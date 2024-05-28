@@ -1285,7 +1285,7 @@
                    <exclude>jdom:jdom</exclude>                      <!-- use: org.apache.servicemix.bundles.jdom -->
                    <exclude>net.sf.jung:*</exclude>                  <!-- use: org.opennms.dependencies:jung-shaded -->
                    <exclude>log4j:log4j</exclude>                    <!-- use: log4j2 -->
-                   <exclude>nekohtml:nekohtml</exclude>              <!-- use: org.nokogiri:nekohtml -->
+                   <exclude>nekohtml:nekohtml</exclude>              <!-- use: net.sourceforge.nekohtml:nekohtml -->
                    <exclude>org.apache.geronimo.specs/geronimo-jms_2.0_spec</exclude>   <!-- use: javax.jms:javax.jms-api -->
                    <exclude>org.apache.velocity:velocity</exclude>   <!-- use: org.apache.velocity:velocity-engine-core -->
                    <exclude>org.springframework:*</exclude>          <!-- use: org.apache.servicemix.bundles.spring-* -->
@@ -1843,7 +1843,7 @@
     <hibernateAnnotationsVersion>3.2.0.Final</hibernateAnnotationsVersion>
     <hibernateAnnotationsOsgiVersion>3.2.0</hibernateAnnotationsOsgiVersion>
     <hibernateValidatorVersion>4.3.2.Final</hibernateValidatorVersion>
-    <hibernateValidatorAnnotationProcessorVersion>4.3.2.Final</hibernateValidatorAnnotationProcessorVersion>
+    <hibernateValidatorAnnotationProcessorVersion>4.1.0.Final</hibernateValidatorAnnotationProcessorVersion>
     <hikaricpVersion>5.0.1</hikaricpVersion>
     <hllVersion>1.6.0</hllVersion>
     <httpcoreVersion>4.4.16</httpcoreVersion>
@@ -1853,7 +1853,7 @@
     <jacksonVersion>1.9.14-atlassian-6</jacksonVersion>
     <jackson2Version>2.16.2</jackson2Version>
     <jmsApiVersion>2.0.1</jmsApiVersion>
-    <snakeyamlVersion>2.2</snakeyamlVersion>
+    <snakeyamlVersion>1.33</snakeyamlVersion>
     <spiflyVersion>1.3.6</spiflyVersion>
     <jacocoVersion>0.8.9</jacocoVersion>
     <jasperreportsVersion>6.20.0</jasperreportsVersion>
@@ -1944,8 +1944,8 @@
     <paxCdiVersion>1.1.4</paxCdiVersion>
     <paxExamVersion>4.13.5</paxExamVersion>
     <pktsVersion>3.0.10</pktsVersion>
-    <protobufVersion>3.24.4</protobufVersion>
-    <postgresqlVersion>42.5.5</postgresqlVersion>
+    <protobufVersion>3.22.5</protobufVersion>
+    <postgresqlVersion>42.5.4</postgresqlVersion>
     <powermockVersion>2.0.9</powermockVersion>
     <okhttpVersion>4.9.3</okhttpVersion>
     <okioVersion>3.6.0</okioVersion>
@@ -2001,7 +2001,6 @@
     <xmlApisExtVersion>1.3.04</xmlApisExtVersion>
     <xmlSchemaVersion>2.3.1</xmlSchemaVersion>
     <xmlgraphicsCommonsVersion>2.9</xmlgraphicsCommonsVersion>
-    <xmlsecVersion>2.3.4</xmlsecVersion>
     <xstreamVersion>1.4.20</xstreamVersion>
     <wsdl4jVersion>1.6.3</wsdl4jVersion>
     <wsmanVersion>1.3.0</wsmanVersion>
@@ -2034,7 +2033,7 @@
 
     <!-- nodejs development -->
     <frontendPluginVersion>1.14.2</frontendPluginVersion>
-    <nodeVersion>v18.20.2</nodeVersion>
+    <nodeVersion>v18.18.2</nodeVersion>
     <npmVersion>9.8.1</npmVersion>
     <yarnVersion>v1.22.19</yarnVersion>
 
@@ -4007,11 +4006,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.santuario</groupId>
-        <artifactId>xmlsec</artifactId>
-        <version>${xmlsecVersion}</version>
-      </dependency>
-      <dependency>
         <groupId>bsf</groupId>
         <artifactId>bsf</artifactId>
         <version>2.4.0</version>
@@ -5033,9 +5027,9 @@
         <version>3.0.1</version>
       </dependency>
       <dependency>
-        <groupId>org.nokogiri</groupId>
+        <groupId>net.sourceforge.nekohtml</groupId>
         <artifactId>nekohtml</artifactId>
-        <version>1.9.22.noko2</version>
+        <version>1.9.22-atlassian-4</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
