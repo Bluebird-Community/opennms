@@ -21,7 +21,6 @@
   <service><name>OpenNMS:Name=PassiveStatusd</name></service>
   <service><name>OpenNMS:Name=Statsd</name></service>
   <service><name>OpenNMS:Name=Provisiond</name></service>
-  <service><name>OpenNMS:Name=Ackd</name></service>
   <service><name>OpenNMS:Name=JettyServer</name></service>
   <service><name>OpenNMS:Name=KarafStartupMonitor</name></service>
   <service><name>OpenNMS:Name=Syslogd</name></service>

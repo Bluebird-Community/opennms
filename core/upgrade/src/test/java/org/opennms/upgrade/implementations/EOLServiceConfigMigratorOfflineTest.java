@@ -60,7 +60,8 @@ public class EOLServiceConfigMigratorOfflineTest {
             "OpenNMS:Name=Xmlrpcd",
             "OpenNMS:Name=XmlrpcProvisioner",
             "OpenNMS:Name=AccessPointMonitor",
-            "OpenNMS:Name=PollerBackEnd"
+            "OpenNMS:Name=PollerBackEnd",
+            "OpenNMS:Name=Ackd"
     );
 
     public EOLServiceConfigMigratorOfflineTest(final String testFile, final int totalBefore, final int totalAfter, final int enabledAfter) {
@@ -101,7 +102,8 @@ public class EOLServiceConfigMigratorOfflineTest {
             { "target/home/etc/service-configuration-1.12.9.xml",  39, 39, 34 },
             { "target/home/etc/service-configuration-14.0.3.xml",  38, 38, 26 },
             { "target/home/etc/service-configuration-15.0.2.xml",  38, 38, 26 },
-            { "target/home/etc/service-configuration-16.0.4.xml",  37, 37, 26 }
+            { "target/home/etc/service-configuration-16.0.4.xml",  37, 37, 26 },
+            { "target/home/etc/service-configuration-33.0.5.xml",  36, 36, 25 }
         });
     }
 

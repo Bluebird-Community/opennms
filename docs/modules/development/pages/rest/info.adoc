@@ -53,7 +53,6 @@ Service that provides information about the {page-component-title} instance.
         "Statsd": "running",
         "Provisiond": "running",
         "Reportd": "running",
-        "Ackd": "running",
         "JettyServer": "running",
         "KarafStartupMonitor": "running",
         "Syslogd": "running",
