@@ -55,13 +55,7 @@ public class EOLServiceConfigMigratorOfflineTest {
     private final int m_totalAfter;
     private final int m_enabledAfter;
 
-    private final List<String> m_disabled = Arrays.asList(
-            "OpenNMS:Name=Linkd",
-            "OpenNMS:Name=Xmlrpcd",
-            "OpenNMS:Name=XmlrpcProvisioner",
-            "OpenNMS:Name=AccessPointMonitor",
-            "OpenNMS:Name=PollerBackEnd"
-    );
+    private static final List<String> DISABLED_SERVICES = EOLServiceConfigMigratorOffline.EOL_SERVICES;
 
     public EOLServiceConfigMigratorOfflineTest(final String testFile, final int totalBefore, final int totalAfter, final int enabledAfter) {
         m_testFile = testFile;
@@ -101,7 +95,8 @@ public class EOLServiceConfigMigratorOfflineTest {
             { "target/home/etc/service-configuration-1.12.9.xml",  39, 39, 34 },
             { "target/home/etc/service-configuration-14.0.3.xml",  38, 38, 26 },
             { "target/home/etc/service-configuration-15.0.2.xml",  38, 38, 26 },
-            { "target/home/etc/service-configuration-16.0.4.xml",  37, 37, 26 }
+            { "target/home/etc/service-configuration-16.0.4.xml",  37, 37, 26 },
+            { "target/home/etc/service-configuration-33.0.5.xml",  36, 36, 25 }
         });
     }
 

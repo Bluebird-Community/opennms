@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.opennms.core.utils.ConfigFileConstants;
@@ -134,7 +135,8 @@ public class EOLServiceConfigMigratorOffline extends AbstractOnmsUpgrade {
                 "OpenNMS:Name=Xmlrpcd",
                 "OpenNMS:Name=XmlrpcProvisioner",
                 "OpenNMS:Name=AccessPointMonitor",
-                "OpenNMS:Name=PollerBackEnd"
+                "OpenNMS:Name=PollerBackEnd",
+                "OpenNMS:Name=Ackd"
         };
 
         try {

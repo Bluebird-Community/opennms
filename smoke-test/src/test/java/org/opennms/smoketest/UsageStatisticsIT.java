@@ -85,7 +85,7 @@ public class UsageStatisticsIT {
 
         final Map<String, Boolean> services = (Map<String, Boolean>) usageReport.get("services");
 
-        assertEquals(32, services.size());
+        assertEquals(31, services.size());
         assertEquals(28, services.entrySet().stream().filter(e -> e.getValue()).count());
         assertEquals(4, services.entrySet().stream().filter(e -> !e.getValue()).count());
 
