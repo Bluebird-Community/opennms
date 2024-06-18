@@ -90,22 +90,12 @@ public class MenuProviderTest {
         MenuEntry infoMenu = getMenuEntry(mainMenu.menus, "Info");
 
         final String[] expectedNames = new String[] {
-                "Node List", "Nodes (Legacy)", "Assets", "Path Outages", "Device Configs", "External Requisitions",
+                "Node List", "Nodes (Legacy)", "Assets", "Path Outages", "External Requisitions",
                 "Logs", "Secure Credentials Vault", "Connect to Zenith"
         };
         List<String> actualNames = getMenuNames(infoMenu);
         assertEquals(expectedNames.length, actualNames.size());
         assertThat(actualNames, containsInAnyOrder(expectedNames));
-
-        // Check Roles on Device Config entry
-        MenuEntry dcbMenu = getMenuEntry(infoMenu.items, "Device Configs");
-
-        final String[] expectedDeviceConfigRoles = new String[] {
-                "ROLE_ADMIN",
-                "ROLE_REST",
-                "ROLE_DEVICE_CONFIG_BACKUP"
-        };
-        assertThat(dcbMenu.roles, containsInAnyOrder(expectedDeviceConfigRoles));
     }
 
     @Test
@@ -117,7 +107,7 @@ public class MenuProviderTest {
         MenuEntry infoMenu = getMenuEntry(mainMenu.menus, "Info");
 
         final String[] expectedNames = new String[] {
-                "Node List", "Nodes (Legacy)", "Assets", "Path Outages", "Device Configs", "External Requisitions",
+                "Node List", "Nodes (Legacy)", "Assets", "Path Outages", "External Requisitions",
                 "Logs", "Secure Credentials Vault"
         };
 

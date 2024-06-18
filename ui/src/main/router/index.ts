@@ -22,7 +22,6 @@
 
 import { createRouter, createWebHashHistory, RouteLocationNormalized } from 'vue-router'
 import { Plugin } from '@/types'
-import DeviceConfigBackup from '@/containers/DeviceConfigBackup.vue'
 import Home from '@/containers/Home.vue'
 import FileEditor from '@/containers/FileEditor.vue'
 import Graphs from '@/components/Resources/Graphs.vue'
@@ -39,7 +38,7 @@ import { ActiveTabs, SnmpLookupEditMode, useSnmpConfigStore } from '@/stores/snm
 import { computed } from 'vue'
 import { whenever } from '@vueuse/core'
 
-const { adminRole, filesystemEditorRole, dcbRole, snmpRole, rolesAreLoaded } = useRole()
+const { adminRole, filesystemEditorRole, snmpRole, rolesAreLoaded } = useRole()
 const menuStore = computed(() => useMenuStore())
 const { showSnackBar } = useSnackbar()
 const { startSpinner, stopSpinner } = useSpinner()
@@ -211,25 +210,6 @@ const router = createRouter({
       path: '/open-api',
       name: 'OpenAPI',
       component: () => import('@/containers/OpenAPI.vue')
-    },
-    {
-      path: '/device-config-backup',
-      name: 'DeviceConfigBackup',
-      component: DeviceConfigBackup,
-      beforeEnter: (to, from) => {
-        const checkRoles = () => {
-          if (!dcbRole.value) {
-            showSnackBar({ msg: 'No role access to DCB.' })
-            router.push(from.path)
-          }
-        }
-
-        if (rolesAreLoaded.value) {
-          checkRoles()
-        } else {
-          whenever(rolesAreLoaded, () => checkRoles())
-        }
-      }
     },
     {
       path: '/scv',
