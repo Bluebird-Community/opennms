@@ -73,9 +73,6 @@ These topics are only needed when the corresponding feature is enabled:
 
 | Trap
 | SNMP trap messages
-
-| DeviceConfig
-| Device configuration backup
 |===
 
 === Telemetry/Flow Sink Topics
@@ -124,7 +121,6 @@ NOTE: The actual telemetry topic names depend on your telemetry daemon configura
 OpenNMS.Sink.Events
 OpenNMS.Sink.Heartbeat
 OpenNMS.Sink.Syslog
-OpenNMS.Sink.DeviceConfig
 OpenNMS.Sink.Telemetry-Netflow-5
 OpenNMS.Sink.Telemetry-Netflow-9
 OpenNMS.Sink.Telemetry-IPFIX
@@ -186,7 +182,6 @@ Sink Topics (optional - feature dependent):
   OpenNMS.Sink.Events                                          [OK]
   OpenNMS.Sink.Syslog                                          [NOT CONFIGURED]
   OpenNMS.Sink.Trap                                            [OK]
-  OpenNMS.Sink.DeviceConfig                                    [OK]
 
 Sink Topics (telemetry - optional):
   Note: These are default queue names, if queue names were customized in

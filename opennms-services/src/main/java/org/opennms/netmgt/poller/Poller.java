@@ -63,9 +63,7 @@ import org.opennms.netmgt.threshd.api.ThresholdingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -115,13 +113,9 @@ public class Poller extends AbstractServiceDaemon {
 
     @Autowired
     private LocationAwarePollerClient m_locationAwarePollerClient;
-    
+
     @Autowired
     private ReadablePollOutagesDao m_pollOutagesDao;
-
-    @Autowired()
-    @Qualifier("deviceConfigMonitorAdaptor")
-    private ServiceMonitorAdaptor serviceMonitorAdaptor;
 
     public void setPersisterFactory(PersisterFactory persisterFactory) {
         m_persisterFactory = persisterFactory;
@@ -253,7 +247,7 @@ public class Poller extends AbstractServiceDaemon {
     ReadablePollOutagesDao getPollOutagesDao() {
         return m_pollOutagesDao;
     }
-    
+
     @VisibleForTesting
     void setPollOutagesDao(ReadablePollOutagesDao pollOutagesDao) {
         m_pollOutagesDao = Objects.requireNonNull(pollOutagesDao);
@@ -281,10 +275,6 @@ public class Poller extends AbstractServiceDaemon {
         m_locationAwarePollerClient = locationAwarePollerClient;
     }
 
-    public void setServiceMonitorAdaptor(ServiceMonitorAdaptor serviceMonitorAdaptor) {
-        this.serviceMonitorAdaptor = serviceMonitorAdaptor;
-    }
-    
     /**
      * <p>onInit</p>
      */
@@ -493,7 +483,7 @@ public class Poller extends AbstractServiceDaemon {
 
     private boolean scheduleService(OnmsMonitoredService service, Set<OnmsOutage> outages) {
         final OnmsIpInterface iface = service.getIpInterface();
-        final OnmsOutage outage = (outages == null || outages.size() < 1 ? null : outages.iterator().next());
+        final OnmsOutage outage = (outages == null || outages.isEmpty() ? null : outages.iterator().next());
         final OnmsEvent event = (outage == null ? null : outage.getServiceLostEvent());
         final String ipAddr = InetAddressUtils.str(iface.getIpAddress());
         final String serviceName = service.getServiceName();
@@ -525,8 +515,8 @@ public class Poller extends AbstractServiceDaemon {
 
         PollableService svc = getNetwork().createService(service.getNodeId(), iface.getNode().getLabel(), iface.getNode().getLocation().getLocationName(), addr, serviceName);
         PollableServiceConfig pollConfig = new PollableServiceConfig(svc, m_pollerConfig, pkg,
-                                                                     getScheduler(), m_persisterFactory, m_thresholdingService,
-                                                                     m_locationAwarePollerClient, m_pollOutagesDao, serviceMonitorAdaptor);
+                getScheduler(), m_persisterFactory, m_thresholdingService,
+                m_locationAwarePollerClient, m_pollOutagesDao);
         svc.setPollConfig(pollConfig);
         synchronized(svc) {
             if (svc.getSchedule() == null) {
@@ -572,15 +562,15 @@ public class Poller extends AbstractServiceDaemon {
     /**
      * This method should be called before scheduling services with outstanding
      * outages for the first time.
-     *
+     * <p>
      * If an outage is open, but has no lost service event, we will mark it as closed
      * with the current timestamp. This can happen if the poller daemon is stopped after
      * creating the outage record, but before the event was received back from the event bus.
-     *
+     * <p>
      * We close the outage immediately, as opposed to marking the service's initial state
      * as down since we do not know the cause, and determining the cause from the current
-     * state of the database is error prone.
-     *
+     * state of the database is error-prone.
+     * <p>
      * Closing the outage immediately also prevents the daemon from creating
      * duplicate outstanding outage records.
      */
