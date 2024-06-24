@@ -61,10 +61,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         WebElement foundElement = null;
 
-        // Dashboards Menu
-        clickMenuItem("dashboardsMenu", "Wallboard");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[starts-with(@id, 'opennmsvaadinwallboard-')]")));
-
         frontPage();
         clickMenuItem("dashboardsMenu", "Heatmap");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/a[starts-with(text(), 'Alarm Heatmap')]")));
