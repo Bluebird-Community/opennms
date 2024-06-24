@@ -61,10 +61,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         WebElement foundElement = null;
 
-        // Dashboards Menu
-        clickMenuItem("dashboardsMenu", "Wallboard");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[starts-with(@id, 'opennmsvaadinwallboard-')]")));
-
         frontPage();
         clickMenuItem("dashboardsMenu", "Heatmap");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/a[starts-with(text(), 'Alarm Heatmap')]")));
@@ -83,10 +79,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("dashboardsMenu", "Metrics Dashboard (KSC Reports)");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Customized Reports']")));
-
-        clickMenuItem("dashboardsMenu", "Surveillance Dashboard");
-        driver.switchTo().frame(findElementByXpath("/html/body/div/iframe"));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance view: default']")));
 
         driver.switchTo().parentFrame();
         frontPage();
@@ -117,13 +109,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("monitoringMenu", "Path Outages");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='All Path Outages']")));
-
-        clickMenuItem("monitoringMenu", "Surveillance View");
-        // switchTo() by xpath is much faster than by ID
-        driver.switchTo().frame(findElementByXpath("/html/body/div/iframe"));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance view: default']")));
-        driver.switchTo().parentFrame();
-        frontPage();
 
         // Metrics Menu
         clickMenuItem("metricsMenu", "Resource Graphs");
@@ -224,9 +209,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         clickMenuItem("administrationMenu", "Scheduled Outages");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Scheduled Outages')]")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/h4[text()='Scheduled Outages']")));
-
-        clickMenuItem("administrationMenu", "Wallboard Configuration");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Ops Board Configuration')]")));
 
         clickMenuItem("administrationMenu", "Product Update Enrollment");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Product Update Enrollment')]")));
