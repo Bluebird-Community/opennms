@@ -256,13 +256,6 @@
           "url": "dashboard.jsp",
           "locationMatch": "dashboard",
           "roles": null
-        },
-        {
-          "id": "opsBoard",
-          "name": "Ops Board",
-          "url": "vaadin-wallboard",
-          "locationMatch": "vaadin-wallboard",
-          "roles": null
         }
       ]
     },

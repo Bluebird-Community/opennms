@@ -43,24 +43,6 @@ body.v-generated-body {
     background: -ms-linear-gradient(top, #d8d9da 0%, #e6e7e8 10%, #e0e1e2 100%);
 }
 
-/* Wallboard UI, make space for Vue top and side menus */
-.dashboard.v-app.wallboardui {
-    margin-top: 4.5em;
-    margin-left: 4em;
-}
-
-/* Safari 10+/20+ specific, needs extra top margin */
-body[class*="v-sa1"] .dashboard.v-app.wallboardui,
-body[class*="v-sa2"] .dashboard.v-app.wallboardui {
-    margin-left: 4em;
-    padding-top: 4em !important;
-}
-
-.dashboard.v-app.wallboardui .v-panel-caption,
-.dashboard.v-app.wallboardui .v-panel-caption.v-panel-caption-novscroll {
-    padding-bottom: 2em;
-}
-
 /*  --------------------------------------------------
     :: Vue Menu UI
     -------------------------------------------------- */
@@ -103,30 +85,6 @@ body[class*="v-sa2"] .v-app.topo_default.topologyui {
     text-indent:100%;
     white-space:nowrap;
     margin: 10px 0px 0px 10px;
-}
-
-.dashboard .wallboard-board {
-    color: #3ba300;
-    padding: 5px 5px;
-    margin: 1px;
-}
-
-.dashboard .wallboard-board {
-    font-size: 18px;
-    padding: 5px 5px;
-    margin: 1px;
-}
-
-.dashboard .wallboard-board .progress-paused {
-    font-size: 24px;
-    font-weight: bold;
-    background: orange;
-    border: 2px solid orangered;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    display: block;
 }
 
 .configuration-title {
