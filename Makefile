@@ -386,8 +386,6 @@ core-deb-pkg: deps-deb-packages
 	@echo "- adding auto-generated changelog entry"
 	export DEBEMAIL="$(DEBEMAIL)"; dch -b -v "$(VERSION)-$(DEB_PKG_RELEASE)" "$(EXTRA_INFO)$(EXTRA_INFO2)"
 	dpkg-buildpackage -us -uc -Zgzip
-	mkdir -p $(ARTIFACTS_DIR)/debian/core
-	mv ../*.deb ../*.dsc ../*.tar.gz ../*.buildinfo ../*.changes $(ARTIFACTS_DIR)/debian/core
 
 .PHONY: javadocs
 javadocs: deps-build show-info
