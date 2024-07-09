@@ -6,6 +6,7 @@ on:
 
 jobs:
   quick-smoke:
+    if: "!contains(github.event.commits[0].message, '[skip quick-smoke]')"
     runs-on:
       group: Default
       labels:
@@ -36,6 +37,7 @@ jobs:
           make collect-testresults
 
   quick-build:
+    if: "!contains(github.event.commits[0].message, '[skip quick-build]')"
     runs-on:
       group: Default
       labels:
@@ -85,6 +87,7 @@ jobs:
           path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
 
   deps-freshness:
+    if: "!contains(github.event.commits[0].message, '[skip deps-freshness]')"
     runs-on: ubuntu-latest
     container:
       image: quay.io/bluebird/bluebird-builder:0.3.0.b17
@@ -107,7 +110,29 @@ jobs:
           path: |
             target/artifacts/logs/libyear.log        
 
+  core-debian-package:
+    if: "!contains(github.event.commits[0].message, '[skip core-debian-package]')"
+    needs: quick-build
+    runs-on:
+      group: Default
+      labels:
+        - self-hosted
+        - Linux
+        - X64
+        - eu-central-de
+        - labmonkeys
+    steps:
+      - name: Build Core Debian packages
+        run: make core-deb-pkg
+      - name: Persist debian package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-deb-pkgs
+          path: |
+            target/artifacts/debian/core
+
   core-oci:
+    if: "!contains(github.event.commits[0].message, '[skip core-oci]')"
     needs: quick-build
     runs-on: ubuntu-latest
     steps:
@@ -160,6 +185,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
   minion-oci:
+    if: "!contains(github.event.commits[0].message, '[skip minion-oci]')"
     needs: quick-build
     runs-on: ubuntu-latest
     steps:
@@ -219,6 +245,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
   sentinel-oci:
+    if: "!contains(github.event.commits[0].message, '[skip sentinel-oci]')"
     needs: quick-build
     runs-on: ubuntu-latest
     steps:
@@ -271,6 +298,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
   unit-tests:
+    if: "!contains(github.event.commits[0].message, '[skip unit-tests]')"
     needs:
       - quick-smoke
     runs-on: ubuntu-latest
@@ -307,6 +335,7 @@ jobs:
             target/artifacts/failsafe-reports
 
   integration-tests:
+    if: "!contains(github.event.commits[0].message, '[skip integration-tests]')"
     needs:
       - quick-smoke
     runs-on:
@@ -347,6 +376,7 @@ jobs:
             target/artifacts/failsafe-reports
 
   e2e-tests-core:
+    if: "!contains(github.event.commits[0].message, '[skip e2e-tests-core]')"
     needs:
       - unit-tests
       - integration-tests
@@ -388,6 +418,7 @@ jobs:
             target/artifacts/recordings
 
   e2e-tests-minion:
+    if: "!contains(github.event.commits[0].message, '[skip e2e-tests-minion]')"
     needs:
       - unit-tests
       - integration-tests
@@ -429,6 +460,7 @@ jobs:
             target/artifacts/recordings
 
   e2e-tests-sentinel:
+    if: "!contains(github.event.commits[0].message, '[skip e2e-tests-sentinel]')"
     needs:
       - unit-tests
       - integration-tests
