@@ -382,12 +382,29 @@ core-deb-pkg: deps-deb-packages
 	@echo "OPA VERSION: " $(OPA_VERSION)
 	@echo "DEBEMAIL:    " $(DEBEMAIL)
 	@echo
-	@sed -i "s/OPA_VERSION/$(OPA_VERSION)/g" debian/control
+	@sed -i='' "s/OPA_VERSION/$(OPA_VERSION)/g" debian/control
 	@echo "- adding auto-generated changelog entry"
 	export DEBEMAIL="$(DEBEMAIL)"; dch -b -v "$(VERSION)-$(DEB_PKG_RELEASE)" "$(EXTRA_INFO)$(EXTRA_INFO2)"
 	dpkg-buildpackage -us -uc -Zgzip
 	mkdir -p $(ARTIFACTS_DIR)/debian/core
 	mv ../*.deb ../*.dsc ../*.tar.gz ../*.buildinfo ../*.changes $(ARTIFACTS_DIR)/debian/core
+
+.PHONY: minion-deb-pkg
+minion-deb-pkg: compile assemble
+	@echo "==== Building Debian OpenNMS ===="
+	@echo
+	@echo "Version:     " $(OPENNMS_VERSION)
+	@echo "Release:     " $(DEB_PKG_RELEASE)
+	@echo "OPA VERSION: " $(OPA_VERSION)
+	@echo "DEBEMAIL:    " $(DEBEMAIL)
+	@echo
+	@echo "- adding auto-generated changelog entry"
+	@cp opennms-assemblies/minion/target/org.opennms.assemblies.minion-*-minion.tar.gz "target/opennms-minion_$(OPENNMS_VERSION).tar.gz"
+	@tar xzf "target/opennms-minion_$(OPENNMS_VERSION).tar.gz" -C target
+	@sed -i='' "s/OPA_VERSION/$(OPA_VERSION)/g" target/minion-$(OPENNMS_VERSION)/debian/control
+	cd target/minion-$(OPENNMS_VERSION); \
+	dch -b -v "$(VERSION)-$(DEB_PKG_RELEASE)" "$(EXTRA_INFO)$(EXTRA_INFO2)"; \
+	dpkg-buildpackage -us -uc -Zgzip
 
 .PHONY: javadocs
 javadocs: deps-build show-info

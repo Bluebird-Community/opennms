@@ -112,7 +112,9 @@ jobs:
 
   core-debian-package:
     if: "!contains(github.event.commits[0].message, '[skip core-debian-package]')"
-    needs: quick-build
+    needs:
+      - quick-build
+      - quick-smoke
     runs-on:
       group: Default
       labels:
@@ -130,6 +132,23 @@ jobs:
           name: core-deb-pkgs
           path: |
             target/artifacts/debian/core
+
+  minion-debian-package:
+    if: "!contains(github.event.commits[0].message, '[skip minion-debian-package]')"
+    needs:
+      - quick-build
+      - quick-smoke
+    runs-on:
+      group: Default
+      labels:
+        - self-hosted
+        - Linux
+        - X64
+        - eu-central-de
+        - labmonkeys
+    steps:
+      - name: Build Minion Debian packages
+        run: make minion-deb-pkg
 
   core-oci:
     if: "!contains(github.event.commits[0].message, '[skip core-oci]')"
