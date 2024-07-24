@@ -42,8 +42,15 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: url('images/wallpapers/background_dark.png');
+    background-image: url('images/wallpapers/ulf-milseburg.jpg');
     background-size: cover;
+  }
+
+  #password-page-title {
+      padding-left: 11%;
+      padding-bottom: 10px;
+      font-weight: 300;
+      font-size: 16px;
   }
 
   .form-content-wrapper {
@@ -116,10 +123,6 @@
     background-image: linear-gradient(to right, rgb(84, 142, 131), rgb(104, 156, 139));
   }
 
-  .horizon {
-    margin-left: 20%;
-  }
-
   label.pg-text, span.pg-text {
     color: #fff;
   }
@@ -183,17 +186,24 @@
 
 <div class="login-page">
     <div class="card login-form rounded">
-        <div style="padding-bottom: 36px; padding-top: 60px">
-            <img src="images/opennms_horizon_title.svg" class="horizon" width="185px" />
+        <div style="padding-top: 60px">
+            <div id="password-page-title">Set a secure admin password</div>
         </div>
         <div class="form-content-wrapper">
             <form role="form" method="post" name="goForm" onSubmit="return verifyGoForm(event);" action="account/selfService/passwordGateAction">
                 <div class="form-content">
                     <div class="form-group">
                         <span class="pg-text">
-                            Please take a moment to change your <em>admin</em> user password from its default value.
-                            This step helps protect your installation against
-                            <a class="pg-link" target="_blank" rel="noopener" href="https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a">default credential attacks</a>.
+                            Please take a moment to change your <strong>admin</strong> user password from its default value.
+                            The complexity of the new password should be at least:
+                            <ul>
+                                <li>12 characters</li>
+                                <li>1 special character</li>
+                                <li>1 uper case letter</li>
+                                <li>1 lower case letter</li>
+                                <li>1 number</li>
+                                <li>6 or more characters in a row are not allowed</li>
+                            </ul>
                         </span>
                     </div>
                     <div class="form-input-wrapper">
@@ -221,11 +231,6 @@
                     </div>
                 </div>
             </form>
-        </div>
-    </div>
-    <div class="" style="position: absolute; bottom: 0px; right: 10px; font-size: 3em; padding: 20pt 20pt 5pt 20pt">
-        <div style="padding-bottom: 20px; padding-top: 20px">
-            <img src="images/opennms-logo-light.svg" class="" width="180px" />
         </div>
     </div>
 </div>
