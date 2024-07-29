@@ -329,7 +329,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - self-hosted
+        - blacksmith-8vcpu-ubuntu-2204
         - Linux
         - X64
         - eu-central-de
@@ -369,7 +369,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - self-hosted
+        - blacksmith-8vcpu-ubuntu-2204
         - Linux
         - X64
         - eu-central-de
@@ -411,7 +411,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - self-hosted
+        - blacksmith-8vcpu-ubuntu-2204
         - Linux
         - X64
         - eu-central-de
@@ -453,7 +453,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - self-hosted
+        - blacksmith-8vcpu-ubuntu-2204
         - Linux
         - X64
         - eu-central-de
@@ -495,7 +495,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - self-hosted
+        - blacksmith-8vcpu-ubuntu-2204
         - Linux
         - X64
         - eu-central-de
