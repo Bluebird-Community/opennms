@@ -16,7 +16,9 @@ jobs:
         - eu-central-de
         - labmonkeys
     container:
-      image: quay.io/bluebird/base-builder:0.0.8
+      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     steps:
       - uses: actions/checkout@v4
       - name: Cleaning project for quick validation
