@@ -15,10 +15,6 @@ jobs:
         - X64
         - eu-central-de
         - labmonkeys
-    container:
-      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
     steps:
       - uses: actions/checkout@v4
       - name: Cleaning project for quick validation
@@ -71,7 +67,7 @@ jobs:
     if: "!contains(github.event.commits[0].message, '[skip deps-freshness]')"
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:0.0.2.jdk-17
+      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
     steps:
       - uses: actions/checkout@v4
       - name: Add workspace to git safe.directory
@@ -103,6 +99,8 @@ jobs:
         - X64
         - eu-central-de
         - labmonkeys
+    container:
+      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
     steps:
       - uses: actions/checkout@v4
       - name: Build Core Debian packages
@@ -126,6 +124,8 @@ jobs:
         - X64
         - eu-central-de
         - labmonkeys
+    container:
+      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
     steps:
       - uses: actions/checkout@v4
       - name: Build Minion Debian packages
@@ -149,6 +149,8 @@ jobs:
         - X64
         - eu-central-de
         - labmonkeys
+    container:
+      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
     steps:
       - uses: actions/checkout@v4
       - name: Build Sentinel Debian packages
@@ -338,6 +340,8 @@ jobs:
         - X64
         - eu-central-de
         - labmonkeys
+    container:
+      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
     steps:
       - uses: actions/checkout@v4
       - name: Prepare the build for tests
@@ -373,7 +377,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - blacksmith-8vcpu-ubuntu-2204
+        - self-hosted
         - Linux
         - X64
         - eu-central-de
@@ -415,7 +419,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - blacksmith-8vcpu-ubuntu-2204
+        - self-hosted
         - Linux
         - X64
         - eu-central-de
@@ -457,7 +461,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - blacksmith-8vcpu-ubuntu-2204
+        - self-hosted
         - Linux
         - X64
         - eu-central-de
@@ -499,7 +503,7 @@ jobs:
     runs-on:
       group: Default
       labels:
-        - blacksmith-8vcpu-ubuntu-2204
+        - self-hosted
         - Linux
         - X64
         - eu-central-de
@@ -539,7 +543,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/base-builder:0.0.6
+      image: quay.io/bluebird/base-builder:0.0.8
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -559,7 +563,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/base-builder:0.0.6
+      image: quay.io/bluebird/base-builder:0.0.8
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -579,7 +583,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/base-builder:0.0.6
+      image: quay.io/bluebird/base-builder:0.0.8
     steps:
       - uses: actions/download-artifact@v4
         with:
