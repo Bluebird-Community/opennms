@@ -336,10 +336,7 @@ jobs:
       group: Default
       labels:
         - blacksmith-8vcpu-ubuntu-2204
-        - Linux
-        - X64
-        - eu-central-de
-        - labmonkeys
+
     container:
       image: quay.io/bluebird/java-builder:0.0.4.jdk-17
     steps:
