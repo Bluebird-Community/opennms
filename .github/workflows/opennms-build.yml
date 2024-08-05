@@ -29,6 +29,48 @@ jobs:
       - name: Assemble tarball without expensive tasks
         run: |
           make quick-assemble
+      - name: Persist tarball Core
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarball-core
+          path: opennms-full-assembly/target/opennms-full-assembly-*.tar.gz
+      - name: Persist tarball Minion
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarball-minion
+          path: opennms-assemblies/minion/target/org.opennms.assemblies.minion-*.tar.gz
+      - name: Persist tarball Sentinel
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarball-sentinel
+          path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
+
+  startup-smoke-test:
+    if: "!contains(github.event.commits[0].message, '[skip startup-smoke-test]')"
+    needs:
+      - quick-build
+    runs-on:
+      group: Default
+      labels:
+        - self-hosted
+        - Linux
+        - X64
+        - eu-central-de
+        - labmonkeys
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - uses: actions/download-artifact@v4
+        with:
+          name: tarball-core
+          path: opennms-full-assembly/target
+      - name: Extract Core tarball for container build
+        run: |
+          mkdir -p opennms-container/core/tarball-root
+          tar xzf opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz -C opennms-container/core/tarball-root
       - name: Run quick smoke test
         run: |
           make quick-smoke
@@ -47,27 +89,12 @@ jobs:
         with:
           name: quick-build-logs
           path: target/artifacts/mvn.*.log
-      - name: Persist tarball Core
-        uses: actions/upload-artifact@v4
-        with:
-          name: tarball-core
-          path: opennms-full-assembly/target/opennms-full-assembly-*.tar.gz
-      - name: Persist tarball Minion
-        uses: actions/upload-artifact@v4
-        with:
-          name: tarball-minion
-          path: opennms-assemblies/minion/target/org.opennms.assemblies.minion-*.tar.gz
-      - name: Persist tarball Sentinel
-        uses: actions/upload-artifact@v4
-        with:
-          name: tarball-sentinel
-          path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
 
   deps-freshness:
     if: "!contains(github.event.commits[0].message, '[skip deps-freshness]')"
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:0.0.4.jdk-17
+      image: quay.io/bluebird/java-builder:0.1.0.jdk-17.b35
     steps:
       - uses: actions/checkout@v4
       - name: Add workspace to git safe.directory
@@ -325,7 +352,7 @@ jobs:
   unit-tests:
     if: "!contains(github.event.commits[0].message, '[skip unit-tests]')"
     needs:
-      - quick-build
+      - startup-smoke-test
     runs-on:
       group: Default
       labels:
@@ -365,7 +392,7 @@ jobs:
   integration-tests:
     if: "!contains(github.event.commits[0].message, '[skip integration-tests]')"
     needs:
-      - quick-build
+      - startup-smoke-test
     runs-on:
       group: Default
       labels:
