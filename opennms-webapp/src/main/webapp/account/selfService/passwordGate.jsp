@@ -37,7 +37,7 @@
 
 <%
     // Horizon values - these are overridden in Meridian
-    String wallpaperBgImagePath = "images/wallpapers/ulf-milseburg.jpg";
+    String wallpaperBgImagePath = "images/wallpapers/ulf-milseburg-view.jpg";
     String titleLogoImagePath = "images/opennms_horizon_title.svg";
     String labelTextColor = "#fff";
 %>
