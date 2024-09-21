@@ -329,9 +329,7 @@ div.NLnode:hover span.NLdbid, div.NLnode:hover span.NLfs, div.NLnode:hover span.
 }
 /* Resource Graph sidebar classes inspired by Bootstrap Docs: End */
 
-#navbar {
-  margin-top: auto;
-}
+#navbar {}
 
 #footer {
   text-align: center;
@@ -423,8 +421,8 @@ iframe.vaadin-fullscreen {
     font-size:14px;
     color:rgba(255, 255, 255, 0.8);
     letter-spacing: 0.12px;
-    margin-right:1rem;
-    padding-top:13px;
+    width: 100px;
+    text-align: right;
   }
   .navbar-bell {
     margin-right:60px;
