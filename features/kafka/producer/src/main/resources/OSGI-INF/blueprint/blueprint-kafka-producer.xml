@@ -33,6 +33,7 @@
       <cm:property name="startAlarmSyncWithCleanState" value="false"/>
       <cm:property name="numEventListenerThreads" value="4"/>
       <cm:property name="nodeAsyncUpdateThreads" value="10"/>
+      <cm:property name="symbiontEndpoint" value="http://localhost:8080/events"/>
     </cm:default-properties>
   </cm:property-placeholder>
 
@@ -44,71 +45,82 @@
   <reference id="alarmDao" interface="org.opennms.netmgt.dao.api.AlarmDao" />
   <reference id="hwEntityDao" interface="org.opennms.netmgt.dao.api.HwEntityDao" />
   <reference id="onmsTopologyDao" interface="org.opennms.netmgt.topologies.service.api.OnmsTopologyDao" />
+  <reference id="distPollerDao" interface="org.opennms.netmgt.dao.api.DistPollerDao" />
 
-  <bean id="protobufMapper" class="org.opennms.features.kafka.producer.ProtobufMapper">
-    <argument ref="eventConfDao"/>
-    <argument ref="hwEntityDao"/>
-    <argument ref="sessionUtils"/>
-    <argument ref="nodeDao"/>
-    <argument value="${nodeIdToCriteriaMaxCacheSize}"/>
-  </bean>
+<!--  <bean id="protobufMapper" class="org.opennms.features.kafka.producer.ProtobufMapper">-->
+<!--    <argument ref="eventConfDao"/>-->
+<!--    <argument ref="hwEntityDao"/>-->
+<!--    <argument ref="sessionUtils"/>-->
+<!--    <argument ref="nodeDao"/>-->
+<!--    <argument value="${nodeIdToCriteriaMaxCacheSize}"/>-->
+<!--  </bean>-->
 
-  <bean id="nodeCache" class="org.opennms.features.kafka.producer.NodeCache">
-    <argument ref="nodeDao"/>
-    <argument ref="sessionUtils"/>
-    <property name="timeoutInMs" value="${nodeRefreshTimeoutMs}"/>
-  </bean>
+<!--  <bean id="nodeCache" class="org.opennms.features.kafka.producer.NodeCache">-->
+<!--    <argument ref="nodeDao"/>-->
+<!--    <argument ref="sessionUtils"/>-->
+<!--    <property name="timeoutInMs" value="${nodeRefreshTimeoutMs}"/>-->
+<!--  </bean>-->
 
-  <bean id="kafkaProducer" class="org.opennms.features.kafka.producer.OpennmsKafkaProducer"
-          init-method="init" destroy-method="destroy">
-    <argument ref="protobufMapper"/>
-    <argument ref="nodeCache"/>
-    <argument ref="configAdmin"/>
-    <argument ref="eventSubscriptionService"/>
-    <argument ref="onmsTopologyDao"/>
-    <argument value="${nodeAsyncUpdateThreads}"/>
-
-    <property name="topologyVertexTopic" value="${topologyVertexTopic}"/>
-    <property name="topologyEdgeTopic" value="${topologyEdgeTopic}"/>
-    <property name="eventTopic" value="${eventTopic}"/>
-    <property name="alarmTopic" value="${alarmTopic}"/>
-    <property name="nodeTopic" value="${nodeTopic}"/>
-    <property name="alarmFeedbackTopic" value="${alarmFeedbackTopic}"/>
-    <property name="eventFilter" value="${eventFilter}"/>
-    <property name="alarmFilter" value="${alarmFilter}"/>
-    <property name="suppressIncrementalAlarms" value="${suppressIncrementalAlarms}"/>
-    <property name="kafkaSendQueueCapacity" value="${kafkaSendQueueCapacity}"/>
-    <property name="encoding" value="${encoding}"/>
+  <bean id="symbiontEventProducer"
+        class="org.bluebird.integrations.opennms.OpennmsToSymbiontEventProducer"
+        init-method="init"
+        destroy-method="destroy">
+    <argument ref="distPollerDao" />
+    <argument ref="eventSubscriptionService" />
+    <argument value="${symbiontEndpoint}" />
     <property name="numEventListenerThreads" value="${numEventListenerThreads}"/>
   </bean>
 
-  <service ref="kafkaProducer" interface="org.opennms.netmgt.topologies.service.api.OnmsTopologyConsumer">
-    <service-properties>
-      <entry key="type" value="kafkaProducer"/>
-    </service-properties>
-  </service>
+<!--  <bean id="kafkaProducer" class="org.opennms.features.kafka.producer.OpennmsKafkaProducer"-->
+<!--          init-method="init" destroy-method="destroy">-->
+<!--    <argument ref="protobufMapper"/>-->
+<!--    <argument ref="nodeCache"/>-->
+<!--    <argument ref="configAdmin"/>-->
+<!--    <argument ref="eventSubscriptionService"/>-->
+<!--    <argument ref="onmsTopologyDao"/>-->
+<!--    <argument value="${nodeAsyncUpdateThreads}"/>-->
 
-  <service ref="kafkaProducer" interface="org.opennms.netmgt.alarmd.api.AlarmLifecycleListener">
-    <service-properties>
-      <entry key="registration.export" value="true"/>
-    </service-properties>
-  </service>
+<!--    <property name="topologyVertexTopic" value="${topologyVertexTopic}"/>-->
+<!--    <property name="topologyEdgeTopic" value="${topologyEdgeTopic}"/>-->
+<!--    <property name="eventTopic" value="${eventTopic}"/>-->
+<!--    <property name="alarmTopic" value="${alarmTopic}"/>-->
+<!--    <property name="nodeTopic" value="${nodeTopic}"/>-->
+<!--    <property name="alarmFeedbackTopic" value="${alarmFeedbackTopic}"/>-->
+<!--    <property name="eventFilter" value="${eventFilter}"/>-->
+<!--    <property name="alarmFilter" value="${alarmFilter}"/>-->
+<!--    <property name="suppressIncrementalAlarms" value="${suppressIncrementalAlarms}"/>-->
+<!--    <property name="kafkaSendQueueCapacity" value="${kafkaSendQueueCapacity}"/>-->
+<!--    <property name="encoding" value="${encoding}"/>-->
+<!--    <property name="numEventListenerThreads" value="${numEventListenerThreads}"/>-->
+<!--  </bean>-->
 
-  <bean id="alarmDataSync" class="org.opennms.features.kafka.producer.datasync.KafkaAlarmDataSync"
-		init-method="init" destroy-method="destroy">
-    <argument ref="configAdmin"/>
-    <argument ref="kafkaProducer"/>
-    <argument ref="protobufMapper" />
-    <property name="alarmTopic" value="${alarmTopic}"/>
-    <property name="alarmSync" value="${alarmSync}"/>
-    <property name="suppressIncrementalAlarms" value="${suppressIncrementalAlarms}"/>
-    <property name="startWithCleanState" value="${startAlarmSyncWithCleanState}"/>
-  </bean>
+<!--  <service ref="kafkaProducer" interface="org.opennms.netmgt.topologies.service.api.OnmsTopologyConsumer">-->
+<!--    <service-properties>-->
+<!--      <entry key="type" value="kafkaProducer"/>-->
+<!--    </service-properties>-->
+<!--  </service>-->
 
-  <bean factory-ref="kafkaProducer" factory-method="setDataSync">
-    <argument ref="alarmDataSync"/>
-  </bean>
+<!--  <service ref="kafkaProducer" interface="org.opennms.netmgt.alarmd.api.AlarmLifecycleListener">-->
+<!--    <service-properties>-->
+<!--      <entry key="registration.export" value="true"/>-->
+<!--    </service-properties>-->
+<!--  </service>-->
 
-  <service ref="alarmDataSync" interface="org.opennms.features.kafka.producer.datasync.AlarmDataStore" />
+<!--  <bean id="alarmDataSync" class="org.opennms.features.kafka.producer.datasync.KafkaAlarmDataSync"-->
+<!--		init-method="init" destroy-method="destroy">-->
+<!--    <argument ref="configAdmin"/>-->
+<!--    <argument ref="kafkaProducer"/>-->
+<!--    <argument ref="protobufMapper" />-->
+<!--    <property name="alarmTopic" value="${alarmTopic}"/>-->
+<!--    <property name="alarmSync" value="${alarmSync}"/>-->
+<!--    <property name="suppressIncrementalAlarms" value="${suppressIncrementalAlarms}"/>-->
+<!--    <property name="startWithCleanState" value="${startAlarmSyncWithCleanState}"/>-->
+<!--  </bean>-->
+
+<!--  <bean factory-ref="kafkaProducer" factory-method="setDataSync">-->
+<!--    <argument ref="alarmDataSync"/>-->
+<!--  </bean>-->
+
+<!--  <service ref="alarmDataSync" interface="org.opennms.features.kafka.producer.datasync.AlarmDataStore" />-->
 
 </blueprint>

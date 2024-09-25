@@ -149,51 +149,51 @@ public class OpennmsKafkaProducer implements AlarmLifecycleListener, EventListen
     }
 
     public void init() throws IOException {
-        // Create the Kafka producer
-        final Properties producerConfig = new Properties();
-        final Dictionary<String, Object> properties = configAdmin.getConfiguration(KAFKA_CLIENT_PID).getProperties();
-        if (properties != null) {
-            final Enumeration<String> keys = properties.keys();
-            while (keys.hasMoreElements()) {
-                final String key = keys.nextElement();
-                producerConfig.put(key, properties.get(key));
-            }
-        }
-        // Overwrite the serializers, since we rely on these
-        producerConfig.put("key.serializer", ByteArraySerializer.class.getCanonicalName());
-        producerConfig.put("value.serializer", ByteArraySerializer.class.getCanonicalName());
-        // Class-loader hack for accessing the kafka classes when initializing producer.
-        producer = Utils.runWithGivenClassLoader(() -> new KafkaProducer<>(producerConfig), KafkaProducer.class.getClassLoader());
-        // Start processing records that have been queued for sending
-        if (kafkaSendQueueCapacity <= 0) {
-            kafkaSendQueueCapacity = 1000;
-            LOG.info("Defaulted the 'kafkaSendQueueCapacity' to 1000 since no property was set");
-        }
-
-        kafkaSendDeque = new LinkedBlockingDeque<>(kafkaSendQueueCapacity);
-        kafkaSendQueueExecutor.execute(this::processKafkaSendQueue);
-
-        if (forwardEvents) {
-            eventSubscriptionService.addEventListener(this);
-        }
-
-        topologyDao.subscribe(this);
+//        // Create the Kafka producer
+//        final Properties producerConfig = new Properties();
+//        final Dictionary<String, Object> properties = configAdmin.getConfiguration(KAFKA_CLIENT_PID).getProperties();
+//        if (properties != null) {
+//            final Enumeration<String> keys = properties.keys();
+//            while (keys.hasMoreElements()) {
+//                final String key = keys.nextElement();
+//                producerConfig.put(key, properties.get(key));
+//            }
+//        }
+//        // Overwrite the serializers, since we rely on these
+//        producerConfig.put("key.serializer", ByteArraySerializer.class.getCanonicalName());
+//        producerConfig.put("value.serializer", ByteArraySerializer.class.getCanonicalName());
+//        // Class-loader hack for accessing the kafka classes when initializing producer.
+//        producer = Utils.runWithGivenClassLoader(() -> new KafkaProducer<>(producerConfig), KafkaProducer.class.getClassLoader());
+//        // Start processing records that have been queued for sending
+//        if (kafkaSendQueueCapacity <= 0) {
+//            kafkaSendQueueCapacity = 1000;
+//            LOG.info("Defaulted the 'kafkaSendQueueCapacity' to 1000 since no property was set");
+//        }
+//
+//        kafkaSendDeque = new LinkedBlockingDeque<>(kafkaSendQueueCapacity);
+//        kafkaSendQueueExecutor.execute(this::processKafkaSendQueue);
+//
+//        if (forwardEvents) {
+//            eventSubscriptionService.addEventListener(this);
+//        }
+//
+//        topologyDao.subscribe(this);
     }
 
     public void destroy() {
-        kafkaSendQueueExecutor.shutdownNow();
-        nodeUpdateExecutor.shutdownNow();
-
-        if (producer != null) {
-            producer.close();
-            producer = null;
-        }
-
-        if (forwardEvents) {
-            eventSubscriptionService.removeEventListener(this);
-        }
-
-        topologyDao.unsubscribe(this);
+//        kafkaSendQueueExecutor.shutdownNow();
+//        nodeUpdateExecutor.shutdownNow();
+//
+//        if (producer != null) {
+//            producer.close();
+//            producer = null;
+//        }
+//
+//        if (forwardEvents) {
+//            eventSubscriptionService.removeEventListener(this);
+//        }
+//
+//        topologyDao.unsubscribe(this);
     }
 
     private void forwardTopologyMessage(OnmsTopologyMessage message) {
