@@ -29,5 +29,6 @@
     <bean id="eventUtil" class="org.opennms.netmgt.eventd.EventUtilDaoImpl">
         <constructor-arg ref="eventdMetricRegistry"/>
     </bean>
+    <onmsgi:service ref="eventUtil" interface="org.opennms.netmgt.eventd.EventUtil" />
 
 </beans>

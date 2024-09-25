@@ -151,6 +151,27 @@
       <artifactId>org.opennms.features.topologies.service.api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+<!--      <version>${jackson2Version}</version>--> <!-- TODO MVR this should be used instead -->
+      <version>2.14.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <!--      <version>${jackson2Version}</version>--> <!-- TODO MVR this should be used instead -->
+      <version>2.14.2</version>
+    </dependency>
+
+    <!-- TODO MVr maybe there is another way, as this is ugly as hell -->
+    <!-- This is required for Eventexpansion to work -->
+    <dependency>
+      <groupId>org.opennms.features.events</groupId>
+      <artifactId>org.opennms.features.events.daemon</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- Test -->
     <dependency>

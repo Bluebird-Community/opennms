@@ -46,6 +46,7 @@
   <reference id="hwEntityDao" interface="org.opennms.netmgt.dao.api.HwEntityDao" />
   <reference id="onmsTopologyDao" interface="org.opennms.netmgt.topologies.service.api.OnmsTopologyDao" />
   <reference id="distPollerDao" interface="org.opennms.netmgt.dao.api.DistPollerDao" />
+  <reference id="eventUtil" interface="org.opennms.netmgt.eventd.EventUtil" />
 
 <!--  <bean id="protobufMapper" class="org.opennms.features.kafka.producer.ProtobufMapper">-->
 <!--    <argument ref="eventConfDao"/>-->
@@ -66,6 +67,7 @@
         init-method="init"
         destroy-method="destroy">
     <argument ref="distPollerDao" />
+    <argument ref="eventUtil" />
     <argument ref="eventSubscriptionService" />
     <argument value="${symbiontEndpoint}" />
     <property name="numEventListenerThreads" value="${numEventListenerThreads}"/>
