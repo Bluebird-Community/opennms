@@ -1,0 +1,37 @@
+<blueprint
+	xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		
+		http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
+		http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
+">
+
+  <!-- Configuration properties -->
+  <cm:property-placeholder id="symbiontProperties" persistent-id="org.opennms.features.symbiont" update-strategy="reload">
+    <cm:default-properties>
+      <cm:property name="numEventListenerThreads" value="4"/>
+      <cm:property name="nodeAsyncUpdateThreads" value="10"/>
+      <cm:property name="symbiontEndpoint" value="http://localhost:8080/events"/>
+    </cm:default-properties>
+  </cm:property-placeholder>
+
+  <reference id="eventSubscriptionService" interface="org.opennms.netmgt.events.api.EventSubscriptionService" />
+  <reference id="distPollerDao" interface="org.opennms.netmgt.dao.api.DistPollerDao" />
+  <reference id="eventUtil" interface="org.opennms.netmgt.eventd.EventUtil" />
+
+  <bean id="symbiontEventProducer"
+        class="org.bluebird.integrations.opennms.OpennmsToSymbiontEventProducer"
+        init-method="init"
+        destroy-method="destroy">
+    <argument ref="distPollerDao" />
+    <argument ref="eventUtil" />
+    <argument ref="eventSubscriptionService" />
+    <argument value="${symbiontEndpoint}" />
+    <property name="numEventListenerThreads" value="${numEventListenerThreads}"/>
+  </bean>
+
+</blueprint>

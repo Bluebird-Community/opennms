@@ -2060,4 +2060,8 @@
         <bundle>mvn:org.opennms.features/org.opennms.features.newts/${project.version}</bundle>
     </feature>
 
+    <feature name="bluebird-opennms-symbiont-integration" description="Bluebird :: Integration :: Symbiont">
+        <bundle>mvn:org.opennms.features/org.opennms.features.symbiont/${project.version}</bundle>
+    </feature>
+
 </features>

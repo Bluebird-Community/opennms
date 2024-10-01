@@ -514,11 +514,14 @@
                 <feature>opennms-deviceconfig-service</feature>
                 <feature>opennms-deviceconfig-monitor</feature>
                 <feature>opennms-timeseries-api</feature>
-                
+
                 <feature>inmemory-timeseries-plugin</feature>
 
                 <!-- pulled in by a transient dependency, so be sure we get our newer one -->
                 <feature>zookeeper-dependencies</feature>
+
+                <!-- bluebird integrations -->
+                <feature>bluebird-opennms-symbiont-integration</feature>
               </features>
               <repository>${project.build.directory}/opennms-repo</repository>
             </configuration>

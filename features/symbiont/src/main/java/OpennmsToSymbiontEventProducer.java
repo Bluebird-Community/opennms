@@ -69,7 +69,8 @@ public class OpennmsToSymbiontEventProducer implements EventListener, ThreadAwar
     @Override
     public void onEvent(IEvent event) {
         final var convertedEvent = convert(event);
-        // TODO MVR this is ugly as hell
+        // TODO MVR this is ugly as hell.
+        // Also use newer versions of http client, not this very old version
         final var client = new HttpClient();
         final var post = new PostMethod(symbiontEndpoint);
         try {

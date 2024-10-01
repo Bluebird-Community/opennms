@@ -996,6 +996,12 @@
       <artifactId>org.opennms.features.notifications.shell</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.opennms.features</groupId>
+      <artifactId>org.opennms.features.symbiont</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <!-- override a bad repo that's causing issues -->
