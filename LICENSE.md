@@ -4,7 +4,7 @@ BlueBirdOps License
 This file is part of BlueBirdOps(tm).
 
 Copyright (C) 2024 the BlueBirdOps Contributors.
-Portions Copyright (C) 2002-2024 by Th OpenNMS Group, Inc.
+Portions Copyright (C) 2002-2024 by The OpenNMS Group, Inc.
 
 BlueBirdOps is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
