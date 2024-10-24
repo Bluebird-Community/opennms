@@ -174,7 +174,7 @@
                 </div>
             </li>
         </ul>
-        <div>
+        <div id="notification-status">
             <#if noticeStatus = 'Unknown'>
                 <!-- Gray circle with bell inside -->
                 <i class="fa fa-bell text-secondary"></i>

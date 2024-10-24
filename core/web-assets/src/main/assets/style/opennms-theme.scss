@@ -152,6 +152,11 @@ Bootstrap Theme Specific Stylesheet
 /* =11.0 Navs and Navbars
 ----------------------------------------------- */
 
+#notification-status {
+  font-size: 1.25rem;
+  padding-right: 5px;
+}
+
 #notificationOff {
   color: $danger;
 }
