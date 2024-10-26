@@ -30,7 +30,7 @@ import org.junit.Test;
 public class FooterIT extends OpenNMSSeleniumIT {
     @Test
     public void verifyDisplayVersionForLoggedInUser() {
-        assertNotNull(findElementByXpath("//*[@id=\"footer\"]/p"));
-        assertNotNull(findElementByXpath("//*[@id=\"footer\"]/p[contains(.,' v')]"));
+        assertNotNull(findElementByXpath("//*[@id=\"footer\"]/span/a[@href=\"about/index.jsp\"]"));
+        assertNotNull(findElementByXpath("//*[@id=\"footer\"]/span[contains(.,'v')]"));
     }
 }
