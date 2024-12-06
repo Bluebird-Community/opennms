@@ -103,7 +103,22 @@ CMD [ "-h" ]
 ENV JAVA_OPTS="-Xmx2g -XX:MaxMetaspaceSize=1g"
 
 # Volumes for storing data outside of the container
-VOLUME [ "/opt/opennms/etc", "/opt/opennms-etc-overlay", "/opennms-data" ]
+# Suggestions how to use the following volumes:
+#   * /opt/opennms/etc: Persistence for etc configuration files
+#   * /opt/opennms-etc-overlay: Inject and override files relative to /opt/opennms/etc
+#   * /opt/opennms-jetty-webinf-overlay: Inject and override files relative to /opt/opennms/jetty-webapps/opennms/WEB-INF
+#   * /opt/opennms-overlay: Inject and override custom files relative to /opt/opennms
+# Order (higher number takes precedence):
+#   1. shipped files
+#   2. confd
+#   3. opt-overlay
+#   4. etc-overlay
+#   5. jetty-overlay
+VOLUME /opennms-data \
+       /opt/opennms/etc \
+       /opt/opennms-overlay \
+       /opt/opennms-etc-overlay \
+       /opt/opennms-jetty-webinf-overlay
 
 ##------------------------------------------------------------------------------
 ## EXPOSED PORTS
