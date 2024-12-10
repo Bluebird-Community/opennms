@@ -1,4 +1,3 @@
-org.opennms.features.newts.converter.NewtsConverterIT
 org.opennms.netmgt.provision.detector.BgpSessionDetectorTest
 org.opennms.netmgt.provision.detector.CiscoIpSlaDetectorTest
 org.opennms.netmgt.provision.detector.DiskUsageDetectorTest
