@@ -1,7 +1,7 @@
 ##
 # Makefile to build OpenNMS from source
 ##
-.DEFAULT_GOAL := compile
+.DEFAULT_GOAL := quick-build
 
 SHELL                 := /bin/bash -o nounset -o pipefail -o errexit
 WORKING_DIRECTORY     := $(shell pwd)
@@ -65,6 +65,7 @@ help:
 	@echo "  test-lists:            Generate a list with all JUnit and Integration Test class names for splitting jobs"
 	@echo "  compile:               Compile OpenNMS from source code with runs expensive tasks doing"
 	@echo "  assemble:              Assemble the build artifacts with expensive tasks for a production build"
+	@echo "  quick-build:           Runs a quick compile and quick assemble for development"
 	@echo "  quick-compile:         Quick compile to get fast feedback for development"
 	@echo "  quick-assemble:        Quick assemble to run on a build local system"
 	@echo "  core-deb-pkg:          Build Core Debian packages"
@@ -201,6 +202,9 @@ compile-ui:
 .PHONY: assemble
 assemble: deps-build show-info
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dopennms.home=$(OPENNMS_HOME) -Dinstall.version=$(INSTALL_VERSION) -Pbuild-bamboo -Prun-expensive-tasks -Dbuild.skip.tarball=false -Denable.license=true -Dbuild.type=production --file opennms-full-assembly/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.assemble.log
+
+.PHONY: quick-build
+quick-build: quick-compile quick-assemble
 
 .PHONY: quick-compile
 quick-compile: maven-structure-graph

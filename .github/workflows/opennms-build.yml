@@ -23,12 +23,9 @@ jobs:
       - name: Build Web UI with yarn including tests
         run: |
           make compile-ui
-      - name: Build from source without expensive tasks
+      - name: Build and assemble from source without expensive tasks
         run: |
-          make quick-compile
-      - name: Assemble tarball without expensive tasks
-        run: |
-          make quick-assemble
+          make
       - name: Run quick smoke test
         run: |
           make quick-smoke
