@@ -3,6 +3,7 @@ name: opennms-build
 run-name: Build and run test suites
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   quick-build:
