@@ -48,6 +48,8 @@ RUN install -d -m 775 -o 10001 -g 0 \
             /opt/opennms-etc-overlay \
             /opt/opennms-jetty-webinf-overlay \
             /opt/opennms-overlay \
+            /opt/opennms/data/tmp \
+            /opt/opennms/etc_archive \
             /opennms-data && \
     install -d -m 775 -o 10001 -g 0 \
             /opennms-data/rrd \
