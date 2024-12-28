@@ -391,6 +391,7 @@ jobs:
             target/artifacts/surefire-reports
             target/artifacts/failsafe-reports
             target/artifacts/recordings
+            target/artifacts/smoke-test-*.tar.gz
 
   e2e-tests-minion:
     if: "!contains(github.event.commits[0].message, '[skip e2e-tests-minion]')"
@@ -433,6 +434,7 @@ jobs:
             target/artifacts/surefire-reports
             target/artifacts/failsafe-reports
             target/artifacts/recordings
+            target/artifacts/smoke-test-*.tar.gz
 
   e2e-tests-sentinel:
     if: "!contains(github.event.commits[0].message, '[skip e2e-tests-sentinel]')"
@@ -475,6 +477,7 @@ jobs:
             target/artifacts/surefire-reports
             target/artifacts/failsafe-reports
             target/artifacts/recordings
+            target/artifacts/smoke-test-*.tar.gz
 
   publish-core-debian-package:
     needs:

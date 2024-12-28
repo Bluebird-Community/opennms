@@ -523,6 +523,8 @@ collect-testresults:
 	find . -type f -regex ".*\/target\/surefire-reports\/.*\.xml" -exec mv -v {} $(ARTIFACTS_DIR)/surefire-reports/ \;
 	find . -type f -regex ".*\/target\/failsafe-reports\/.*\.xml" -exec mv -v {} $(ARTIFACTS_DIR)/failsafe-reports/ \;
 	find . -type d -regex "^\.\/target\/logs" -exec tar czf $(ARTIFACTS_DIR)/logs.tar.gz {} \;
+	find . -type d -regex "^\./smoke-test\/target\/logs" -exec tar czf $(ARTIFACTS_DIR)/smoke-test-logs.tar.gz {} \;
+	find . -type d -regex "^\./smoke-test\/target\/screenshots" -exec tar czf $(ARTIFACTS_DIR)/smoke-test-screenshots.tar.gz {} \;
 	find . -type f -regex "^\.\/target\/structure-graph\.json" -exec mv -v {} $(ARTIFACTS_DIR) \;
 
 .PHONY: spinup-postgres
