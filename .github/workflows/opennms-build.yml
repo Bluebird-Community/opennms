@@ -14,8 +14,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Cleaning project for quick validation
@@ -95,8 +93,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Build Core Debian packages
@@ -118,8 +114,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Build Minion Debian packages
@@ -141,8 +135,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Build Sentinel Debian packages
@@ -279,8 +271,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Prepare the build for tests
@@ -319,8 +309,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Prepare the build for tests and installing it
@@ -361,8 +349,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Build and assemble with container images
@@ -404,8 +390,6 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
     steps:
       - uses: actions/checkout@v4
       - name: Build and assemble with container images
@@ -447,8 +431,7 @@ jobs:
         - self-hosted
         - Linux
         - X64
-        - eu-central-de
-        - labmonkeys
+        - 32g-ram
     steps:
       - uses: actions/checkout@v4
       - name: Build and assemble with container images
