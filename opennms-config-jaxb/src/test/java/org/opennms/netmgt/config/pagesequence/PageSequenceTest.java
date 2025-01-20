@@ -74,9 +74,9 @@ public class PageSequenceTest extends XmlTestNoCastor<PageSequence> {
         page.setScheme("http");
         page.setHost("${ipaddr}");
         page.setDisableSslVerification("true");
-        page.setPort(7080);
-        page.setPath("/Login.do");
-        page.setSuccessMatch("(HQ Login)|(Sign in to Hyperic HQ)");
+        page.setPort(8980);
+        page.setPath("/opennms/login.jsp");
+        page.setSuccessMatch("Password");
         page.setResponseRange("100-399");
         ps.addPage(page);
 
@@ -86,26 +86,26 @@ public class PageSequenceTest extends XmlTestNoCastor<PageSequence> {
         page.setScheme("http");
         page.setHost("${ipaddr}");
         page.setDisableSslVerification("true");
-        page.setPort(7080);
-        page.setPath("/j_security_check.do");
+        page.setPort(8980);
+        page.setPath("/opennms/j_spring_security_check");
         page.setFailureMatch("(?s)(The username or password provided does not match our records)|(You are not signed in)");
-        page.setFailureMessage("HQ Login in Failed");
-        page.setSuccessMatch("HQ Dashboard");
+        page.setFailureMessage("Login in Failed");
+        page.setSuccessMatch("Log Out");
         page.setResponseRange("100-399");
         org.opennms.netmgt.config.pagesequence.Parameter parameter = new org.opennms.netmgt.config.pagesequence.Parameter();
         parameter.setKey("j_username");
-        parameter.setValue("hqadmin");
+        parameter.setValue("admin");
         page.addParameter(parameter);
         parameter = new org.opennms.netmgt.config.pagesequence.Parameter();
         parameter.setKey("j_password");
-        parameter.setValue("hqadmin");
+        parameter.setValue("admin");
         page.addParameter(parameter);
         ps.addPage(page);
 
         page = new Page();
-        page.setPath("/Logout.do");
-        page.setPort(7080);
-        page.setSuccessMatch("HQ Login");
+        page.setPath("/opennms/j_spring_security_logout");
+        page.setPort(8980);
+        page.setSuccessMatch("Login");
         page.addHeader(new Header("foo", "bar"));
         ps.addPage(page);
 
