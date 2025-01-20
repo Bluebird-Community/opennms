@@ -104,31 +104,6 @@ public class PollerConfigurationTest extends XmlTestNoCastor<PollerConfiguration
         assertEquals(expected18config, actual18config);
     }
 
-    @Test
-    public void testNms6490() throws IOException {
-        final String originalPollerConfigXml = IOUtils.toString(PollerConfigurationTest.class.getResource("poller-configuration-NMS-6490.xml"));
-
-        LOG.debug("original poller config XML: {}", originalPollerConfigXml);
-        final PollerConfiguration pollerConfig = JaxbUtils.unmarshal(PollerConfiguration.class, originalPollerConfigXml);
-        assertNotNull(pollerConfig);
-        assertEquals(2, pollerConfig.getPackages().size());
-        final Package pack = pollerConfig.getPackage("example1");
-        assertNotNull(pack);
-        final Service hyperic = pack.getService("HypericHQ");
-        assertNotNull(hyperic);
-        final Parameter psmParam = hyperic.getParameter("page-sequence");
-        assertNotNull(psmParam);
-        final PageSequence ps = (PageSequence) psmParam.getAnyObject();
-        assertNotNull(ps);
-        assertNotNull(ps.getPages());
-        assertEquals(3, ps.getPages().size());
-
-        final String marshalledPollerConfigXml = JaxbUtils.marshal(pollerConfig);
-        LOG.debug("marshalled poller config XML: {}", marshalledPollerConfigXml);
-
-        assertXmlEquals(originalPollerConfigXml, marshalledPollerConfigXml);
-    }
-
     protected static PollerConfiguration getMinimalPollerConfiguration() {
         final PollerConfiguration config = new PollerConfiguration();
         final NodeOutage no = new NodeOutage();
@@ -319,69 +294,6 @@ public class PollerConfigurationTest extends XmlTestNoCastor<PollerConfiguration
                                         "port", "280",
                                         "url", "/"
                 ));
-
-        example1.addService(new Service("HypericAgent", 300000, "false", "on",
-                                        "retry", "1",
-                                        "timeout", "2200",
-                                        "port", "2144"
-                ));
-
-        final Service hyperichq = new Service("HypericHQ", 300000, "false", "on",
-                                        "retry", "1",
-                                        "timeout", "3000",
-                                        "rrd-repository", "/Users/ranger/rcs/opennms-work/target/opennms-1.13.0-SNAPSHOT/share/rrd/response",
-                                        "rrd-base-name", "hyperic-hq",
-                                        "ds-name", "hyperic-hq"
-                );
-        final Parameter hypericPageSequence = new Parameter();
-        hypericPageSequence.setKey("page-sequence");
-
-        final PageSequence ps = new PageSequence();
-
-        Page page = new Page();
-        page.setMethod("GET");
-        page.setHttpVersion("1.1");
-        page.setScheme("http");
-        page.setHost("${ipaddr}");
-        page.setDisableSslVerification("true");
-        page.setPort(7080);
-        page.setPath("/Login.do");
-        page.setSuccessMatch("(HQ Login)|(Sign in to Hyperic HQ)");
-        page.setResponseRange("100-399");
-        ps.addPage(page);
-
-        page = new Page();
-        page.setMethod("POST");
-        page.setHttpVersion("1.1");
-        page.setScheme("http");
-        page.setHost("${ipaddr}");
-        page.setDisableSslVerification("true");
-        page.setPort(7080);
-        page.setPath("/j_security_check.do");
-        page.setFailureMatch("(?s)(The username or password provided does not match our records)|(You are not signed in)");
-        page.setFailureMessage("HQ Login in Failed");
-        page.setSuccessMatch("HQ Dashboard");
-        page.setResponseRange("100-399");
-        org.opennms.netmgt.config.pagesequence.Parameter parameter = new org.opennms.netmgt.config.pagesequence.Parameter();
-        parameter.setKey("j_username");
-        parameter.setValue("hqadmin");
-        page.addParameter(parameter);
-        parameter = new org.opennms.netmgt.config.pagesequence.Parameter();
-        parameter.setKey("j_password");
-        parameter.setValue("hqadmin");
-        page.addParameter(parameter);
-        ps.addPage(page);
-
-        page = new Page();
-        page.setPath("/Logout.do");
-        page.setPort(7080);
-        page.setSuccessMatch("HQ Login");
-        ps.addPage(page);
-
-        hypericPageSequence.setAnyObject(ps);
-
-        hyperichq.addParameter(hypericPageSequence);
-        example1.addService(hyperichq);
 
         example1.addService(new Service("MySQL", 300000, "false", "on",
                                         "retry", "1",
@@ -592,8 +504,6 @@ public class PollerConfigurationTest extends XmlTestNoCastor<PollerConfiguration
         config.addMonitor("HTTP-8000", "org.opennms.netmgt.poller.monitors.HttpMonitor");
         config.addMonitor("HTTP-HostExample", "org.opennms.netmgt.poller.monitors.HttpMonitor");
         config.addMonitor("HTTPS", "org.opennms.netmgt.poller.monitors.HttpsMonitor");
-        config.addMonitor("HypericAgent", "org.opennms.netmgt.poller.monitors.TcpMonitor");
-        config.addMonitor("HypericHQ", "org.opennms.netmgt.poller.monitors.PageSequenceMonitor");
         config.addMonitor("SMTP", "org.opennms.netmgt.poller.monitors.SmtpMonitor");
         config.addMonitor("DNS", "org.opennms.netmgt.poller.monitors.DnsMonitor");
         config.addMonitor("FTP", "org.opennms.netmgt.poller.monitors.FtpMonitor");
