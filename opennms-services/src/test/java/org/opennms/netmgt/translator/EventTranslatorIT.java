@@ -385,9 +385,7 @@ public class EventTranslatorIT {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
 	    		"<event-translator-configuration xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" + 
 	    		"  xsi:schemaLocation=\"http://xmlns.opennms.org/xsd/translator-configuration http://www.opennms.org/xsd/config/translator-configuration.xsd \">\n" + 
-	    		"  <translation>\n" + 
-	    		"    <!-- This translation is predifined for integration with Hyperic-HQ server and the OpenNMS integrations found in\n" + 
-	    		"         the $OPENNMS_HOME/contrib/hyperic-integration directory -->\n" + 
+	    		"  <translation>\n" +
 	    		"    <event-translation-spec uei=\"uei.opennms.org/generic/traps/SNMP_Link_Down\">\n" + 
 	    		"      <mappings>\n" + 
 	    		"        <mapping>\n" + 
