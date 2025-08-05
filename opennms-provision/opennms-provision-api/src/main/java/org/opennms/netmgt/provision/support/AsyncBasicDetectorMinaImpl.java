@@ -177,7 +177,7 @@ public abstract class AsyncBasicDetectorMinaImpl<Request, Response> extends Asyn
     @SuppressWarnings("java:S4423") // be permissive as far as what we allow detecting
     private static final SSLContext createClientSSLContext() throws NoSuchAlgorithmException, KeyManagementException {
         final TrustManager[] tm = { new RelaxedX509ExtendedTrustManager() };
-        final SSLContext sslContext = SSLContext.getInstance("SSL");
+        final SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, tm, new java.security.SecureRandom());
         return sslContext;
     }
