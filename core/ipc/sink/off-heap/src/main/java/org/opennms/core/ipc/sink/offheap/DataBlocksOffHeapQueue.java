@@ -48,7 +48,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -67,8 +67,9 @@ public class DataBlocksOffHeapQueue<T> implements DispatchQueue<T> {
             .every(Duration.ofSeconds(30))
             .build();
 
-    private final Lock headLock = new ReentrantLock(true);
-    private final Lock tailLock = new ReentrantLock(true);
+    private final ReentrantLock lock = new ReentrantLock(true);
+    private final Condition notEmpty = lock.newCondition();
+    private final Condition notFull = lock.newCondition();
 
     private final Function<T, byte[]> serializer;
     private final Function<byte[], T> deserializer;
@@ -235,76 +236,56 @@ public class DataBlocksOffHeapQueue<T> implements DispatchQueue<T> {
     }
 
     @Override
-    public EnqueueResult enqueue(T message, String key) throws WriteFailedException {
+    public EnqueueResult enqueue(T message, String key) throws WriteFailedException, InterruptedException {
+        lock.lock();
         try {
-            synchronized (tailBlock) {
-                while (isFull()) {
-                    tailBlock.wait(10);
-                }
+            while (isFull()) {
+                notFull.await(10, TimeUnit.MILLISECONDS);
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+
+            boolean status = tailBlock.enqueue(key, message);
+            if (!status) {
+                return EnqueueResult.DEFERRED;
+            }
+
+            createDataBlock(false);
+            notEmpty.signal();
+            return EnqueueResult.IMMEDIATE;
+        } finally {
+            lock.unlock();
         }
-
-        tailLock.lock();
-        boolean status = tailBlock.enqueue(key, message);
-        if (!status) {
-            tailLock.unlock();
-            return EnqueueResult.DEFERRED;
-        }
-
-        this.createDataBlock(false);
-        tailLock.unlock();
-
-        return EnqueueResult.IMMEDIATE;
     }
 
     @Override
-    public Map.Entry<String, T> dequeue() throws InterruptedException {
-        headLock.lock();
-
-        Map.Entry<String, T> data = null;
+    public Map.Entry<String, T> dequeue() throws InterruptedException, ReadFailedException {
+        lock.lock();
         try {
-            while (data == null) {
-                data = readData();
+            while (getSize() == 0) {
+                notEmpty.await();
             }
-        } catch (ReadFailedException e) {
-            LOG.error("Fail to dequeue. {}", e.getMessage());
-            return null;
+
+            Map.Entry<String, T> data = readData();
+            notFull.signal();
+            return data;
         } finally {
-            headLock.unlock();
+            lock.unlock();
         }
-        return data;
     }
 
-    private Map.Entry<String, T> readData() throws ReadFailedException, InterruptedException {
-        Map.Entry<String, T> data = null;
-        boolean headTailEqual = false;
-        if (mainQueue.peek() == tailBlock) {
-            if (!tailLock.tryLock(1, TimeUnit.MILLISECONDS)) {
-                return null;
-            }
-            headTailEqual = true;
+    private Map.Entry<String, T> readData() throws ReadFailedException {
+        DataBlock<T> head = mainQueue.peek();
+        if (head == null) {
+            return null;
         }
-        var head = mainQueue.peek();
-        if (head.size() > 0) {
-            data = head.dequeue();
-            if (headTailEqual) {
-                tailLock.unlock();
-            } else {
-                removeHeadBlockIfNeeded();
-            }
-        } else {
-            if (headTailEqual) {
-                tailLock.unlock();
-            }
-        }
+
+        Map.Entry<String, T> data = head.dequeue();
+        removeHeadBlockIfNeeded();
         return data;
     }
 
     private void removeHeadBlockIfNeeded() throws ReadFailedException {
         DataBlock<T> head = mainQueue.peek();
-        if (head.size() <= 0 && mainQueue.size() > 1) {
+        if (head != null && head.size() <= 0 && mainQueue.size() > 1) {
             var tmpHead = mainQueue.remove();
             if (tmpHead != head) {
                 LOG.error("Queue is modified. May have data lost");
@@ -338,17 +319,27 @@ public class DataBlocksOffHeapQueue<T> implements DispatchQueue<T> {
 
     @Override
     public boolean isFull() {
-        if (isMemoryFull()) {
-            return isOffHeapFull();
-        } else {
-            return false;
+        lock.lock();
+        try {
+            if (isMemoryFull()) {
+                return isOffHeapFull();
+            } else {
+                return false;
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public int getSize() {
-        return mainQueue.stream().map(DataBlock::size)
-                .reduce(Integer::sum).orElse(0);
+        lock.lock();
+        try {
+            return mainQueue.stream().map(DataBlock::size)
+                    .reduce(Integer::sum).orElse(0);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getMemoryBlockCount() {
