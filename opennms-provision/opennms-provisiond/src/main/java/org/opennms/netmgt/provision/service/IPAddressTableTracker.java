@@ -177,6 +177,21 @@ public class IPAddressTableTracker extends TableTracker {
                 addressBytes[i] = Integer.valueOf(rawIds[i + offset]).byteValue();
             }
             String ipaddr = new String(addressBytes, StandardCharsets.UTF_8);
+            // NMS-6452: Some older Brocade Switches represent the IP address as a octet string,
+            // which can contain leading zeros. The standard InetAddress parser interprets this
+            // as an octal number, so we need to normalize it first.
+            if (ipaddr.contains(".")) {
+                // IPv4
+                final String[] octets = ipaddr.split("\\.");
+                final StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < octets.length; i++) {
+                    builder.append(Integer.parseInt(octets[i]));
+                    if (i < octets.length - 1) {
+                        builder.append('.');
+                    }
+                }
+                ipaddr = builder.toString();
+            }
             return getInetAddress(ipaddr);
         }
 
