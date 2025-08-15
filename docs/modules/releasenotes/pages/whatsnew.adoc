@@ -2,11 +2,6 @@
 
 = What's New in OpenNMS Horizon 34
 
-== System requirements
-
-* *Java 17*: OpenNMS Horizon 34 runs on OpenJDK 17.
-* *PostgreSQL 13 or higher*: Horizon 34 requires any supported version of PostgreSQL from 13 up to 17.
-
 == New features and important changes
 
 === Node Cache configuration
@@ -14,9 +9,28 @@
 Due to a refactoring to enable the collection of IPFix metrics, the node cache has been moved to another module.
 The configuration of the cache is now stored in the file `org.opennms.features.telemetry.protocols.common.cfg` and no longer in the file `org.opennms.features.flows.persistence.elastic.cfg`.
 
-=== `install.sh` script clears data directory and restores Karaf-related configuration files
+=== Support for Composable Index Templates and Elasticsearch 8.x in Flow Processing
+OpenNMS Flow processing now supports Elasticsearch 8.x, ensuring compatibility with the latest versions of the Elastic stack.
+Additionally, support has been added for [composable templates](https://www.elastic.co/docs/manage-data/data-store/templates), enabling more flexible and modular configuration of Elasticsearch index settings for NetFlow data.
+
+=== The `install.sh` script clears data directory and restores Karaf-related configuration files
 To overcome common upgrading problems, the data directory is automatically pruned when invoking the `install.sh` script.
 Furthermore, all Karaf-related configuration files are restored to their pristine state.
+
+=== Enhanced Keystore Support in Secure Credentials Vault
+The Secure Credentials Vault now supports the PKCS12 keystore format in addition to the previously supported JCEKS format. This enhancement provides greater compatibility with modern security standards and tooling.
+
+=== IPFix support for vendor-specific Information Elements
+OpenNMS now supports the definition of vendor-specific information elements.
+This allows users to collect additional metrics that are not part of the standard IPFix definitions, enabling customized data collection for specific devices or vendors.
+
+=== NetFlow Telemetry Adapters
+The new range of NetFlow telemetry adapters (v5, v9, IPFix) allows users to process NetFlow data using custom scripts, e.g. to store values from NetFlow datasets as metrics.
+
+=== Updates to Structured Node List
+We have made some updates to the Structured Node List. This will eventually replace the existing Node List page once we have feature equivalence.
+
+More information can be found xref:operation:deep-dive/structured-node-list/introduction.adoc[here].
 
 === OpenNMS Plugin API
 
@@ -51,23 +65,6 @@ IMPORTANT: When you have .jrb files, ensure after upgrading to Horizon 34 you ex
 org.opennms.rrd.strategyClass=org.opennms.netmgt.rrd.jrobin.JRobinRrdStrategy
 ----
 
-== Deprecation of JRobin as timeseries storage
-
-The release of Horizon 34 will be the last version which supports reading and writing timeseries data using JRobin.
-The JRobin library and the JRobin timeseries strategy will be removed from Horizon 35+ moving forward.
-
-
-== Deprecation of Tl1d
-The Tl1d service has been deprecated and removed from service configuration due to low user adoption. The service code will be fully removed in the next Horizon/Meridian release.
-
-== Deprecation of AsteriskGateway
-The AsteriskGateway service has been deprecated and removed from service configuration due to low user adoption. The service code will be fully removed in the next Horizon/Meridian release.
-
-== Deprecation of Reportd service
-
-The Reportd service has been deprecated and removed from service configuration due to low user adoption. The service code will be fully removed in the next Horizon/Meridian release.
-
-
 === OpenNMS Minion environment variables changes
 The OpenNMS Minion Docker container no longer uses the KAFKA_SINK, KAFKA_RPC and KAFKA_TWIN prefixes to configure Kafka.
 Instead, only the KAFKA_IPC prefix is used, which ensures that all Kafka-related settings are set correctly for all features and that ActiveMQ is no longer installed incorrectly.
@@ -83,7 +80,35 @@ If you want to convert the `PKCS12` keystore format instead of `JCEKS`, be sure 
 You can convert a `JCEKS` file to `PKCS12` using the following command.
 `keytool -importkeystore -srckeystore $OPENNMS_HOME/etc/scv.jce -destkeystore $OPENNMS_HOME/etc/scv.pk12 -deststoretype pkcs12`.
 
-== Removed
+=== SNMP4J upgrade
+The SNMP4J library has been upgraded to version 2.8.15.
+As part of this upgrade, the SNMP4J logger configuration has been updated to use the SLF4J logging implementation:
+
+`snmp4j.LogFactory=org.opennms.netmgt.snmp.snmp4j.Slf4jLogFactory`
+
+NOTE: If you are upgrading from an older version and have overridden this property (e.g., still using org.snmp4j.log.Log4jLogFactory), you must update it manually. Retaining the old value may cause OpenNMS to fail to start.
+
+=== Removed
 
 * Removed support for OpenJDK 11, the support reached end of life October 31, 2024
 * Removed support for PostgreSQL 10, 11, 12
+
+== Deprecation
+
+=== JRobin as timeseries storage
+
+The release of Horizon 34 will be the last version which supports reading and writing timeseries data using JRobin.
+The JRobin library and the JRobin timeseries strategy will be removed from Horizon 35+ moving forward.
+
+=== Tl1d
+The Tl1d service has been deprecated and removed from service configuration due to low user adoption.
+The service code will be fully removed in the next Horizon/Meridian release.
+
+=== AsteriskGateway
+The AsteriskGateway service has been deprecated and removed from service configuration due to low user adoption.
+The service code will be fully removed in the next Horizon/Meridian release.
+
+=== Reportd service
+
+The Reportd service has been deprecated and removed from service configuration due to low user adoption.
+The service code will be fully removed in the next Horizon/Meridian release.
