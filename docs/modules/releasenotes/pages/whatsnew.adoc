@@ -2,23 +2,23 @@
 
 = What's New in OpenNMS Horizon 34
 
-== New features and important changes
+== Features and Improvements
 
 === Node Cache configuration
-
 Due to a refactoring to enable the collection of IPFix metrics, the node cache has been moved to another module.
 The configuration of the cache is now stored in the file `org.opennms.features.telemetry.protocols.common.cfg` and no longer in the file `org.opennms.features.flows.persistence.elastic.cfg`.
 
 === Support for Composable Index Templates and Elasticsearch 8.x in Flow Processing
 OpenNMS Flow processing now supports Elasticsearch 8.x, ensuring compatibility with the latest versions of the Elastic stack.
-Additionally, support has been added for [composable templates](https://www.elastic.co/docs/manage-data/data-store/templates), enabling more flexible and modular configuration of Elasticsearch index settings for NetFlow data.
+Additionally, support has been added for https://www.elastic.co/docs/manage-data/data-store/templates[composable templates], enabling more flexible and modular configuration of Elasticsearch index settings for NetFlow data.
 
 === The `install.sh` script clears data directory and restores Karaf-related configuration files
 To overcome common upgrading problems, the data directory is automatically pruned when invoking the `install.sh` script.
 Furthermore, all Karaf-related configuration files are restored to their pristine state.
 
 === Enhanced Keystore Support in Secure Credentials Vault
-The Secure Credentials Vault now supports the PKCS12 keystore format in addition to the previously supported JCEKS format. This enhancement provides greater compatibility with modern security standards and tooling.
+The Secure Credentials Vault now supports the PKCS12 keystore format in addition to the previously supported JCEKS format.
+This enhancement provides greater compatibility with modern security standards and tooling.
 
 === IPFix support for vendor-specific Information Elements
 OpenNMS now supports the definition of vendor-specific information elements.
@@ -34,7 +34,7 @@ More information can be found xref:operation:deep-dive/structured-node-list/intr
 
 === OpenNMS Plugin API
 
-The OpenNMS Plugin API has been updated to version 1.6.0, which includes some new APIs ported over from the Horizon codebase to simplify plugin development, as well as cleanups to dependencies.
+The OpenNMS Plugin API has been updated to version 1.6.1, which includes some new APIs ported over from the Horizon codebase to simplify plugin development, as well as cleanups to dependencies.
 It also includes some fixes to the protocol list used by Enlinkd.
 
 === Expanded metadata support
@@ -50,11 +50,15 @@ Support for `confd` has been added to the Sentinel container.
 
 An enhanced node list has been introduced with options for sorting and filtering.
 
+=== Improvements to JDBC Collection configuration
+The `jdbc-datacollection-config.xml` has been broken down into individual files, which now reside in `$OPENNMS_HOME/etc/jdbc-datacollection.d/`. Additionally, we have added new collections for Oracle and Microsoft SQL Server.
+
 == Breaking changes
 The default time series storage strategy is now by default RRDTool.
 
 IMPORTANT: If you use JRobin, make sure you set the property.
-You can easily verify it by checking the file extension created in the directory  `$\{OPENNMS_HOME}/share/rrd/snmp`. The extension .jrb indicates JRobin and .rrd indicates RRDtool.
+You can easily verify it by checking the file extension created in the directory  `$\{OPENNMS_HOME}/share/rrd/snmp`.
+The extension .jrb indicates JRobin and .rrd indicates RRDtool.
 If you miss this setting, all your timeseries files will be newely created as .rrd files and you won't have access to your JRobin files with your history.
 
 IMPORTANT: When you have .jrb files, ensure after upgrading to Horizon 34 you explicitly configure JRobin in a file like `$\{OPENNMS_HOME}/etc/opennms.properties.d/timeseries.properties`.
@@ -64,6 +68,11 @@ IMPORTANT: When you have .jrb files, ensure after upgrading to Horizon 34 you ex
 ----
 org.opennms.rrd.strategyClass=org.opennms.netmgt.rrd.jrobin.JRobinRrdStrategy
 ----
+
+=== Node Cache configuration
+
+Due to a refactoring to enable the collection of IPFix metrics, the node cache has been moved to another module.
+The configuration of the cache is now stored in the file `org.opennms.features.telemetry.protocols.common.cfg` and no longer in the file `org.opennms.features.flows.persistence.elastic.cfg`.
 
 === OpenNMS Minion environment variables changes
 The OpenNMS Minion Docker container no longer uses the KAFKA_SINK, KAFKA_RPC and KAFKA_TWIN prefixes to configure Kafka.
