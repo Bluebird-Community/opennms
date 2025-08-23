@@ -29,14 +29,14 @@
   <version>34.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>OpenNMS</name>
-  <url>http://opennms.org/</url>
+  <url>https://github.com/Bluebird-Community/opennms</url>
   <description>
     OpenNMS is the world's first enterprise grade network management platform developed under the open source model. It consists of a community supported open-source project as well as a commercial services, training and support organization.
   </description>
   <licenses>
     <license>
       <name>GNU Affero General Public License</name>
-      <url>http://www.gnu.org/licenses/agpl.html</url>
+      <url>https://www.gnu.org/licenses/agpl.html</url>
       <comments>
         This Maven metadata is provided for informational purposes only. For specific licensing
         questions, please contact: OpenNMS(R) Licensing (license@opennms.org)
@@ -44,12 +44,12 @@
     </license>
   </licenses>
   <issueManagement>
-    <system>Jira</system>
-    <url>http://issues.opennms.org/</url>
+    <system>GitHub Issues</system>
+    <url>https://github.com/Bluebird-Community/opennms/issues</url>
  </issueManagement>
   <ciManagement>
-    <system>CircleCI</system>
-    <url>https://app.circleci.com/pipelines/github/OpenNMS/opennms</url>
+    <system>GitHub Actions</system>
+    <url>https://github.com/Bluebird-Community/opennms/actions</url>
   </ciManagement>
   <developers>
     <developer>
@@ -87,9 +87,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:https://github.com/OpenNMS/opennms.git</connection>
-    <developerConnection>scm:git:https://${user.name}@github.com/OpenNMS/opennms.git</developerConnection>
-    <url>https://github.com/OpenNMS/opennms</url>
+    <connection>scm:git:https://github.com/Bluebird-Community/opennms.git</connection>
+    <developerConnection>scm:git:https://${user.name}@github.com/Bluebird-Community/opennms.git</developerConnection>
+    <url>github.com/Bluebird-Community/opennms</url>
   </scm>
   <modules>
     <!-- new structure -->
