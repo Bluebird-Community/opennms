@@ -115,8 +115,8 @@ public class AggregatedFlowQueryIT {
 
 
     // Elasticsearch version used for testing
-    private static final String ES_VERSION = "8.18.3";
-    private static final String DRIFT_PLUGIN_VERSION = "2.1.0";
+    private static final String ES_VERSION = "9.1.3";
+    private static final String DRIFT_PLUGIN_VERSION = "2.2.2";
 
     protected ElasticFlowRepository flowRepository;
     protected SmartQueryService smartQueryService;

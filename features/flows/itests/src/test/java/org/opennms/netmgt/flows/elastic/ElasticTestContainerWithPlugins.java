@@ -54,7 +54,7 @@ public class ElasticTestContainerWithPlugins extends GenericContainer<ElasticTes
     private static final Logger LOG = LoggerFactory.getLogger(ElasticTestContainerWithPlugins.class);
     private static final int ES_HTTP_PORT = 9200;
     private static final int ES_TRANSPORT_PORT = 9300;
-    private static final String ES_VERSION = "7.17.0"; // Default ES version
+    private static final String ES_VERSION = "9.1.3"; // Default ES version
     private final List<MavenPlugin> plugins = new ArrayList<>();
     private final Path tempDir;
 
