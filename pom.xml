@@ -1949,7 +1949,7 @@
     <sonarVersion>3.9.1.2184</sonarVersion>
     <spiflyVersion>1.3.6</spiflyVersion>
     <spockVersion>2.3-groovy-4.0</spockVersion>
-    <swaggerUIVersion>3.23.11</swaggerUIVersion>
+    <swaggerUIVersion>4.1.3</swaggerUIVersion>
     <swaggerVersion>2.1.12</swaggerVersion>
     <swaggerParserVersion>2.0.33</swaggerParserVersion>
     <swaggerRequestValidatorVersion>2.42.0</swaggerRequestValidatorVersion>
