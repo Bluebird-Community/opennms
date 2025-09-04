@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>org.opennms.features.minion</groupId>
         <artifactId>core-parent</artifactId>
@@ -26,12 +26,16 @@
                         <configuration>
                             <descriptors>
                                 <!-- Default repositories -->
-                                <descriptor>mvn:org.apache.karaf.features/standard/${karafVersion}/xml/features</descriptor>
-                                <descriptor>mvn:org.opennms.karaf/opennms/${project.version}/xml/spring-legacy</descriptor>
+                                <descriptor>mvn:org.apache.karaf.features/standard/${karafVersion}/xml/features
+                                </descriptor>
+                                <descriptor>mvn:org.opennms.karaf/opennms/${project.version}/xml/spring-legacy
+                                </descriptor>
                                 <!-- Add the OpenNMS Karaf extensions feature repository -->
-                                <repository>mvn:org.opennms.karaf/opennms/${project.version}/xml/karaf-extensions</repository>
+                                <repository>mvn:org.opennms.karaf/opennms/${project.version}/xml/karaf-extensions
+                                </repository>
                                 <!-- Add Minion features -->
-                                <descriptor>mvn:org.opennms.features.minion/core-features/${project.version}/xml</descriptor>
+                                <descriptor>mvn:org.opennms.features.minion/core-features/${project.version}/xml
+                                </descriptor>
                                 <!-- Add OpenNMS features -->
                                 <descriptor>mvn:org.opennms.karaf/opennms/${project.version}/xml/features</descriptor>
                             </descriptors>
@@ -76,11 +80,15 @@
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
-                        <goals><goal>files</goal></goals>
+                        <goals>
+                            <goal>files</goal>
+                        </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <algorithms><algorithm>SHA-1</algorithm></algorithms>
+                    <algorithms>
+                        <algorithm>SHA-1</algorithm>
+                    </algorithms>
                     <fileSets>
                         <fileSet>
                             <directory>${project.build.directory}/maven-repo</directory>
@@ -166,9 +174,9 @@
             <url>https://repo.maven.bluebirdops.org/releases</url>
         </repository>
         <repository>
-	    <id>opennms-3rdparty</id>
-	    <name>OpenNMS 3rd Party</name>
-	    <url>https://archive.opennms.com/repo-maven/3rdparty/</url>
+            <id>opennms-3rdparty</id>
+            <name>OpenNMS 3rd Party</name>
+            <url>https://archive.opennms.com/repo-maven/3rdparty/</url>
         </repository>
     </repositories>
 </project>
