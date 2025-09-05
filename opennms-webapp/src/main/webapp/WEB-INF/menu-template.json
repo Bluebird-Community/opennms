@@ -13,14 +13,7 @@
   "sideMenuInitialExpand": false,
   "copyrightDates": "",
   "version": "",
-  "userTileProviders": [
-    {
-      "name": "OpenNMS Default",
-      "url": "https://tiles.opennms.org/${z}/${x}/${y}.png",
-      "attribution": "Map data &copy; <a tabindex=\"-1\" target=\"_blank\" href=\"http://openstreetmap.org/copyright\">OpenStreetMap</a> contributors under <a tabindex=\"-1\" target=\"_blank\" href=\"http://opendatacommons.org/licenses/odbl/\">ODbL</a>, <a tabindex=\"-1\" target=\"_blank\" href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC BY-SA 2.0</a>",
-      "userDefinedAsDefault": false
-    }
-  ],
+  "userTileProviders": [],
   "menus": [
     {
       "id": "dashboardsMenu",
@@ -112,7 +105,7 @@
         },
         {
           "id": "structuredNodeList",
-          "name": "Structured Node List",
+          "name": "Node Browser",
           "url": "ui/index.html#/nodes",
           "locationMatch": "configurationManagement",
           "roles": null
@@ -395,19 +388,6 @@
           "url": "admin/endpoint/index.jsp",
           "locationMatch": "",
           "roles": null
-        },
-        {
-          "id": "zenithConnect",
-          "name": "Connect to Zenith",
-          "url": "ui/index.html#/zenith-connect",
-          "locationMatch": "zenithConnect",
-          "roles": ["ROLE_ADMIN", "ROLE_USER"],
-          "requiredSystemProperties": [
-            {
-              "name": "opennms.zenithConnect.enabled",
-              "value": "true"
-            }
-          ]
         }
       ]
     },

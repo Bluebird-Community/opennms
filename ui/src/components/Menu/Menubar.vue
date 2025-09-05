@@ -20,14 +20,14 @@
     </template>
 
     <template v-slot:right>
-      <div class="date-wrapper">
-        <div class="date-formatted-time">{{ formattedTime }}</div>
-        <div class="date-formatted-date">{{ formattedDate }}</div>
-      </div>
       <template v-if="mainMenu.username">
         <UserNotificationsMenuItem :ref="userNotificationsMenu" />
         <UserSelfServiceMenuItem />
       </template>
+      <div class="date-wrapper">
+        <div class="date-formatted-time">{{ formattedTime }}</div>
+        <div class="date-formatted-date">{{ formattedDate }}</div>
+      </div>
 
       <!-- <FeatherIcon :icon="LightDarkMode" title="Toggle Light/Dark Mode" class="pointer light-dark"
         @click="toggleDarkLightMode(null)" /> -->
