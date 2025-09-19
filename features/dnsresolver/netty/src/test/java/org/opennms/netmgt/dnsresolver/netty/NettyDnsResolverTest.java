@@ -64,14 +64,14 @@ import io.netty.resolver.dns.DnsNameResolverTimeoutException;
 @ContextConfiguration(locations={"classpath:/META-INF/opennms/emptyContext.xml"})
 @TestExecutionListeners(JUnitDNSServerExecutionListener.class)
 @JUnitDNSServer(port=NettyDnsResolverTest.DNS_SERVER_PORT, zones={
-        @DNSZone(name = "opennms.ca.", entries = {
-                @DNSEntry(hostname = "rnd", data = "173.242.186.51"),
+        @DNSZone(name = "test.bbo.local.", entries = {
+                @DNSEntry(hostname = "rnd", data = "192.0.2.53"),
         }),
         @DNSZone(name = "in-addr.arpa.", entries = {
-                @DNSEntry(hostname = "51.186.242.173", type = "PTR", data = "rnd.opennms.ca.")
+                @DNSEntry(hostname = "53.2.0.192", type = "PTR", data = "rnd.test.bbo.local.")
         }),
         @DNSZone(name = "ip6.arpa.", entries = {
-                @DNSEntry(hostname = "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.3.0.0.0.9.2.c.f.0.0.8.5.0.0.6.2", type = "PTR", data = "secret.opennms.com.")
+                @DNSEntry(hostname = "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.a.d.c.9.4.1.c.7.d.f", type = "PTR", data = "secret.test.bbo.local.")
         })
 })
 public class NettyDnsResolverTest {
@@ -96,9 +96,9 @@ public class NettyDnsResolverTest {
     @Test
     public void canDoLookups() throws UnknownHostException, ExecutionException, InterruptedException {
         // Our DNS server knows about this one
-        assertThat(dnsResolver.lookup("rnd.opennms.ca").get().get(), equalTo(InetAddress.getByName("173.242.186.51")));
+        assertThat(dnsResolver.lookup("rnd.test.bbo.local").get().get(), equalTo(InetAddress.getByName("192.0.2.53")));
         // Our DNS server does not know about this one
-        assertThat(dnsResolver.lookup("private.opennms.ca").get(), equalTo(Optional.empty()));
+        assertThat(dnsResolver.lookup("private.test.bbo.local").get(), equalTo(Optional.empty()));
     }
 
     @Test
@@ -107,30 +107,29 @@ public class NettyDnsResolverTest {
         assertThat(dnsResolver.getCache().getSize(), equalTo(0L));
 
         // Query for a known host
-        assertThat(dnsResolver.lookup("rnd.opennms.ca").get().get(), equalTo(InetAddress.getByName("173.242.186.51")));
+        assertThat(dnsResolver.lookup("rnd.test.bbo.local").get().get(), equalTo(InetAddress.getByName("192.0.2.53")));
 
         // There should be 1 cached record now
         assertThat(dnsResolver.getCache().getSize(), equalTo(1L));
 
         // Cache hit
-        assertThat(dnsResolver.lookup("rnd.opennms.ca").get().get(), equalTo(InetAddress.getByName("173.242.186.51")));
+        assertThat(dnsResolver.lookup("rnd.test.bbo.local").get().get(), equalTo(InetAddress.getByName("192.0.2.53")));
 
         // Our DNS server does not know about this one
-        assertThat(dnsResolver.lookup("private.opennms.ca").get(), equalTo(Optional.empty()));
+        assertThat(dnsResolver.lookup("private.test.bbo.local").get(), equalTo(Optional.empty()));
 
         // There should be at least 2 cached records now (there can be more that 2 if the system is configured with search domains)
         assertThat(dnsResolver.getCache().getSize(), greaterThanOrEqualTo(2L));
 
         // Cache hit
-        assertThat(dnsResolver.lookup("private.opennms.ca").get(), equalTo(Optional.empty()));
+        assertThat(dnsResolver.lookup("private.test.bbo.local").get(), equalTo(Optional.empty()));
     }
 
     @Test
     public void canDoReverseLookups() throws UnknownHostException, ExecutionException, InterruptedException {
         // Our DNS server knows about these
-        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("173.242.186.51")).get().get(), equalTo("rnd.opennms.ca"));
-        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("2600:5800:fc29:0003:0000:0000:0000:0001")).get().get(), equalTo("secret.opennms.com"));
-
+        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("192.0.2.53")).get().get(), equalTo("rnd.test.bbo.local"));
+        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("fd7c:149c:daad:0000:0000:0000:0000:0001")).get().get(), equalTo("secret.test.bbo.local"));
         // But not about these
         assertThat(dnsResolver.reverseLookup(InetAddress.getByName("1.1.1.1")).get(), equalTo(Optional.empty()));
         assertThat(dnsResolver.reverseLookup(InetAddressUtils.addr("2606:4700:4700::1111")).get(), equalTo(Optional.empty()));
@@ -142,13 +141,13 @@ public class NettyDnsResolverTest {
         assertThat(dnsResolver.getCache().getSize(), equalTo(0L));
 
         // Query for a known host
-        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("173.242.186.51")).get().get(), equalTo("rnd.opennms.ca"));
+        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("192.0.2.53")).get().get(), equalTo("rnd.test.bbo.local"));
 
         // There should be 1 cached record now
         assertThat(dnsResolver.getCache().getSize(), equalTo(1L));
 
         // Cache hit
-        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("173.242.186.51")).get().get(), equalTo("rnd.opennms.ca"));
+        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("192.0.2.53")).get().get(), equalTo("rnd.test.bbo.local"));
 
         // Now query for an unknown host
         assertThat(dnsResolver.reverseLookup(InetAddress.getByName("1.1.1.1")).get(), equalTo(Optional.empty()));
@@ -168,7 +167,7 @@ public class NettyDnsResolverTest {
         dnsResolver.init();
 
         try {
-            dnsResolver.lookup("rnd.opennms.ca").get();
+            dnsResolver.lookup("rnd.test.bbo.local").get();
             fail("Expected a DnsNameResolverTimeoutException to be thrown");
         } catch (ExecutionException e) {
             assertThat(e.getCause(), is(instanceOf(DnsNameResolverTimeoutException.class)));
@@ -228,5 +227,4 @@ public class NettyDnsResolverTest {
                         new InetSocketAddress("::1", 5353),
                         new InetSocketAddress("1.1.1.1", 54)));
     }
-
 }
