@@ -66,6 +66,10 @@ jobs:
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
+      - name: Persist workspace
+        uses: bissolli/gh-action-persist-workspace@v2
+        with:
+          action: persist
 
   deps-freshness:
     if: "!contains(github.event.commits[0].message, '[skip deps-freshness]')"
@@ -361,6 +365,8 @@ jobs:
 
   unit-tests:
     if: "!contains(github.event.commits[0].message, '[skip unit-tests]')"
+    needs:
+      - build-with-smoke-test
     strategy:
       fail-fast: false
       matrix:
@@ -373,11 +379,10 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v4
-      - name: Prepare the build for tests
-        run: |
-          make quick-compile
-          make quick-assemble
+      - name: Retrieve workspace
+        uses: bissolli/gh-action-persist-workspace@v2
+        with:
+          action: retrieve
       - name: Run unit test suite (shard ${{ matrix.shard_idx }})
         run: |
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -409,7 +414,6 @@ jobs:
         shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
-      - build-with-smoke-test
     runs-on:
       group: Default
       labels:
@@ -417,11 +421,12 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v4
+      - name: Retrieve workspace
+        uses: bissolli/gh-action-persist-workspace@v2
+        with:
+          action: retrieve
       - name: Prepare the build for tests and installing it
         run: |
-          make quick-compile 
-          make quick-assemble 
           make install-core
       - name: Run integration unit test suite (shard ${{ matrix.shard_idx }})
         run: |
@@ -454,7 +459,6 @@ jobs:
         shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
-      - build-with-smoke-test
     runs-on:
       group: Default
       labels:
@@ -462,11 +466,10 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v4
-      - name: Build and assemble with container images
-        run: |
-          make quick-compile
-          make quick-assemble
+      - name: Retrieve workspace
+        uses: bissolli/gh-action-persist-workspace@v2
+        with:
+          action: retrieve
       - name: Run Core End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -500,7 +503,6 @@ jobs:
         shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
-      - build-with-smoke-test
     runs-on:
       group: Default
       labels:
@@ -508,11 +510,10 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v4
-      - name: Build and assemble with container images
-        run: |
-          make quick-compile
-          make quick-assemble
+      - name: Retrieve workspace
+        uses: bissolli/gh-action-persist-workspace@v2
+        with:
+          action: retrieve
       - name: Run Minion End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -546,7 +547,6 @@ jobs:
         shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
-      - build-with-smoke-test
     runs-on:
       group: Default
       labels:
@@ -554,11 +554,10 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v4
-      - name: Build and assemble with container images
-        run: |
-          make quick-compile
-          make quick-assemble
+      - name: Retrieve workspace
+        uses: bissolli/gh-action-persist-workspace@v2
+        with:
+          action: retrieve
       - name: Run Sentinel End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
