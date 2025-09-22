@@ -361,6 +361,11 @@ jobs:
 
   unit-tests:
     if: "!contains(github.event.commits[0].message, '[skip unit-tests]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
+        shards: [ 8 ]                         # 8 parallel test jobs
     runs-on:
       group: Default
       labels:
@@ -373,23 +378,23 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
-      - name: Run unit test suite
+      - name: Run unit test suite (shard ${{ matrix.shard_idx }})
         run: |
-          make unit-tests
-      - name: Publish Unit Test Report
+          make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
+      - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
         with:
-          check_name: Unit Test Report
-      - name: Collect test results and logs
+          check_name: Unit Test Report (shard ${{ matrix.shard_idx }})
+      - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
         if: always()
         run: |
           make collect-testresults
-      - name: Persist unit test results
+      - name: Persist unit test results (shard ${{ matrix.shard_idx }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-tests-artifacts
+          name: unit-tests-artifacts-${{ matrix.shard_idx }}
           path: |
             target/artifacts/mvn.*.log
             target/artifacts/surefire-reports
@@ -397,6 +402,11 @@ jobs:
 
   integration-tests:
     if: "!contains(github.event.commits[0].message, '[skip integration-tests]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
+        shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
       - build-with-smoke-test
@@ -413,23 +423,23 @@ jobs:
           make quick-compile 
           make quick-assemble 
           make install-core
-      - name: Run integration unit test suite
+      - name: Run integration unit test suite (shard ${{ matrix.shard_idx }})
         run: |
-          make integration-tests
-      - name: Publish Integration Test Report
+          make integration-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
+      - name: Publish Integration Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
         with:
-          check_name: Integration Test Report
-      - name: Collect test results and logs
+          check_name: Integration Test Report (shard ${{ matrix.shard_idx }})
+      - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
         if: always()
         run: |
           make collect-testresults
-      - name: Persist integration test results
+      - name: Persist integration test results (shard ${{ matrix.shard_idx }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-tests-artifacts
+          name: integration-tests-artifacts-${{ matrix.shard_idx }}
           path: |
             target/artifacts/mvn.*.log
             target/artifacts/surefire-reports
@@ -437,6 +447,11 @@ jobs:
 
   e2e-tests-core:
     if: "!contains(github.event.commits[0].message, '[skip e2e-tests-core]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
+        shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
       - build-with-smoke-test
@@ -452,23 +467,23 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
-      - name: Run Core End-to-End tests
+      - name: Run Core End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
-          make core-e2e
-      - name: Publish E2E Core Test Report
+          make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
+      - name: Publish E2E Core Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
         with:
-          check_name: Core E2E Test Report
-      - name: Collect test results and logs
+          check_name: Core E2E Test Report (shard ${{ matrix.shard_idx }})
+      - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
         if: always()
         run: |
           make collect-testresults
-      - name: Persist Core e2e test results
+      - name: Persist Core e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-tests-core-artifacts
+          name: e2e-tests-core-artifacts-${{ matrix.shard_idx }}
           path: |
             target/artifacts/mvn.*.log
             target/artifacts/surefire-reports
@@ -478,6 +493,11 @@ jobs:
 
   e2e-tests-minion:
     if: "!contains(github.event.commits[0].message, '[skip e2e-tests-minion]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
+        shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
       - build-with-smoke-test
@@ -493,23 +513,23 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
-      - name: Run Minion End-to-End tests
+      - name: Run Minion End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
-          make minion-e2e
-      - name: Publish E2E Minion Test Report
+          make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
+      - name: Publish E2E Minion Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
         with:
-          check_name: Minion E2E Test Report
-      - name: Collect test results and logs
+          check_name: Minion E2E Test Report (shard ${{ matrix.shard_idx }})
+      - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
         if: always()
         run: |
           make collect-testresults
-      - name: Persist Minion e2e test results
+      - name: Persist Minion e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-tests-minion-artifacts
+          name: e2e-tests-minion-artifacts-${{ matrix.shard_idx }}
           path: |
             target/artifacts/mvn.*.log
             target/artifacts/surefire-reports
@@ -519,6 +539,11 @@ jobs:
 
   e2e-tests-sentinel:
     if: "!contains(github.event.commits[0].message, '[skip e2e-tests-sentinel]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
+        shards: [ 8 ]                         # 8 parallel test jobs
     needs:
       - unit-tests
       - build-with-smoke-test
@@ -534,23 +559,23 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
-      - name: Run Sentinel End-to-End tests
+      - name: Run Sentinel End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
-          make sentinel-e2e
-      - name: Publish E2E Sentinel Test Report
+          make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
+      - name: Publish E2E Sentinel Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
         with:
-          check_name: Sentinel E2E Test Report
-      - name: Collect test results and logs
+          check_name: Sentinel E2E Test Report (shard ${{ matrix.shard_idx }})
+      - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
         if: always()
         run: |
           make collect-testresults
-      - name: Persist Sentinel e2e test results
+      - name: Persist Sentinel e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-tests-sentinel-artifacts
+          name: e2e-tests-sentinel-artifacts-${{ matrix.shard_idx }}
           path: |
             target/artifacts/mvn.*.log
             target/artifacts/surefire-reports
