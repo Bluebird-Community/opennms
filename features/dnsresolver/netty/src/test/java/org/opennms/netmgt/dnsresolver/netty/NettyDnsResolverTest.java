@@ -150,13 +150,13 @@ public class NettyDnsResolverTest {
         assertThat(dnsResolver.reverseLookup(InetAddress.getByName("192.0.2.53")).get().get(), equalTo("rnd.test.bbo.local"));
 
         // Now query for an unknown host
-        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("1.1.1.1")).get(), equalTo(Optional.empty()));
+        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("192.0.2.254")).get(), equalTo(Optional.empty()));
 
         // There should be 2 cached record now
         assertThat(dnsResolver.getCache().getSize(), equalTo(2L));
 
         // Cache hit
-        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("1.1.1.1")).get(), equalTo(Optional.empty()));
+        assertThat(dnsResolver.reverseLookup(InetAddress.getByName("192.0.2.254")).get(), equalTo(Optional.empty()));
     }
 
     @Test
