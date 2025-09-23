@@ -383,6 +383,8 @@ jobs:
         uses: bissolli/gh-action-persist-workspace@v2
         with:
           action: retrieve
+      - name: Delete workspace
+        run: rm workspace.tar
       - name: Run unit test suite (shard ${{ matrix.shard_idx }})
         run: |
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -425,6 +427,8 @@ jobs:
         uses: bissolli/gh-action-persist-workspace@v2
         with:
           action: retrieve
+      - name: Delete workspace
+        run: rm workspace.tar
       - name: Prepare the build for tests and installing it
         run: |
           make install-core
@@ -470,6 +474,8 @@ jobs:
         uses: bissolli/gh-action-persist-workspace@v2
         with:
           action: retrieve
+      - name: Delete workspace
+        run: rm workspace.tar
       - name: Run Core End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -514,6 +520,8 @@ jobs:
         uses: bissolli/gh-action-persist-workspace@v2
         with:
           action: retrieve
+      - name: Delete workspace
+        run: rm workspace.tar
       - name: Run Minion End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -558,6 +566,8 @@ jobs:
         uses: bissolli/gh-action-persist-workspace@v2
         with:
           action: retrieve
+      - name: Delete workspace
+        run: rm workspace.tar
       - name: Run Sentinel End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
