@@ -43,6 +43,24 @@ if [[ "${PROM_JMX_EXPORTER_ENABLED,,}" == "true" ]]; then
   export JAVA_OPTS="${JAVA_OPTS} -javaagent:${PROM_JMX_EXPORTER_JAR}=${PROM_JMX_EXPORTER_PORT}:${PROM_JMX_EXPORTER_CONFIG}"
 fi
 
+# Pyroscope continuous profiling agent
+# The Pyroscope Java agent needs to be enabled and is disabled by default.
+# Configure PYROSCOPE_SERVER_ADDRESS is set localhost and needs to be configured accordingly.
+PYROSCOPE_ENABLED="${PYROSCOPE_ENABLED:-false}"
+PYROSCOPE_APPLICATION_NAME="${PYROSCOPE_APPLICATION_NAME:-bbo.minion.java.push.app}"
+PYROSCOPE_FORMAT="${PYROSCOPE_FORMAT:-jfr}"
+PYROSCOPE_PROFILING_INTERVAL="${PYROSCOPE_PROFILING_INTERVAL:-10ms}"
+PYROSCOPE_PROFILER_EVENT="${PYROSCOPE_PROFILER_EVENT:-itimer}"
+PYROSCOPE_PROFILER_LOCK="${PYROSCOPE_PROFILER_LOCK:-10ms}"
+PYROSCOPE_PROFILER_ALLOC="${PYROSCOPE_PROFILER_ALLOC:-512k}"
+PYROSCOPE_UPLOAD_INTERVAL="${PYROSCOPE_UPLOAD_INTERVAL:-15s}"
+PYROSCOPE_LOG_LEVEL="${PYROSCOPE_LOG_LEVEL:-info}"
+PYROSCOPE_SERVER_ADDRESS="${PYROSCOPE_SERVER_ADDRESS:-http://localhost:4040}"
+
+if [[ "${PYROSCOPE_ENABLED,,}" == "true" ]]; then
+  export JAVA_OPTS="${JAVA_OPTS} -javaagent:/opt/pyroscope/pyroscope.jar"
+fi
+
 export JAVA_OPTS="$JAVA_OPTS -Djava.locale.providers=CLDR,COMPAT"
 export JAVA_OPTS="$JAVA_OPTS $("${MINION_HOME}/bin/_module_opts.sh")"
 export JAVA_OPTS="$JAVA_OPTS -Dopennms.home=${MINION_HOME}"
