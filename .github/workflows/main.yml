@@ -66,10 +66,6 @@ jobs:
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
-      - name: Persist workspace
-        uses: indigo423/gh-action-persist-workspace@main
-        with:
-          action: persist
 
   deps-freshness:
     if: "!contains(github.event.commits[0].message, '[skip deps-freshness]')"
@@ -379,10 +375,11 @@ jobs:
         - Linux
         - X64
     steps:
-      - name: Retrieve workspace
-        uses: indigo423/gh-action-persist-workspace@main
-        with:
-          action: retrieve
+      - uses: actions/checkout@v4
+      - name: Prepare the build for tests
+        run: |
+          make quick-compile
+          make quick-assemble
       - name: Run unit test suite (shard ${{ matrix.shard_idx }})
         run: |
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -421,10 +418,11 @@ jobs:
         - Linux
         - X64
     steps:
-      - name: Retrieve workspace
-        uses: indigo423/gh-action-persist-workspace@main
-        with:
-          action: retrieve
+      - uses: actions/checkout@v4
+      - name: Prepare the build for tests
+        run: |
+          make quick-compile
+          make quick-assemble
       - name: Prepare the build for tests and installing it
         run: |
           make install-core
@@ -466,10 +464,11 @@ jobs:
         - Linux
         - X64
     steps:
-      - name: Retrieve workspace
-        uses: indigo423/gh-action-persist-workspace@main
-        with:
-          action: retrieve
+      - uses: actions/checkout@v4
+      - name: Prepare the build for tests
+        run: |
+          make quick-compile
+          make quick-assemble
       - name: Run Core End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -510,10 +509,11 @@ jobs:
         - Linux
         - X64
     steps:
-      - name: Retrieve workspace
-        uses: indigo423/gh-action-persist-workspace@main
-        with:
-          action: retrieve
+      - uses: actions/checkout@v4
+      - name: Prepare the build for tests
+        run: |
+          make quick-compile
+          make quick-assemble
       - name: Run Minion End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
@@ -554,10 +554,11 @@ jobs:
         - Linux
         - X64
     steps:
-      - name: Retrieve workspace
-        uses: indigo423/gh-action-persist-workspace@main
-        with:
-          action: retrieve
+      - uses: actions/checkout@v4
+      - name: Prepare the build for tests
+        run: |
+          make quick-compile
+          make quick-assemble
       - name: Run Sentinel End-to-End tests (shard ${{ matrix.shard_idx }})
         run: |
           make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
