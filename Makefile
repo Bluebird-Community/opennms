@@ -9,7 +9,8 @@ SITE_FILE             := antora-playbook-local.yml
 ARTIFACTS_DIR         := target/artifacts
 MAVEN_SHARDS          := 1
 MAVEN_SHARD_IDX       := 0
-MAVEN_BIN             := maven/bin/mvn
+M2_HOME               := ./maven
+MAVEN_BIN             := $(M2_HOME)/bin/mvn
 MAVEN_ARGS            := --batch-mode -DupdatePolicy=never -Djava.awt.headless=true -Daether.connector.resumeDownloads=false -Daether.connector.basic.threads=1 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DvaadinJavaMaxMemory=2g -DmaxCpus=8 -Dstyle.color=always
 export MAVEN_OPTS     := -XX:+UseG1GC -Xms8g -Xmx8g -XX:ReservedCodeCacheSize=1g -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -XX:-UseGCOverheadLimit -XX:-MaxFDLimit -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Dmaven.wagon.http.retryHandler.count=3
 
