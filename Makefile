@@ -279,7 +279,8 @@ endif
 	tar xzf opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz -C opennms-container/core/tarball-root && \
 	cd opennms-container/core && \
 	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
-    docker build --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
+    docker build --platform=$(OCI_PLATFORM) \
+         --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
 		 --build-arg BUILD_DATE=$(BUILD_DATE) \
 		 --build-arg VERSION=$(OPENNMS_VERSION) \
 		 --build-arg REVISION=$(RELEASE_COMMIT) \
@@ -305,7 +306,8 @@ endif
 		-e 's,@REVISION@,$(RELEASE_COMMIT),' \
 		-e 's,@BRANCH@,$(GIT_BRANCH),' \
 		-e 's,@BUILD_NUMBER@,$(RELEASE_BUILD_NUM),' > minion-config-schema.yml && \
-    docker build --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
+    docker build --platform=$(OCI_PLATFORM) \
+         --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
          --build-arg BUILD_DATE=$(BUILD_DATE) \
          --build-arg VERSION=$(OPENNMS_VERSION) \
          --build-arg REVISION=$(RELEASE_COMMIT) \
@@ -327,7 +329,8 @@ endif
 	tar xzf opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*-sentinel.tar.gz --strip-component 1 -C opennms-container/sentinel/tarball-root
 	cd opennms-container/sentinel && \
 	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
-    docker build --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
+    docker build --platform=$(OCI_PLATFORM) \
+          --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
          --build-arg BUILD_DATE=$(BUILD_DATE) \
          --build-arg VERSION=$(OPENNMS_VERSION) \
          --build-arg REVISION=$(RELEASE_COMMIT) \
