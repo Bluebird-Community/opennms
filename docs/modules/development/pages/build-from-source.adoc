@@ -98,7 +98,7 @@ This release version depends on which version tag or branch you have checked out
 It is helpful to extract the release version in an environment variable and allows you to repeat the following instructions more easily.
 
 TIP: Instead of maintaining a local PostgreSQL installation, you can also run an ephemeral PostgreSQL instance as a container.
-     The command `sudo docker run -d -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432 postgres:13` starts an instance which allows connections without authentication for development.
+     The command `sudo docker run -d -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432 postgres:18` starts an instance which allows connections without authentication for development.
      If you want to persist the database on your host for later use, you can add `-v $(pwd)/data:/var/lib/postgresql/data`.
 
 .Set the OpenNMS release version in a global environment variable
