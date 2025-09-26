@@ -500,12 +500,12 @@ core-pkg-deb: deps-packages core-pkg-buildroot
 		--depends jicmp6 \
 		--depends jrrd2 \
 		--deb-recommends openjdk-17-jdk-headless \
-		--deb-suggests "postgresql (>= 13.0)" \
-		--deb-suggests iplike-pgsql13 \
+		--deb-suggests "postgresql (>= 14.0)" \
 		--deb-suggests iplike-pgsql14 \
 		--deb-suggests iplike-pgsql15 \
 		--deb-suggests iplike-pgsql16 \
 		--deb-suggests iplike-pgsql17 \
+		--deb-suggests iplike-pgsql18 \
 		--after-install packages/pkg-postinst-core.sh \
 		-C "$(BUILD_ROOT)/core"
 
@@ -527,12 +527,12 @@ core-pkg-rpm: deps-packages core-pkg-buildroot
 		--depends jicmp6 \
 		--depends jrrd2 \
 		--rpm-tag "Recommends: java-17-openjdk-devel" \
-		--rpm-tag "Suggests: postgresql-server >= 13.0" \
-		--rpm-tag "Suggests: iplike-pgsql13" \
+		--rpm-tag "Suggests: postgresql-server >= 14.0" \
 		--rpm-tag "Suggests: iplike-pgsql14" \
 		--rpm-tag "Suggests: iplike-pgsql15" \
 		--rpm-tag "Suggests: iplike-pgsql16" \
 		--rpm-tag "Suggests: iplike-pgsql17" \
+		--rpm-tag "Suggests: iplike-pgsql18" \
 		--after-install packages/pkg-postinst-core.sh \
 		-C "$(BUILD_ROOT)/core"
 
