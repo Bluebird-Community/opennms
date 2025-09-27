@@ -110,6 +110,8 @@ public class NettyDnsResolverTest {
         assertThat(dnsResolver.lookup("rnd.test.bbo.local").get().get(), equalTo(InetAddress.getByName("192.0.2.53")));
 
         // There should be 1 cached record now
+        // We need to wait a bit for the cache to be populated
+        Thread.sleep(100);
         assertThat(dnsResolver.getCache().getSize(), equalTo(1L));
 
         // Cache hit
@@ -119,6 +121,8 @@ public class NettyDnsResolverTest {
         assertThat(dnsResolver.lookup("private.test.bbo.local").get(), equalTo(Optional.empty()));
 
         // There should be at least 2 cached records now (there can be more that 2 if the system is configured with search domains)
+        // We need to wait a bit for the cache to be populated
+        Thread.sleep(100);
         assertThat(dnsResolver.getCache().getSize(), greaterThanOrEqualTo(2L));
 
         // Cache hit
