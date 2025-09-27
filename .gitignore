@@ -60,9 +60,6 @@ __pycache__
 /build/
 /public/
 
-# Ignore jenv local version files
-.java-version
-
 # Ignore secure vault
 opennms-base-assembly/src/main/filtered/etc/scv.jce
 
