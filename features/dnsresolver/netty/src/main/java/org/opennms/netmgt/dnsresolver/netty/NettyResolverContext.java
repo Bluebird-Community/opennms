@@ -24,6 +24,7 @@ package org.opennms.netmgt.dnsresolver.netty;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -90,6 +91,7 @@ public class NettyResolverContext implements DnsResolver {
                 .queryTimeoutMillis(parent.getQueryTimeoutMillis())
                 .maxQueriesPerResolve(1)
                 .optResourceEnabled(false)
+                .searchDomains(Collections.emptyList())
                 .resolveCache(cache)
                 .build();
     }
