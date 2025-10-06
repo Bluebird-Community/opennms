@@ -7,8 +7,6 @@
     </template>
 
     <template v-slot:center>
-        <Search class="search-left-margin" id="onms-central-search-control" />
-
         <!-- Provision/Quick add node menu -->
         <div v-if="displayAddNodeButton" class="quick-add-node-wrapper">
           <FeatherButton
@@ -20,6 +18,7 @@
     </template>
 
     <template v-slot:right>
+      <Search id="onms-central-search-control" />
       <template v-if="mainMenu.username">
         <UserNotificationsMenuItem :ref="userNotificationsMenu" />
         <UserSelfServiceMenuItem />
@@ -186,10 +185,6 @@ onMounted(async () => {
 .alarm-unknown {
   background-color: var($indeterminate);
   color: var($primary-text-on-color) !important;
-}
-
-.search-left-margin {
-  margin-left: 1em;
 }
 
 .notifications-icon-wrapper {

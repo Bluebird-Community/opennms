@@ -314,7 +314,7 @@ const onKeyDown = async (event: KeyboardEvent) => {
   display: flex;
   position: relative;
   align-items: center;
-  width: 100%;
+  width: 95%;
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 4px;
