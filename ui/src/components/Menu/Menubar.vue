@@ -7,16 +7,16 @@
     </template>
 
     <template v-slot:center>
-      <Search class="search-left-margin" id="onms-central-search-control" />
+        <Search class="search-left-margin" id="onms-central-search-control" />
 
-      <!-- Provision/Quick add node menu -->
-      <div v-if="displayAddNodeButton" class="quick-add-node-wrapper">
-        <FeatherButton
+        <!-- Provision/Quick add node menu -->
+        <div v-if="displayAddNodeButton" class="quick-add-node-wrapper">
+          <FeatherButton
             primary
             v-if="mainMenu.provisionMenu"
             @click="onAddNode"
-        >Add a Node</FeatherButton>
-      </div>
+          >Add a Node</FeatherButton>
+        </div>
     </template>
 
     <template v-slot:right>
@@ -40,7 +40,8 @@ import { useOutsideClick } from '@featherds/composables/events/OutsideClick'
 import { FeatherAppBar, FeatherAppBarLink } from '@featherds/app-bar'
 import { FeatherButton } from '@featherds/button'
 
-import IconLogo from '@/assets/LogoBluebird.vue'
+// see vite.config.ts, resolve.alias for the actual logo file that is imported
+import IconLogo from './src/assets/ProductLogo.vue'
 import { useAppStore } from '@/stores/appStore'
 import { useMenuStore } from '@/stores/menuStore'
 import { MainMenu } from '@/types/mainMenu'
