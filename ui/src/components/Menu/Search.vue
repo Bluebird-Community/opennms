@@ -267,7 +267,6 @@ const onKeyDown = async (event: KeyboardEvent) => {
 
 .onms-search-control-wrapper {
   position: relative;
-  min-width: 30em;
 }
 
 .search-results-dropdown {
