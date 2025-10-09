@@ -1,6 +1,6 @@
-[[releasenotes-34]]
+[[releasenotes-35]]
 
-= What's New in OpenNMS Horizon 34
+= What's New in OpenNMS Horizon 35
 
 == Features and Improvements
 
@@ -83,7 +83,7 @@ The `Secure Credentials Vault` in `OpenNMS` traditionally supported the `JCEKS` 
 support has been added for the `PKCS12` keystore format.
 
 Set `org.opennms.features.scv.keystore.type=PKCS12` in configuration file
- `$OPENNMS_HOME/etc/opennms.properties.d/scv.properties.`
+`$OPENNMS_HOME/etc/opennms.properties.d/scv.properties.`
 
 If you want to convert the `PKCS12` keystore format instead of `JCEKS`, be sure to update the file extension to match the new format (e.g., use `.pk12` instead of `.jce`).
 You can convert a `JCEKS` file to `PKCS12` using the following command.
