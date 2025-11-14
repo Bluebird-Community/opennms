@@ -137,18 +137,18 @@ public final class OpenNMSStack implements TestRule {
 
     private OpenNMSStack(StackModel model) {
         postgreSQLContainer = new PostgreSQLContainer();
-        RuleChain chain = RuleChain.outerRule(postgreSQLContainer);
+        RuleChain chain = RuleChain.outerRule((TestRule) postgreSQLContainer);
 
         if (model.isJaegerEnabled()) {
             jaegerContainer = new JaegerContainer();
-            chain = chain.around(jaegerContainer);
+            chain = chain.around((TestRule) jaegerContainer);
         } else {
             jaegerContainer = null;
         }
 
         if (model.isElasticsearchEnabled()) {
             elasticsearchContainer = new ElasticsearchContainer();
-            chain = chain.around(elasticsearchContainer);
+            chain = chain.around((TestRule) elasticsearchContainer);
         } else {
             elasticsearchContainer = null;
         }
@@ -161,7 +161,7 @@ public final class OpenNMSStack implements TestRule {
                     .withEnv("KAFKA_HEAP_OPTS", "-Xms256m -Xmx256m")
                     .withNetwork(Network.SHARED)
                     .withNetworkAliases(OpenNMSContainer.KAFKA_ALIAS);
-            chain = chain.around(kafkaContainer);
+            chain = chain.around((TestRule) kafkaContainer);
         } else {
             kafkaContainer = null;
         }
@@ -170,19 +170,19 @@ public final class OpenNMSStack implements TestRule {
             cassandraContainer = new OpenNMSCassandraContainer();
             cassandraContainer.withNetwork(Network.SHARED)
                     .withNetworkAliases(OpenNMSContainer.CASSANDRA_ALIAS);
-            chain = chain.around(cassandraContainer);
+            chain = chain.around((TestRule) cassandraContainer);
         } else {
             cassandraContainer = null;
         }
 
         opennmsContainer = new OpenNMSContainer(model, model.getOpenNMS());
-        chain = chain.around(opennmsContainer);
+        chain = chain.around((TestRule) opennmsContainer);
 
         final List<MinionContainer> minions = new ArrayList<>(model.getMinions().size());
         for (final MinionProfile profile : model.getMinions()) {
             final MinionContainer minion = new MinionContainer(model, profile);
             minions.add(minion);
-            chain = chain.around(minion);
+            chain = chain.around((TestRule) minion);
         }
         minionContainers = Collections.unmodifiableList(minions);
 
@@ -190,7 +190,7 @@ public final class OpenNMSStack implements TestRule {
         for (SentinelProfile profile : model.getSentinels()) {
             final SentinelContainer sentinel = new SentinelContainer(model, profile);
             sentinels.add(sentinel);
-            chain = chain.around(sentinel);
+            chain = chain.around((TestRule) sentinel);
         }
         sentinelContainers = Collections.unmodifiableList(sentinels);
 
