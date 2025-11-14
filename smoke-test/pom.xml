@@ -62,7 +62,7 @@
          https://github.com/seleniumhq-community/docker-seleniarm/releases -->
     <seleniarm.version>4.6.0-20221104</seleniarm.version>
     <slf4jVersion>2.0.7</slf4jVersion>
-    <testcontainers.version>2.0.2</testcontainers.version>
+    <testcontainers.version>1.21.3</testcontainers.version>
     <netty4Version>4.1.100.Final</netty4Version>
     <jna.version>5.8.0</jna.version>
     <okhttpVersion>3.10.0</okhttpVersion>
@@ -745,27 +745,27 @@
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers-selenium</artifactId>
+      <artifactId>selenium</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers-postgresql</artifactId>
+      <artifactId>postgresql</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers-kafka</artifactId>
+      <artifactId>kafka</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers-elasticsearch</artifactId>
+      <artifactId>elasticsearch</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers-cassandra</artifactId>
+      <artifactId>cassandra</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
