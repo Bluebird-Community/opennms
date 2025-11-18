@@ -62,10 +62,10 @@
          https://github.com/seleniumhq-community/docker-seleniarm/releases -->
     <seleniarm.version>4.6.0-20221104</seleniarm.version>
     <slf4jVersion>2.0.7</slf4jVersion>
-    <testcontainers.version>1.21.3</testcontainers.version>
+    <testcontainers.version>2.0.2</testcontainers.version>
     <netty4Version>4.1.100.Final</netty4Version>
     <jna.version>5.8.0</jna.version>
-    <okhttpVersion>3.10.0</okhttpVersion>
+    <okhttpVersion>4.9.2</okhttpVersion>
     <test.fork.count>0</test.fork.count>
     <!-- Limit ITs to 30 minutes by default -->
     <test.fork.timeout>1800</test.fork.timeout>
