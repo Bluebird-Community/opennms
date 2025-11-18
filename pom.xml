@@ -2196,8 +2196,8 @@
           </snapshots>
         </repository>
         <repository>
-          <id>opennms-ossrh</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+          <id>central-portal</id>
+          <url>https://central.sonatype.com/repository/maven-snapshots</url>
           <releases>
             <enabled>false</enabled>
           </releases>
