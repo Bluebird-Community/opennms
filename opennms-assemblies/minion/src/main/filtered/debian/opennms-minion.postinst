@@ -2,7 +2,7 @@
 
 set -e
 
-ETCDIR="/etc/minion"
+ETCDIR="/opt/minion/etc"
 MINIONUSER="minion"
 MINIONHOME="/opt/minion"
 MINIONDATA="/opt/minion/data"

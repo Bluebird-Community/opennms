@@ -134,6 +134,7 @@ VOLUME /opennms-data \
 ## -- OpenNMS Eventd      5817/TCP
 ## -- SNMP Trapd          1162/UDP
 ## -- Syslog Receiver    10514/UDP
-EXPOSE 8980 8101 \
-       1162/udp \
+EXPOSE  8101/tcp \
+        8980/tcp \
+        1162/udp \
        10514/udp

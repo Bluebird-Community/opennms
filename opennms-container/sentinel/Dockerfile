@@ -108,4 +108,4 @@ ENV SENTINEL_HOME="/opt/sentinel" \
 ## -- Sentinel Karaf Debug 5005/TCP
 ## -- Sentinel KARAF SSH   8301/TCP
 
-EXPOSE 8301
+EXPOSE 8301/tcp
