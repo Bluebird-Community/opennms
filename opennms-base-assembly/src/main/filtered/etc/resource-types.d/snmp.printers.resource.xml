@@ -1,0 +1,7 @@
+<resource-types>
+    <resourceType name="prtMarkerSuppliesIndex" label="Printer Marker Supply"
+                  resourceLabel="${prtMarkerSuppliesDescription}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+</resource-types>
