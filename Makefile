@@ -65,6 +65,34 @@ OCI_REGISTRY_PASSWORD ?= changeme
 OCI_REGISTRY_ORG      ?= changeme
 TRIVY_ARGS            := --java-db-repository quay.io/bluebird/trivy-java-db:1 --timeout 30m --format json
 
+
+define setversion
+	@echo -n "💅 Set Maven release version:   "
+	@mvn versions:set -DnewVersion=$(1) >>$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version Karaf Test case: "
+	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' opennms-full-assembly/src/test/java/org/opennms/assemblies/karaf/OnmsKarafTestCase.java >>$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version web assets:      "
+	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' core/web-assets/package.json >>$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version web assets lock: "
+	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' core/web-assets/package-lock.json >>$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version Antora docs:     "
+	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' docs/antora.yml >>$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version Maven deploy:    "
+	@cd deploy && mvn versions:set -DnewVersion=$(1) >>../$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version OSGi:            "
+	@sed -i.versionsBackup 's/\<opennms\.osgi\.version\>$(VERSION).SNAPSHOT\<\/opennms\.osgi\.version\>/\<opennms\.osgi\.version\>$(1)\<\/opennms\.osgi\.version\>/g' pom.xml >>$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+	@echo -n "💅 Set version smoke-test:      "
+	@cd smoke-test && mvn versions:set -DnewVersion=$(1) >>../$(RELEASE_LOG) 2>&1
+	@echo "$(OK)"
+endef
+
 .PHONY: help
 help:
 	@echo ""
@@ -763,6 +791,10 @@ libyear: deps-build
 	@mkdir -p $(ARTIFACTS_DIR)/logs
 	$(MAVEN_BIN) $(MAVEN_ARGS) io.github.mfoo:libyear-maven-plugin:analyze 2>&1 | tee $(ARTIFACTS_DIR)/logs/libyear.log
 
+.PHONY: version
+version: deps-build
+	$(call setversion,$(RELEASE_VERSION))
+
 .PHONY: release
 release: deps-build
 	@mkdir -p target
@@ -789,31 +821,7 @@ release: deps-build
 	@echo -n "👮‍♀️ Check version tag available: "
 	@if git rev-parse v$(RELEASE_VERSION) >$(RELEASE_LOG) 2>&1; then echo "Tag v$(RELEASE_VERSION) already exists"; exit 1; fi
 	@echo "$(OK)"
-	@echo -n "💅 Set Maven release version:   "
-	@mvn versions:set -DnewVersion=$(RELEASE_VERSION) >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version Karaf Test case: "
-	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(RELEASE_VERSION)/g' opennms-full-assembly/src/test/java/org/opennms/assemblies/karaf/OnmsKarafTestCase.java >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version web assets:      "
-	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(RELEASE_VERSION)/g' core/web-assets/package.json >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version web assets lock: "
-	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(RELEASE_VERSION)/g' core/web-assets/package-lock.json >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version Antora docs:     "
-	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(RELEASE_VERSION)/g' docs/antora.yml >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version Maven deploy:    "
-	@cd deploy && mvn versions:set -DnewVersion=$(RELEASE_VERSION) >>../$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version OSGi:            "
-	@sed -i.versionsBackup 's/\<opennms\.osgi\.version\>$(VERSION).SNAPSHOT\<\/opennms\.osgi\.version\>/\<opennms\.osgi\.version\>$(RELEASE_VERSION)\<\/opennms\.osgi\.version\>/g' pom.xml >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version smoke-test:      "
-	@cd smoke-test && mvn versions:set -DnewVersion=$(RELEASE_VERSION) >>../$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "👮‍♀️ Validate:                    "
+	@$(call setversion,$(RELEASE_VERSION))
 	@mvn validate >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "🎁 Git commit new release       "
@@ -822,27 +830,7 @@ release: deps-build
 	@echo -n "🦄 Set Git version tag:         "
 	@git tag -a "v$(RELEASE_VERSION)" -m "Release BluebirdOps version $(RELEASE_VERSION)" >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
-	@echo -n "⬆️ Set Maven snapshot version:  "
-	@mvn versions:set -DnewVersion=$(SNAPSHOT_VERSION) >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "⬆️ Set version Karaf Test case: "
-	@sed -i.versionsBackup 's/$(RELEASE_VERSION)/$(SNAPSHOT_VERSION)/g' opennms-full-assembly/src/test/java/org/opennms/assemblies/karaf/OnmsKarafTestCase.java >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "⬆️ Set version web assets:      "
-	@sed -i.versionsBackup 's/$(RELEASE_VERSION)/$(SNAPSHOT_VERSION)/g' core/web-assets/package.json >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "⬆️ Set version Antora docs:     "
-	@sed -i.versionsBackup 's/$(RELEASE_VERSION)/$(SNAPSHOT_VERSION)/g' docs/antora.yml >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "⬆️ Set version Maven deploy:    "
-	@cd deploy && mvn versions:set -DnewVersion=$(SNAPSHOT_VERSION) >>../$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "⬆️ Set version OSGi:            "
-	@sed -i.versionsBackup 's/\<opennms\.osgi\.version\>$(RELEASE_VERSION)\<\/opennms\.osgi\.version\>/\<opennms\.osgi\.version\>$(MAJOR_VERSION).$(MINOR_VERSION).$(shell expr $(PATCH_VERSION) + 1).SNAPSHOT\<\/opennms\.osgi\.version\>/g' pom.xml >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "⬆️ Set version smoke-test:      "
-	@cd smoke-test && mvn versions:set -DnewVersion=$(SNAPSHOT_VERSION) >>../$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
+	@$(call setversion,$(SNAPSHOT_VERSION))
 	@echo -n "🎁 Git commit snapshot release: "
 	@git commit --signoff -am "release: BluebirdOps $(SNAPSHOT_VERSION)" >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
