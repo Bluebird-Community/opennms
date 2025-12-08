@@ -2001,7 +2001,7 @@
 
     <!-- nodejs development -->
     <frontendPluginVersion>1.15.1</frontendPluginVersion>
-    <nodeVersion>v20.19.6</nodeVersion>
+    <nodeVersion>v24.11.1</nodeVersion>
     <npmVersion>11.6.4</npmVersion>
     <yarnVersion>v1.22.22</yarnVersion>
 
