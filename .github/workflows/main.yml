@@ -27,7 +27,7 @@ jobs:
       - name: Cleaning project for quick validation
         run: |
           make validate
-      - name: Build Web UI with yarn including tests
+      - name: Build Web UI with pnpm including tests
         run: |
           make compile-ui
       - name: Build and assemble from source without expensive tasks
@@ -67,30 +67,6 @@ jobs:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
 
-  deps-freshness:
-    if: "!contains(github.event.commits[0].message, '[skip deps-freshness]')"
-    runs-on: ubuntu-latest
-    container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.1.5.jdk-17.b22
-    steps:
-      - uses: actions/checkout@v6
-      - name: Add workspace to git safe.directory
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Cleaning project for quick validation
-        run: |
-          make libyear
-      - name: Collect libyear logs
-        if: always()
-        run: |
-          make collect-testresults
-      - name: Persist libyear results
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: deps-freshness
-          path: |
-            target/artifacts/logs/libyear.log        
-
   core-packages:
     if: "!contains(github.event.commits[0].message, '[skip core-packages]')"
     needs:
@@ -100,7 +76,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.1.5.jdk-17.b22
+      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-17.b27
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
@@ -127,7 +103,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.1.5.jdk-17.b22
+      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-17.b27
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
@@ -154,7 +130,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.1.5.jdk-17.b22
+      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-17.b27
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6

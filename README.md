@@ -48,9 +48,8 @@ Building from source requires the following components:
 * OpenJDK 17 Development Kit
 * Maven
 * Docker if you run tests
-* NodeJS 18
-* NPM
-* Yarn
+* NodeJS 24
+* PNPM
 * Docker with Docker Compose plugin
 
 ```console

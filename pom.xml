@@ -2002,7 +2002,7 @@
     <!-- nodejs development -->
     <frontendPluginVersion>1.15.1</frontendPluginVersion>
     <nodeVersion>v24.11.1</nodeVersion>
-    <npmVersion>11.6.4</npmVersion>
+    <pnpmVersion>10.25.0</pnpmVersion>
 
     <!-- configuration manager -->
     <xmlschemaVersion>2.3.1</xmlschemaVersion>

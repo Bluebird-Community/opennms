@@ -24,17 +24,19 @@ endif
 RELEASE_BUILD_NUM     ?= ${CIRCLE_BUILD_NUM}
 RELEASE_COMMIT        := $(shell git rev-parse --short HEAD)
 OPEN_FILES_LIMIT      := 20000
-RELEASE_VERSION     := UNSET.0.0
-RELEASE_BRANCH      := main
-PUSH_RELEASE        := false
-MAJOR_VERSION       := $(shell echo $(RELEASE_VERSION) | cut -d. -f1)
-MINOR_VERSION       := $(shell echo $(RELEASE_VERSION) | cut -d. -f2)
-PATCH_VERSION       := $(shell echo $(RELEASE_VERSION) | cut -d. -f3)
-SNAPSHOT_VERSION    := $(MAJOR_VERSION).$(MINOR_VERSION).$(shell expr $(PATCH_VERSION) + 1)-SNAPSHOT
-RELEASE_LOG         := target/release.log
-OK                  := "[ 👍 ]"
-SKIP                := "[ ⏭️ ]"
-JAVA_MAJOR_VERSION  := 17
+CURRENT_FILES_LIMIT   := $(shell ulimit -n 2>/dev/null || echo 0)
+RELEASE_VERSION       := UNSET.0.0
+RELEASE_BRANCH        := main
+PUSH_RELEASE          := false
+MAJOR_VERSION         := $(shell echo $(RELEASE_VERSION) | cut -d. -f1)
+MINOR_VERSION         := $(shell echo $(RELEASE_VERSION) | cut -d. -f2)
+PATCH_VERSION         := $(shell echo $(RELEASE_VERSION) | cut -d. -f3)
+SNAPSHOT_VERSION      := $(MAJOR_VERSION).$(MINOR_VERSION).$(shell expr $(PATCH_VERSION) + 1)-SNAPSHOT
+RELEASE_LOG           := target/release.log
+OK                    := "[ 👍 ]"
+FAILED                := "[ 🤬 ]"
+SKIP                  := "[ ⏭️ ]"
+JAVA_MAJOR_VERSION    := 17
 
 # Package requirements
 PKG_CORE_HOME         := /opt/opennms
@@ -100,10 +102,8 @@ help:
 	@echo ""
 	@echo "Requirements to build:"
 	@echo "  * OpenJDK 17 Development Kit"
-	@echo "  * Maven 3.8.8, WARNING: Don't run with latest Maven, it throws errors. 3.8.8 is shipped with the git repo."
-	@echo "  * NodeJS 18 with npm"
-	@echo "  * Global install of yarn: npm install --global yarn"
-	@echo "  * Global install of node-gyp to build the UI: yarn global add node-gyp"
+	@echo "  * Maven 3.8.x, WARNING: Don't run with latest Maven, it throws errors. 3.8.8 is shipped with the git repo."
+	@echo "  * NodeJS 24 with pnpm"
 	@echo "  * Antora"
 	@echo "We are using the command tool to test for the requirements in your search path."
 	@echo ""
@@ -141,7 +141,6 @@ help:
 	@echo "  minion-oci-sec-scan:   Create security scan report for the Core container image"
 	@echo "  sentinel-oci-sec-scan: Create security scan report for the Core container image"
 	@echo "  code-coverage:         Test code coverage with SonarScanner CLI"
-	@echo "  libyear:               Run libyear Maven pluginto show the freshness of lib dependencies"
 	@echo ""
 	@echo "Test suits:"
 	@echo "  quick-smoke:           Simple smoke test to verify the application can be started by using the MenuHeaderIT and SinglePortFlowsIT test"
@@ -174,9 +173,10 @@ help:
 	@echo ""
 	@echo ""
 
+
 .PHONY: deps-build
 deps-build:
-	@echo "Check build dependencies: Java JDK, NodeJS, NPM, paste, python3 and yarn with node-gyp"
+	@echo "Check build dependencies: Java JDK, NodeJS, PNMP, paste, python3"
 	@echo -n "👮‍♀️ Check Maven binary:          "
 	@command -v $(MAVEN_BIN) > /dev/null
 	@echo $(OK)
@@ -195,18 +195,21 @@ deps-build:
 	@echo -n "👮‍♀️ Check Python3:               "
 	@command -v python3 > /dev/null
 	@echo $(OK)
-	@echo -n "👮‍♀️ Check yarn:                  "
-	@command -v yarn > /dev/null
-	@echo $(OK)
-	@echo -n "👮‍♀️ Check node-gyp:              "
-	@yarn global list | grep "^info \"node-gyp.*has binaries:"  > /dev/null
+	@echo -n "👮‍♀️ Check pnmp:                  "
+	@command -v pnpm > /dev/null
 	@echo $(OK)
 	@mkdir -p $(ARTIFACTS_DIR)
 	@echo -n "👮‍♀️ Check Java version $(JAVA_MAJOR_VERSION):       "
 	@java -version 2>&1 | grep '$(JAVA_MAJOR_VERSION)\..*' >/dev/null
 	@echo $(OK)
 	@echo -n "👮‍♀️ Check file limits ($(OPEN_FILES_LIMIT)):   "
-	@if [ "$(shell ulimit -n)" -lt "$(OPEN_FILES_LIMIT)" ]; then echo -n "$(FAIL) "; echo "Increase your open file limit with: ulimit -n $(OPEN_FILES_LIMIT)"; exit 1; fi >/dev/null
+	@if [ "$$(ulimit -n)" -lt "$(OPEN_FILES_LIMIT)" ]; then \
+	  echo $(FAILED); \
+	  echo ""; \
+	  echo "Your open file limit is $(CURRENT_FILES_LIMIT) and $(OPEN_FILES_LIMIT) is required. Please adjust your system settings."; \
+	  echo "You can set the open file limit using 'ulimit -n $(OPEN_FILES_LIMIT)' or by editing your shell configuration file (e.g., ~/.bashrc)."; \
+	  exit 1; \
+	fi
 	@echo $(OK)
 
 .PHONY: deps-packages
@@ -274,7 +277,7 @@ compile: maven-structure-graph
 
 .PHONY: compile-ui
 compile-ui:
-	cd ui && yarn install && yarn build && yarn test
+	cd ui && pnpm install && pnpm build && pnpm test
 
 .PHONY: assemble
 assemble: deps-build show-info
@@ -784,12 +787,6 @@ destroy-postgres: deps-oci
 .PHONY: registry-login
 registry-login: deps-oci
 	@echo ${OCI_REGISTRY_PASSWORD} | docker login --username ${OCI_REGISTRY_USER} --password-stdin ${OCI_REGISTRY}
-
-.PHONY: libyear
-libyear: deps-build
-	@echo "Analyze dependency freshness measured in libyear"
-	@mkdir -p $(ARTIFACTS_DIR)/logs
-	$(MAVEN_BIN) $(MAVEN_ARGS) io.github.mfoo:libyear-maven-plugin:analyze 2>&1 | tee $(ARTIFACTS_DIR)/logs/libyear.log
 
 .PHONY: version
 version: deps-build
