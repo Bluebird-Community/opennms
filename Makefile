@@ -67,7 +67,6 @@ OCI_REGISTRY_PASSWORD ?= changeme
 OCI_REGISTRY_ORG      ?= changeme
 TRIVY_ARGS            := --java-db-repository quay.io/bluebird/trivy-java-db:1 --timeout 30m --format json
 
-
 define setversion
 	@echo -n "💅 Set Maven release version:   "
 	@mvn versions:set -DnewVersion=$(1) >>$(RELEASE_LOG) 2>&1
@@ -77,9 +76,6 @@ define setversion
 	@echo "$(OK)"
 	@echo -n "💅 Set version web assets:      "
 	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' core/web-assets/package.json >>$(RELEASE_LOG) 2>&1
-	@echo "$(OK)"
-	@echo -n "💅 Set version web assets lock: "
-	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' core/web-assets/package-lock.json >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "💅 Set version Antora docs:     "
 	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' docs/antora.yml >>$(RELEASE_LOG) 2>&1
@@ -172,7 +168,6 @@ help:
 	@echo "  SITE_FILE:           Antora site.yml file to build the site"
 	@echo ""
 	@echo ""
-
 
 .PHONY: deps-build
 deps-build:
