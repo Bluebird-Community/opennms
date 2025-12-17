@@ -94,7 +94,7 @@ CentOS/RHEL 9::
 include::centos-rhel9/postgresql.adoc[]
 --
 
-CentOS 10::
+CentOS/RHEL 10::
 +
 --
 include::centos10/postgresql.adoc[]
