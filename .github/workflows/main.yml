@@ -178,6 +178,7 @@ jobs:
         run: |
           mkdir -p opennms-container/core/tarball-root
           tar xzf opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz -C opennms-container/core/tarball-root
+          rm -rf opennms-full-assembly/target
       - name: Get the release version for the OCI tag
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
