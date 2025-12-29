@@ -106,7 +106,7 @@ public class KafkaProducerManager {
 
     private boolean hasValidConfiguration(String pid) {
         try {
-            var config = configAdmin.getConfiguration(pid, null);
+            var config = configAdmin.getConfiguration(pid);
             if (config != null && config.getProperties() != null && !config.getProperties().isEmpty()) {
                 Dictionary<String, Object> properties = config.getProperties();
                 return properties.get("bootstrap.servers") != null;
@@ -183,7 +183,7 @@ public class KafkaProducerManager {
 
     private String getEffectivePid(String topicSpecificPid) {
         try {
-            var config = configAdmin.getConfiguration(topicSpecificPid, null);
+            var config = configAdmin.getConfiguration(topicSpecificPid);
             if (config != null && config.getProperties() != null && !config.getProperties().isEmpty()) {
                 Dictionary<String, Object> properties = config.getProperties();
                 if (properties.get("bootstrap.servers") != null) {
@@ -231,7 +231,7 @@ public class KafkaProducerManager {
     public Properties getConfigurationForPid(String pid) {
         try {
             final Properties config = new Properties();
-            final Dictionary<String, Object> properties = configAdmin.getConfiguration(pid, null).getProperties();
+            final Dictionary<String, Object> properties = configAdmin.getConfiguration(pid).getProperties();
 
             if (properties != null) {
                 final Enumeration<String> keys = properties.keys();

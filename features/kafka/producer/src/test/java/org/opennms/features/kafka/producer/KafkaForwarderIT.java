@@ -248,16 +248,14 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
         when(producerConfiguration.getProperties()).thenReturn(producerConfig);
 
         when(configAdmin.getConfiguration(
-                eq(OpennmsKafkaProducer.KAFKA_CLIENT_PID),
-                isNull()
+                eq(OpennmsKafkaProducer.KAFKA_CLIENT_PID)
         )).thenReturn(producerConfiguration);
 
         Configuration streamsConfiguration = mock(Configuration.class);
         when(streamsConfiguration.getProperties()).thenReturn(streamsConfig);
 
         when(configAdmin.getConfiguration(
-                eq(KafkaAlarmDataSync.KAFKA_STREAMS_PID),
-                isNull()
+                eq(KafkaAlarmDataSync.KAFKA_STREAMS_PID)
         )).thenReturn(streamsConfiguration);
         kafkaProducerManager = new KafkaProducerManager(configAdmin);
 
@@ -334,13 +332,11 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
         // Wait for alarm feedback to be consumed
         await().atMost(1, TimeUnit.MINUTES).until(() -> kafkaConsumer.getAlarmFeedback(), not(empty()));
 
-        // Events, nodes and alarms were forwarded and consumed!
 
-        // Verify the alarm feedback consumed
+
         OpennmsModelProtos.AlarmFeedback consumedAlarmFeedback = kafkaConsumer.getAlarmFeedback().get(0);
         assertThat(consumedAlarmFeedback.getSituationKey(), is(equalTo(alarmFeedback.getSituationKey())));
-        
-        // Ensure that we have some events with a fs:fid
+
 
         List<OpennmsModelProtos.Event> eventsWithFsAndFid = kafkaConsumer.getEvents().stream()
                 .filter(e -> !Strings.isNullOrEmpty(e.getNodeCriteria().getForeignId())
@@ -430,23 +426,19 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
 
        // when(configAdmin.getConfiguration(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID)).thenReturn(emptyConfig);
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID)
         )).thenReturn(emptyConfig);
 
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.ALARMS_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.ALARMS_KAFKA_CLIENT_PID)
         )).thenReturn(emptyConfig);
 
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.NODES_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.NODES_KAFKA_CLIENT_PID)
         )).thenReturn(emptyConfig);
 
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.GLOBAL_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.GLOBAL_KAFKA_CLIENT_PID)
         )).thenReturn(globalConfig);
 
         when(configAdmin.getConfiguration(anyString())).thenReturn(globalConfig);
@@ -486,18 +478,15 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
 
        // when(configAdmin.getConfiguration(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID)).thenReturn(eventsConfig);
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID)
         )).thenReturn(eventsConfig);
 
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.ALARMS_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.ALARMS_KAFKA_CLIENT_PID)
         )).thenReturn(alarmsConfig);
 
         when(configAdmin.getConfiguration(
-                eq(KafkaProducerManager.GLOBAL_KAFKA_CLIENT_PID),
-                isNull()
+                eq(KafkaProducerManager.GLOBAL_KAFKA_CLIENT_PID)
         )).thenReturn(globalConfig);
 
         when(configAdmin.getConfiguration(anyString())).thenReturn(globalConfig);
@@ -925,19 +914,19 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
             eventsConfig.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 2000);
 
             // Mock all configurations with proper method signature
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.GLOBAL_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.GLOBAL_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(globalConfig);
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.EVENTS_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(eventsConfig);
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.ALARMS_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.ALARMS_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(globalConfig);
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.NODES_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.NODES_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(globalConfig);
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.METRICS_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.METRICS_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(globalConfig);
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.TOPOLOGY_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.TOPOLOGY_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(globalConfig);
-            when(configAdmin.getConfiguration(eq(KafkaProducerManager.ALARM_FEEDBACK_KAFKA_CLIENT_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaProducerManager.ALARM_FEEDBACK_KAFKA_CLIENT_PID)).getProperties())
                     .thenReturn(globalConfig);
 
             // Create a unique state directory for this test
@@ -950,7 +939,7 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
             // Add unique application ID to avoid conflicts
             streamsConfig.put(StreamsConfig.APPLICATION_ID_CONFIG, "alarm-datasync-" + System.currentTimeMillis());
 
-            when(configAdmin.getConfiguration(eq(KafkaAlarmDataSync.KAFKA_STREAMS_PID), isNull()).getProperties())
+            when(configAdmin.getConfiguration(eq(KafkaAlarmDataSync.KAFKA_STREAMS_PID)).getProperties())
                     .thenReturn(streamsConfig);
 
             // Mock individual configurations for event-specific PID
