@@ -138,6 +138,7 @@ import static org.mockito.Mockito.when;
 public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaForwarderIT.class);
 
+    private static final String  BOOTSTRAP_SERVER= "bootstrap.servers";
     private static final String EVENT_TOPIC_NAME = "events";
     private static final String ALARM_TOPIC_NAME = "test-alarms";
     private static final String NODE_TOPIC_NAME = "test-nodes";
@@ -902,13 +903,13 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
             ConfigurationAdmin configAdmin = mock(ConfigurationAdmin.class, RETURNS_DEEP_STUBS);
 
             Hashtable<String, Object> globalConfig = new Hashtable<>();
-            globalConfig.put("bootstrap.servers", globalConnectString);
+            globalConfig.put(BOOTSTRAP_SERVER, globalConnectString);
             globalConfig.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 3000);
             globalConfig.put(ProducerConfig.LINGER_MS_CONFIG, 0);
             globalConfig.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 2000);
 
             Hashtable<String, Object> eventsConfig = new Hashtable<>();
-            eventsConfig.put("bootstrap.servers", eventsConnectString);
+            eventsConfig.put(BOOTSTRAP_SERVER, eventsConnectString);
             eventsConfig.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 3000);
             eventsConfig.put(ProducerConfig.LINGER_MS_CONFIG, 0);
             eventsConfig.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 2000);
@@ -963,11 +964,11 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
                     KafkaProducerManager.MessageType.ALARM);
 
             assertThat("Events should use events Kafka cluster",
-                    eventConfigResult.getProperty("bootstrap.servers"),
+                    eventConfigResult.getProperty(BOOTSTRAP_SERVER),
                     equalTo(eventsConnectString));
 
             assertThat("Alarms should fall back to global Kafka cluster",
-                    alarmConfigResult.getProperty("bootstrap.servers"),
+                    alarmConfigResult.getProperty(BOOTSTRAP_SERVER),
                     equalTo(globalConnectString));
 
             // CRITICAL: Destroy existing producer and data sync before creating new ones

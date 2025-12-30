@@ -49,7 +49,7 @@ public class KafkaProducerManager {
     public static final String NODES_KAFKA_CLIENT_PID = "org.opennms.features.kafka.producer.client.nodes";
     public static final String TOPOLOGY_KAFKA_CLIENT_PID = "org.opennms.features.kafka.producer.client.topology";
     public static final String ALARM_FEEDBACK_KAFKA_CLIENT_PID = "org.opennms.features.kafka.producer.client.alarmFeedback";
-
+    public static final String  BOOTSTRAP_SERVER= "bootstrap.servers";
     public enum MessageType {
         EVENT,
         ALARM,
@@ -109,7 +109,7 @@ public class KafkaProducerManager {
             var config = configAdmin.getConfiguration(pid);
             if (config != null && config.getProperties() != null && !config.getProperties().isEmpty()) {
                 Dictionary<String, Object> properties = config.getProperties();
-                return properties.get("bootstrap.servers") != null;
+                return properties.get(BOOTSTRAP_SERVER) != null;
             }
             return false;
         } catch (IOException e) {
@@ -155,12 +155,6 @@ public class KafkaProducerManager {
         }
     }
 
-
-    private Producer<byte[], byte[]> createProducerForMessageType(MessageType messageType) {
-        String pid = determinePidForMessageType(messageType);
-        return getOrCreateProducerForPid(pid);
-    }
-
     private String determinePidForMessageType(MessageType messageType) {
         switch (messageType) {
             case EVENT:
@@ -186,7 +180,7 @@ public class KafkaProducerManager {
             var config = configAdmin.getConfiguration(topicSpecificPid);
             if (config != null && config.getProperties() != null && !config.getProperties().isEmpty()) {
                 Dictionary<String, Object> properties = config.getProperties();
-                if (properties.get("bootstrap.servers") != null) {
+                if (properties.get(BOOTSTRAP_SERVER) != null) {
                     LOG.debug("bootstrap.server found  for PID: {}", topicSpecificPid);
                     return topicSpecificPid;
                 }
@@ -211,7 +205,7 @@ public class KafkaProducerManager {
 
 
             LOG.info("Creating Kafka producer for PID: {} with bootstrap.servers: {}",
-                    pid, producerConfig.getProperty("bootstrap.servers", "not configured"));
+                    pid, producerConfig.getProperty(BOOTSTRAP_SERVER, "not configured"));
 
             return Utils.runWithGivenClassLoader(() -> new KafkaProducer<>(producerConfig),
                     KafkaProducer.class.getClassLoader());
@@ -226,7 +220,6 @@ public class KafkaProducerManager {
         String pid = determinePidForMessageType(messageType);
         return getConfigurationForPid(pid);
     }
-
 
     public Properties getConfigurationForPid(String pid) {
         try {
@@ -259,4 +252,5 @@ public class KafkaProducerManager {
         return configAdmin;
     }
 }
+
 

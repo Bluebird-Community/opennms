@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Properties;
+import static org.opennms.features.kafka.producer.KafkaProducerManager.BOOTSTRAP_SERVER;
 
 public class KafkaPersisterFactory implements PersisterFactory {
 
@@ -74,9 +75,7 @@ public class KafkaPersisterFactory implements PersisterFactory {
         String globalPid = OpennmsKafkaProducer.KAFKA_CLIENT_PID;
 
         final Properties producerConfig = new Properties();
-        Dictionary<String, Object> properties = null;
-
-        properties = configAdmin.getConfiguration(metricsPid).getProperties();
+        Dictionary<String, Object> properties = configAdmin.getConfiguration(metricsPid).getProperties();
         if (hasValidConfiguration(properties)) {
             LOG.info("Using metrics-specific Kafka configuration");
         } else {
@@ -109,7 +108,7 @@ public class KafkaPersisterFactory implements PersisterFactory {
     private boolean hasValidConfiguration(Dictionary<String, Object> properties) {
         return properties != null &&
                 !properties.isEmpty() &&
-                properties.get("bootstrap.servers") != null;
+                properties.get(BOOTSTRAP_SERVER) != null;
     }
 
     public void destroy() {

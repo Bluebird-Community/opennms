@@ -53,7 +53,6 @@ public class NoOpProducer<K,V> implements Producer<K,V> {
 
     @Override
     public Future<RecordMetadata> send(ProducerRecord<K, V> record, Callback callback) {
-        // Log at debug level instead of throwing exception
         LOG.debug("No-op producer: Not sending message to topic {}", record.topic());
 
         if (callback != null) {
@@ -70,7 +69,6 @@ public class NoOpProducer<K,V> implements Producer<K,V> {
             callback.onCompletion(dummyMetadata, null);
         }
 
-        // Return a completed future with dummy metadata
         CompletableFuture<RecordMetadata> future = new CompletableFuture<>();
         RecordMetadata dummyMetadata = new RecordMetadata(
                 new TopicPartition(record.topic(), -1),
