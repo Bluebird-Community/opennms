@@ -8,7 +8,9 @@ import { FeatherTextarea } from '@featherds/textarea'
 import { createTestingPinia } from '@pinia/testing'
 import { flushPromises, mount } from '@vue/test-utils'
 import { setActivePinia } from 'pinia'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, it, vi } from 'vitest'
+// Ensure expect is always from vitest
+import { expect } from 'vitest'
 
 // Mock router
 const mockPush = vi.fn()
@@ -67,6 +69,14 @@ describe('CreateEventConfigurationDialog.vue', () => {
     vi.useRealTimers()
   })
 
+  const setWrapperRefs = async (configName: string, vendor: string, description: string) => {
+    const vm = wrapper.vm as any
+    vm.configName = configName as string
+    vm.vendor = vendor as string
+    vm.description = description as string
+    await wrapper.vm.$nextTick()
+  }
+
   it('renders the dialog when visible is true', () => {
     const header = document.body.querySelector('[data-ref-id="feather-dialog-header"]')
     expect(header).not.toBeNull()
@@ -100,24 +110,19 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('shows error when input empty', async () => {
-    ;(wrapper.vm as any).configName = ''
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('', '', '')
     const inputComp = wrapper.findAllComponents(FeatherInput)[0]
     expect(inputComp.props('error')).toBe('Configuration name is required.')
   })
 
   it('clears error when input has value', async () => {
-    ;(wrapper.vm as any).configName = 'X'
-    ;(wrapper.vm as any).vendor = 'X'
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('X', 'X', '')
     const inputComp = wrapper.findAllComponents(FeatherInput)[0]
     expect(inputComp.props('error')).toBeUndefined()
   })
 
   it('disables Create button when invalid', async () => {
-    ;(wrapper.vm as any).configName = '   '
-    ;(wrapper.vm as any).vendor = '   '
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('   ', '   ', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     // Button should be disabled when error is not null
     const hasDisabled =
@@ -126,9 +131,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('enables Create button when valid', async () => {
-    ;(wrapper.vm as any).configName = 'Valid'
-    ;(wrapper.vm as any).vendor = 'Valid'
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('Valid', 'Valid', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     expect(createBtn.attributes('disabled')).toBeUndefined()
   })
@@ -142,8 +145,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   it('does not save when invalid create clicked', async () => {
     store.hideCreateEventConfigSourceDialog = vi.fn()
-    ;(wrapper.vm as any).configName = '   '
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('   ', '   ', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
     // Button is disabled, so click may not trigger
@@ -151,48 +153,44 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('saves and shows success state when valid', async () => {
-    ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
-    ;(wrapper.vm as any).configName = 'ConfigA'
-    ;(wrapper.vm as any).vendor = 'ConfigA'
-    await wrapper.vm.$nextTick()
+    (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+    await setWrapperRefs('ConfigA', 'ConfigA', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
     await flushPromises()
+    const vm = wrapper.vm as any
 
-    expect((wrapper.vm as any).successMessage).toBe(true)
+    expect(vm.successMessage).toBe(true)
   })
 
   it('resets form after save', async () => {
-    store.hideCreateEventConfigSourceDialog = vi.fn()
-    ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
-    ;(wrapper.vm as any).configName = 'ResetMe'
-    ;(wrapper.vm as any).vendor = 'ResetMe'
-    await wrapper.vm.$nextTick()
+    store.hideCreateEventConfigSourceDialog = vi.fn() as any
+    (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+    await setWrapperRefs('ResetMe', 'ResetMe', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
     await flushPromises()
+    const vm = wrapper.vm as any
 
-    expect((wrapper.vm as any).configName).toBe('')
-    expect((wrapper.vm as any).vendor).toBe('')
+    expect(vm.configName).toBe('')
+    expect(vm.vendor).toBe('')
   })
 
   it('whitespace-only treated invalid', async () => {
-    ;(wrapper.vm as any).configName = '   '
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('   ', '   ', '')
     const inputComp = wrapper.findAllComponents(FeatherInput)[0]
     expect(inputComp.props('error')).toBe('Configuration name is required.')
   })
 
   it('multiple successful submissions show success state', async () => {
-    ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
-    ;(wrapper.vm as any).configName = 'One'
-    ;(wrapper.vm as any).vendor = 'One'
-    await wrapper.vm.$nextTick()
+    (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+    await setWrapperRefs('One', 'One', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
     await flushPromises()
+    const vm = wrapper.vm as any
 
-    expect((wrapper.vm as any).successMessage).toBe(true)
+    expect(vm.successMessage).toBe(true)
   })
 
   it('modal-body has expected structure', () => {
@@ -204,8 +202,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('maintains form state before save', async () => {
-    ;(wrapper.vm as any).configName = 'Persist'
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('Persist', 'Persist', '')
     const inputComp = wrapper.findAllComponents(FeatherInput)[0]
     expect(inputComp.props('modelValue')).toBe('Persist')
   })
@@ -228,9 +225,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('treats trimmed non-empty as valid', async () => {
-    ;(wrapper.vm as any).configName = '   X   '
-    ;(wrapper.vm as any).vendor = '   X   '
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('   X   ', '   X   ', '')
     const input = wrapper.findAllComponents(FeatherInput)[0]
     expect(input.props('error')).toBeUndefined()
   })
@@ -256,10 +251,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('disabled state updates when reverting to empty', async () => {
-    ;(wrapper.vm as any).configName = 'Valid'
-    await wrapper.vm.$nextTick()
-    ;(wrapper.vm as any).configName = ''
-    await wrapper.vm.$nextTick()
+    await setWrapperRefs('Valid', 'Valid', '')
+    await setWrapperRefs('', '', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     expect(createBtn.attributes('aria-disabled') === 'true' || createBtn.attributes('disabled')).toBeTruthy()
   })
@@ -272,30 +265,25 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('shows error when vendor is empty', async () => {
-      ;(wrapper.vm as any).vendor = ''
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Valid', '', '')
       const inputs = wrapper.findAllComponents(FeatherInput)
       expect(inputs[1].props('error')).toBe('Vendor is required.')
     })
 
     it('clears error when vendor has value', async () => {
-      ;(wrapper.vm as any).vendor = 'OpenNMS'
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Valid', 'OpenNMS', '')
       const inputs = wrapper.findAllComponents(FeatherInput)
       expect(inputs[1].props('error')).toBeUndefined()
     })
 
     it('validates vendor field on form submission', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = ''
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Test', '', '')      
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       expect(createBtn.attributes('aria-disabled') === 'true' || createBtn.attributes('disabled')).toBeTruthy()
     })
 
     it('whitespace-only vendor treated as invalid', async () => {
-      ;(wrapper.vm as any).vendor = '   '
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Valid', '   ', '')
       const inputs = wrapper.findAllComponents(FeatherInput)
       expect(inputs[1].props('error')).toBe('Vendor is required.')
     })
@@ -319,20 +307,17 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('description field is optional (empty allowed)', async () => {
-      ;(wrapper.vm as any).configName = 'Valid'
-      ;(wrapper.vm as any).vendor = 'Valid'
-      ;(wrapper.vm as any).description = ''
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Valid', 'Valid', '')
       // Should not show error for empty description
       const textarea = wrapper.findComponent(FeatherTextarea)
       expect(textarea.props('error')).toBeUndefined()
     })
 
     it('description field trims whitespace on input', async () => {
-      ;(wrapper.vm as any).description = '  trimmed text  '
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Valid', 'Valid', '  trimmed text  ')
+      const vm = wrapper.vm as any
       // v-model.trim should trim the value
-      expect((wrapper.vm as any).description).toBe('trimmed text')
+      expect(vm.description).toBe('trimmed text')
     })
 
     it('description field has auto height feature', () => {
@@ -351,8 +336,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
     it('description accepts long text', async () => {
       const longText = 'A'.repeat(500)
-      ;(wrapper.vm as any).description = longText
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Valid', 'Valid', longText)
       const textarea = wrapper.findComponent(FeatherTextarea)
       expect(textarea.props('modelValue')).toHaveLength(500)
     })
@@ -365,39 +349,32 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Form Validation', () => {
     it('requires both configName and vendor to enable Create button', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = ''
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Test', '', '')
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       expect(createBtn.attributes('aria-disabled') === 'true' || createBtn.attributes('disabled')).toBeTruthy()
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('Test', 'Vendor', '')
       expect(createBtn.attributes('aria-disabled')).toBeUndefined()
     })
 
     it('disables Create button when either field is invalid', async () => {
-      ;(wrapper.vm as any).configName = ''
-      ;(wrapper.vm as any).vendor = 'Valid'
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('', 'Valid', '')
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       expect(createBtn.attributes('aria-disabled') === 'true' || createBtn.attributes('disabled')).toBeTruthy()
     })
 
     it('error object contains both name and vendor when both empty', async () => {
-      ;(wrapper.vm as any).configName = ''
-      ;(wrapper.vm as any).vendor = ''
-      await wrapper.vm.$nextTick()
-      const error = (wrapper.vm as any).error
+      await setWrapperRefs('', '', '')
+      const vm = wrapper.vm as any
+      const error = vm.error
       expect(error).not.toBeNull()
       expect(error.name).toBeDefined()
       expect(error.vendor).toBeDefined()
     })
 
     it('error object is null when form is valid', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      await wrapper.vm.$nextTick()
-      const error = (wrapper.vm as any).error
+      await setWrapperRefs('Test', 'Vendor', '')
+      const vm = wrapper.vm as any
+      const error = vm.error
       expect(error).toBeNull()
     })
   })
@@ -417,11 +394,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     }
 
     beforeEach(async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(wrapper.vm as any).description = 'Test description'
-      vi.clearAllMocks()
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test description')
+      vi.clearAllMocks() as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
       store.sources = [mockSource]
     })
 
@@ -430,21 +405,22 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      const vm = wrapper.vm as any
+      expect(vm.successMessage).toBe(true)
     })
 
     it('hides form and shows success message', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test description') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       await wrapper.vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
+      const vm = wrapper.vm as any
       // Check that successMessage flag is set
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      expect(vm.successMessage).toBe(true)
 
       // The conditional rendering is based on successMessage flag - use DOM selectors
       const formBody = document.querySelector('.modal-body-form')
@@ -465,8 +441,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
       if (successBody.exists()) {
         expect(successBody.text()).toContain('created successfully')
       } else {
+        const vm = wrapper.vm as any
         // Fallback: check in the component's successMessage flag
-        expect((wrapper.vm as any).successMessage).toBe(true)
+        expect(vm.successMessage).toBe(true)
       }
     })
 
@@ -482,10 +459,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Service Integration', () => {
     it('calls addEventConfigSource with correct parameters', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(wrapper.vm as any).description = 'Test Description'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       await wrapper.vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
@@ -497,11 +472,11 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
     it('validates success response structure contains required fields', async () => {
       const mockResponse = mockSuccessResponse(123, 'TestSource', 5)
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockResponse)
+      await setWrapperRefs('TestSource', 'TestVendor', 'Description') as any
+      (addEventConfigSource as any).mockResolvedValue(mockResponse)
+      const vm = wrapper.vm as any
 
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
@@ -511,17 +486,16 @@ describe('CreateEventConfigurationDialog.vue', () => {
       expect(mockResponse).toHaveProperty('name', 'TestSource')
       expect(mockResponse).toHaveProperty('fileOrder', 5)
       expect(mockResponse).toHaveProperty('status', 201)
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      expect(vm.successMessage).toBe(true)
     })
 
     it('handles service error gracefully', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {}) as any
+      (addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
 
-      ;(addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
-
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
@@ -533,9 +507,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Navigation', () => {
     it('navigates to Event Configuration Detail after clicking View Source', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       await wrapper.vm.$nextTick()
@@ -554,9 +527,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('hides dialog after navigating to source', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       await wrapper.vm.$nextTick()
@@ -572,28 +544,29 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('resets success message after navigation', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      expect(vm.successMessage).toBe(true)
 
       const viewSourceBtn =
         wrapper.findAllComponents(FeatherButton)[wrapper.findAllComponents(FeatherButton).length - 1]
       await viewSourceBtn.trigger('click')
 
-      expect((wrapper.vm as any).successMessage).toBe(false)
+      expect(vm.successMessage).toBe(false)
     })
 
     it('logs error when newId is 0 on View Source click', async () => {
-      ;(wrapper.vm as any).successMessage = true
-      ;(wrapper.vm as any).newId = 0
+      const vm = wrapper.vm as any
+      vm.successMessage = true as boolean
+      vm.newId = 0 as number
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
@@ -612,38 +585,35 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Form Reset', () => {
     it('resets all form fields after successful creation', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'TestVendor'
-      ;(wrapper.vm as any).description = 'Test Description'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).configName).toBe('')
-      expect((wrapper.vm as any).vendor).toBe('')
-      expect((wrapper.vm as any).description).toBe('')
+      expect(vm.configName).toBe('')
+      expect(vm.vendor).toBe('')
+      expect(vm.description).toBe('')
     })
 
     it('clears description field on reset', async () => {
-      ;(wrapper.vm as any).description = 'Some long description text'
-      await wrapper.vm.$nextTick()
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Test'
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Test', 'Some long description text') as any
 
+      const vm = wrapper.vm as any
       // Verify initial description state
-      expect((wrapper.vm as any).description).toBe('Some long description text')
+      expect(vm.description).toBe('Some long description text')
 
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
       // After save, description should be cleared by resetForm()
-      expect((wrapper.vm as any).description).toBe('')
+      expect(vm.description).toBe('')
     })
   })
 
@@ -667,22 +637,22 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('HTTP Status Code 409 (Duplicate Name)', () => {
     it('shows snackbar error on 409 duplicate source name', async () => {
-      ;(wrapper.vm as any).configName = 'ExistingSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(409)
 
+      const vm = wrapper.vm as any
       const mockShowSnackBar = vi.fn()
       vi.stubGlobal('useSnackbar', () => ({
         showSnackBar: mockShowSnackBar
       }))
 
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
       // Verify the specific 409 error message
-      expect((wrapper.vm as any).snackbar.showSnackBar).toHaveBeenCalledWith(
+      expect(vm.snackbar.showSnackBar).toHaveBeenCalledWith(
         expect.objectContaining({
           msg: 'An event configuration source with this name already exists.',
           error: true
@@ -691,39 +661,37 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not reset form on 409 error', async () => {
-      ;(wrapper.vm as any).configName = 'ExistingSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(wrapper.vm as any).description = 'Description'
-      ;(addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', 'Description') as any
+      (addEventConfigSource as any).mockResolvedValue(409)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
       // Form should retain values after 409 error
-      expect((wrapper.vm as any).configName).toBe('ExistingSource')
-      expect((wrapper.vm as any).vendor).toBe('Vendor')
-      expect((wrapper.vm as any).description).toBe('Description')
+      expect(vm.configName).toBe('ExistingSource')
+      expect(vm.vendor).toBe('Vendor')
+      expect(vm.description).toBe('Description')
     })
 
     it('does not show success message on 409 error', async () => {
-      ;(wrapper.vm as any).configName = 'ExistingSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(409)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(false)
+      expect(vm.successMessage).toBe(false)
     })
 
     it('does not call store methods on 409 error', async () => {
-      ;(wrapper.vm as any).configName = 'ExistingSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(409)
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
@@ -739,16 +707,16 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('HTTP Status Code 400 (Bad Request)', () => {
     it('shows snackbar error on 400 validation error', async () => {
-      ;(wrapper.vm as any).configName = 'Invalid@Name'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(400)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).snackbar.showSnackBar).toHaveBeenCalledWith(
+      expect(vm.snackbar.showSnackBar).toHaveBeenCalledWith(
         expect.objectContaining({
           msg: 'Invalid request. Please check your input and try again.',
           error: true
@@ -757,37 +725,35 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not reset form on 400 error', async () => {
-      ;(wrapper.vm as any).configName = 'Invalid@Name'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(wrapper.vm as any).description = 'Description'
-      ;(addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', 'Description') as any
+      (addEventConfigSource as any).mockResolvedValue(400)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).configName).toBe('Invalid@Name')
-      expect((wrapper.vm as any).vendor).toBe('Vendor')
+      expect(vm.configName).toBe('Invalid@Name')
+      expect(vm.vendor).toBe('Vendor')
     })
 
     it('does not show success message on 400 error', async () => {
-      ;(wrapper.vm as any).configName = 'Invalid@Name'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(400)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(false)
+      expect(vm.successMessage).toBe(false)
     })
 
     it('does not call store methods on 400 error', async () => {
-      ;(wrapper.vm as any).configName = 'Invalid@Name'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(400)
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
@@ -803,16 +769,16 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('HTTP Status Code 500 (Server Error)', () => {
     it('shows snackbar error on 500 server error', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(500)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).snackbar.showSnackBar).toHaveBeenCalledWith(
+      expect(vm.snackbar.showSnackBar).toHaveBeenCalledWith(
         expect.objectContaining({
           msg: 'Failed to create event configuration source. Please try again.',
           error: true
@@ -821,41 +787,40 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not reset form on 500 error', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(wrapper.vm as any).description = 'Test'
-      ;(addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', 'Test') as any
+      (addEventConfigSource as any).mockResolvedValue(500)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).configName).toBe('TestSource')
-      expect((wrapper.vm as any).vendor).toBe('Vendor')
+      expect(vm.configName).toBe('TestSource')
+      expect(vm.vendor).toBe('Vendor')
     })
 
     it('does not show success message on 500 error', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(500)
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(false)
+      expect(vm.successMessage).toBe(false)
     })
 
     it('does not call store methods on 500 error', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(500)
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
@@ -865,17 +830,17 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('handles unexpected status codes as errors', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(503) // Unexpected status code
+      await setWrapperRefs('TestSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(503) // Unexpected status code
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
       // Should show generic error message for unexpected status
-      expect((wrapper.vm as any).snackbar.showSnackBar).toHaveBeenCalledWith(
+      expect(vm.snackbar.showSnackBar).toHaveBeenCalledWith(
         expect.objectContaining({
           msg: 'Failed to create event configuration source. Please try again.',
           error: true
@@ -886,10 +851,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Exception Handling', () => {
     it('catches and logs exceptions from service call', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      const testError = new Error('Network error')
-      ;(addEventConfigSource as any).mockRejectedValue(testError)
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const testError = new Error('Network error') as any
+      (addEventConfigSource as any).mockRejectedValue(testError)
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       await wrapper.vm.$nextTick()
@@ -902,26 +866,26 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not show success on exception', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockRejectedValue(new Error('Service unavailable'))
+      await setWrapperRefs('TestSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockRejectedValue(new Error('Service unavailable'))
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(false)
+      expect(vm.successMessage).toBe(false)
     })
 
     it('does not call store methods on exception', async () => {
-      ;(wrapper.vm as any).configName = 'TestSource'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
+      await setWrapperRefs('TestSource', 'Vendor', '') as any
+      (addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
@@ -933,27 +897,28 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('NewId State Management', () => {
     it('captures the new source ID from response after creation', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
 
-      expect((wrapper.vm as any).newId).toBe(0) // Initial value
+      const vm = wrapper.vm as any      
+      expect(vm.newId).toBe(0) // Initial value
 
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).newId).toBe(789) // Should be set to response.id
+      expect(vm.newId).toBe(789) // Should be set to response.id
     })
 
     it('newId persists for navigation to detail page', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      expect(vm.newId).toBe(0) // Initial value      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
@@ -969,24 +934,23 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('newId is set from response.id', async () => {
-      ;(wrapper.vm as any).configName = 'TestConfig'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(999, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(999, 'TestConfig', 0))
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any      
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).newId).toBe(999)
+      expect(vm.newId).toBe(999)
     })
   })
 
   describe('Dialog Visibility and State Transitions', () => {
     it('toggles from form view to success view', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       // Initially shows form
       expect(document.querySelector('.modal-body-form')).not.toBeNull()
@@ -1002,25 +966,26 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('dialog state persists when hidden and reopened', async () => {
-      ;(wrapper.vm as any).successMessage = true
-      ;(wrapper.vm as any).configName = 'PreviousValue'
+      const vm = wrapper.vm as any      
+      vm.successMessage = true as boolean
+      vm.configName = 'PreviousValue' as string
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       // Hide dialog
       store.createEventConfigSourceDialogState.visible = false
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
 
       // Dialog should not be visible
       expect(document.querySelector('[data-ref-id="feather-dialog-header"]')).toBeNull()
 
       // Reopen dialog
       store.createEventConfigSourceDialogState.visible = true
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
 
       // Dialog should be visible again
       expect(document.querySelector('[data-ref-id="feather-dialog-header"]')).not.toBeNull()
       // successMessage state should persist (not auto-reset when toggling visibility)
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      expect(vm.successMessage).toBe(true)
     })
   })
 
@@ -1029,29 +994,31 @@ describe('CreateEventConfigurationDialog.vue', () => {
       const inputs = wrapper.findAllComponents(FeatherInput)
       const nameInput = inputs[0]
 
+      const vm = wrapper.vm as any
       await nameInput.vm.$emit('update:modelValue', 'NewName')
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
 
-      expect((wrapper.vm as any).configName).toBe('NewName')
+      expect(vm.configName).toBe('NewName')
     })
 
     it('updates vendor on input', async () => {
       const inputs = wrapper.findAllComponents(FeatherInput)
       const vendorInput = inputs[1]
 
+      const vm = wrapper.vm as any
       await vendorInput.vm.$emit('update:modelValue', 'NewVendor')
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
 
-      expect((wrapper.vm as any).vendor).toBe('NewVendor')
+      expect(vm.vendor).toBe('NewVendor')
     })
 
     it('updates description on textarea input', async () => {
       const textarea = wrapper.findComponent(FeatherTextarea)
 
+      const vm = wrapper.vm as any
       await textarea.vm.$emit('update:modelValue', 'New description')
-      await wrapper.vm.$nextTick()
-
-      expect((wrapper.vm as any).description).toBe('New description')
+      await vm.$nextTick()
+      expect(vm.description).toBe('New description')
     })
 
     it('description gets trimmed automatically with v-model.trim', async () => {
@@ -1066,17 +1033,17 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Edge Cases and Additional Scenarios', () => {
     it('cancel button works from success view', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
       // Now in success state
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      expect(vm.successMessage).toBe(true)
 
       // Click Cancel from success view
       const cancelBtn = wrapper.findAllComponents(FeatherButton)[0]
@@ -1086,20 +1053,20 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('resets success state when dialog is closed and reopened', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
-      expect((wrapper.vm as any).successMessage).toBe(true)
+      expect(vm.successMessage).toBe(true)
 
       // Manually reset to simulate closing dialog
-      ;(wrapper.vm as any).successMessage = false
-      await wrapper.vm.$nextTick()
+      vm.successMessage = false
+      await vm.$nextTick()
 
       // Dialog should show form again
       expect(document.querySelector('.modal-body-form')).not.toBeNull()
@@ -1107,45 +1074,42 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('prevents save when vendor is empty but name is valid', async () => {
-      ;(wrapper.vm as any).configName = 'ValidName'
-      ;(wrapper.vm as any).vendor = '' // Empty vendor
-
-      await wrapper.vm.$nextTick()
+      await setWrapperRefs('ValidName', '', '') as any
+      const vm = wrapper.vm as any
+      await vm.$nextTick()
 
       // Create button should be disabled
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       expect(createBtn.vm.$props.disabled).toBe(true)
 
       // Verify error exists for vendor
-      const errors = (wrapper.vm as any).error
+      const errors = vm.error
       expect(errors).not.toBeNull()
       expect(errors.vendor).toBeDefined()
     })
 
     it('prevents save when name is empty but vendor is valid', async () => {
-      ;(wrapper.vm as any).configName = '' // Empty name
-      ;(wrapper.vm as any).vendor = 'ValidVendor'
-
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await setWrapperRefs('', 'ValidVendor', '') as any
+      await vm.$nextTick()
 
       // Create button should be disabled
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       expect(createBtn.vm.$props.disabled).toBe(true)
 
       // Verify error exists for name
-      const errors = (wrapper.vm as any).error
+      const errors = vm.error
       expect(errors).not.toBeNull()
       expect(errors.name).toBeDefined()
     })
 
     it('handles both name and vendor empty simultaneously', async () => {
-      ;(wrapper.vm as any).configName = ''
-      ;(wrapper.vm as any).vendor = ''
-
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any
+      await setWrapperRefs('', '', '') as any
+      await vm.$nextTick()
 
       // Both errors should be present
-      const errors = (wrapper.vm as any).error
+      const errors = vm.error
       expect(errors).not.toBeNull()
       expect(errors.name).toBeDefined()
       expect(errors.vendor).toBeDefined()
@@ -1158,28 +1122,27 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('newId remains 0 on failed creation', async () => {
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(500) // Failure
+      await setWrapperRefs('Test', 'Vendor', '') as any
+      const vm = wrapper.vm as any
+      (addEventConfigSource as any).mockResolvedValue(500) // Failure
 
-      expect((wrapper.vm as any).newId).toBe(0)
+      expect(vm.newId).toBe(0)
 
-      await wrapper.vm.$nextTick()
+      await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
       await flushPromises()
 
       // newId should remain 0 on failure
-      expect((wrapper.vm as any).newId).toBe(0)
+      expect(vm.newId).toBe(0)
     })
 
     it('View Source button only appears after successful creation', async () => {
       // Initially should show Create button
       let buttons = wrapper.findAllComponents(FeatherButton)
       expect(buttons[1].text()).toContain('Create')
-      ;(wrapper.vm as any).configName = 'Test'
-      ;(wrapper.vm as any).vendor = 'Vendor'
-      ;(addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '') as any
+      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       await wrapper.vm.$nextTick()
       const createBtn = buttons[1]
