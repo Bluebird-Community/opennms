@@ -277,7 +277,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('validates vendor field on form submission', async () => {
-      await setWrapperRefs('Test', '', '')      
+      await setWrapperRefs('Test', '', '')
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       expect(createBtn.attributes('aria-disabled') === 'true' || createBtn.attributes('disabled')).toBeTruthy()
     })
@@ -491,7 +491,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
     it('handles service error gracefully', async () => {
       await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {}) as any
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { }) as any
       (addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
 
       const vm = wrapper.vm as any
@@ -567,7 +567,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       const vm = wrapper.vm as any
       vm.successMessage = true as boolean
       vm.newId = 0 as number
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       // Access the last button which would be the View Source button
@@ -742,7 +742,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
       (addEventConfigSource as any).mockResolvedValue(400)
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -772,7 +772,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestSource', 'Vendor', '') as any
       (addEventConfigSource as any).mockResolvedValue(500)
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -790,7 +790,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestSource', 'Vendor', 'Test') as any
       (addEventConfigSource as any).mockResolvedValue(500)
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -804,7 +804,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestSource', 'Vendor', '') as any
       (addEventConfigSource as any).mockResolvedValue(500)
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -819,7 +819,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -833,7 +833,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestSource', 'Vendor', '') as any
       (addEventConfigSource as any).mockResolvedValue(503) // Unexpected status code
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -854,7 +854,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestSource', 'Vendor', '')
       const testError = new Error('Network error') as any
       (addEventConfigSource as any).mockRejectedValue(testError)
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
       await wrapper.vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
@@ -869,7 +869,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestSource', 'Vendor', '') as any
       (addEventConfigSource as any).mockRejectedValue(new Error('Service unavailable'))
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -884,7 +884,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -900,7 +900,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestConfig', 'Vendor', '') as any
       (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       expect(vm.newId).toBe(0) // Initial value
 
       await vm.$nextTick()
@@ -916,7 +916,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       expect(vm.newId).toBe(0) // Initial value      
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
@@ -937,7 +937,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       await setWrapperRefs('TestConfig', 'Vendor', '') as any
       (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(999, 'TestConfig', 0))
 
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -966,7 +966,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('dialog state persists when hidden and reopened', async () => {
-      const vm = wrapper.vm as any      
+      const vm = wrapper.vm as any
       vm.successMessage = true as boolean
       vm.configName = 'PreviousValue' as string
       store.hideCreateEventConfigSourceDialog = vi.fn()
