@@ -153,7 +153,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('saves and shows success state when valid', async () => {
-    (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+    const func = addEventConfigSource as any
+    func.mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
     await setWrapperRefs('ConfigA', 'ConfigA', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
@@ -165,7 +166,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   it('resets form after save', async () => {
     store.hideCreateEventConfigSourceDialog = vi.fn() as any
-    (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+    const func = addEventConfigSource as any
+    func.mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
     await setWrapperRefs('ResetMe', 'ResetMe', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
@@ -183,7 +185,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
   })
 
   it('multiple successful submissions show success state', async () => {
-    (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+    const func = addEventConfigSource as any
+    func.mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
     await setWrapperRefs('One', 'One', '')
     const createBtn = wrapper.findAllComponents(FeatherButton)[1]
     await createBtn.trigger('click')
@@ -396,7 +399,8 @@ describe('CreateEventConfigurationDialog.vue', () => {
     beforeEach(async () => {
       await setWrapperRefs('TestConfig', 'TestVendor', 'Test description')
       vi.clearAllMocks() as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(1, 'TestConfig', 0))
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
       store.sources = [mockSource]
     })
 
@@ -410,8 +414,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('hides form and shows success message', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', 'Test description') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test description')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       await wrapper.vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
@@ -459,8 +464,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Service Integration', () => {
     it('calls addEventConfigSource with correct parameters', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       await wrapper.vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
@@ -472,8 +478,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
     it('validates success response structure contains required fields', async () => {
       const mockResponse = mockSuccessResponse(123, 'TestSource', 5)
-      await setWrapperRefs('TestSource', 'TestVendor', 'Description') as any
-      (addEventConfigSource as any).mockResolvedValue(mockResponse)
+      await setWrapperRefs('TestSource', 'TestVendor', 'Description')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockResponse)
       const vm = wrapper.vm as any
 
       await vm.$nextTick()
@@ -490,9 +497,10 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('handles service error gracefully', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { }) as any
-      (addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description')
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {}) as any
+      const func = addEventConfigSource as any
+      func.mockRejectedValue(new Error('Service error'))
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -507,8 +515,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Navigation', () => {
     it('navigates to Event Configuration Detail after clicking View Source', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       await wrapper.vm.$nextTick()
@@ -527,8 +536,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('hides dialog after navigating to source', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       await wrapper.vm.$nextTick()
@@ -544,8 +554,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('resets success message after navigation', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(456, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       const vm = wrapper.vm as any
@@ -567,7 +578,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
       const vm = wrapper.vm as any
       vm.successMessage = true as boolean
       vm.newId = 0 as number
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       // Access the last button which would be the View Source button
@@ -585,8 +596,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Form Reset', () => {
     it('resets all form fields after successful creation', async () => {
-      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'TestVendor', 'Test Description')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -600,8 +612,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('clears description field on reset', async () => {
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
-      await setWrapperRefs('Test', 'Test', 'Some long description text') as any
+      await setWrapperRefs('Test', 'Test', 'Some long description text')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       const vm = wrapper.vm as any
       // Verify initial description state
@@ -637,8 +650,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('HTTP Status Code 409 (Duplicate Name)', () => {
     it('shows snackbar error on 409 duplicate source name', async () => {
-      await setWrapperRefs('ExistingSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(409)
 
       const vm = wrapper.vm as any
       const mockShowSnackBar = vi.fn()
@@ -661,8 +675,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not reset form on 409 error', async () => {
-      await setWrapperRefs('ExistingSource', 'Vendor', 'Description') as any
-      (addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', 'Description')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(409)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -677,8 +692,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not show success message on 409 error', async () => {
-      await setWrapperRefs('ExistingSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(409)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -690,8 +706,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not call store methods on 409 error', async () => {
-      await setWrapperRefs('ExistingSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(409)
+      await setWrapperRefs('ExistingSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(409)
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
@@ -707,8 +724,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('HTTP Status Code 400 (Bad Request)', () => {
     it('shows snackbar error on 400 validation error', async () => {
-      await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(400)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -725,8 +743,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not reset form on 400 error', async () => {
-      await setWrapperRefs('Invalid@Name', 'Vendor', 'Description') as any
-      (addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', 'Description')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(400)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -739,8 +758,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not show success message on 400 error', async () => {
-      await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(400)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -752,8 +772,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not call store methods on 400 error', async () => {
-      await setWrapperRefs('Invalid@Name', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(400)
+      await setWrapperRefs('Invalid@Name', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(400)
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
@@ -769,8 +790,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('HTTP Status Code 500 (Server Error)', () => {
     it('shows snackbar error on 500 server error', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(500)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -787,8 +809,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not reset form on 500 error', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', 'Test') as any
-      (addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', 'Test')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(500)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -801,8 +824,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not show success message on 500 error', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(500)
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -814,8 +838,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not call store methods on 500 error', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(500)
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(500)
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
@@ -830,8 +855,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('handles unexpected status codes as errors', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(503) // Unexpected status code
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(503) // Unexpected status code
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -853,8 +879,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     it('catches and logs exceptions from service call', async () => {
       await setWrapperRefs('TestSource', 'Vendor', '')
       const testError = new Error('Network error') as any
-      (addEventConfigSource as any).mockRejectedValue(testError)
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+      const func = addEventConfigSource as any
+      func.mockRejectedValue(testError)
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       await wrapper.vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
@@ -866,8 +893,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not show success on exception', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockRejectedValue(new Error('Service unavailable'))
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockRejectedValue(new Error('Service unavailable'))
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -879,8 +907,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('does not call store methods on exception', async () => {
-      await setWrapperRefs('TestSource', 'Vendor', '') as any
-      (addEventConfigSource as any).mockRejectedValue(new Error('Service error'))
+      await setWrapperRefs('TestSource', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockRejectedValue(new Error('Service error'))
       store.fetchEventConfigs = vi.fn()
       store.refreshSourcesFilters = vi.fn()
 
@@ -897,8 +926,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('NewId State Management', () => {
     it('captures the new source ID from response after creation', async () => {
-      await setWrapperRefs('TestConfig', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
 
       const vm = wrapper.vm as any
       expect(vm.newId).toBe(0) // Initial value
@@ -912,12 +942,13 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('newId persists for navigation to detail page', async () => {
-      await setWrapperRefs('TestConfig', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(789, 'TestConfig', 0))
       store.hideCreateEventConfigSourceDialog = vi.fn()
 
       const vm = wrapper.vm as any
-      expect(vm.newId).toBe(0) // Initial value      
+      expect(vm.newId).toBe(0) // Initial value
       await vm.$nextTick()
       const createBtn = wrapper.findAllComponents(FeatherButton)[1]
       await createBtn.trigger('click')
@@ -934,8 +965,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('newId is set from response.id', async () => {
-      await setWrapperRefs('TestConfig', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(999, 'TestConfig', 0))
+      await setWrapperRefs('TestConfig', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(999, 'TestConfig', 0))
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -949,8 +981,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Dialog Visibility and State Transitions', () => {
     it('toggles from form view to success view', async () => {
-      await setWrapperRefs('Test', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       // Initially shows form
       expect(document.querySelector('.modal-body-form')).not.toBeNull()
@@ -1033,8 +1066,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
   describe('Edge Cases and Additional Scenarios', () => {
     it('cancel button works from success view', async () => {
-      await setWrapperRefs('Test', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -1053,8 +1087,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('resets success state when dialog is closed and reopened', async () => {
-      await setWrapperRefs('Test', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       const vm = wrapper.vm as any
       await vm.$nextTick()
@@ -1074,7 +1109,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('prevents save when vendor is empty but name is valid', async () => {
-      await setWrapperRefs('ValidName', '', '') as any
+      await setWrapperRefs('ValidName', '', '')
       const vm = wrapper.vm as any
       await vm.$nextTick()
 
@@ -1090,7 +1125,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
     it('prevents save when name is empty but vendor is valid', async () => {
       const vm = wrapper.vm as any
-      await setWrapperRefs('', 'ValidVendor', '') as any
+      await setWrapperRefs('', 'ValidVendor', '')
       await vm.$nextTick()
 
       // Create button should be disabled
@@ -1105,7 +1140,7 @@ describe('CreateEventConfigurationDialog.vue', () => {
 
     it('handles both name and vendor empty simultaneously', async () => {
       const vm = wrapper.vm as any
-      await setWrapperRefs('', '', '') as any
+      await setWrapperRefs('', '', '')
       await vm.$nextTick()
 
       // Both errors should be present
@@ -1122,9 +1157,10 @@ describe('CreateEventConfigurationDialog.vue', () => {
     })
 
     it('newId remains 0 on failed creation', async () => {
-      await setWrapperRefs('Test', 'Vendor', '') as any
+      await setWrapperRefs('Test', 'Vendor', '')
       const vm = wrapper.vm as any
-      (addEventConfigSource as any).mockResolvedValue(500) // Failure
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(500) // Failure
 
       expect(vm.newId).toBe(0)
 
@@ -1141,8 +1177,9 @@ describe('CreateEventConfigurationDialog.vue', () => {
       // Initially should show Create button
       let buttons = wrapper.findAllComponents(FeatherButton)
       expect(buttons[1].text()).toContain('Create')
-      await setWrapperRefs('Test', 'Vendor', '') as any
-      (addEventConfigSource as any).mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
+      await setWrapperRefs('Test', 'Vendor', '')
+      const func = addEventConfigSource as any
+      func.mockResolvedValue(mockSuccessResponse(123, 'TestConfig', 0))
 
       await wrapper.vm.$nextTick()
       const createBtn = buttons[1]
