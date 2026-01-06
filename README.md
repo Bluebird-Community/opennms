@@ -118,11 +118,11 @@ confidence.
 
 ## Licenses
 
-The BlueBirdOps software, as distributed here, is Copyright © 2025 by the BlueBirdOps contributors.
+The BlueBirdOps software, as distributed here, is Copyright © 2026 by the BlueBirdOps contributors.
 
 BlueBirdOps is a derivative work, containing original code, included code, and modified code that was published under the GNU Affero General Public License or a compatible license. Please see the source code for detailed copyright notices, but some notable copyright holders are listed below:
 
-* The OpenNMS Horizon 34.x code base is Copyright © 2002-2025 by The OpenNMS Group, Inc.
+* The OpenNMS Horizon 34.x code base is Copyright © 2002-2026 by The OpenNMS Group, Inc.
 * Source code files whose comments list other copyright holders are as indicated therein.
 
 OpenNMS is a registered trademark of The OpenNMS Group, Inc. 

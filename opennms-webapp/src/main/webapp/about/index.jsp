@@ -1,9 +1,9 @@
 <%--
     This file is part of BlueBirdOps(tm).
 
-    BlueBirdOps is Copyright (C) 2025 BlueBirdOps Contributors.
+    BlueBirdOps is Copyright (C) 2026 BlueBirdOps Contributors.
 
-    Portions Copyright (C) 2002-2025 The OpenNMS Group, Inc.
+    Portions Copyright (C) 2002-2026 The OpenNMS Group, Inc.
 
     See the LICENSE.md file distributed with this work for additional
     information regarding copyright ownership.
@@ -168,7 +168,7 @@
   </p>
   <ul>
     <li>The OpenNMS Horizon 34.x code base is Copyright &copy;
-       2002-2025 by <a href="http://www.opennms.com/">The OpenNMS Group,
+       2002-2026 by <a href="http://www.opennms.com/">The OpenNMS Group,
        Inc</a>.</li>
     <li>Source code files whose comments list other copyright holders are as
       indicated therein.</li>
