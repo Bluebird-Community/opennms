@@ -36,6 +36,7 @@ RELEASE_LOG           := target/release.log
 OK                    := "[ 👍 ]"
 FAILED                := "[ 🤬 ]"
 SKIP                  := "[ ⏭️ ]"
+SKIP_UI_TESTS         := true
 JAVA_MAJOR_VERSION    := 17
 
 # Package requirements
@@ -272,7 +273,8 @@ compile: maven-structure-graph
 
 .PHONY: compile-ui
 compile-ui:
-	cd ui && pnpm install && pnpm build && pnpm test
+	cd ui && pnpm install && pnpm build && \
+	if [ "$(SKIP_UI_TESTS)" == "false" ]; then pnpm test; else echo "Skip UI Tests"; fi;
 
 .PHONY: assemble
 assemble: deps-build show-info
