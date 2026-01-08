@@ -36,7 +36,7 @@ RELEASE_LOG           := target/release.log
 OK                    := "[ 👍 ]"
 FAILED                := "[ 🤬 ]"
 SKIP                  := "[ ⏭️ ]"
-SKIP_UI_TESTS         := true
+SKIP_UI_TESTS         := false
 JAVA_MAJOR_VERSION    := 17
 
 # Package requirements
