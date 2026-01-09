@@ -1,5 +1,5 @@
 ## Set a fallback, so you can use just docker build without failing
-ARG DEPLOY_BASE_IMAGE="quay.io/bluebird/deploy-base:2.1.0.b29"
+ARG DEPLOY_BASE_IMAGE="quay.io/bluebird/deploy-base:3.0.0.b42"
 
 FROM ${DEPLOY_BASE_IMAGE} AS core-tarball
 
@@ -59,6 +59,9 @@ RUN install -d -m 775 -o 10001 -g 0 \
     ln -s /opennms-data/reports /opt/opennms/share/reports && \
     ln -s /opennms-data/mibs /opt/opennms/share/mibs && \
     cp -a /opt/opennms/etc/ /opt/opennms/share/etc-pristine/
+
+RUN echo "${JAVA_HOME}/bin/java" > /opt/opennms/etc/java.conf && \
+    chown 10001:0 /opt/opennms/etc/java.conf
 
 # Add templates replaced at runtime and entrypoint
 COPY --chown=10001:0 ./container-fs/confd /etc/confd

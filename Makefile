@@ -59,7 +59,7 @@ PKG_RELEASE           := $(RELEASE_BUILD_NUM)
 MAINTAINER_EMAIL      ?= maintainer@bluebirdops.org
 
 INSTALL_VERSION       := ${OPENNMS_VERSION}-${RELEASE_COMMIT}
-DEPLOY_BASE_IMAGE     := quay.io/bluebird/deploy-base:2.1.0.b29
+DEPLOY_BASE_IMAGE     := quay.io/bluebird/deploy-base:3.0.0.b42
 BUILD_DATE            := $(shell date '+%Y%m%d')
 OCI_PLATFORM          := linux/amd64
 OCI_REGISTRY          ?= quay.io
