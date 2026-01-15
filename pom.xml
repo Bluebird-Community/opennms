@@ -1777,8 +1777,8 @@
     <eddsaVersion>0.3.0</eddsaVersion>
     <elasticsearchNettyVersion>${netty4Version}</elasticsearchNettyVersion>
     <elasticsearchDriftPluginVersion>2.0.5</elasticsearchDriftPluginVersion>
-    <elasticsearchTargetVersion>7.17.9</elasticsearchTargetVersion>
-    <elasticsearchClientVersion>8.18.1</elasticsearchClientVersion>
+    <elasticsearchTargetVersion>8.19.9</elasticsearchTargetVersion>
+    <elasticsearchClientVersion>8.19.9</elasticsearchClientVersion>
     <errorProneAnnotationsVersion>2.25.0</errorProneAnnotationsVersion>
     <esapiVersion>2.5.2.0</esapiVersion>
     <felixBridgeVersion>4.1.6</felixBridgeVersion>

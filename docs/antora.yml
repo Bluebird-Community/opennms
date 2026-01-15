@@ -19,7 +19,7 @@ asciidoc:
     compatible-opennms-plugin: '9 - 11.2'
     compatible-oia: '1.6.1'
     compatible-cassandra: '4.17.0'
-    compatible-elasticsearch: '8.18.3'
+    compatible-elasticsearch: '8.19.9'
     compatible-javajdk: 'OpenJDK 17'
     compatible-kafka: '1.x - 3.x'
     compatible-postgresql: '14.x - 18.x'

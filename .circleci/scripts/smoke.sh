@@ -30,7 +30,7 @@ for CONTAINER in \
   "cassandra:3.11.2" \
   "confluentinc/cp-kafka:5.2.1" \
   "confluentinc/cp-kafka:latest" \
-  "docker.elastic.co/elasticsearch/elasticsearch:7.17.9" \
+  "docker.elastic.co/elasticsearch/elasticsearch:8.19.9" \
   "opennms/dummy-http-endpoint:0.0.2" \
   "postgres:13-alpine" \
   "postgres:latest" \

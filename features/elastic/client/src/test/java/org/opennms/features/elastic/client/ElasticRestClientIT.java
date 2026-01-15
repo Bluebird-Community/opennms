@@ -66,7 +66,7 @@ import eu.rekawek.toxiproxy.ToxiproxyClient;
 
 public class ElasticRestClientIT {
 
-    private static final String ELASTICSEARCH_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:7.17.9";
+    private static final String ELASTICSEARCH_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.19.9";
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticRestClientIT.class);
 

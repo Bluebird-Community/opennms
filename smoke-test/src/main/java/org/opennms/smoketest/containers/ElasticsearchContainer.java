@@ -29,7 +29,7 @@ import org.testcontainers.containers.Network;
 public class ElasticsearchContainer extends org.testcontainers.elasticsearch.ElasticsearchContainer {
 
     public ElasticsearchContainer() {
-        super("docker.elastic.co/elasticsearch/elasticsearch:7.17.9");
+        super("docker.elastic.co/elasticsearch/elasticsearch:8.18.9");
                  withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
                 .withEnv("xpack.security.enabled", "false")
                 .withNetwork(Network.SHARED)
