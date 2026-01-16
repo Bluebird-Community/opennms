@@ -1,5 +1,5 @@
 ifeval::["{page-component-title}" == "Horizon"]
-include::../centos/adoptium.adoc[]
+include::../centos-rhel/adoptium.adoc[]
 endif::[]
 
 ifeval::["{page-component-title}" == "Horizon"]

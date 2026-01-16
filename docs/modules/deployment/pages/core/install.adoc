@@ -97,7 +97,7 @@ include::centos-rhel9/postgresql.adoc[]
 CentOS/RHEL 10::
 +
 --
-include::centos10/postgresql.adoc[]
+include::centos-rhel10/postgresql.adoc[]
 --
 ifeval::["{page-component-title}" == "Horizon"]
 
@@ -129,10 +129,10 @@ CentOS/RHEL 9::
 include::centos-rhel9/install-core.adoc[]
 --
 
-CentOS 10::
+CentOS/RHEL 10::
 +
 --
-include::centos10/install-core.adoc[]
+include::centos-rhel10/install-core.adoc[]
 --
 
 ifeval::["{page-component-title}" == "Horizon"]
@@ -166,12 +166,6 @@ CentOS/RHEL 9::
 +
 --
 include::centos-rhel/initialize-core.adoc[]
---
-
-CentOS 10::
-+
---
-include::centos/initialize-core.adoc[]
 --
 
 ifeval::["{page-component-title}" == "Horizon"]
