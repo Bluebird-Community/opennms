@@ -76,7 +76,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-17.b27
+      image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-17.b31
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
@@ -103,7 +103,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-17.b27
+      image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-17.b31
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
@@ -130,7 +130,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-17.b27
+      image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-17.b31
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
@@ -384,8 +384,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
-        shards: [ 8 ]                         # total number of parallel test jobs
+        shard_idx: [ 0, 1, 2 ] # Test job index for each runner
+        shards: [ 3 ]             # total number of parallel test jobs
     needs:
       - unit-tests
     runs-on:
@@ -430,8 +430,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
-        shards: [ 8 ]                         # total number of parallel test jobs
+        shard_idx: [ 0, 1, 2 ] # Test job index for each runner
+        shards: [ 3 ]                         # total number of parallel test jobs
     needs:
       - unit-tests
     runs-on:
@@ -568,7 +568,7 @@ jobs:
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/base-builder:ubuntu.0.1.8.b19
+      image: quay.io/bluebird/base-builder:ubuntu-25.10-0.1.b26
     steps:
       - name: Set a release package repository to stable
         if: startsWith(github.ref, 'refs/tags/v')
