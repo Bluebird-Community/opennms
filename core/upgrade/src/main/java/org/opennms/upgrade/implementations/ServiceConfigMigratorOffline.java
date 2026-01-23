@@ -170,14 +170,6 @@ public class ServiceConfigMigratorOffline extends AbstractOnmsUpgrade {
                     log("Disabling service %s because it is not on the default list of enabled services\n", localSvc.getName());
                     localSvc.setEnabled(false);
                 }
-                if (localSvc.getClassName().equals("org.opennms.netmgt.poller.jmx.RemotePollerBackEnd")) {
-                    log("Fixing the class path for RemotePollerBackEnd.\n");
-                    localSvc.setClassName("org.opennms.netmgt.poller.remote.jmx.RemotePollerBackEnd");
-                }
-                if (localSvc.getName().equals("OpenNMS:Name=Linkd")) {
-                    log("Disabling Linkd (to promote EnhancedLinkd)\n");
-                    localSvc.setEnabled(false);
-                }
                 Attribute a = getLoggingPrefix(localSvc);
                 if (a != null) {
                     String prefix = a.getValue().getContent().toLowerCase();
