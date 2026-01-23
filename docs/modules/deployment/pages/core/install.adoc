@@ -162,7 +162,7 @@ endif::[]
 
 [{tabs}]
 ====
-CentOS/RHEL 9::
+CentOS/RHEL::
 +
 --
 include::centos-rhel/initialize-core.adoc[]

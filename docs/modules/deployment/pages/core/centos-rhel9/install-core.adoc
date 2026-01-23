@@ -26,26 +26,3 @@ ifeval::["{page-component-title}" == "Meridian"]
 sudo dnf config-manager --disable meridian
 endif::[]
 ----
-
-.Verify directory structure with the tree command
-[source, console]
-----
-sudo dnf -y install tree
-tree /opt/opennms -L 1
-----
-
-.Directory structure after successful installation
-[source, output]
-----
-/opt/opennms
-├── bin
-├── contrib
-├── data
-├── deploy
-├── etc
-├── jetty-webapps
-├── lib
-├── logs -> /var/log/opennms
-├── share -> /var/opennms
-└── system
-----
