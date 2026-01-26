@@ -4,21 +4,12 @@ ARG DEPLOY_BASE_IMAGE="quay.io/bluebird/deploy-base:3.0.0.b42"
 FROM ${DEPLOY_BASE_IMAGE} AS core-tarball
 
 ADD --chown=10001:0 ./tarball-root/ /opt/opennms/
-RUN chmod -R g-w /opt/opennms && \
-    chmod -R g=u \
-        /opt/opennms/etc \
-        /opt/opennms/data \
-        /opt/opennms/jetty-webapps/*/WEB-INF \
-        /opt/opennms/logs \
-        /opt/opennms/share \
-        && \
-    chmod g=u /opt/opennms && \
-    find \
-        /opt/opennms/data \
-        /opt/opennms/deploy \
-        /opt/opennms/logs \
-        /opt/opennms/system \
-        -type d -print0 | xargs -0 chmod 2775
+
+# Remove directories that are persisted in /opennms-data
+RUN rm -r /opt/opennms/share/rrd \
+          /opt/opennms/share/reports \
+          /opt/opennms/share/mibs \
+          /opt/opennms/etc/examples
 
 ##
 # Install and setup OpenNMS
@@ -44,24 +35,24 @@ RUN groupadd \
 
 COPY --chown=10001:0 --from=core-tarball /opt/opennms /opt/opennms
 
-RUN install -d -m 775 -o 10001 -g 0 \
-            /opt/opennms-etc-overlay \
-            /opt/opennms-jetty-webinf-overlay \
-            /opt/opennms-overlay \
-            /opt/opennms/data/tmp \
-            /opt/opennms/etc_archive \
-            /opennms-data && \
-    install -d -m 775 -o 10001 -g 0 \
+# Set permissions so that permissions are inherited and can be written by group 0
+# That makes it possible to run with random user ID in OpenShift
+
+# Allow to run liquibase with etc migration which uses etc_archive
+RUN install -d -m 2775 -o 10001 -g 0 \
             /opennms-data/rrd \
             /opennms-data/reports \
-            /opennms-data/mibs && \
-    ln -s /opennms-data/rrd /opt/opennms/share/rrd && \
+            /opennms-data/mibs \
+            /opt/opennms/etc_archive && \
+    chmod -R g+rwX /opt/opennms/etc \
+                   /opt/opennms/data \
+                   /opt/opennms/logs && \
+    find /opt/opennms/etc -type d -print0 | xargs -0 chmod 2775 && \
+    chmod g+rwX /opt/opennms # Allow to create Karaf pid file
+RUN ln -s /opennms-data/rrd /opt/opennms/share/rrd && \
     ln -s /opennms-data/reports /opt/opennms/share/reports && \
     ln -s /opennms-data/mibs /opt/opennms/share/mibs && \
     cp -a /opt/opennms/etc/ /opt/opennms/share/etc-pristine/
-
-RUN echo "${JAVA_HOME}/bin/java" > /opt/opennms/etc/java.conf && \
-    chown 10001:0 /opt/opennms/etc/java.conf
 
 # Add templates replaced at runtime and entrypoint
 COPY --chown=10001:0 ./container-fs/confd /etc/confd

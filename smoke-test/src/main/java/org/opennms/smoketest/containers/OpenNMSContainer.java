@@ -39,6 +39,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +51,8 @@ import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.ctc.wstx.dtd.DTDElement;
+import org.junit.jupiter.api.AfterEach;
 import org.opennms.smoketest.stacks.InternetProtocol;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.NetworkProtocol;
@@ -71,6 +74,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.SelinuxContext;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 import org.testcontainers.lifecycle.TestDescription;
 import org.testcontainers.lifecycle.TestLifecycleAware;
 
@@ -203,8 +208,8 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases(ALIAS)
                 .withCommand(containerCommand)
-                .waitingFor(Objects.requireNonNull(profile.getWaitStrategy()).apply(this));
-
+                .waitingFor(Objects.requireNonNull(profile.getWaitStrategy()).apply(this))
+                .withLogConsumer(new Slf4jLogConsumer(logger()).withSeparateOutputStreams());
         addFileSystemBind(overlay.toString(),
                         "/opt/opennms-overlay", BindMode.READ_ONLY, SelinuxContext.SINGLE);
 
@@ -453,7 +458,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         return model;
     }
 
-    public static class WaitForOpenNMS extends org.testcontainers.containers.wait.strategy.AbstractWaitStrategy {
+    public static class WaitForOpenNMS extends AbstractWaitStrategy {
         private final OpenNMSContainer container;
 
         public WaitForOpenNMS(OpenNMSContainer container) {
@@ -482,8 +487,16 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             LOG.info("Waiting for startup to begin.");
             final Path managerLog = CONTAINER_LOG_DIR.resolve("manager.log");
             await("waiting for startup to begin")
-                    .atMost(3, MINUTES)
-                    .failFast("container is no longer running", () -> !container.isRunning())
+                    .atMost(5, MINUTES)
+                    .failFast("container is no longer running", () -> {
+                        if (!container.isRunning()) {
+                            LOG.error("Container stopped unexpectedly. Exit code: {}",
+                                container.getCurrentContainerInfo().getState().getExitCodeLong());
+                            LOG.error("Container logs:\n{}", container.getLogs());
+                            return true;
+                        }
+                        return false;
+                    })
                     .ignoreException(NotFoundException.class)
                     .until(() -> TestContainerUtils.getFileFromContainerAsString(container, managerLog),
                     containsString("Starter: Beginning startup"));
@@ -526,7 +539,6 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
 
             container.assertNoKarafDestroy(Paths.get("/opt", ALIAS, "logs", "karaf.log"));
         }
-
     }
 
     public int getGeneratedUserId() {
