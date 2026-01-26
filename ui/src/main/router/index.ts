@@ -22,7 +22,6 @@
 
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { Plugin } from '@/types'
-import DeviceConfigBackup from '@/containers/DeviceConfigBackup.vue'
 import Home from '@/containers/Home.vue'
 import FileEditor from '@/containers/FileEditor.vue'
 import Graphs from '@/components/Resources/Graphs.vue'
@@ -36,7 +35,7 @@ import useSnackbar from '@/composables/useSnackbar'
 import useSpinner from '@/composables/useSpinner'
 import { useMenuStore } from '@/stores/menuStore'
 
-const { adminRole, filesystemEditorRole, dcbRole, rolesAreLoaded } = useRole()
+const { adminRole, filesystemEditorRole, rolesAreLoaded } = useRole()
 const menuStore = computed(() => useMenuStore())
 const { showSnackBar } = useSnackbar()
 const { startSpinner, stopSpinner } = useSpinner()
@@ -185,22 +184,6 @@ const router = createRouter({
       component: () => import('@/containers/OpenAPI.vue')
     },
     {
-      path: '/device-config-backup',
-      name: 'DeviceConfigBackup',
-      component: DeviceConfigBackup,
-      beforeEnter: (to, from) => {
-        const checkRoles = () => {
-          if (!dcbRole.value) {
-            showSnackBar({ msg: 'No role access to DCB.' })
-            router.push(from.path)
-          }
-        }
-
-        if (rolesAreLoaded.value) checkRoles()
-        else whenever(rolesAreLoaded, () => checkRoles())
-      }
-    },
-    {
       path: '/scv',
       name: 'SCV',
       component: () => import('@/containers/SecureCredentialsVault.vue'),
@@ -297,4 +280,3 @@ router.beforeEach(() => startSpinner())
 router.afterEach(() => stopSpinner())
 export default router
 export { isLegacyPlugin }
-

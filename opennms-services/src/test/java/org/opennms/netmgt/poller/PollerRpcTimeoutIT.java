@@ -90,8 +90,7 @@ import org.springframework.transaction.support.TransactionTemplate;
         "classpath:/META-INF/opennms/applicationContext-rpc-poller.xml",
         "classpath:/META-INF/opennms/applicationContext-pollerd.xml",
         "classpath:/META-INF/opennms/applicationContext-testThresholdingDaos.xml",
-        "classpath:/META-INF/opennms/applicationContext-testPollerConfigDaos.xml",
-        "classpath:/META-INF/opennms/applicationContext-test-deviceConfig.xml"
+        "classpath:/META-INF/opennms/applicationContext-testPollerConfigDaos.xml"
 })
 @JUnitConfigurationEnvironment(systemProperties={
         "org.opennms.netmgt.icmp.pingerClass=org.opennms.netmgt.icmp.jna.JnaPinger",
@@ -108,8 +107,6 @@ public class PollerRpcTimeoutIT implements TemporaryDatabaseAware<MockDatabase> 
     public static final String NONEXISTENT_LOCATION = "DOESNT_EXIST";
 
     private Poller m_poller;
-
-    private MockNetwork m_network;
 
     private MockDatabase m_db;
 
@@ -162,8 +159,6 @@ public class PollerRpcTimeoutIT implements TemporaryDatabaseAware<MockDatabase> 
     /**
      * Clean up the activemq persistence directory before and after
      * the test.
-     * 
-     * @throws Exception
      */
     @BeforeClass
     @AfterClass
@@ -178,7 +173,7 @@ public class PollerRpcTimeoutIT implements TemporaryDatabaseAware<MockDatabase> 
         MockUtil.println("------------ Begin Test  --------------------------");
         MockLogAppender.setupLogging();
 
-        m_network = new MockNetwork();
+        MockNetwork m_network = new MockNetwork();
         m_network.setCriticalService("ICMP");
         m_network.addNode(1, "Router");
         m_network.addInterface(str(InetAddressUtils.UNPINGABLE_ADDRESS));
@@ -233,7 +228,6 @@ public class PollerRpcTimeoutIT implements TemporaryDatabaseAware<MockDatabase> 
         m_poller.setPollerConfig(factory);
         m_poller.setLocationAwarePollerClient(m_locationAwarePollerClient);
         m_poller.setPollOutagesDao(m_pollOutagesDao);
-        m_poller.setServiceMonitorAdaptor((service, parameters, status) -> status);
         m_poller.setPersisterFactory(new MockPersisterFactory());
     }
 
