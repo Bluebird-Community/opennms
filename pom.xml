@@ -85,6 +85,16 @@
       <organization>The OpenNMS Group</organization>
       <timezone>-5</timezone>
     </developer>
+    <developer>
+      <id>indigo</id>
+      <name>Ronny Trommer</name>
+      <email>ronny@opennms.org</email>
+      <roles>
+        <role>Maintainer</role>
+      </roles>
+      <organization>The OpenNMS Group</organization>
+      <timezone>+1</timezone>
+    </developer>
   </developers>
   <scm>
     <connection>scm:git:https://github.com/Bluebird-Community/opennms.git</connection>
