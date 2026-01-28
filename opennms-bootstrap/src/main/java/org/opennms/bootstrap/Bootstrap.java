@@ -39,11 +39,13 @@ import java.nio.file.Paths;
 import java.rmi.server.RMISocketFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -68,12 +70,12 @@ public abstract class Bootstrap {
     protected static final String OPENNMS_PROPERTIES_D_NAME = "opennms.properties.d";
     protected static final String OPENNMS_HOME_PROPERTY = "opennms.home";
     protected static final String DEFAULT_RRD_INTERFACE_JAR ="/usr/share/java/jrrd2.jar";
-    public static final String DEFAULT_RRD_STRATEGY_CLASS = "org.opennms.netmgt.rrd.rrdtool.MultithreadedJniRrdStrategy";
+    protected static final String DEFAULT_RRD_STRATEGY_CLASS = "org.opennms.netmgt.rrd.rrdtool.MultithreadedJniRrdStrategy";
 
     /**
      * Matches any file that is a directory.
      */
-    private static FileFilter m_dirFilter = new FileFilter() {
+    private static final FileFilter m_dirFilter = new FileFilter() {
         @Override
         public boolean accept(File pathname) {
             return pathname.isDirectory();
@@ -83,7 +85,7 @@ public abstract class Bootstrap {
     /**
      * Matches any file that has a name ending in ".jar".
      */
-    private static FilenameFilter m_jarFilter = new FilenameFilter() {
+    private static final FilenameFilter m_jarFilter = new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
             return name.endsWith(".jar");
@@ -94,7 +96,7 @@ public abstract class Bootstrap {
     /**
      * Matches any file that has a name ending in ".properties".
      */
-    private static FilenameFilter m_propertiesFilter = new FilenameFilter() {
+    private static final FilenameFilter m_propertiesFilter = new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
             return name.endsWith(".properties");
@@ -102,7 +104,7 @@ public abstract class Bootstrap {
     };
 
     /**
-     * A list of sub-folders found in $OPENNMS_HOME that should always be excluded
+     * A list of subfolders found in $OPENNMS_HOME that should always be excluded
      * from the class-loader
      */
     private static final List<String> OPENNMS_HOME_CLASSLOADER_EXCLUDES = Arrays.asList(
@@ -120,8 +122,8 @@ public abstract class Bootstrap {
 
     static {
 
-        // Here we determine the canonical files for the excluded sub-folders under
-        // $OPENNMS_HOME, and add them to the list of excludes
+        // Here we determine the canonical files for the excluded subfolders under
+        // $OPENNMS_HOME and add them to the list of excludes
         try {
             final File opennmsHome = Bootstrap.findOpenNMSHome();
             for (final String subfolder : OPENNMS_HOME_CLASSLOADER_EXCLUDES) {
@@ -163,9 +165,7 @@ public abstract class Bootstrap {
 
         if (append) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            for (final URL u : ((URLClassLoader) classLoader).getURLs()) {
-                urls.add(u);
-            }
+            Collections.addAll(urls, ((URLClassLoader) classLoader).getURLs());
         }
         StringTokenizer toke = new StringTokenizer(dirStr, File.pathSeparator);
         while (toke.hasMoreTokens()) {
@@ -272,7 +272,6 @@ public abstract class Bootstrap {
     /**
      * Retrieves the list of configuration files containing
      * system properties to be set.
-     *
      * The system properties must be set in the same order
      * as they are returned here.
      *
@@ -360,7 +359,7 @@ public abstract class Bootstrap {
      * for known mandatory files.
      *
      * @param opennmsHome the OpenNMS home directory
-     * @return true is the opennmsHome folder is a valid OpenNMS home directory
+     * @return true if the opennmsHome folder is a valid OpenNMS home directory
      */
     protected static boolean isValidOpenNMSHome(File opennmsHome) {
         File etc = new File(opennmsHome, "etc");
@@ -414,6 +413,7 @@ public abstract class Bootstrap {
         try {
             String classFile = Bootstrap.class.getName().replace('.', '/') + ".class";
             URL url = l.getResource(classFile);
+            Objects.requireNonNull(url, "Could not find class file for " + Bootstrap.class.getName());
             if (url.getProtocol().equals("jar")) {
                 URL subUrl = new URL(url.getFile());
                 if (subUrl.getProtocol().equals("file")) {
@@ -434,8 +434,8 @@ public abstract class Bootstrap {
      * Bootloader main method. Takes the following steps to initialize a
      * ClassLoader, set properties, and start OpenNMS:
      * <ul>
-     * <li>Checks for existence of opennms.home system property, and loads
-     * properties file located at ${opennms.home}/etc/bootstrap.properties if
+     * <li>Checks for the existence of opennms.home system property and loads
+     * a properties file located at ${opennms.home}/etc/bootstrap.properties if
      * it exists.</li>
      * <li>Calls {@link #findOpenNMSHome findOpenNMSHome} to determine the
      * OpenNMS home directory if the bootstrap.properties file has not yet
@@ -470,9 +470,8 @@ public abstract class Bootstrap {
 
         final String classToExec = System.getProperty("opennms.manager.class", "org.opennms.netmgt.vmmgr.Controller");
         final String classToExecMethod = System.getProperty("opennms.manager.method", "main");
-        final String[] classToExecArgs = args;
 
-        executeClass(classToExec, classToExecMethod, classToExecArgs, false);
+        executeClass(classToExec, classToExecMethod, args, false);
     }
 
     protected static void executeClass(final String classToExec, final String classToExecMethod, final String[] classToExecArgs, boolean appendClasspath) throws ClassNotFoundException, NoSuchMethodException, IOException {
@@ -513,10 +512,9 @@ public abstract class Bootstrap {
         configureRMI(cl);
 
         if (classToExec != null) {
-            final String className = classToExec;
             final Class<?>[] classes = new Class[] { classToExecArgs.getClass() };
             final Object[] methodArgs = new Object[] { classToExecArgs };
-            Class<?> c = cl.loadClass(className);
+            Class<?> c = cl.loadClass(classToExec);
             final Method method = c.getMethod(classToExecMethod, classes);
 
             Runnable execer = new Runnable() {
@@ -572,14 +570,13 @@ public abstract class Bootstrap {
             m_rmiServerSocketFactory = new HostRMIServerSocketFactory("localhost");
             RMISocketFactory.setSocketFactory(m_rmiServerSocketFactory);
         }
-
-        /**
-          * This is necessary so the ProxyLoginModule can find the OpenNMSLoginModule because
-          * otherwise we're at the mercy of which thread/context is the first to make a JAAS
-          * request, since LoginModules are initialized statically.  In my testing, attempting
-          * to connect to JMX with jconsole would give a class not found while attempting to
-          * locate the OpenNMSLoginModule without using a classloader like this.
-          */
+        /*
+         * This is necessary so the ProxyLoginModule can find the OpenNMSLoginModule because
+         * otherwise we're at the mercy of which thread/context is the first to make a JAAS
+         * request, since LoginModules are initialized statically.  In my testing, attempting
+         * to connect to JMX with jconsole would give a ClassNotFound while attempting to
+         * locate the OpenNMSLoginModule without using a classloader like this.
+         */
         OpenNMSProxyLoginModule.setClassloader(cl);
     }
 }
