@@ -1000,18 +1000,5 @@
           <artifactId>jersey-media-multipart</artifactId>
           <version>${jersey.version}</version>
       </dependency>
-
-
   </dependencies>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>central-portal</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>central-portal</id>
-      <url>https://central.sonatype.com/repository/maven-releases/</url>
-    </repository>
-  </distributionManagement>
 </project>
