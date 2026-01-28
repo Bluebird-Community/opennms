@@ -23,7 +23,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Cleaning project for quick validation
         run: |
           make validate
@@ -38,7 +38,7 @@ jobs:
           make quick-smoke
       - name: Publish Quick Smoke Test Report
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@5609ce4db72c09db044803b344a8968fd1f315da # v1.9.1
         with:
           check_name: Quick Smoke Test Report
       - name: Collect build logs
@@ -47,22 +47,22 @@ jobs:
           make collect-testresults
       - name: Persist test results and logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: build-with-smoke-test-logs
           path: target/artifacts/mvn.*.log
       - name: Persist tarball Core
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target/opennms-full-assembly-*.tar.gz
       - name: Persist tarball Minion
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target/org.opennms.assemblies.minion-*.tar.gz
       - name: Persist tarball Sentinel
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
@@ -78,8 +78,8 @@ jobs:
     container:
       image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-17.b31
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target
@@ -88,7 +88,7 @@ jobs:
       - name: Build Core RPM packages
         run: make core-pkg-rpm PKG_RELEASE=${{ github.run_number }}
       - name: Persist Core package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: core-pkgs
           path: |
@@ -105,8 +105,8 @@ jobs:
     container:
       image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-17.b31
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
@@ -115,7 +115,7 @@ jobs:
       - name: Build Minion RPM packages
         run: make minion-pkg-rpm PKG_RELEASE=${{ github.run_number }}
       - name: Persist Minion package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: minion-pkgs
           path: |
@@ -132,8 +132,8 @@ jobs:
     container:
       image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-17.b31
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
@@ -142,7 +142,7 @@ jobs:
       - name: Build Sentinel RPM packages
         run: make sentinel-pkg-rpm PKG_RELEASE=${{ github.run_number }}
       - name: Persist Sentinel package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: sentinel-pkgs
           path: |
@@ -157,20 +157,20 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
         with:
           cache-image: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v 3.12.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target
@@ -194,7 +194,7 @@ jobs:
           echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> ${GITHUB_ENV}
           echo "TAG=${VERSION:-$(git rev-parse --short HEAD)}" >> ${GITHUB_ENV}
       - name: Build and push Core container image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ./opennms-container/core
           platforms: linux/amd64,linux/arm64
@@ -218,20 +218,20 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
         with:
           cache-image: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v 3.12.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
@@ -261,7 +261,7 @@ jobs:
           echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> ${GITHUB_ENV}
           echo "TAG=${VERSION:-$(git rev-parse --short HEAD)}" >> ${GITHUB_ENV}
       - name: Build and push Minion container image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ./opennms-container/minion
           platforms: linux/amd64,linux/arm64
@@ -285,20 +285,20 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
         with:
           cache-image: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v 3.12.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
@@ -321,7 +321,7 @@ jobs:
           echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> ${GITHUB_ENV}
           echo "TAG=${VERSION:-$(git rev-parse --short HEAD)}" >> ${GITHUB_ENV}
       - name: Build and push Sentinel container image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ./opennms-container/sentinel
           platforms: linux/amd64,linux/arm64
@@ -352,7 +352,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare the build for tests
         run: |
           make quick-compile
@@ -362,7 +362,7 @@ jobs:
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@5609ce4db72c09db044803b344a8968fd1f315da # v1.9.1
         with:
           check_name: Unit Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -371,7 +371,7 @@ jobs:
           make collect-testresults
       - name: Persist unit test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: unit-tests-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -395,7 +395,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare the build for tests
         run: |
           make quick-compile
@@ -408,7 +408,7 @@ jobs:
           make integration-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Integration Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@5609ce4db72c09db044803b344a8968fd1f315da # v1.9.1
         with:
           check_name: Integration Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -417,7 +417,7 @@ jobs:
           make collect-testresults
       - name: Persist integration test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: integration-tests-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -441,7 +441,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare the build for tests
         run: |
           make quick-compile
@@ -451,7 +451,7 @@ jobs:
           make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Core Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@5609ce4db72c09db044803b344a8968fd1f315da # v1.9.1
         with:
           check_name: Core E2E Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -460,7 +460,7 @@ jobs:
           make collect-testresults
       - name: Persist Core e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: e2e-tests-core-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -486,7 +486,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare the build for tests
         run: |
           make quick-compile
@@ -496,7 +496,7 @@ jobs:
           make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Minion Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@5609ce4db72c09db044803b344a8968fd1f315da # v1.9.1
         with:
           check_name: Minion E2E Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -505,7 +505,7 @@ jobs:
           make collect-testresults
       - name: Persist Minion e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: e2e-tests-minion-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -531,7 +531,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Prepare the build for tests
         run: |
           make quick-compile
@@ -541,7 +541,7 @@ jobs:
           make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Sentinel Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@5609ce4db72c09db044803b344a8968fd1f315da # v1.9.1
         with:
           check_name: Sentinel E2E Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -550,7 +550,7 @@ jobs:
           make collect-testresults
       - name: Persist Sentinel e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: e2e-tests-sentinel-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -577,15 +577,15 @@ jobs:
       - name: Set package repository
         run: |
           echo "PKG_REPOSITORY=${TARGET:-develop}" >> ${GITHUB_ENV}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: core-pkgs
           path: target/artifacts/packages/core
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: minion-pkgs
           path: target/artifacts/packages/minion
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: sentinel-pkgs
           path: target/artifacts/packages/sentinel
@@ -614,32 +614,32 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: core-pkgs
           path: target/artifacts/packages/core
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: minion-pkgs
           path: target/artifacts/packages/minion
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: sentinel-pkgs
           path: target/artifacts/packages/sentinel
       - name: Release ${{ github.ref_name }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           files: |
             opennms-full-assembly/target/*.tar.gz
