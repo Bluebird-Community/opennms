@@ -153,6 +153,9 @@
                 "branches": {
                     "ignore": [
                         "/^merge-foundation.*/"
+                    ],
+                    "only": [
+                        "/^master-.*/"
                     ]
                 }
             }
@@ -169,6 +172,9 @@
                 "branches": {
                     "ignore": [
                         "/^merge-foundation.*/"
+                    ],
+                    "only": [
+                        "/^master-.*/"
                     ]
                 }
             }
