@@ -157,9 +157,9 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
-            },
-            "user_overridable": false
+                },
+                "user_overridable": false
+            }
         },
         "build-rpm": {
             "context": [
@@ -177,9 +177,9 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
-            },
-            "user_overridable": false
+                },
+                "user_overridable": false
+            }
         },
         "docs": {
             "job": "build-docs",
