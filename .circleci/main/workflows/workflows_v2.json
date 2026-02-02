@@ -158,7 +158,8 @@
                         "/^master-.*/"
                     ]
                 }
-            }
+            },
+            "user_overridable": false
         },
         "build-rpm": {
             "context": [
@@ -177,7 +178,8 @@
                         "/^master-.*/"
                     ]
                 }
-            }
+            },
+            "user_overridable": false
         },
         "docs": {
             "job": "build-docs",
