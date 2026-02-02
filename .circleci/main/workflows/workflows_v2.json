@@ -278,7 +278,7 @@
             "requires": [
                 "tarball-assembly-only"
             ]
-        },        
+        },
         "minion-image-single-arch-linux-amd64-trivy-analyze": {
             "context": [
                 "CircleCI",
@@ -288,7 +288,7 @@
                 "minion-image-single-arch-linux-amd64-trivy",
                 "horizon-image-single-arch-linux-amd64-trivy-analyze"
             ]
-        },        
+        },
         "horizon-image-single-arch-linux-amd64": {
             "context": [
                 "CircleCI",
@@ -306,7 +306,7 @@
             "requires": [
                 "tarball-assembly-only"
             ]
-        },        
+        },
         "horizon-image-single-arch-linux-amd64-trivy-analyze": {
             "context": [
                 "CircleCI",
@@ -315,7 +315,7 @@
             "requires": [
                 "horizon-image-single-arch-linux-amd64-trivy"
             ]
-        },        
+        },
         "sentinel-image-single-arch-linux-amd64": {
             "context": [
                 "CircleCI",
@@ -333,7 +333,7 @@
             "requires": [
                 "tarball-assembly-only"
             ]
-        },        
+        },
         "sentinel-image-single-arch-linux-amd64-trivy-analyze": {
             "context": [
                 "CircleCI",
@@ -344,7 +344,7 @@
                 "horizon-image-single-arch-linux-amd64-trivy-analyze",
                 "minion-image-single-arch-linux-amd64-trivy-analyze"
             ]
-        },        
+        },
         "minion-image-single-arch": {
             "context": [
                 "CircleCI",
@@ -357,7 +357,15 @@
                 "smoke-test-core",
                 "smoke-test-minion",
                 "smoke-test-sentinel"
-            ]
+            ],
+            "filters": {
+                "branches": {
+                    "only": [
+                        "/^master-.*/"
+                    ]
+                },
+                "user_overridable": false
+            }
         },
         "horizon-image-single-arch": {
             "context": [
@@ -371,7 +379,15 @@
                 "smoke-test-core",
                 "smoke-test-minion",
                 "smoke-test-sentinel"
-            ]
+            ],
+            "filters": {
+                "branches": {
+                    "only": [
+                        "/^master-.*/"
+                    ]
+                },
+                "user_overridable": false
+            }
         },
         "sentinel-image-single-arch": {
             "context": [
@@ -385,7 +401,15 @@
                 "smoke-test-core",
                 "smoke-test-minion",
                 "smoke-test-sentinel"
-            ]
+            ],
+            "filters": {
+                "branches": {
+                    "only": [
+                        "/^master-.*/"
+                    ]
+                },
+                "user_overridable": false
+            }
         },
         "create-merge-foundation-branch": {
             "context": [
@@ -430,10 +454,10 @@
         "create-merge-omega-branch": {
             "context": [
                 "CircleCI"
-            ],  
+            ],
             "requires": [
                 "tarball-assembly-only"
-            ],  
+            ],
             "filters": {
                 "branches": {
                     "only": [
@@ -441,8 +465,8 @@
                     ]
                 },
                 "user_overridable": false
-            }   
-        },      
+            }
+        },
         "create-merge-meridian-branch": {
             "context": [
                 "CircleCI"
