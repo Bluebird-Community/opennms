@@ -71,7 +71,9 @@
                 "debs",
                 "oci",
                 "smoke",
-                "merge"
+                "merge",
+                "publish",
+                "publish-maven"
             ]
         },
         "merge": {
@@ -500,10 +502,7 @@
             "filters": {
                 "branches": {
                     "only": [
-                        "develop",
-                        "/^master-.*/",
-                        "/^release-.*/",
-                        "/^foundation.*/"
+                        "/^master-.*/"
                     ]
                 },
                 "user_overridable": false
@@ -522,9 +521,7 @@
             "filters": {
                 "branches": {
                     "only": [
-                        "develop",
-                        "/^master-.*/",
-                        "/^release-.*/"
+                        "/^master-.*/"
                     ]
                 },
                 "user_overridable": false
