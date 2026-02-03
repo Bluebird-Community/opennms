@@ -1818,6 +1818,7 @@
         <jackson2Version>2.16.2</jackson2Version>
         <jinjavaVersion>2.8.2</jinjavaVersion>
         <jmsApiVersion>2.0.1</jmsApiVersion>
+        <jose4jVersion>0.9.6</jose4jVersion>
         <snakeyamlVersion>2.2</snakeyamlVersion>
         <spiflyVersion>1.3.6</spiflyVersion>
         <jacocoVersion>0.8.9</jacocoVersion>
@@ -1887,6 +1888,7 @@
         <osgiUtilPromiseVersion>1.3.0</osgiUtilPromiseVersion>
         <paxLoggingVersion>2.3.0</paxLoggingVersion>
         <paxSwissboxVersion>1.9.0</paxSwissboxVersion>
+        <paxSwissboxOptionalJclVersion>1.8.5</paxSwissboxOptionalJclVersion>
         <paxUrlAetherVersion>2.6.17</paxUrlAetherVersion>
         <paxWebVersion>8.0.34</paxWebVersion>
         <slingJohnzonVersion>1.2.16</slingJohnzonVersion>
