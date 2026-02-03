@@ -1260,44 +1260,29 @@
                                         <exclude>xml-apis:xml-apis</exclude>
 
                                         <exclude>asm:*</exclude>                          <!-- use: org.ow2.asm.* -->
-                                        <exclude>org.ow2.asm:asm-all
-                                        </exclude>            <!-- doesn't exist anymore, use individual deps -->
-                                        <exclude>bouncycastle:*
-                                        </exclude>                 <!-- use: org.bouncycastle:* instead, but not in a way that ends up in $OPENNMS_HOME/lib/ -->
-                                        <exclude>bsh:*
-                                        </exclude>                          <!-- use: org.apache-extras.beanshell:bsh -->
+                                        <exclude>org.ow2.asm:asm-all</exclude>            <!-- doesn't exist anymore, use individual deps -->
+                                        <exclude>bouncycastle:*</exclude>                 <!-- use: org.bouncycastle:* instead, but not in a way that ends up in $OPENNMS_HOME/lib/ -->
+                                        <exclude>bsh:*</exclude>                          <!-- use: org.apache-extras.beanshell:bsh -->
                                         <exclude>c3p0:c3p0</exclude>                      <!-- use: com.mchange:c3p0 -->
                                         <exclude>commons-logging:*</exclude>              <!-- use: jcl-over-slf4j -->
-                                        <exclude>com.github.detro:*
-                                        </exclude>             <!-- use: com.codeborne.phantomjsdriver -->
-                                        <exclude>com.github.detro.ghostdriver:*
-                                        </exclude> <!-- use: com.codeborne.phantomjsdriver -->
+                                        <exclude>com.github.detro:*</exclude>             <!-- use: com.codeborne.phantomjsdriver -->
+                                        <exclude>com.github.detro.ghostdriver:*</exclude> <!-- use: com.codeborne.phantomjsdriver -->
                                         <exclude>com.sun.mail:jakarta.mail</exclude>      <!-- use: javax.mail:mail -->
                                         <exclude>dom4j:dom4j</exclude>                    <!-- use: org.dom4j:dom4j -->
-                                        <exclude>javax.servlet:jstl
-                                        </exclude>             <!-- use: jstl-dependencies -->
-                                        <exclude>javax.servlet.jsp:jsp-api
-                                        </exclude>      <!-- use: servlet-dependencies -->
+                                        <exclude>javax.servlet:jstl</exclude>             <!-- use: jstl-dependencies -->
+                                        <exclude>javax.servlet.jsp:jsp-api</exclude>      <!-- use: servlet-dependencies -->
                                         <exclude>javax.ws.rs:jsr311-api</exclude>         <!-- use: javax.ws.rs-api -->
-                                        <exclude>javax.xml.bind:jaxb-api
-                                        </exclude>        <!-- use: jaxb-dependencies -->
-                                        <exclude>jdom:jdom
-                                        </exclude>                      <!-- use: org.apache.servicemix.bundles.jdom -->
-                                        <exclude>net.sf.jung:*
-                                        </exclude>                  <!-- use: org.opennms.dependencies:jung-shaded -->
+                                        <exclude>javax.xml.bind:jaxb-api</exclude>        <!-- use: jaxb-dependencies -->
+                                        <exclude>jdom:jdom</exclude>                      <!-- use: org.apache.servicemix.bundles.jdom -->
+                                        <exclude>net.sf.jung:*</exclude>                  <!-- use: org.opennms.dependencies:jung-shaded -->
                                         <exclude>log4j:log4j</exclude>                    <!-- use: log4j2 -->
-                                        <exclude>nekohtml:nekohtml
-                                        </exclude>              <!-- use: org.nokogiri:nekohtml -->
-                                        <exclude>org.apache.geronimo.specs/geronimo-jms_2.0_spec
-                                        </exclude>   <!-- use: javax.jms:javax.jms-api -->
-                                        <exclude>org.apache.velocity:velocity
-                                        </exclude>   <!-- use: org.apache.velocity:velocity-engine-core -->
-                                        <exclude>org.springframework:*
-                                        </exclude>          <!-- use: org.apache.servicemix.bundles.spring-* -->
-                                        <exclude>org.springframework.security:*
-                                        </exclude> <!-- use: org.apache.servicemix.bundles.spring-security-* -->
-                                        <exclude>org.springframework.security.kerberos:*
-                                        </exclude> <!-- use: org.apache.servicemix.bundles.spring-security-* -->
+                                        <exclude>nekohtml:nekohtml</exclude>              <!-- use: org.nokogiri:nekohtml -->
+                                        <exclude>org.apache.geronimo.specs/geronimo-jms_2.0_spec</exclude>   <!-- use: javax.jms:javax.jms-api -->
+                                        <exclude>org.apache.velocity:velocity</exclude>   <!-- use: org.apache.velocity:velocity-engine-core -->
+                                        <exclude>org.springframework:*</exclude>          <!-- use: org.apache.servicemix.bundles.spring-* -->
+                                        <exclude>org.springframework.security:*</exclude> <!-- use: org.apache.servicemix.bundles.spring-security-* -->
+                                        <exclude>org.springframework.security.kerberos:*</exclude> <!-- use: org.apache.servicemix.bundles.spring-security-* -->
+                                        <exclude>org.lz4:lz4-java</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>
@@ -1435,7 +1420,7 @@
                 <version>${maven.testing.plugin.version}</version>
                 <configuration>
                     <argLine>${argLineAllowReflection}</argLine>
-                    <!-- Don't specify argLine here or it will override the argLine property value -->
+                    <!-- Don't specify argLine here, or it will override the argLine property value -->
                     <skip>${skipSurefire}</skip>
                     <systemPropertyVariables>
                         <!-- Turn off queuing in the RRD output -->
@@ -1485,7 +1470,7 @@
                 <configuration>
                     <!-- Don't use this! Use the normal -DskipITs=true; this exists only for CI to do some optimizations. -->
                     <skip>${skipFailsafe}</skip>
-                    <!-- Don't specify argLine here or it will override the argLine property value -->
+                    <!-- Don't specify argLine here, or it will override the argLine property value -->
                     <systemPropertyVariables>
                         <java.locale.providers>CLDR,COMPAT</java.locale.providers>
                     </systemPropertyVariables>
@@ -1867,6 +1852,7 @@
         <jnrVersion>3.1.17</jnrVersion>
         <jodaTimeVersion>2.12.5</jodaTimeVersion>
         <jolokiaVersion>1.7.2</jolokiaVersion>
+        <jose4jVersion>0.9.6</jose4jVersion>
         <jqwikVersion>1.6.5</jqwikVersion>
         <jrrdVersion>1.1.0</jrrdVersion>
         <jrrd2Version>2.0.3</jrrd2Version>
@@ -1932,8 +1918,8 @@
         <okhttp3Version>4.9.2</okhttp3Version>
         <okioGrafanaVersion>2.8.0</okioGrafanaVersion>
         <openid4javaVersion>0.9.6</openid4javaVersion>
-        <opennmsApiVersion>1.6.1</opennmsApiVersion>
-        <opennmsApiVersionOsgi>1.6.1</opennmsApiVersionOsgi>
+        <opennmsApiVersion>2.0.0</opennmsApiVersion>
+        <opennmsApiVersionOsgi>2.0.0</opennmsApiVersionOsgi>
         <osgiVersion>7.0.0</osgiVersion>
         <osgiAnnotationVersion>7.0.0</osgiAnnotationVersion>
         <osgiCompendiumVersion>7.0.0</osgiCompendiumVersion>
@@ -1947,7 +1933,7 @@
         <opentracingVersion>0.32.0</opentracingVersion>
         <jaegertracingVersion>1.8.1</jaegertracingVersion>
         <pyroscopeVersion>2.1.2</pyroscopeVersion>
-        <lz4JavaVersion>1.8.0</lz4JavaVersion>
+        <lz4JavaVersion>1.10.2</lz4JavaVersion>
         <quartzVersion>2.3.2</quartzVersion>
         <rancidApiVersion>2.0.0</rancidApiVersion>
         <rateLimitedLoggerVersion>2.0.2</rateLimitedLoggerVersion>
