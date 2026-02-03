@@ -1,5 +1,5 @@
 ## Set a fallback, so you can use just docker build without failing
-ARG DEPLOY_BASE_IMAGE="quay.io/bluebird/deploy-base:4.0.0.b45"
+ARG DEPLOY_BASE_IMAGE="quay.io/bluebird/deploy-base:5.0.0.b46"
 
 FROM ${DEPLOY_BASE_IMAGE} AS sentinel-tarball
 
