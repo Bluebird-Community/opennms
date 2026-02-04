@@ -1816,7 +1816,7 @@
         <ipaddressVersion>5.5.0</ipaddressVersion>
         <jacksonVersion>1.9.14-atlassian-6</jacksonVersion>
         <jackson2Version>2.16.2</jackson2Version>
-        <jinjavaVersion>2.8.2</jinjavaVersion>
+        <jinjavaVersion>2.8.3</jinjavaVersion>
         <jmsApiVersion>2.0.1</jmsApiVersion>
         <jose4jVersion>0.9.6</jose4jVersion>
         <snakeyamlVersion>2.2</snakeyamlVersion>
