@@ -21,7 +21,17 @@
  */
 package org.opennms.netmgt.trapd;
 
+import java.net.InetAddress;
 import java.util.function.Supplier;
+
+import org.opennms.core.utils.InetAddressUtils;
+import org.opennms.core.utils.LocationUtils;
+import org.opennms.distributed.core.api.Identity;
+import org.opennms.netmgt.trapd.jmx.DeviceTrapMetrics;
+import org.opennms.netmgt.trapd.jmx.DeviceTrapMetricsRegistry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -38,14 +48,15 @@ import com.codahale.metrics.jmx.JmxReporter;
  * - Queue size metrics (current, max, batch size)
  */
 public class TrapListenerMetrics {
+    private static final Logger LOG = LoggerFactory.getLogger(TrapListenerMetrics.class);
     private static final String JMX_DOMAIN = "org.opennms.netmgt.trapd";
+    private static final String DEVICE_METRICS_PROPERTY = "org.opennms.netmgt.trapd.enableDeviceMetrics";
 
     private final MetricRegistry metrics;
     private JmxReporter jmxReporter;
 
     // Counters (listener level)
     private final Counter rawTrapsReceived;
-    private final Counter trapsDispatched;
     private final Counter trapsErrored;
 
     // Gauges
@@ -53,12 +64,22 @@ public class TrapListenerMetrics {
     private int maxQueueSize = 0;
     private int batchSize = 0;
 
+    // Per-device metrics
+    private final Identity identity;
+    private final DeviceTrapMetricsRegistry<DeviceTrapMetrics> deviceRegistry;
+
     public TrapListenerMetrics(MetricRegistry metrics) {
+        this(metrics, null, false);
+    }
+
+    public TrapListenerMetrics(MetricRegistry metrics, Identity identity, boolean enableDeviceMetrics) {
         this.metrics = metrics;
+        this.identity = identity;
+        boolean deviceMetricsEnabled = enableDeviceMetrics || Boolean.getBoolean(DEVICE_METRICS_PROPERTY);
+        this.deviceRegistry = new DeviceTrapMetricsRegistry<>(deviceMetricsEnabled, DeviceTrapMetrics::new, "listener");
 
         // Register listener-level counters only
         this.rawTrapsReceived = metrics.counter(name("rawTrapsReceived"));
-        this.trapsDispatched = metrics.counter(name("trapsDispatched"));
         this.trapsErrored = metrics.counter(name("trapsErrored"));
 
         // Register queue gauges
@@ -83,6 +104,7 @@ public class TrapListenerMetrics {
             jmxReporter.close();
             jmxReporter = null;
         }
+        deviceRegistry.shutdown();
     }
 
     // Counter methods
@@ -90,12 +112,24 @@ public class TrapListenerMetrics {
         rawTrapsReceived.inc();
     }
 
-    public void incTrapsDispatched() {
-        trapsDispatched.inc();
+    public void incRawTrapsReceivedCount(InetAddress trapAddress) {
+        rawTrapsReceived.inc();
+        DeviceTrapMetrics device = getDeviceMetrics(trapAddress);
+        if (device != null) {
+            device.incRawTrapsReceived();
+        }
     }
 
     public void incErrorCount() {
         trapsErrored.inc();
+    }
+
+    public void incErrorCount(InetAddress trapAddress) {
+        trapsErrored.inc();
+        DeviceTrapMetrics device = getDeviceMetrics(trapAddress);
+        if (device != null) {
+            device.incTrapsErrored();
+        }
     }
 
     // Gauge setters
@@ -109,5 +143,13 @@ public class TrapListenerMetrics {
 
     public void setBatchSize(int size) {
         this.batchSize = size;
+    }
+
+    private DeviceTrapMetrics getDeviceMetrics(InetAddress trapAddress) {
+        if (trapAddress == null) {
+            return null;
+        }
+        String location = identity != null ? identity.getLocation() : LocationUtils.DEFAULT_LOCATION_NAME;
+        return deviceRegistry.getOrCreate(location, InetAddressUtils.str(trapAddress));
     }
 }
