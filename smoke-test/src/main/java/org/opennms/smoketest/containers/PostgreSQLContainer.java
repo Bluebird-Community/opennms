@@ -87,7 +87,7 @@ public class PostgreSQLContainer extends org.testcontainers.containers.PostgreSQ
         }
     }
 
-    public <T extends AbstractDaoHibernate<?, ?>> T dao(Class<T> clazz) {
+    public <T extends AbstractDaoHibernate<?, ? extends java.io.Serializable>> T dao(Class<T> clazz) {
         return getDaoFactory().getDao(clazz);
     }
 
