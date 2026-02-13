@@ -56,8 +56,8 @@ import io.searchbox.core.SearchResult;
 /**
  * Simple helper which sends a defined set of {@link FlowPacket}s to OpenNMS or Minion and afterwards verifies
  * the data at the elastic endpoints.
- *
- * Optionally it can also run verifications before sending flows or check the results at the OpenNMS ReST endpoint as well.
+ * <p>
+ * Optionally, it can also run verifications before sending flows or check the results at the OpenNMS ReST endpoint as well.
  *
  * @author mvrueden
  */
@@ -79,7 +79,7 @@ public class FlowTester {
 
     private static final String TEMPLATE_NAME = "netflow";
 
-    private static Logger LOG = LoggerFactory.getLogger(FlowTester.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FlowTester.class);
 
     private static final Gson gson = new Gson();
 
@@ -113,7 +113,7 @@ public class FlowTester {
 
             // Verify the flow count via the REST API
             runAfter.add(flowTester -> {
-                with().pollInterval(15, SECONDS).await().atMost(1, MINUTES)
+                with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
                     .until(() -> restclient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount));
             });
         }
@@ -127,7 +127,7 @@ public class FlowTester {
 
 
             // Verify the flow count via the REST API
-            runAfter.add((flowTester) -> with().pollInterval(15, SECONDS).await().atMost(1, MINUTES)
+            runAfter.add((flowTester) -> with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
                                      .until(() -> restClient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount)));
         }
     }
@@ -240,7 +240,7 @@ public class FlowTester {
         Objects.requireNonNull(verifyCallback);
 
         // Verify
-        with().pollInterval(15, SECONDS).await().atMost(5, MINUTES).until(() -> {
+        with().pollInterval(5, SECONDS).await().atMost(5, MINUTES).until(() -> {
             try {
                 LOG.info("Querying elastic search");
                 return verifyCallback.test();
