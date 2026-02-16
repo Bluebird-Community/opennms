@@ -14,7 +14,7 @@ MAVEN_ARGS            := --batch-mode -DupdatePolicy=never -Djava.awt.headless=t
 export MAVEN_OPTS     := -XX:+UseG1GC -XX:InitialRAMPercentage=75.0 -XX:MaxRAMPercentage=75.0 -XX:ReservedCodeCacheSize=1g -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -XX:-UseGCOverheadLimit -XX:-MaxFDLimit -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Dmaven.wagon.http.retryHandler.count=3
 
 GIT_BRANCH            := $(shell git branch | grep \* | cut -d' ' -f2)
-OPENNMS_VERSION       := $(shell mvn org.apache.maven.plugins:maven-help-plugin:3.5.1:evaluate -Dexpression=project.version -q -DforceStdout)
+OPENNMS_VERSION       ?= $(shell grep '<version>' pom.xml | head -1 | sed -e 's/.*<version>\(.*\)<\/version>.*/\1/')
 VERSION               := $(shell echo ${OPENNMS_VERSION} | sed -e 's,-SNAPSHOT,,')
 RELEASE_BRANCH        := $(shell echo ${GIT_BRANCH} | sed -e 's,/,-,g')
 ifndef CIRCLE_BUILD_NUM
