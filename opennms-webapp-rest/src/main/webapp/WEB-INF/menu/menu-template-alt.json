@@ -205,13 +205,6 @@
           "roles": null
         },
         {
-          "id": "opsBoard",
-          "name": "Wallboard",
-          "url": "vaadin-wallboard",
-          "locationMatch": "vaadin-wallboard",
-          "roles": null
-        },
-        {
           "id": "heatmap",
           "name": "Heatmap",
           "url": "heatmap/index.jsp",
