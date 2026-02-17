@@ -22,8 +22,11 @@
 package org.opennms.netmgt.measurements.filters.impl;
 
 import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.opennms.netmgt.integrations.R.RScriptException;
+import org.opennms.netmgt.integrations.R.RScriptExecutor;
 import org.opennms.netmgt.measurements.api.Filter;
 import org.opennms.netmgt.measurements.model.FilterDef;
 
@@ -31,6 +34,20 @@ import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
 
 public class HWRForecastIT extends AnalyticsFilterTest {
+
+    @Before
+    public void setUp() {
+        Assume.assumeTrue("Rscript binary not found in PATH", isRscriptAvailable());
+    }
+
+    private boolean isRscriptAvailable() {
+        try {
+            Process p = Runtime.getRuntime().exec(new String[] { RScriptExecutor.RSCRIPT_BINARY, "--version" });
+            return p.waitFor() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @Test
     public void canCheckForecastSupport() throws RScriptException  {
@@ -47,11 +64,11 @@ public class HWRForecastIT extends AnalyticsFilterTest {
                 "periodInSeconds", "1",
                 "confidenceLevel", "0.95");
 
-        // Use constant values for the Y column
+        // Use non-constant values for the Y column
         RowSortedTable<Long, String, Double> table = TreeBasedTable.create();
         for (long i = 0; i < 100; i++) {
             table.put(i, Filter.TIMESTAMP_COLUMN_NAME, (double)(i * 1000));
-            table.put(i, "X", 1.0d);
+            table.put(i, "X", (double)i);
         }
 
         // Make the forecasts
@@ -65,11 +82,11 @@ public class HWRForecastIT extends AnalyticsFilterTest {
             Assert.assertEquals((double) (i * 1000), table.get(i, Filter.TIMESTAMP_COLUMN_NAME), 0.0001);
         }
 
-        // The forecasted value should be constant
+        // The forecasted value should follow the trend
         for (long i = 100; i < 112; i++) {
-            Assert.assertEquals(1.0d, table.get(i, "HWFit"), 0.0001);
-            Assert.assertEquals(1.0d, table.get(i, "HWLwr"), 0.0001);
-            Assert.assertEquals(1.0d, table.get(i, "HWUpr"), 0.0001);
+            Assert.assertEquals((double) i, table.get(i, "HWFit"), 0.0001);
+            Assert.assertTrue(table.get(i, "HWLwr") <= table.get(i, "HWFit"));
+            Assert.assertTrue(table.get(i, "HWUpr") >= table.get(i, "HWFit"));
         }
     }
 }
