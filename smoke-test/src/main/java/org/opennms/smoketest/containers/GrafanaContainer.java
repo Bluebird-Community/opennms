@@ -38,7 +38,7 @@ public class GrafanaContainer extends GenericContainer<GrafanaContainer> impleme
     public static final int WEB_PORT = 3000;
     public static final String GRAFANA_ALIAS = "grafana";
     public GrafanaContainer() {
-        super("grafana/grafana:11.3.0");
+        super("grafana/grafana-oss:12.3.3");
             withEnv("GF_SECURITY_ADMIN_PASSWORD", "admin")
                 .withNetwork(Network.SHARED)
                     .withExposedPorts(WEB_PORT);

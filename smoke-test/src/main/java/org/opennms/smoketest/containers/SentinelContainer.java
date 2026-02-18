@@ -78,7 +78,7 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
     private static final int SENTINEL_DEBUG_PORT = 5005;
     private static final int SENTINEL_SSH_PORT = 8301;
     private static final int SENTINEL_JETTY_PORT = 8181;
-    static final String IMAGE = "opennms/sentinel";
+    static final String IMAGE = "local/sentinel:latest";
     static final String ALIAS = "sentinel";
 
     private final StackModel model;

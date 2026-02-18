@@ -24,9 +24,9 @@ docker pull opennms/sentinel:$VERSION
 And then tag them for the tests:
 ```
 export VERSION=XX.X.X
-docker tag opennms/horizon:XX.X.X opennms/horizon
-docker tag opennms/minion:XX.X.X opennms/minion
-docker tag opennms/sentinel:XX.X.X opennms/sentinel
+docker tag local/core:XX.X.X opennms/horizon
+docker tag local/minion:XX.X.X opennms/minion
+docker tag local/sentinel:XX.X.X opennms/sentinel
 ```
 
 ### b) Pull images from build artifacts
@@ -68,9 +68,9 @@ mvn -DskipITs=false integration-test -Djava.io.tmpdir=/tmp
 ### Run tests from local Docker image
 
 If you have the code compiled and assembled locally, you can use the tarball build for container images, so you don't have to wait for the CI/CD to download the container image artifact.
-In `opennms-container/horizon` run `make` to create `opennms/horizon:latest` in your local Docker image repo.
+In `opennms-container/horizon` run `make` to create `local/core:latest` in your local Docker image repo.
 Smoke tests will run against this image in your local Docker image repo.
-When you want to use the latest **published** Horizon docker image, make sure to remove the local image with `docker image rm opennms/horizon:latest`.
+When you want to use the latest **published** Horizon docker image, make sure to remove the local image with `docker image rm local/horizon:latest`.
 You can do the same for the Minion and Sentinel.
 
 ## Writing system tests
