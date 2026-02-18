@@ -86,7 +86,7 @@ import com.google.common.collect.ImmutableMap;
  */
 @SuppressWarnings("java:S2068")
 public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> implements KarafContainer<OpenNMSContainer>, TestLifecycleAware {
-    public static final String IMAGE = "opennms/horizon";
+    public static final String IMAGE = "local/core:latest";
     public static final String ALIAS = "opennms";
     public static final String DB_ALIAS = "db";
     public static final String KAFKA_ALIAS = "kafka";

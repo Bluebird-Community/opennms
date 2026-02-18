@@ -43,7 +43,7 @@ public class JaegerContainer extends GenericContainer<JaegerContainer> implement
     public static final String ALIAS = "jaeger";
     public static final int WEB_PORT = 16686;
     public static final int THRIFT_HTTP_PORT = 14268;
-    public static final String IMAGE = "jaegertracing/all-in-one:1.39";
+    public static final String IMAGE = "jaegertracing/all-in-one:1.76.0";
     private static final Logger LOG = LoggerFactory.getLogger(JaegerContainer.class);
 
     public JaegerContainer() {

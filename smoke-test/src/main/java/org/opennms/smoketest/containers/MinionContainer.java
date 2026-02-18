@@ -80,7 +80,7 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
     private static final int MINION_JETTY_PORT = 8181;
 
     static final String ALIAS = "minion";
-    static final String IMAGE = "opennms/minion";
+    static final String IMAGE = "local/minion:latest";
 
     private final StackModel model;
 

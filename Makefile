@@ -123,12 +123,12 @@ help:
 	@echo "  all-pkgs:              Build all packages"
 	@echo ""
 	@echo "Container Images:"
-	@echo "  core-oci:              Build container image for Horizon Core, tag: opennms/horizon:latest"
-	@echo "  minion-oci:            Build container image for Minion, tag opennms/minion:latest"
-	@echo "  sentinel-oci:          Build container image for Sentinel, tag opennms/sentinel:latest"
-	@echo "  show-core-oci:         Analyze the OCI image using dive, tag opennms/horizon:latest"
-	@echo "  show-minion-oci:       Analyze the OCI image using dive, tag opennms/minion:latest"
-	@echo "  show-sentinel-oci:     Analyze the OCI image using dive, tag opennms/sentinel:latest"
+	@echo "  core-oci:              Build container image for Horizon Core, tag: local/core:latest"
+	@echo "  minion-oci:            Build container image for Minion, tag local/minion:latest"
+	@echo "  sentinel-oci:          Build container image for Sentinel, tag local/sentinel:latest"
+	@echo "  show-core-oci:         Analyze the OCI image using dive, tag local/horizon:latest"
+	@echo "  show-minion-oci:       Analyze the OCI image using dive, tag local/minion:latest"
+	@echo "  show-sentinel-oci:     Analyze the OCI image using dive, tag local/sentinel:latest"
 	@echo ""
 	@echo "Dependencies and quality scans:"
 	@echo "  core-oci-sbom:         Create software bill of material for the Core container image"
@@ -312,7 +312,7 @@ endif
 		 --build-arg BUILD_DATE=$(BUILD_DATE) \
 		 --build-arg VERSION=$(OPENNMS_VERSION) \
 		 --build-arg REVISION=$(RELEASE_COMMIT) \
-		 -t opennms/horizon:latest .
+		 -t local/core:latest .
 
 .PHONY: minion-oci
 minion-oci:
@@ -339,7 +339,7 @@ endif
          --build-arg BUILD_DATE=$(BUILD_DATE) \
          --build-arg VERSION=$(OPENNMS_VERSION) \
          --build-arg REVISION=$(RELEASE_COMMIT) \
-         -t opennms/minion:latest .
+         -t local/minion:latest .
 
 .PHONY: sentinel-oci
 sentinel-oci:
@@ -362,43 +362,43 @@ endif
          --build-arg BUILD_DATE=$(BUILD_DATE) \
          --build-arg VERSION=$(OPENNMS_VERSION) \
          --build-arg REVISION=$(RELEASE_COMMIT) \
-         -t opennms/sentinel:latest .
+         -t local/sentinel:latest .
 
 .PHONY: show-core-oci
 show-core-oci: deps-oci-layers core-oci
-	CI=true dive opennms/horizon:latest
+	CI=true dive local/core:latest
 
 .PHONY: show-minion-oci
 show-minion-oci: deps-oci-layers minion-oci
-	CI=true dive opennms/minion:latest
+	CI=true dive local/minion:latest
 
 .PHONY: show-sentinel-oci
 show-sentinel-oci: deps-oci-layers sentinel-oci
-	CI=true dive opennms/sentinel:latest
+	CI=true dive local/sentinel:latest
 
 .PHONY: core-oci-sbom
 core-oci-sbom: deps-oci-sbom core-oci
-	syft scan opennms/horizon:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/core-oci-sbom.xml --quiet
+	syft scan local/core:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/core-oci-sbom.xml --quiet
 
 .PHONY: minion-oci-sbom
 minion-oci-sbom: deps-oci-sbom minion-oci
-	syft scan opennms/minion:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/minion-oci-sbom.xml --quiet
+	syft scan local/minion:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/minion-oci-sbom.xml --quiet
 
 .PHONY: sentinel-oci-sbom
 sentinel-oci-sbom: deps-oci-sbom sentinel-oci
-	syft scan opennms/sentinel:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/sentinel-oci-sbom.xml --quiet
+	syft scan local/sentinel:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/sentinel-oci-sbom.xml --quiet
 
 .PHONY: core-oci-sec-scan
 core-oci-sec-scan: deps-oci-sec-scan core-oci
-	trivy image opennms/horizon:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/core-trivy-report.json
+	trivy image local/core:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/core-trivy-report.json
 
 .PHONY: minion-oci-sec-scan
 minion-oci-sec-scan: deps-oci-sec-scan minion-oci
-	trivy image opennms/minion:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/minion-trivy-report.json
+	trivy image local/minion:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/minion-trivy-report.json
 
 .PHONY: sentinel-oci-sec-scan
 sentinel-oci-sec-scan: deps-oci-sec-scan sentinel-oci
-	trivy image opennms/sentinel:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/sentinel-trivy-report.json
+	trivy image local/sentinel:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/sentinel-trivy-report.json
 
 # Run just the a very limited set of integration tests to verify the application comes up and we have something we can
 # at least work with.
