@@ -14,8 +14,8 @@ export const validateEventConfigFile = async (file: File) => {
       return { isValid: false, errors: validationErrors }
     }
 
-    if (!file.name.endsWith('.events.xml') && !file.name.includes('event')) {
-      validationErrors.push('File does not appear to be an event configuration file (expected .events.xml extension)')
+    if (!file.name.endsWith('.xml') && !file.name.includes('event')) {
+      validationErrors.push('File does not appear to be an event configuration file (expected .xml extension)')
       return { isValid: false, errors: validationErrors }
     }
 
@@ -87,38 +87,18 @@ export const validateEventConfigFile = async (file: File) => {
   }
 }
 
-export const validateEventElement = (event: Element | any, eventNumber: number): string => {
-  if (!event || typeof event.querySelector !== 'function') {
-    return `Event ${eventNumber}: missing <uei>`
-  }
+// Helper function to extract inner text from XML element
+const getInnerText = (el: Element, tag: string): string => {
+  if (!el) return ''
+  const node = el.querySelector(tag) || el.getElementsByTagName(tag)[0]
+  return node?.textContent?.trim() || ''
+}
 
-  const getInnerText = (el: any, tag: string): string => {
-    if (!el) return ''
-    let node: any = null
-    try {
-      if (typeof el.querySelector === 'function') node = el.querySelector(tag)
-    } catch (e) {
-      // Re-throw Error objects as these are unexpected errors
-      if (e instanceof Error) throw e
-      node = null
-    }
-    if (!node) {
-      try {
-        if (typeof el.getElementsByTagName === 'function') node = el.getElementsByTagName(tag)[0]
-      } catch (e) {
-        // Re-throw Error objects as these are unexpected errors
-        if (e instanceof Error) throw e
-        node = null
-      }
-    }
-    const text = node?.textContent
-    return typeof text === 'string' ? text.trim() : ''
-  }
-
-  const uei = getInnerText(event, 'uei')
-  const label = getInnerText(event, 'event-label')
-  const severity = getInnerText(event, 'severity')
-  const description = getInnerText(event, 'descr')
+export const validateEventElement = (event: Element, eventNumber: number): string => {
+  const uei = event.querySelector('uei')?.textContent?.trim()
+  const label = event.querySelector('event-label')?.textContent?.trim()
+  const severity = event.querySelector('severity')?.textContent?.trim()
+  const description = event.querySelector('descr')?.textContent?.trim()
 
   if (!uei) {
     return `Event ${eventNumber}: missing <uei>`
