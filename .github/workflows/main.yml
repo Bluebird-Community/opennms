@@ -475,8 +475,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard_idx: [ 0, 1, 2 ] # Test job index for each runner
-        shards: [ 3 ]          # 3 parallel test jobs
+        shard_idx: [ 0 ] # Test job index for each runner
+        shards: [ 1 ]    # No parallel test jobs
     needs:
       - unit-tests
     runs-on:
@@ -520,8 +520,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard_idx: [ 0, 1, 2 ] # Test job index for each runner
-        shards: [ 3 ]          # 3 parallel test jobs
+        shard_idx: [ 0 ] # Test job index for each runner
+        shards: [ 1 ]    # No parallel test jobs
     needs:
       - unit-tests
     runs-on:
