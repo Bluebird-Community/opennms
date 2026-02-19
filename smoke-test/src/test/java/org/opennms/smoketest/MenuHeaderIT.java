@@ -34,10 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.opennms.smoketest.ui.framework.search.CentralSearch;
-import org.opennms.smoketest.ui.framework.search.result.ContextSearchResult;
-import org.opennms.smoketest.ui.framework.search.result.SearchContext;
-import org.opennms.smoketest.ui.framework.search.result.SearchResult;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -535,35 +531,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
                 // 10 actual results
                 assertThat(searchResultItems.size(), is(10));
-
-                // TODO:
-                // - load more search results
-                // - possibly remove CentralSearch code (ui/framework/search) if no longer being
-                // used
-
-                frontPage();
-
-                // TODO: Will probably remove this code
-                if (false) {
-                        // Kick off search
-                        final SearchResult searchResult = new CentralSearch(getDriver()).search("Configure");
-                        assertThat(searchResult.size(), is(10L));
-
-                        // TODO!
-                        // Load more elements
-                        final ContextSearchResult contextSearchResult = searchResult.forContext(SearchContext.Action);
-                        assertThat(contextSearchResult.hasMore(), is(true));
-                        contextSearchResult.loadMore();
-                        assertThat(contextSearchResult.size(), is(14L));
-
-                        // Select last element from the now loaded elements
-                        contextSearchResult.getItem("Configure Users").click();
-                        getDriver().getCurrentUrl().endsWith("/opennms/admin/userGroupView/users/list.jsp");
-
-                        // Go back to start page
-                        new CentralSearch(getDriver()).search("Home").getSingleItem().click();
-                        getDriver().getCurrentUrl().endsWith("/opennms/index.jsp");
-                }
         }
 
         // We need this helper method, as with the icon used in some menus the
