@@ -95,22 +95,19 @@ const getInnerText = (el: Element, tag: string): string => {
 }
 
 export const validateEventElement = (event: Element, eventNumber: number): string => {
-  const uei = event.querySelector('uei')?.textContent?.trim()
-  const label = event.querySelector('event-label')?.textContent?.trim()
-  const severity = event.querySelector('severity')?.textContent?.trim()
-  const description = event.querySelector('descr')?.textContent?.trim()
+  // Define required fields for validation
+  const requiredFields = [
+    { tag: 'uei', name: '<uei>' },
+    { tag: 'event-label', name: '<event-label>' },
+    { tag: 'severity', name: '<severity>' },
+    { tag: 'descr', name: '<descr>' }
+  ] as const
 
-  if (!uei) {
-    return `Event ${eventNumber}: missing <uei>`
-  }
-  if (!label) {
-    return `Event ${eventNumber}: missing <event-label>`
-  }
-  if (!severity) {
-    return `Event ${eventNumber}: missing <severity>`
-  }
-  if (!description) {
-    return `Event ${eventNumber}: missing <descr>`
+  // Validate each required field
+  for (const field of requiredFields) {
+    if (!getInnerText(event, field.tag)) {
+      return `Event ${eventNumber}: missing ${field.name}`
+    }
   }
 
   return ''
@@ -119,4 +116,3 @@ export const validateEventElement = (event: Element, eventNumber: number): strin
 export const isDuplicateFile = (fileName: string, existingFiles: UploadEventFileType[]): boolean => {
   return !!existingFiles?.some((element) => element.file.name.toLowerCase() === fileName.toLowerCase())
 }
-
