@@ -403,7 +403,7 @@ sentinel-oci-sec-scan: deps-oci-sec-scan sentinel-oci
 # Run just the a very limited set of integration tests to verify the application comes up and we have something we can
 # at least work with.
 .PHONY: quick-smoke
-quick-smoke: deps-oci core-oci test-lists
+quick-smoke: deps-oci core-oci minion-oci sentinel-oci test-lists
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="MenuHeaderIT,SinglePortFlowsIT" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.core --file smoke-test/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.smoke-quick.log
 
 .PHONY: core-e2e

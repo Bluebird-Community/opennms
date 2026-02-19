@@ -85,9 +85,6 @@ public class OpenNMSSeleniumIT extends AbstractOpenNMSSeleniumHelper {
     @RegisterExtension
     protected static OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @RegisterExtension
-    public static WorkaroundBrowserWebDriverContainer firefox = OpenNMSSeleniumIT.firefox_instance;
-
     private static final WorkaroundBrowserWebDriverContainer firefox_instance = new WorkaroundBrowserWebDriverContainer()
             .withCapabilities(getFirefoxOptions())
             .withRecordingMode(RECORDING_MODE, RECORDING_DIRECTORY, RECORDING_FORMAT)
@@ -114,6 +111,9 @@ public class OpenNMSSeleniumIT extends AbstractOpenNMSSeleniumHelper {
                 }
             })
             .withFileSystemBind("target/downloads", "/tmp/firefox-downloads");
+
+    @RegisterExtension
+    public static WorkaroundBrowserWebDriverContainer firefox = firefox_instance;
 
     public static FirefoxOptions getFirefoxOptions() {
         final FirefoxOptions options = new FirefoxOptions();
@@ -144,6 +144,9 @@ public class OpenNMSSeleniumIT extends AbstractOpenNMSSeleniumHelper {
 
     @BeforeAll
     public static void setUpClass() {
+        if (!firefox.isRunning()) {
+            firefox.start();
+        }
         driver = firefox.getWebDriver();
     }
 
