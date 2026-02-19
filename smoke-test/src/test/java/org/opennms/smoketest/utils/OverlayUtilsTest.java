@@ -22,32 +22,29 @@
 package org.opennms.smoketest.utils;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.opennms.smoketest.stacks.OverlayFile;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
 import com.google.common.collect.Lists;
 
 public class OverlayUtilsTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    public java.nio.file.Path temporaryFolder;
 
     @Test
     public void canOverlayFilesAndFolders() throws IOException {
-        File source = temporaryFolder.newFolder("source");
+        File source = temporaryFolder.resolve("source").toFile();
+        assertTrue(source.mkdirs(), "Failed to create source directory");
 
         File a = new File(source, "a");
         assertThat(a.createNewFile(), equalTo(true));
@@ -56,11 +53,12 @@ public class OverlayUtilsTest {
         File c = new File(b, "c");
         assertThat(c.createNewFile(), equalTo(true));
 
-        File target = temporaryFolder.newFolder("target");
+        File target = temporaryFolder.resolve("target").toFile();
+        assertTrue(target.mkdirs(), "Failed to create target directory");
 
         OverlayUtils.copyFiles(Lists.newArrayList(new OverlayFile(a.toURI().toURL(), "a"),
-                        new OverlayFile(b.toURI().toURL(), "b"),
-                        new OverlayFile(c.toURI().toURL(), "c")),
+                new OverlayFile(b.toURI().toURL(), "b"),
+                new OverlayFile(c.toURI().toURL(), "c")),
                 target.toPath());
 
         // Verify
@@ -69,17 +67,17 @@ public class OverlayUtilsTest {
         assertThat(target.toPath().resolve("b").resolve("c").toFile().isFile(), equalTo(true));
         assertThat(target.toPath().resolve("c").toFile().isFile(), equalTo(true));
     }
-    
+
     @Test
     public void testMergingMaps() {
         Map<String, Object> map1 = new HashMap<>();
         map1.put("base", "basevalue");
-        
+
         Map<String, Object> submap1 = new HashMap<>();
         String originalKey = "submapbase";
         String originalValue = "submapvalue";
         submap1.put(originalKey, originalValue);
-        
+
         String submapKey = "submap";
         map1.put(submapKey, submap1);
 
@@ -87,16 +85,16 @@ public class OverlayUtilsTest {
         Map<String, Object> newSubmap = new HashMap<>();
         String newKey = "newsub";
         String newValue = "newsubvalue";
-        
+
         newSubmap.put(newKey, newValue);
         newMap.put(submapKey, newSubmap);
-        
+
         OverlayUtils.mergeMaps(map1, newMap);
-        
+
         Map<String, String> expectedMap = new HashMap<>();
         expectedMap.put(originalKey, originalValue);
         expectedMap.put(newKey, newValue);
-        
+
         assertThat(map1.get(submapKey), equalTo(expectedMap));
     }
 }

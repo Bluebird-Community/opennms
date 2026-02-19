@@ -67,7 +67,8 @@ import org.testcontainers.utility.MountableFile;
 
 import com.google.common.base.Strings;
 
-public class MinionContainer extends GenericContainer<MinionContainer> implements KarafContainer<MinionContainer>, TestLifecycleAware {
+public class MinionContainer extends GenericContainer<MinionContainer>
+        implements KarafContainer<MinionContainer>, TestLifecycleAware {
     private static final Logger LOG = LoggerFactory.getLogger(MinionContainer.class);
     private static final int MINION_DEBUG_PORT = 5005;
     private static final int MINION_SYSLOG_PORT = 1514;
@@ -129,7 +130,7 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
                 .withCommand("-c")
                 .waitingFor(Objects.requireNonNull(profile.getWaitStrategy()).apply(this))
                 .addFileSystemBind(overlay.toString(),
-                "/opt/minion-etc-overlay", BindMode.READ_ONLY, SelinuxContext.SINGLE);
+                        "/opt/minion-etc-overlay", BindMode.READ_ONLY, SelinuxContext.SINGLE);
 
         // Help make development/debugging easier
         DevDebugUtils.setupMavenRepoBind(this, "/opt/minion/.m2");
@@ -158,11 +159,13 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
             throw new RuntimeException(e);
         }
     }
-    
+
     private void writeMinionConfigYaml(Path minionConfigYaml, MinionProfile profile) throws IOException {
         // Copy over the default configuration from the class-path
-        FileUtils.copyFile(new File(MountableFile.forClasspathResource("minion-config/minion-config.yaml").getFilesystemPath()), minionConfigYaml.toFile());
-        
+        FileUtils.copyFile(
+                new File(MountableFile.forClasspathResource("minion-config/minion-config.yaml").getFilesystemPath()),
+                minionConfigYaml.toFile());
+
         // Allow other users to read the file
         OverlayUtils.setOverlayPermissions(minionConfigYaml);
 
@@ -177,7 +180,8 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
             final String scvConfig = "{\"scv\": {\"provider\": \"dominion\"}}";
             OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(scvConfig, Map.class));
 
-            final String gprcConfig = "{\"dominion\": { \"grpc\": { \"client-secret\":\"" + profile.getDominionGrpcScvClientSecret() + "\"}}}";
+            final String gprcConfig = "{\"dominion\": { \"grpc\": { \"client-secret\":\""
+                    + profile.getDominionGrpcScvClientSecret() + "\"}}}";
             OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(gprcConfig, Map.class));
         }
 
@@ -185,8 +189,8 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
             String kafkaIpc = "{\n" +
                     "\t\"ipc\": {\n" +
                     "\t\t\"kafka\": {\n" +
-                    "\t\t\t\"bootstrap.servers\": \""+ OpenNMSContainer.KAFKA_ALIAS +":9092\",\n" +
-                    "\t\t\t\"compression.type\": \""+ model.getKafkaCompressionStrategy().getCodec() +"\"\n" +
+                    "\t\t\t\"bootstrap.servers\": \"" + OpenNMSContainer.KAFKA_ALIAS + ":9092\",\n" +
+                    "\t\t\t\"compression.type\": \"" + model.getKafkaCompressionStrategy().getCodec() + "\"\n" +
                     "\t\t}\n" +
                     "\t}\n" +
                     "}";
@@ -235,19 +239,18 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
     }
 
     public InetSocketAddress getSyslogAddress() {
-        return new InetSocketAddress(getContainerIpAddress(), TestContainerUtils.getMappedUdpPort(this, MINION_SYSLOG_PORT));
+        return new InetSocketAddress(getHost(), TestContainerUtils.getMappedUdpPort(this, MINION_SYSLOG_PORT));
     }
 
     @Override
     public InetSocketAddress getSshAddress() {
-        return new InetSocketAddress(getContainerIpAddress(), getMappedPort(MINION_SSH_PORT));
+        return new InetSocketAddress(getHost(), getMappedPort(MINION_SSH_PORT));
     }
 
     @Override
     public SshClient ssh() {
         return new SshClient(getSshAddress(), OpenNMSContainer.ADMIN_USER, OpenNMSContainer.ADMIN_PASSWORD);
     }
-
 
     @Override
     public Path getKarafHomeDirectory() {
@@ -256,7 +259,7 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
 
     public URL getWebUrl() {
         try {
-            return new URL(String.format("http://%s:%d/", getContainerIpAddress(), getMappedPort(MINION_JETTY_PORT)));
+            return new URL(String.format("http://%s:%d/", getHost(), getMappedPort(MINION_JETTY_PORT)));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -265,7 +268,6 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
     public int getWebPort() {
         return MINION_JETTY_PORT;
     }
-
 
     public String getLocation() {
         return this.location;
@@ -290,7 +292,7 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
                 mappedPort = getMappedPort(MINION_TELEMETRY_IPFIX_TCP_PORT);
                 break;
         }
-        return new InetSocketAddress(getContainerIpAddress(), mappedPort);
+        return new InetSocketAddress(getHost(), mappedPort);
     }
 
     public static class WaitForMinion extends org.testcontainers.containers.wait.strategy.AbstractWaitStrategy {
@@ -308,7 +310,9 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
                     .atMost(5, MINUTES)
                     .pollInterval(10, SECONDS)
                     .failFast("container is no longer running", () -> !container.isRunning())
-                    .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
+                    .ignoreExceptionsMatching((e) -> {
+                        return e.getCause() != null && e.getCause() instanceof SocketException;
+                    })
                     .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
             LOG.info("Health check passed.");
 
@@ -331,8 +335,9 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
         await("calling gatherThreadDump")
                 .atMost(Duration.ofSeconds(120))
                 .untilAsserted(
-                        () -> { threadDump.set(DevDebugUtils.gatherThreadDump(this, targetLogFolder, null)); }
-                );
+                        () -> {
+                            threadDump.set(DevDebugUtils.gatherThreadDump(this, targetLogFolder, null));
+                        });
 
         LOG.info("Gathering logs...");
         // List of known log files we expect to find in the container

@@ -21,15 +21,15 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class EventsPageIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         driver.get(getBaseUrlInternal() + "opennms/event/list");
     }
@@ -46,7 +46,7 @@ public class EventsPageIT extends OpenNMSSeleniumIT {
         findElementByLink("Service");
     }
 
-    @Test 
+    @Test
     public void testAdvancedSearch() throws InterruptedException {
         findElementByXpath("//button[@type='button' and text() = 'Search']").click();
         findElementByName("eventtext");

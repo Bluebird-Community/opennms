@@ -21,37 +21,15 @@
  */
 package org.opennms.smoketest.utils;
 
-import org.junit.Test;
-import org.testcontainers.shaded.com.google.common.io.CharSource;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.File;
+import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class XmlUtilsTest {
 
@@ -61,12 +39,15 @@ public class XmlUtilsTest {
      * @throws Exception on error
      */
     @Test
-    public void canFilterAttributesFromXml() throws Exception {
-        String xmlIn = "<ipInterface isDown=\"true\" hasFlows=\"false\" monitoredServiceCount=\"0\" snmpPrimary=\"N\">\n" +
+    public void canFilterAttributesFromXml(@TempDir Path temporaryFolder) throws Exception {
+        String xmlIn = "<ipInterface isDown=\"true\" hasFlows=\"false\" monitoredServiceCount=\"0\" snmpPrimary=\"N\">\n"
+                +
                 "   <ipAddress>192.168.1.1</ipAddress>\n" +
                 "   <hostName>192.168.1.1</hostName>\n" +
                 "   <nodeId>1</nodeId>\n" +
                 "</ipInterface>";
+        File target = temporaryFolder.resolve("target").toFile();
+        assertTrue(target.mkdirs());
         String expectedFilteredXml = "<ipInterface monitoredServiceCount=\"0\" snmpPrimary=\"N\">\n" +
                 "   <ipAddress>192.168.1.1</ipAddress>\n" +
                 "   <hostName>192.168.1.1</hostName>\n" +

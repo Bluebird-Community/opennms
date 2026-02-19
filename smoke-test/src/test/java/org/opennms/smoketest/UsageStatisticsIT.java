@@ -29,25 +29,25 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.RestClient;
 
 public class UsageStatisticsIT {
-    @ClassRule
+    @RegisterExtension
     public static OpenNMSStack stack = OpenNMSStack.MINIMAL;
     private static RestClient restClient;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         restClient = stack.opennms().getRestClient();
         createNode("Cisco #1", "test-fs", "cisco1", ".1.3.6.1.4.1.9.1.799");
@@ -59,7 +59,8 @@ public class UsageStatisticsIT {
         createNode("Mini Appliance #1", "test-fs", "appliance3", ".1.3.6.1.4.1.5813.42.5.2");
     }
 
-    private static void createNode(final String label, final String foreignSource, final String foreignId, final String sysObjectId) {
+    private static void createNode(final String label, final String foreignSource, final String foreignId,
+            final String sysObjectId) {
         final OnmsNode node = new OnmsNode();
         node.setLabel(label);
         node.setType(OnmsNode.NodeType.ACTIVE);
@@ -74,10 +75,10 @@ public class UsageStatisticsIT {
     public void testUsageStatistics() throws Exception {
         final Map<String, Object> usageReport = restClient.getUsageStatistics();
 
-        assertThat((long)usageReport.get("freePhysicalMemorySize"), greaterThan(1L));
-        assertThat((long)usageReport.get("totalPhysicalMemorySize"), greaterThan(1L));
+        assertThat((long) usageReport.get("freePhysicalMemorySize"), greaterThan(1L));
+        assertThat((long) usageReport.get("totalPhysicalMemorySize"), greaterThan(1L));
         assertThat((String) usageReport.get("version"), matchesPattern("^\\d+\\.\\d+\\.\\d+$"));
-        assertThat((long)usageReport.get("availableProcessors"), greaterThan(1L));
+        assertThat((long) usageReport.get("availableProcessors"), greaterThan(1L));
 
         assertThat((String) usageReport.get("osName"), not(emptyString()));
         assertThat((String) usageReport.get("osArch"), not(emptyString()));
@@ -103,7 +104,8 @@ public class UsageStatisticsIT {
         assertThat((long) usageReport.get("provisiondScanThreadPoolSize"), is(10L));
         assertThat((long) usageReport.get("provisiondWriteThreadPoolSize"), is(8L));
 
-        final Map<String, Long> provisiondRequisitionSchemeCount = (Map<String, Long>) usageReport.get("provisiondRequisitionSchemeCount");
+        final Map<String, Long> provisiondRequisitionSchemeCount = (Map<String, Long>) usageReport
+                .get("provisiondRequisitionSchemeCount");
 
         assertThat(provisiondRequisitionSchemeCount, is(anEmptyMap()));
 
@@ -143,7 +145,7 @@ public class UsageStatisticsIT {
         assertThat((long) usageReport.get("alarmsLastHours"), greaterThanOrEqualTo(0L));
         assertThat((long) usageReport.get("minions"), is(0L));
 
-        final Map<String, Integer> appliances = (Map<String, Integer>)usageReport.get("applianceCounts");
+        final Map<String, Integer> appliances = (Map<String, Integer>) usageReport.get("applianceCounts");
         assertThat((long) appliances.get("virtualAppliance"), is(2L));
         assertThat((long) appliances.get("applianceMini"), is(1L));
         assertThat((long) appliances.get("appliance1U"), is(0L));

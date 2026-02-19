@@ -21,16 +21,15 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FocusedVertexIT extends OpenNMSSeleniumIT {
 
     private TopologyIT.TopologyUIPage topologyUIPage;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         topologyUIPage = new TopologyIT.TopologyUIPage(this, "");
     }
@@ -41,11 +40,11 @@ public class FocusedVertexIT extends OpenNMSSeleniumIT {
         TopologyIT.FocusedVertex focusedVertex2 = new TopologyIT.FocusedVertex(topologyUIPage, "namespace1", "id");
         TopologyIT.FocusedVertex focusedVertex3 = new TopologyIT.FocusedVertex(topologyUIPage, "namespace2", "id");
 
-        Assert.assertEquals(focusedVertex1, focusedVertex1);
-        Assert.assertEquals(focusedVertex1, focusedVertex2);
-        Assert.assertNotEquals(focusedVertex1, focusedVertex3);
+        Assertions.assertEquals(focusedVertex1, focusedVertex1);
+        Assertions.assertEquals(focusedVertex1, focusedVertex2);
+        Assertions.assertNotEquals(focusedVertex1, focusedVertex3);
 
-        Assert.assertEquals(focusedVertex1.hashCode(), focusedVertex2.hashCode());
-        Assert.assertNotEquals(focusedVertex1.hashCode(), focusedVertex3.hashCode());
+        Assertions.assertEquals(focusedVertex1.hashCode(), focusedVertex2.hashCode());
+        Assertions.assertNotEquals(focusedVertex1.hashCode(), focusedVertex3.hashCode());
     }
 }

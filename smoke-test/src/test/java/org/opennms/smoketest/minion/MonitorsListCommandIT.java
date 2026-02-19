@@ -22,10 +22,9 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.hasSize;
 
+import java.time.Duration;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -34,10 +33,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.MinionTests;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.CommandTestUtils;
 import org.opennms.smoketest.utils.SshClient;
@@ -46,21 +44,21 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class MonitorsListCommandIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(MonitorsListCommandIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public final static OpenNMSStack stack = OpenNMSStack.MINION;
 
-    private ImmutableSet<String> expectedMonitors = ImmutableSet.<String> builder().add(
+    private ImmutableSet<String> expectedMonitors = ImmutableSet.<String>builder().add(
             "org.opennms.netmgt.poller.monitors.DNSResolutionMonitor",
-            "org.opennms.netmgt.poller.monitors.JDBCQueryMonitor", 
+            "org.opennms.netmgt.poller.monitors.JDBCQueryMonitor",
             "org.opennms.netmgt.poller.monitors.DskTableMonitor",
-            "org.opennms.netmgt.poller.monitors.SmbMonitor", 
+            "org.opennms.netmgt.poller.monitors.SmbMonitor",
             "org.opennms.netmgt.poller.monitors.HttpMonitor",
-            "org.opennms.netmgt.poller.monitors.PercMonitor", 
+            "org.opennms.netmgt.poller.monitors.PercMonitor",
             "org.opennms.netmgt.poller.monitors.HttpsMonitor",
             "org.opennms.netmgt.poller.monitors.SSLCertMonitor",
             "org.opennms.netmgt.poller.monitors.MailTransportMonitor",
@@ -70,32 +68,32 @@ public class MonitorsListCommandIT {
             "org.opennms.netmgt.poller.monitors.MemcachedMonitor",
             "org.opennms.netmgt.poller.monitors.ImapMonitor",
             "org.opennms.netmgt.poller.monitors.MinaSshMonitor",
-            "org.opennms.netmgt.poller.monitors.SshMonitor", 
+            "org.opennms.netmgt.poller.monitors.SshMonitor",
             "org.opennms.netmgt.poller.monitors.PageSequenceMonitor",
-            "org.opennms.netmgt.poller.monitors.LaTableMonitor", 
+            "org.opennms.netmgt.poller.monitors.LaTableMonitor",
             "org.opennms.netmgt.poller.monitors.HttpPostMonitor",
             "org.opennms.netmgt.poller.monitors.Jsr160Monitor",
             "org.opennms.netmgt.poller.monitors.LdapsMonitor",
-            "org.opennms.netmgt.poller.monitors.ImapsMonitor", 
+            "org.opennms.netmgt.poller.monitors.ImapsMonitor",
             "org.opennms.netmgt.poller.monitors.DiskUsageMonitor",
             "org.opennms.netmgt.poller.monitors.SystemExecuteMonitor",
-            "org.opennms.netmgt.poller.monitors.CitrixMonitor", 
+            "org.opennms.netmgt.poller.monitors.CitrixMonitor",
             "org.opennms.netmgt.poller.monitors.SmtpMonitor",
             "org.opennms.netmgt.poller.monitors.TrivialTimeMonitor",
             "org.opennms.netmgt.poller.monitors.JolokiaBeanMonitor",
-            "org.opennms.netmgt.poller.monitors.LoopMonitor", 
+            "org.opennms.netmgt.poller.monitors.LoopMonitor",
             "org.opennms.netmgt.poller.monitors.FtpMonitor",
-            "org.opennms.netmgt.poller.monitors.NrpeMonitor", 
+            "org.opennms.netmgt.poller.monitors.NrpeMonitor",
             "org.opennms.netmgt.poller.monitors.AvailabilityMonitor",
             "org.opennms.netmgt.poller.monitors.LogMatchTableMonitor",
-            "org.opennms.netmgt.poller.monitors.Win32ServiceMonitor", 
+            "org.opennms.netmgt.poller.monitors.Win32ServiceMonitor",
             "org.opennms.netmgt.poller.monitors.NtpMonitor",
             "org.opennms.netmgt.poller.monitors.CiscoPingMibMonitor",
-            "org.opennms.netmgt.poller.monitors.StrafePingMonitor", 
+            "org.opennms.netmgt.poller.monitors.StrafePingMonitor",
             "org.opennms.netmgt.poller.monitors.LdapMonitor",
-            "org.opennms.netmgt.poller.monitors.Pop3Monitor", 
+            "org.opennms.netmgt.poller.monitors.Pop3Monitor",
             "org.opennms.netmgt.poller.monitors.DominoIIOPMonitor",
-            "org.opennms.netmgt.poller.monitors.DnsMonitor", 
+            "org.opennms.netmgt.poller.monitors.DnsMonitor",
             "org.opennms.netmgt.poller.monitors.SnmpMonitor",
             "org.opennms.netmgt.poller.monitors.PrTableMonitor",
             "org.opennms.netmgt.poller.monitors.IcmpMonitor",
@@ -106,7 +104,7 @@ public class MonitorsListCommandIT {
             "org.opennms.netmgt.poller.monitors.OmsaStorageMonitor",
             "org.opennms.netmgt.poller.monitors.HostResourceSwRunMonitor",
             "org.opennms.netmgt.poller.monitors.NetScalerGroupHealthMonitor",
-            "org.opennms.netmgt.poller.monitors.WebMonitor", 
+            "org.opennms.netmgt.poller.monitors.WebMonitor",
             "org.opennms.netmgt.poller.monitors.CiscoIpSlaMonitor",
             "org.opennms.netmgt.poller.monitors.VmwareMonitor",
             "org.opennms.netmgt.poller.monitors.VmwareCimMonitor",
@@ -117,14 +115,14 @@ public class MonitorsListCommandIT {
     @Test
     public void canLoadMonitorsOnMinion() throws Exception {
         final InetSocketAddress sshAddr = stack.minion().getSshAddress();
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
                 .until(() -> listAndVerifyMonitors("Minion", sshAddr), hasSize(0));
     }
 
     @Test
     public void canLoadMonitorsOnOpenNMS() throws Exception {
         final InetSocketAddress sshAddr = stack.opennms().getSshAddress();
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
                 .until(() -> listAndVerifyMonitors("OpenNMS", sshAddr), hasSize(0));
     }
 
@@ -135,7 +133,7 @@ public class MonitorsListCommandIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println("opennms:list-monitors");
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
 
             // Parse the output
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());

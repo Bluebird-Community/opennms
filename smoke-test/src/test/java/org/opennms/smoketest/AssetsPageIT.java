@@ -21,16 +21,16 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class AssetsPageIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         driver.get(getBaseUrlInternal() + "opennms/asset/index.jsp");
     }
@@ -41,7 +41,7 @@ public class AssetsPageIT extends OpenNMSSeleniumIT {
         findElementByXpath("//span[text()='Search Asset Information']");
         findElementByXpath("//span[text()='Assets with Asset Numbers']");
         findElementByXpath("//span[text()='Assets Inventory']");
-    }    
+    }
 
     @Test
     public void testAllLinks() throws InterruptedException {

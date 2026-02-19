@@ -23,16 +23,15 @@ package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Awaitility.with;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 
+import java.time.Duration;
 import java.util.Date;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.hibernate.MinionDaoHibernate;
 import org.opennms.netmgt.model.minion.OnmsMinion;
@@ -61,12 +60,12 @@ import io.searchbox.core.SearchResult;
  * 
  * @author Seth
  */
-@Category(org.opennms.smoketest.junit.MinionTests.class)
+@Tag("MinionTests")
 public class SyslogKafkaElasticsearchIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyslogKafkaElasticsearchIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withIpcStrategy(IpcStrategy.KAFKA)
@@ -82,16 +81,14 @@ public class SyslogKafkaElasticsearchIT {
         final String sender = TestContainerUtils.getInternalIpAddress(stack.postgres());
 
         // Wait for the minion to show up
-        await().atMost(90, SECONDS).pollInterval(5, SECONDS)
-            .until(DaoUtils.countMatchingCallable(
-                 stack.postgres().getDaoFactory().getDao(MinionDaoHibernate.class),
-                 new CriteriaBuilder(OnmsMinion.class)
-                     .gt("lastUpdated", startOfTest)
-                     .eq("location", stack.minion().getLocation())
-                     .toCriteria()
-                 ),
-                 is(1)
-             );
+        await().atMost(Duration.ofSeconds(90)).pollInterval(Duration.ofSeconds(5))
+                .until(DaoUtils.countMatchingCallable(
+                        stack.postgres().getDaoFactory().getDao(MinionDaoHibernate.class),
+                        new CriteriaBuilder(OnmsMinion.class)
+                                .gt("lastUpdated", startOfTest)
+                                .eq("location", stack.minion().getLocation())
+                                .toCriteria()),
+                        is(1));
 
         LOG.info("Warming up syslog routes by sending 100 packets");
 
@@ -126,9 +123,10 @@ public class SyslogKafkaElasticsearchIT {
 
         // Wait for at least 1k messages to show up in Elastisearch
         final JestClientFactory factory = new JestClientFactory();
-        factory.setHttpClientConfig(new HttpClientConfig.Builder(String.format("http://%s", stack.elastic().getHttpHostAddress()))
-                .multiThreaded(true)
-                .build());
+        factory.setHttpClientConfig(
+                new HttpClientConfig.Builder(String.format("http://%s", stack.elastic().getHttpHostAddress()))
+                        .multiThreaded(true)
+                        .build());
 
         final String queryString = "{\n" +
                 "    \"query\": {\n" +
@@ -141,15 +139,14 @@ public class SyslogKafkaElasticsearchIT {
                 "}";
 
         try (JestClient client = factory.getObject()) {
-            with().pollInterval(15, SECONDS).await().atMost(5, MINUTES).until(() -> {
-                    LOG.debug("SEARCH QUERY: {}", queryString);
-                    SearchResult response = client.execute(
-                            new Search.Builder(queryString)
-                                    .addIndex("opennms*")
-                                    .build()
-                    );
-                    LOG.debug("SEARCH RESPONSE: {}", response.toString());
-                    return SearchResultUtils.getTotal(response);
+            with().pollInterval(Duration.ofSeconds(15)).await().atMost(Duration.ofMinutes(5)).until(() -> {
+                LOG.debug("SEARCH QUERY: {}", queryString);
+                SearchResult response = client.execute(
+                        new Search.Builder(queryString)
+                                .addIndex("opennms*")
+                                .build());
+                LOG.debug("SEARCH RESPONSE: {}", response.toString());
+                return SearchResultUtils.getTotal(response);
             }, greaterThanOrEqualTo(1000L));
         }
     }

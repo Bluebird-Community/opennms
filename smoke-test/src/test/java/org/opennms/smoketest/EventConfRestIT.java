@@ -22,9 +22,9 @@
 package org.opennms.smoketest;
 
 import io.restassured.RestAssured;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.RestClient;
@@ -36,17 +36,16 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.preemptive;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EventConfRestIT {
 
-    @ClassRule
+    @RegisterExtension
     public static OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
     private RestClient restClient;
 
-
-    @Before
+    @BeforeEach
     public void setUp() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
@@ -71,7 +70,7 @@ public class EventConfRestIT {
         }
 
         // "eventconf/upload" is API path
-        Response response = restClient.uploadFiles("upload",new String[]{"eventconf", "upload"},eventFiles);
+        Response response = restClient.uploadFiles("upload", new String[] { "eventconf", "upload" }, eventFiles);
 
         assertEquals(200, response.getStatus());
         String jsonResponse = response.readEntity(String.class);
@@ -81,6 +80,6 @@ public class EventConfRestIT {
         List<Map<String, Object>> successList = (List<Map<String, Object>>) responseMap.get("success");
         int successCount = successList != null ? successList.size() : 0;
 
-        assertEquals("Mismatch in successfully uploaded file count!", eventFiles.length, successCount);
+        assertEquals(eventFiles.length, successCount, "Mismatch in successfully uploaded file count!");
     }
 }

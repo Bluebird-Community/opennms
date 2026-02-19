@@ -24,21 +24,22 @@ package org.opennms.smoketest;
 import java.io.IOException;
 import java.time.Duration;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.KarafShell;
 import org.opennms.smoketest.utils.KarafShellUtils;
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class GrpcExporterPluginIT {
-    @ClassRule
+    @RegisterExtension
     public static OpenNMSStack stack = OpenNMSStack.MINIMAL;
     private static final String FEATURE_GRPC_EXPORTER = "opennms-grpc-exporter";
     protected KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException, InterruptedException {
         // Make sure the Karaf shell is healthy before we start
         KarafShellUtils.awaitHealthCheckSucceeded(stack.opennms());
@@ -46,8 +47,8 @@ public class GrpcExporterPluginIT {
 
     @Test
     public void everythingHappy() throws Exception {
-        karafShell.runCommandOnce("feature:install " + FEATURE_GRPC_EXPORTER ,
-               output -> !output.toLowerCase().contains("error"), false);
+        karafShell.runCommandOnce("feature:install " + FEATURE_GRPC_EXPORTER,
+                output -> !output.toLowerCase().contains("error"), false);
         karafShell.checkFeature(FEATURE_GRPC_EXPORTER, "Started", Duration.ofSeconds(30));
     }
 }

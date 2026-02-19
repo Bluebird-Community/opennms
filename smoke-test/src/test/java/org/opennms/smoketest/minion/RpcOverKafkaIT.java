@@ -22,18 +22,17 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
 
+import java.time.Duration;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.netmgt.model.PrimaryType;
 import org.opennms.netmgt.provision.persist.requisition.Requisition;
 import org.opennms.netmgt.provision.persist.requisition.RequisitionInterface;
@@ -49,11 +48,11 @@ import org.opennms.smoketest.utils.SshClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class RpcOverKafkaIT {
     private static final Logger LOG = LoggerFactory.getLogger(RpcOverKafkaIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withIpcStrategy(IpcStrategy.KAFKA)
@@ -65,7 +64,7 @@ public class RpcOverKafkaIT {
     public void verifyKafkaRpcWithTcpServiceDetection() {
         // Add node and interface with minion location.
         addRequisition(stack.opennms().getRestClient(), stack.minion().getLocation(), LOCALHOST);
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15))
                 .until(() -> detectTcpAtLocationMinion(stack), containsString("'TCP' WAS detected on 127.0.0.1"));
     }
 
@@ -74,7 +73,7 @@ public class RpcOverKafkaIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println(String.format("detect -l %s TCP 127.0.0.1 port=8201", stack.minion().getLocation()));
             pipe.println("logout");
-            await().atMost(90, SECONDS).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofSeconds(90)).until(sshClient.isShellClosedCallable());
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
             shellOutput = StringUtils.substringAfter(shellOutput, "detect -l");
             LOG.info("Detect output: {}", shellOutput);
@@ -84,7 +83,7 @@ public class RpcOverKafkaIT {
 
     @Test
     public void verifyKafkaRpcWithJdbcServiceDetection() {
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
                 .until(this::detectJdbcAtLocationMinion, containsString("'JDBC' WAS detected"));
     }
 
@@ -94,9 +93,10 @@ public class RpcOverKafkaIT {
         try (final SshClient sshClient = stack.opennms().ssh()) {
             // Perform JDBC service detection on Minion
             final PrintStream pipe = sshClient.openShell();
-            pipe.println(String.format("detect -l %s JDBC 127.0.0.1 url=%s user=opennms password=opennms", stack.minion().getLocation(), jdbcUrl));
+            pipe.println(String.format("detect -l %s JDBC 127.0.0.1 url=%s user=opennms password=opennms",
+                    stack.minion().getLocation(), jdbcUrl));
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
             // Sanitize the output
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
             shellOutput = StringUtils.substringAfter(shellOutput, "detect -l");

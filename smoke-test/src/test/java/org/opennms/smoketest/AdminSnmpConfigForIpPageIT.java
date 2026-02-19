@@ -21,28 +21,28 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.http.client.methods.HttpGet;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.opennms.smoketest.selenium.ResponseData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         gotoPage();
     }
@@ -61,21 +61,27 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
             long locationCount = Long.parseLong(response.getResponseText());
 
             // Verify location drop downs
-            Assert.assertEquals(new Select(findElementById("lookup_location")).getOptions().size(), locationCount);
-            Assert.assertEquals(new Select(findElementById("location")).getOptions().size(), locationCount);
+            Assertions.assertEquals(locationCount, new Select(findElementById("lookup_location")).getOptions().size());
+            Assertions.assertEquals(locationCount, new Select(findElementById("location")).getOptions().size());
 
-            // creating the location "ABC" because "ABC" < "Default" alphabetically, see issue NMS-10514
-            sendPost("/api/v2/monitoringLocations", "<location location-name=\"ABC\" monitoring-area=\"ABC\" priority=\"100\"/>", 201);
+            // creating the location "ABC" because "ABC" < "Default" alphabetically, see
+            // issue NMS-10514
+            sendPost("/api/v2/monitoringLocations",
+                    "<location location-name=\"ABC\" monitoring-area=\"ABC\" priority=\"100\"/>", 201);
             created = true;
 
             // verify
             gotoPage();
-            Assert.assertEquals(new Select(findElementById("lookup_location")).getOptions().size(), locationCount + 1);
-            Assert.assertEquals(new Select(findElementById("location")).getOptions().size(), locationCount + 1);
+            Assertions.assertEquals(locationCount + 1,
+                    new Select(findElementById("lookup_location")).getOptions().size());
+            Assertions.assertEquals(locationCount + 1, new Select(findElementById("location")).getOptions().size());
 
-            // check that "Default" is still selected even if the location "ABC" is added, see issue NMS-10514
-            Assert.assertEquals(new Select(findElementById("lookup_location")).getFirstSelectedOption().getText(), "Default");
-            Assert.assertEquals(new Select(findElementById("location")).getFirstSelectedOption().getText(), "Default");
+            // check that "Default" is still selected even if the location "ABC" is added,
+            // see issue NMS-10514
+            Assertions.assertEquals("Default",
+                    new Select(findElementById("lookup_location")).getFirstSelectedOption().getText());
+            Assertions.assertEquals("Default",
+                    new Select(findElementById("location")).getFirstSelectedOption().getText());
 
         } finally {
             if (created) {
@@ -85,7 +91,8 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
     }
 
     /**
-     * Tests if getting the current snmp configuration for a specific ip address works.
+     * Tests if getting the current snmp configuration for a specific ip address
+     * works.
      */
     @Test
     public void testGetIpInformation() throws Exception {
@@ -98,8 +105,7 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
         assertEquals("v2c", findElementByName("version").getAttribute("value"));
         assertEquals("1.1.1.1", findElementByName("firstIPAddress").getAttribute("value"));
 
-
-        //v3
+        // v3
         gotoPage();
         new Select(findElementByName("version")).selectByVisibleText("v3");
         enterText(By.name("firstIPAddress"), "1.2.3.4");
@@ -124,62 +130,70 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
         assertEquals("MD5", findElementByName("authProtocol").getAttribute("value"));
         assertEquals("privMe!", findElementByName("privPassPhrase").getAttribute("value"));
         assertEquals("DES", findElementByName("privProtocol").getAttribute("value"));
-        assertEquals("2", findElementByName("securityLevel").getAttribute("value")); //authNoPriv
+        assertEquals("2", findElementByName("securityLevel").getAttribute("value")); // authNoPriv
     }
 
     /**
-     * Tests that only one "version specifics" area is visible at the time. 
+     * Tests that only one "version specifics" area is visible at the time.
      */
     @Test
     public void testVersionHandling() {
         new Select(findElementByName("version")).selectByVisibleText("v1");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='v1/v2c specific parameters']")));
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//span[text()='v3 specific parameters']")));
+        wait.until(
+                ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='v1/v2c specific parameters']")));
+        wait.until(
+                ExpectedConditions.invisibilityOfElementLocated(By.xpath("//span[text()='v3 specific parameters']")));
 
         new Select(findElementByName("version")).selectByVisibleText("v2c");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='v1/v2c specific parameters']")));
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//span[text()='v3 specific parameters']")));
+        wait.until(
+                ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='v1/v2c specific parameters']")));
+        wait.until(
+                ExpectedConditions.invisibilityOfElementLocated(By.xpath("//span[text()='v3 specific parameters']")));
 
         // change to v3
         new Select(findElementByName("version")).selectByVisibleText("v3");
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//span[text()='v1/v2c specific parameters']")));
+        wait.until(ExpectedConditions
+                .invisibilityOfElementLocated(By.xpath("//span[text()='v1/v2c specific parameters']")));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='v3 specific parameters']")));
     }
 
     /**
-     * Tests if the validation of the integer fields in the "saveConfig" form works fine.
+     * Tests if the validation of the integer fields in the "saveConfig" form works
+     * fine.
      */
     @Test
     public void testIntegerValidation() {
         final String defaultValidationErrorTemplate = "%s is not a valid %s. Please enter a number greater than 0 or leave it empty.";
         final String geZeroValidationErrorTemplate = "%s is not a valid %s. Please enter a number greater than or equal to 0, or leave it empty.";
         final String maxRequestSizeErrorTemplate = "%s is not a valid %s. Please enter a number greater or equal than 484 or leave it empty.";
-        final String[] integerFields = new String[]{
-                "timeout", 
-                "retryCount", 
-                "port", 
-                "maxVarsPerPdu", 
+        final String[] integerFields = new String[] {
+                "timeout",
+                "retryCount",
+                "port",
+                "maxVarsPerPdu",
                 "maxRepetitions",
-        "maxRequestSize"};
-        final String[] fieldLabels = new String[]{
-                "timeout", 
-                "Retry Count", 
+                "maxRequestSize" };
+        final String[] fieldLabels = new String[] {
+                "timeout",
+                "Retry Count",
                 "Port",
                 "Max Vars Per Pdu",
                 "Max Repetitions",
-        "Max Request Size"};
-        final String[] errorMessages = new String[]{
-                defaultValidationErrorTemplate, 
-                geZeroValidationErrorTemplate, 
-                defaultValidationErrorTemplate, 
-                defaultValidationErrorTemplate, 
+                "Max Request Size" };
+        final String[] errorMessages = new String[] {
                 defaultValidationErrorTemplate,
-                maxRequestSizeErrorTemplate};
-        assertTrue("integerFields and fieldDescriptions must have the same length", integerFields.length == fieldLabels.length);
-        assertTrue("integerFields and errorMessages must have the same length", integerFields.length == errorMessages.length);
+                geZeroValidationErrorTemplate,
+                defaultValidationErrorTemplate,
+                defaultValidationErrorTemplate,
+                defaultValidationErrorTemplate,
+                maxRequestSizeErrorTemplate };
+        assertTrue(integerFields.length == fieldLabels.length,
+                "integerFields and fieldDescriptions must have the same length");
+        assertTrue(integerFields.length == errorMessages.length,
+                "integerFields and errorMessages must have the same length");
 
-        for (int i=0; i<integerFields.length; i++) {
-            if (i>0) {
+        for (int i = 0; i < integerFields.length; i++) {
+            if (i > 0) {
                 gotoPage(); // reset page
             }
             final String fieldName = integerFields[i];
@@ -193,7 +207,7 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
             validate(errorMessageTemplate, fieldName, fieldLabel, "abc", false);
             enterText(By.name(fieldName), "-5"); // < 0
             validate(errorMessageTemplate, fieldName, fieldLabel, "-5", false);
-            enterText(By.name( fieldName), "0"); // = 0
+            enterText(By.name(fieldName), "0"); // = 0
             if (i != 1) { // A retryCount of zero is legal
                 validate(errorMessageTemplate, fieldName, fieldLabel, "0", false);
             }
@@ -204,9 +218,9 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
         }
 
         // now test max request size individually
-        final String[] input = new String[]{"483", "484", "65535", "65536"};
-        final boolean[] success = new boolean[]{false, true, true, true};
-        for (int i=0; i<input.length; i++) {
+        final String[] input = new String[] { "483", "484", "65535", "65536" };
+        final boolean[] success = new boolean[] { false, true, true, true };
+        for (int i = 0; i < input.length; i++) {
             gotoPage();
             enterText(By.name("firstIPAddress"), "1.2.3.4");
             enterText(By.name("maxRequestSize"), input[i]);
@@ -216,11 +230,12 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
 
     /**
      * Tests if the ip address validation in the "saveConfig" form works fine.
+     * 
      * @throws Exception
      */
     @Test
     public void testIpValidation() throws Exception {
-        //invalid first and empty last ip
+        // invalid first and empty last ip
         gotoPage();
         enterText(By.name("firstIPAddress"), "1234");
         enterText(By.name("lastIPAddress"), "");
@@ -271,7 +286,8 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
     }
 
     /**
-     * Tests that one or both save options can be selected, but that there must be at least one selection.
+     * Tests that one or both save options can be selected, but that there must be
+     * at least one selection.
      */
     @Test
     public void testSaveOptions() {
@@ -294,7 +310,7 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
         assertNull(alertText);
         assertTrue(wait.until(pageContainsText("Finished configuring SNMP")));
 
-        // OK 
+        // OK
         gotoPage();
         enterText(By.name("firstIPAddress"), "1.1.1.1");
         setChecked(By.id("sendEventOption"));
@@ -312,20 +328,25 @@ public class AdminSnmpConfigForIpPageIT extends OpenNMSSeleniumIT {
         findElementByName("saveConfig").click();
         alertText = handleAlert();
         assertNotNull(alertText);
-        assertEquals("You must select either 'Send Event' or 'Save Locally'. It is possible to select both options.", alertText);
+        assertEquals("You must select either 'Send Event' or 'Save Locally'. It is possible to select both options.",
+                alertText);
     }
 
-    private void validate (final String errorMessageTemplate, final String fieldName, final String fieldLabel, final String fieldValue, final Boolean success) {
+    private void validate(final String errorMessageTemplate, final String fieldName, final String fieldLabel,
+            final String fieldValue, final Boolean success) {
         findElementByName("saveConfig").click();
         String alertText = handleAlert();
         if (success) {
-            // if we expect this page to succeed, we should have no alert text, and we should find the finish text
+            // if we expect this page to succeed, we should have no alert text, and we
+            // should find the finish text
             assertNull(alertText);
-            assertTrue("Expected success on field '" + fieldLabel + "' with value " + fieldValue, wait.until(pageContainsText("Finished configuring SNMP")));
+            assertTrue(wait.until(pageContainsText("Finished configuring SNMP")),
+                    "Expected success on field '" + fieldLabel + "' with value " + fieldValue);
         } else {
             // if we expect a failure, check that the message matches
             assertNotNull(alertText);
-            assertEquals("Expected a failure on field '" + fieldLabel + "' with value " + fieldValue, String.format(errorMessageTemplate, fieldValue, fieldLabel), alertText);
+            assertEquals(String.format(errorMessageTemplate, fieldValue, fieldLabel), alertText,
+                    "Expected a failure on field '" + fieldLabel + "' with value " + fieldValue);
         }
     }
 

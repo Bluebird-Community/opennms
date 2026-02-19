@@ -21,19 +21,17 @@
  */
 package org.opennms.smoketest.minion;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.io.PrintStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.containers.MinionContainer;
-import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.MinionProfile;
 import org.opennms.smoketest.stacks.StackModel;
 import org.opennms.smoketest.utils.CommandTestUtils;
@@ -42,33 +40,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class NMS14655_IT {
     private static final Logger LOG = LoggerFactory.getLogger(NMS14655_IT.class);
 
-    @ClassRule
-    public static final MinionContainer MINION_CONTAINER = new MinionContainer(StackModel.newBuilder().build(), MinionProfile.newBuilder()
-            .withId("00000000-0000-0000-0000-000000ddba11")
-            .withLocation("Fulda")
-            .withDominionGrpcScvClientSecret("foobar")
-            // we do not wait for health check since it will never succeed without the appliance
-            .withWaitStrategy(c -> new AbstractWaitStrategy() {
-                @Override
-                protected void waitUntilReady() {
-                }
-            })
-            .build());
+    @RegisterExtension
+    public static final MinionContainer MINION_CONTAINER = new MinionContainer(StackModel.newBuilder().build(),
+            MinionProfile.newBuilder()
+                    .withId("00000000-0000-0000-0000-000000ddba11")
+                    .withLocation("Fulda")
+                    .withDominionGrpcScvClientSecret("foobar")
+                    // we do not wait for health check since it will never succeed without the
+                    // appliance
+                    .withWaitStrategy(c -> new AbstractWaitStrategy() {
+                        @Override
+                        protected void waitUntilReady() {
+                        }
+                    })
+                    .build());
 
     @Test
     public void verifyStartup() {
-        await().atMost(5, MINUTES)
-                .pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(5))
+                .pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     final String bundleCount = ssh("bundle:list | grep SCV | wc -l");
                     final String scvBundles = ssh("bundle:list | grep SCV");
                     LOG.warn("bundleCount: {}", bundleCount);
                     LOG.warn("SCV bundles: {}", scvBundles);
-                    return bundleCount.contains("3") && scvBundles.contains("Dominion gRPC Impl") && !scvBundles.contains("JCEKS Impl");
+                    return bundleCount.contains("3") && scvBundles.contains("Dominion gRPC Impl")
+                            && !scvBundles.contains("JCEKS Impl");
                 });
     }
 
@@ -79,7 +80,7 @@ public class NMS14655_IT {
                 pipe.println(command);
             }
             pipe.println("logout");
-            await().atMost(30, SECONDS).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofSeconds(30)).until(sshClient.isShellClosedCallable());
             // Retrieve output and strip ANSI sequences
             String output = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
 

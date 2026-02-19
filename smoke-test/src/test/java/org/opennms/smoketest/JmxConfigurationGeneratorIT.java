@@ -23,13 +23,13 @@ package org.opennms.smoketest;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
@@ -49,13 +49,14 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Collections2;
 
 /**
- * Verifies that the Vaadin JMX Configuration Generator Application is deployed correctly.
+ * Verifies that the Vaadin JMX Configuration Generator Application is deployed
+ * correctly.
  */
 public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
     private static final Logger LOG = LoggerFactory.getLogger(JmxConfigurationGeneratorIT.class);
     private static final String MBEANS_VIEW_TREE_WAIT_NAME = "com.zaxxer.hikari";
 
-    @Before
+    @BeforeEach
     public void before() throws InterruptedException {
         driver.get(getBaseUrlInternal() + "opennms/admin/jmxConfigGenerator.jsp");
 
@@ -68,7 +69,8 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
     public void testClickOnHeaderLinkWorks() {
         /*
          * In Vaadin 7 a Navigator was introduced to navigate within Vaadin applications
-         * Somehow normal links cause a vaadin exception. This test verifies that no exception
+         * Somehow normal links cause a vaadin exception. This test verifies that no
+         * exception
          * is thrown when clicking the Header links
          */
         clickElement(By.linkText("1. Service Configuration"));
@@ -76,7 +78,7 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
         Collection<WebElement> errorPopups = driver.findElements(By.cssSelector("div[class=\"v-errormessage\"]"));
         // sometimes empty v-errormessage divs are present, we have to filter them out
         errorPopups = Collections2.filter(errorPopups, input -> input.getText() != null && !input.getText().isEmpty());
-        Assert.assertEquals("Error message is present.", 0, errorPopups.size());
+        Assertions.assertEquals(0, errorPopups.size(), "Error message is present.");
     }
 
     private void waitForAndClickOnNext() {
@@ -94,7 +96,8 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
                 .ignoring(Exception.class);
         // Wait for the button to be clickable
         wait.until(ExpectedConditions.elementToBeClickable(by));
-        // Wait for the click to succeed - it's possible for elementToBeClickable to return even though it's not actually clickable yet
+        // Wait for the click to succeed - it's possible for elementToBeClickable to
+        // return even though it's not actually clickable yet
         wait.until(driver -> {
             final WebElement el = driver.findElement(by);
             el.click();
@@ -121,10 +124,11 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
     }
 
     /*
-     * Verifies that selected CompMembers do show up in the generated jmx-datacollection-config.xml snippet.
+     * Verifies that selected CompMembers do show up in the generated
+     * jmx-datacollection-config.xml snippet.
      */
     @Test
-    @org.junit.Ignore
+    @Disabled
     public void verifyCompMemberSelection() throws Exception {
         configureJMXConnection(false);
 
@@ -141,8 +145,8 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
         // verify output
         final String jmxDatacollectionConfigContent = findElementByXpath("//textarea").getAttribute("value");
 
-        Assert.assertEquals(2, find("<comp-attrib", jmxDatacollectionConfigContent));
-        Assert.assertEquals(8, find("<comp-member", jmxDatacollectionConfigContent));
+        Assertions.assertEquals(2, find("<comp-attrib", jmxDatacollectionConfigContent));
+        Assertions.assertEquals(8, find("<comp-member", jmxDatacollectionConfigContent));
     }
 
     protected void configureJMXConnection(final boolean skipDefaultVM) throws Exception {
@@ -164,7 +168,7 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
         }
 
         /*
-         * Sometimes, Vaadin just loses input, or focus.  Or both!  I suspect it's
+         * Sometimes, Vaadin just loses input, or focus. Or both! I suspect it's
          * because of the way Vaadin handles events and DOM-redraws itself, but...
          * ¯\_(ツ)_/¯
          *
@@ -176,9 +180,9 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
          * 3. Send the text to the field
          * 4. Click it *again* because sometimes this wakes up the event handler
          * 5. Do it all in a loop that checks for validation errors, because
-         *    *sometimes* even with all that, it will fail to fill in a field...
-         *    In that case, hit escape to clear the error message and start all
-         *    over and try again.
+         * *sometimes* even with all that, it will fail to fill in a field...
+         * In that case, hit escape to clear the error message and start all
+         * over and try again.
          */
         boolean found = false;
         do {
@@ -189,9 +193,10 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
             clickElement(By.id("next"));
 
             try {
-                setImplicitWait(1, TimeUnit.SECONDS);
+                setImplicitWait(Duration.ofSeconds(1));
                 found = shortWait.until(new ExpectedCondition<Boolean>() {
-                    @Override public Boolean apply(final WebDriver driver) {
+                    @Override
+                    public Boolean apply(final WebDriver driver) {
                         try {
                             final WebElement elem = driver.findElement(By.cssSelector("div.v-Notification-error h1"));
                             LOG.debug("Notification error element: {}", elem);
@@ -246,7 +251,7 @@ public class JmxConfigurationGeneratorIT extends OpenNMSSeleniumIT {
         // PooledDataSource span usually isn't there yet after the last click, even if
         // we try waiting for it, since Selenium will return the cached one rather than
         // a new one. And guess what? You can't clear the cache.
-        // So, ugh.  Sleep.  :/
+        // So, ugh. Sleep. :/
         Thread.sleep(5000);
 
         new Actions(driver).contextClick(findElementByXpath(treeNodeXpath)).perform(); // right click

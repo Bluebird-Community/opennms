@@ -23,17 +23,18 @@ package org.opennms.smoketest;
 
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Test Class for the Admin Page to configure data collection per SNMP interface.
+ * The Test Class for the Admin Page to configure data collection per SNMP
+ * interface.
  * 
  * @author <a href="mailto:agalue@opennms.org">Alejandro Galue</a>
  */
@@ -47,16 +48,18 @@ public class AdminDataCollectionSnmpInterfacesIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // Creating a node
 
         LOG.debug("creating node");
-        String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">" +
+        String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">"
+                +
                 "<labelSource>H</labelSource>" +
                 "<sysContact>The Owner</sysContact>" +
                 "<sysDescription>" +
-                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
+                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386"
+                +
                 "</sysDescription>" +
                 "<sysLocation>DevJam</sysLocation>" +
                 "<sysName>TestMachine1</sysName>" +
@@ -79,9 +82,10 @@ public class AdminDataCollectionSnmpInterfacesIT extends OpenNMSSeleniumIT {
 
         // Adding SNMP Interfaces
 
-        for (int i = 1; i < 5; i ++) {
+        for (int i = 1; i < 5; i++) {
             LOG.debug("creating snmp interface " + i);
-            String snmpInterface = "<snmpInterface collectFlag=\"" + (i < 2 ? "C" : "N") + "\" ifIndex=\"" + i + "\" pollFlag=\"N\">" +
+            String snmpInterface = "<snmpInterface collectFlag=\"" + (i < 2 ? "C" : "N") + "\" ifIndex=\"" + i
+                    + "\" pollFlag=\"N\">" +
                     "<ifAdminStatus>1</ifAdminStatus>" +
                     "<ifDescr>eth" + i + "</ifDescr>" +
                     "<ifName>eth" + i + "</ifName>" +
@@ -104,7 +108,7 @@ public class AdminDataCollectionSnmpInterfacesIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         sendDelete("rest/nodes/SmokeTests:TestMachine1", 202);
     }
@@ -120,20 +124,20 @@ public class AdminDataCollectionSnmpInterfacesIT extends OpenNMSSeleniumIT {
         findElementByLink("Configure SNMP Data Collection per Interface").click();
         // 5 columns: ifIndex, ifType, ifDescr, ifName, ifAlias
         List<WebElement> interfaces = driver.findElements(By.cssSelector("onms-interfaces-config td.ng-binding"));
-        Assert.assertNotNull(interfaces);
-        Assert.assertEquals(20, interfaces.size());
+        Assertions.assertNotNull(interfaces);
+        Assertions.assertEquals(20, interfaces.size());
         // 1 column: collect
         List<WebElement> collect = driver.findElements(By.cssSelector("onms-interfaces-config td input"));
-        Assert.assertNotNull(collect);
-        Assert.assertEquals(4, collect.size());
+        Assertions.assertNotNull(collect);
+        Assertions.assertEquals(4, collect.size());
         // 1st Row: collection enabled
-        Assert.assertEquals("1", interfaces.get(0).getText());
-        Assert.assertEquals("eth1", interfaces.get(3).getText());
-        Assert.assertTrue(collect.get(0).isSelected());
+        Assertions.assertEquals("1", interfaces.get(0).getText());
+        Assertions.assertEquals("eth1", interfaces.get(3).getText());
+        Assertions.assertTrue(collect.get(0).isSelected());
         // 4th Row: collection disabled
-        Assert.assertEquals("4", interfaces.get(15).getText());
-        Assert.assertEquals("eth4", interfaces.get(18).getText());
-        Assert.assertFalse(collect.get(3).isSelected());
+        Assertions.assertEquals("4", interfaces.get(15).getText());
+        Assertions.assertEquals("eth4", interfaces.get(18).getText());
+        Assertions.assertFalse(collect.get(3).isSelected());
     }
 
 }

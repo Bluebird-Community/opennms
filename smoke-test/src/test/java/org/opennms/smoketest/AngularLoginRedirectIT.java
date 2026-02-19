@@ -21,26 +21,26 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -62,11 +62,12 @@ public class AngularLoginRedirectIT extends OpenNMSSeleniumIT {
         private Runnable verifyAfterLogout;
 
         public Check(String url, Runnable verifyPageLoaded, Runnable actionToPerform,
-                     Runnable actionToPerformAfterLogout, Runnable verifyAfterLogout) {
+                Runnable actionToPerformAfterLogout, Runnable verifyAfterLogout) {
             this.url = Objects.requireNonNull(url);
             this.verifyPageLoaded = Objects.requireNonNull(verifyPageLoaded);
             this.actionToPerform = Objects.requireNonNull(actionToPerform);
-            this.actionToPerformAfterLogout = actionToPerformAfterLogout == null ? actionToPerform : actionToPerformAfterLogout;
+            this.actionToPerformAfterLogout = actionToPerformAfterLogout == null ? actionToPerform
+                    : actionToPerformAfterLogout;
             this.verifyAfterLogout = verifyAfterLogout;
         }
     }
@@ -97,21 +98,21 @@ public class AngularLoginRedirectIT extends OpenNMSSeleniumIT {
                     () -> pageContainsText("Settings"),
                     () -> findElementByLink("Google").click(),
                     () -> findElementByLink("Settings").click(),
-                    () -> validateGeoserviceLogout())
-    );
+                    () -> validateGeoserviceLogout()));
 
-    @Before
+    @BeforeEach
     public void before() {
-        setImplicitWait(5, TimeUnit.SECONDS);
+        setImplicitWait(Duration.ofSeconds(5));
         logout();
     }
 
-    @After
+    @AfterEach
     public void after() {
         setImplicitWait();
     }
 
-    @Ignore("This test is flaky due to the simulated logout process, ignoring for now.")
+    @Disabled("This test is flaky due to the simulated logout process, ignoring for now.")
+    @Test
     public void testAngularLogout() throws IOException {
         for (Check eachCheck : checks) {
             LOG.info("{}: Run test for page", eachCheck.url);
@@ -165,27 +166,29 @@ public class AngularLoginRedirectIT extends OpenNMSSeleniumIT {
 
         // Verify we have been forwarded to the login page
         new WebDriverWait(driver, Duration.ofSeconds(5)).until(input -> {
-                LOG.info("Verify redirect to login.jsp occurred");
-                LOG.info("| Current Url: {}", driver.getCurrentUrl());
+            LOG.info("Verify redirect to login.jsp occurred");
+            LOG.info("| Current Url: {}", driver.getCurrentUrl());
 
-                return driver.getCurrentUrl().matches(loginRegex);
-            }
-        );
+            return driver.getCurrentUrl().matches(loginRegex);
+        });
     }
 
     private void validateCannotRetrieveRequisitionsAfterLogout() {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[contains(@class, 'growl-message ng-binding') and contains(text(), 'Cannot retrieve the requisitions.')]")));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(
+                "//div[contains(@class, 'growl-message ng-binding') and contains(text(), 'Cannot retrieve the requisitions.')]")));
     }
 
     private void validateGeoserviceLogout() {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[contains(@class, 'alert-danger')]/span[contains(text(), 'An unexpected error occurred: Unauthorized')]")));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(
+                "//div[contains(@class, 'alert-danger')]/span[contains(text(), 'An unexpected error occurred: Unauthorized')]")));
     }
 
     private void simulateSessionTimeout(final String url) throws IOException {
         final Set<Cookie> cookies = driver.manage().getCookies();
 
         for (Cookie eachCookie : cookies) {
-            LOG.info("{}: simulateSessionTimeout handling cookie: {}={}", url, eachCookie.getName(), eachCookie.getValue());
+            LOG.info("{}: simulateSessionTimeout handling cookie: {}={}", url, eachCookie.getName(),
+                    eachCookie.getValue());
 
             if (eachCookie.getName().equalsIgnoreCase("JSESSIONID")) {
                 LOG.info("{}: simulateSessionTimeout found JSESSIONID, attempting to log out", url);
@@ -194,10 +197,10 @@ public class AngularLoginRedirectIT extends OpenNMSSeleniumIT {
                 httpPost.addHeader("Cookie", eachCookie.getName() + "=" + eachCookie.getValue());
 
                 try (CloseableHttpClient client = HttpClientBuilder.create().disableRedirectHandling().build();
-                     CloseableHttpResponse response = client.execute(httpPost)
-                ) {
+                        CloseableHttpResponse response = client.execute(httpPost)) {
                     assertEquals(302, response.getStatusLine().getStatusCode());
-                    LOG.info("{}: simulateSessionTimeout successfully logged out, redirected to {}", url, response.getFirstHeader("Location"));
+                    LOG.info("{}: simulateSessionTimeout successfully logged out, redirected to {}", url,
+                            response.getFirstHeader("Location"));
                 }
             }
         }

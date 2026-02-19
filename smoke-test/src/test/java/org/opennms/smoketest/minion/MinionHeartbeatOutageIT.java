@@ -22,19 +22,18 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.hibernate.EventDaoHibernate;
 import org.opennms.netmgt.dao.hibernate.MinionDaoHibernate;
@@ -57,84 +56,84 @@ import org.opennms.smoketest.utils.TestContainerUtils;
  * 
  * @author Seth
  */
-@Category(org.opennms.smoketest.junit.FlakyTests.class)
-//@Category(org.opennms.smoketest.junit.MinionTests.class)
+@Tag("FlakyTests")
+@Timeout(value = 20, unit = TimeUnit.MINUTES)
 public class MinionHeartbeatOutageIT {
 
-    @Rule
+    @RegisterExtension
     public final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withIpcStrategy(getIpcStrategy())
             .build());
-
-    @Rule
-    public Timeout timeout = new Timeout(20, TimeUnit.MINUTES);
 
     @Test
     public void testHeartbeatOutages() throws Exception {
         Date startOfTest = new Date();
 
         // Wait for the Minion to show up
-        await().atMost(90, SECONDS).pollInterval(5, SECONDS)
-            .until(DaoUtils.countMatchingCallable(
-                 stack.postgres().dao(MinionDaoHibernate.class),
-                 new CriteriaBuilder(OnmsMinion.class)
-                     .gt("lastUpdated", startOfTest)
-                     .eq("location", stack.minion().getLocation())
-                     .toCriteria()
-                 ),
-                 is(1)
-             );
+        await().atMost(Duration.ofSeconds(90)).pollInterval(Duration.ofSeconds(5))
+                .until(DaoUtils.countMatchingCallable(
+                        stack.postgres().dao(MinionDaoHibernate.class),
+                        new CriteriaBuilder(OnmsMinion.class)
+                                .gt("lastUpdated", startOfTest)
+                                .eq("location", stack.minion().getLocation())
+                                .toCriteria()),
+                        is(1));
 
         // Make sure that the node is available
-        await().atMost(180, SECONDS).pollInterval(5, SECONDS)
-            .until(DaoUtils.countMatchingCallable(
-                stack.postgres().dao(NodeDaoHibernate.class),
-                new CriteriaBuilder(OnmsNode.class)
-                .eq("foreignSource", "Minions")
-                .eq("foreignId", stack.minion().getId())
-                .toCriteria()
-                ),
-            equalTo(1)
-        );
+        await().atMost(Duration.ofSeconds(180)).pollInterval(Duration.ofSeconds(5))
+                .until(DaoUtils.countMatchingCallable(
+                        stack.postgres().dao(NodeDaoHibernate.class),
+                        new CriteriaBuilder(OnmsNode.class)
+                                .eq("foreignSource", "Minions")
+                                .eq("foreignId", stack.minion().getId())
+                                .toCriteria()),
+                        equalTo(1));
 
         // Make sure that the expected events are present
 
         /*
-        assertEquals(1, DaoUtils.countMatchingCallable(
-            stack.postgres().dao(.getDao(EventDaoHibernate.class),
-            new CriteriaBuilder(OnmsEvent.class)
-            .eq("eventUei", EventConstants.MONITORING_SYSTEM_ADDED_UEI)
-            .like("eventParms", String.format("%%%s=%s%%", EventConstants.PARAM_MONITORING_SYSTEM_TYPE, OnmsMonitoringSystem.TYPE_MINION))
-            .like("eventParms", String.format("%%%s=%s%%", EventConstants.PARAM_MONITORING_SYSTEM_ID, "00000000-0000-0000-0000-000000ddba11"))
-            .like("eventParms", String.format("%%%s=%s%%", EventConstants.PARAM_MONITORING_SYSTEM_LOCATION, "MINION"))
-            .toCriteria()
-            ).call().intValue()
-        );
-        */
+         * assertEquals(1, DaoUtils.countMatchingCallable(
+         * stack.postgres().dao(.getDao(EventDaoHibernate.class),
+         * new CriteriaBuilder(OnmsEvent.class)
+         * .eq("eventUei", EventConstants.MONITORING_SYSTEM_ADDED_UEI)
+         * .like("eventParms", String.format("%%%s=%s%%",
+         * EventConstants.PARAM_MONITORING_SYSTEM_TYPE,
+         * OnmsMonitoringSystem.TYPE_MINION))
+         * .like("eventParms", String.format("%%%s=%s%%",
+         * EventConstants.PARAM_MONITORING_SYSTEM_ID,
+         * "00000000-0000-0000-0000-000000ddba11"))
+         * .like("eventParms", String.format("%%%s=%s%%",
+         * EventConstants.PARAM_MONITORING_SYSTEM_LOCATION, "MINION"))
+         * .toCriteria()
+         * ).call().intValue()
+         * );
+         */
 
         assertEquals(1,
-            stack.postgres().dao(EventDaoHibernate.class).findMatching(
-                new CriteriaBuilder(OnmsEvent.class)
-                    .alias("eventParameters", "eventParameters")
-                    .eq("eventUei", EventConstants.MONITORING_SYSTEM_ADDED_UEI).toCriteria()).stream()
-                    .filter(e -> e.getEventParameters().stream()
-                            .anyMatch(p -> EventConstants.PARAM_MONITORING_SYSTEM_TYPE.equals(p.getName()) && OnmsMonitoringSystem.TYPE_MINION.equals(p.getValue())))
-                    .filter(e -> e.getEventParameters().stream()
-                            .anyMatch(p -> EventConstants.PARAM_MONITORING_SYSTEM_ID.equals(p.getName()) && stack.minion().getId().equals(p.getValue())))
-                    .filter(e -> e.getEventParameters().stream()
-                            .anyMatch(p -> EventConstants.PARAM_MONITORING_SYSTEM_LOCATION.equals(p.getName()) && stack.minion().getLocation().equals(p.getValue())))
-                    .distinct()
-                    .count()
-        );
+                stack.postgres().dao(EventDaoHibernate.class).findMatching(
+                        new CriteriaBuilder(OnmsEvent.class)
+                                .alias("eventParameters", "eventParameters")
+                                .eq("eventUei", EventConstants.MONITORING_SYSTEM_ADDED_UEI).toCriteria())
+                        .stream()
+                        .filter(e -> e.getEventParameters().stream()
+                                .anyMatch(p -> EventConstants.PARAM_MONITORING_SYSTEM_TYPE.equals(p.getName())
+                                        && OnmsMonitoringSystem.TYPE_MINION.equals(p.getValue())))
+                        .filter(e -> e.getEventParameters().stream()
+                                .anyMatch(p -> EventConstants.PARAM_MONITORING_SYSTEM_ID.equals(p.getName())
+                                        && stack.minion().getId().equals(p.getValue())))
+                        .filter(e -> e.getEventParameters().stream()
+                                .anyMatch(p -> EventConstants.PARAM_MONITORING_SYSTEM_LOCATION.equals(p.getName())
+                                        && stack.minion().getLocation().equals(p.getValue())))
+                        .distinct()
+                        .count());
 
         assertEquals(0, DaoUtils.countMatchingCallable(
-            stack.postgres().dao(EventDaoHibernate.class),
-            new CriteriaBuilder(OnmsEvent.class)
-            .eq("eventUei", EventConstants.MONITORING_SYSTEM_LOCATION_CHANGED_UEI)
-            .toCriteria()
-            ).call().intValue()
-        );
+                stack.postgres().dao(EventDaoHibernate.class),
+                new CriteriaBuilder(OnmsEvent.class)
+                        .eq("eventUei", EventConstants.MONITORING_SYSTEM_LOCATION_CHANGED_UEI)
+                        .toCriteria())
+                .call().intValue());
 
         for (int i = 0; i < 3; i++) {
             TestContainerUtils.restartContainer(stack.minion());
@@ -142,16 +141,14 @@ public class MinionHeartbeatOutageIT {
             // Reset the startOfTest timestamp
             startOfTest = new Date();
 
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS)
-                .until(DaoUtils.countMatchingCallable(
-                     stack.postgres().dao(MinionDaoHibernate.class),
-                     new CriteriaBuilder(OnmsMinion.class)
-                         .gt("lastUpdated", startOfTest)
-                         .eq("location", stack.minion().getLocation())
-                         .toCriteria()
-                     ),
-                     is(1)
-                 );
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
+                    .until(DaoUtils.countMatchingCallable(
+                            stack.postgres().dao(MinionDaoHibernate.class),
+                            new CriteriaBuilder(OnmsMinion.class)
+                                    .gt("lastUpdated", startOfTest)
+                                    .eq("location", stack.minion().getLocation())
+                                    .toCriteria()),
+                            is(1));
         }
 
         for (int i = 0; i < 2; i++) {
@@ -160,16 +157,14 @@ public class MinionHeartbeatOutageIT {
             // Reset the startOfTest timestamp
             startOfTest = new Date();
 
-            await().atMost(5, MINUTES).pollInterval(5, SECONDS)
-                .until(DaoUtils.countMatchingCallable(
-                     stack.postgres().dao(MinionDaoHibernate.class),
-                     new CriteriaBuilder(OnmsMinion.class)
-                         .gt("lastUpdated", startOfTest)
-                         .eq("location", stack.minion().getLocation())
-                         .toCriteria()
-                     ),
-                     is(1)
-                 );
+            await().atMost(Duration.ofMinutes(5)).pollInterval(Duration.ofSeconds(5))
+                    .until(DaoUtils.countMatchingCallable(
+                            stack.postgres().dao(MinionDaoHibernate.class),
+                            new CriteriaBuilder(OnmsMinion.class)
+                                    .gt("lastUpdated", startOfTest)
+                                    .eq("location", stack.minion().getLocation())
+                                    .toCriteria()),
+                            is(1));
         }
 
         for (int i = 0; i < 1; i++) {
@@ -178,16 +173,14 @@ public class MinionHeartbeatOutageIT {
             // Reset the startOfTest timestamp
             startOfTest = new Date();
 
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS)
-                .until(DaoUtils.countMatchingCallable(
-                     stack.postgres().dao(MinionDaoHibernate.class),
-                     new CriteriaBuilder(OnmsMinion.class)
-                         .gt("lastUpdated", startOfTest)
-                         .eq("location", stack.minion().getLocation())
-                         .toCriteria()
-                     ),
-                     is(1)
-                 );
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
+                    .until(DaoUtils.countMatchingCallable(
+                            stack.postgres().dao(MinionDaoHibernate.class),
+                            new CriteriaBuilder(OnmsMinion.class)
+                                    .gt("lastUpdated", startOfTest)
+                                    .eq("location", stack.minion().getLocation())
+                                    .toCriteria()),
+                            is(1));
         }
     }
 

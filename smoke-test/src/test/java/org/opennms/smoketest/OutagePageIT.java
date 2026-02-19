@@ -21,20 +21,20 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class OutagePageIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         outagePage();
     }
@@ -45,7 +45,7 @@ public class OutagePageIT extends OpenNMSSeleniumIT {
         findElementByXpath("//span[text()='Outage Menu']");
         findElementByXpath("//span[text()='Outages and Service Level Availability']");
         findElementByName("outageIdForm").findElement(By.name("id"));
-    }  
+    }
 
     @Test
     public void testAllLinks() throws InterruptedException {

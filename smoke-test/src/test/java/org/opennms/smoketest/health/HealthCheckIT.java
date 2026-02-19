@@ -21,23 +21,21 @@
  */
 package org.opennms.smoketest.health;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.hamcrest.Matchers;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.health.api.Status;
 import org.opennms.smoketest.containers.OpenNMSContainer;
 import org.opennms.smoketest.junit.SentinelTests;
@@ -50,12 +48,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
+@Timeout(value = 20, unit = TimeUnit.MINUTES)
 public class HealthCheckIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(HealthCheckIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withSentinel()
@@ -64,10 +63,6 @@ public class HealthCheckIT {
             // This adds extra health checks that our test counts
             .withTelemetryProcessing()
             .build());
-
-    @Rule
-    public Timeout timeout = new Timeout(20, TimeUnit.MINUTES);
-
 
     @Test
     public void verifyOpenNMSHealth() {
@@ -93,34 +88,38 @@ public class HealthCheckIT {
     private void verifyHealthCheck(final int expectedHealthCheckServices, final InetSocketAddress sshAddress) {
         final long timeoutMins = 10;
         try {
-            await().atMost(timeoutMins, MINUTES)
-                    .pollInterval(5, SECONDS)
+            await().atMost(Duration.ofMinutes(timeoutMins))
+                    .pollInterval(Duration.ofSeconds(5))
                     .ignoreExceptions()
                     .untilAsserted(() -> {
                         var result = KarafShellUtils.executeHealthCheck(sshAddress);
                         final var reason = "health check result: " + result;
                         assertThat(reason, result.isSuccess());
                         // the health check may output the some success messages repeatedly
-                        // -> the health check output moves the terminal's cursor and overwrites its former output
+                        // -> the health check output moves the terminal's cursor and overwrites its
+                        // former output
                         // -> count only distinct success messages
-                        var count = (int)result.stdout.stream().filter(s -> s.contains(Status.Success.name())).distinct().count();
+                        var count = (int) result.stdout.stream().filter(s -> s.contains(Status.Success.name()))
+                                .distinct().count();
                         assertThat(reason, count, Matchers.greaterThanOrEqualTo(expectedHealthCheckServices));
                     });
         } catch (ConditionTimeoutException e) {
-            throw new RuntimeException("health check did not complete as expected after " + timeoutMins + " minutes", e);
+            throw new RuntimeException("health check did not complete as expected after " + timeoutMins + " minutes",
+                    e);
         }
     }
 
     private void verifyMetrics(final InetSocketAddress sshAddress) {
-        await().atMost(2, MINUTES)
-                .pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(2))
+                .pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
-                    try (final SshClient sshClient = new SshClient(sshAddress, OpenNMSContainer.ADMIN_USER, OpenNMSContainer.ADMIN_PASSWORD)) {
+                    try (final SshClient sshClient = new SshClient(sshAddress, OpenNMSContainer.ADMIN_USER,
+                            OpenNMSContainer.ADMIN_PASSWORD)) {
                         final PrintStream pipe = sshClient.openShell();
                         pipe.println("opennms:metrics-display");
                         pipe.println("logout");
 
-                        await().atMost(15, SECONDS).until(sshClient.isShellClosedCallable());
+                        await().atMost(Duration.ofSeconds(15)).until(sshClient.isShellClosedCallable());
 
                         // Read stdout and verify
                         final String shellOutput = sshClient.getStdout();
@@ -137,7 +136,8 @@ public class HealthCheckIT {
     }
 
     private static String getOverallStatus(String input) {
-        // Returns the text starting from the success line, but also contains other content
+        // Returns the text starting from the success line, but also contains other
+        // content
         final String tempStatus = input.substring(input.indexOf("=> "));
         // Here we remove the leading => and also anything at the end of the status line
         final String overallStatus = tempStatus.substring("=> ".length(), tempStatus.indexOf("\n")).trim();

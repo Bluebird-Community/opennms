@@ -21,14 +21,14 @@
  */
 package org.opennms.smoketest.sentinel;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.features.jest.client.SearchResultUtils;
 import org.opennms.smoketest.junit.SentinelTests;
 import org.opennms.smoketest.stacks.IpcStrategy;
@@ -44,10 +44,10 @@ import org.opennms.smoketest.telemetry.Sender;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
 public class KafkaCompressionZSTDFlowIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withSentinel()

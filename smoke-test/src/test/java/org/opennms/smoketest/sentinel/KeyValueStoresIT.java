@@ -21,9 +21,9 @@
  */
 package org.opennms.smoketest.sentinel;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.junit.SentinelTests;
 import org.opennms.smoketest.stacks.BlobStoreStrategy;
@@ -32,9 +32,9 @@ import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.StackModel;
 import org.opennms.smoketest.utils.KarafShell;
 
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
 public class KeyValueStoresIT {
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withSentinel()
             .withTelemetryProcessing()

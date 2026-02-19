@@ -26,9 +26,9 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 import static io.restassured.RestAssured.preemptive;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME;
 
@@ -44,10 +44,10 @@ public class GenericSchemaIT {
     private static final Logger LOG = LoggerFactory.getLogger(GenericSchemaIT.class);
     private static final String CM_BASEPATH = "/opennms/rest/cm";
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @Before
+    @BeforeEach
     public void before() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();

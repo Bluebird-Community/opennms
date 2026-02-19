@@ -62,10 +62,8 @@ import org.opennms.smoketest.utils.TestContainerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.SelinuxContext;
 import org.testcontainers.lifecycle.TestDescription;
 import org.testcontainers.lifecycle.TestLifecycleAware;
@@ -73,7 +71,8 @@ import org.testcontainers.utility.MountableFile;
 
 import com.google.common.collect.ImmutableMap;
 
-public class SentinelContainer extends GenericContainer<SentinelContainer> implements KarafContainer<SentinelContainer>, TestLifecycleAware {
+public class SentinelContainer extends GenericContainer<SentinelContainer>
+        implements KarafContainer<SentinelContainer>, TestLifecycleAware {
     private static final Logger LOG = LoggerFactory.getLogger(SentinelContainer.class);
     private static final int SENTINEL_DEBUG_PORT = 5005;
     private static final int SENTINEL_SSH_PORT = 8301;
@@ -94,7 +93,7 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                 .withEnv("SENTINEL_LOCATION", "Sentinel")
                 .withEnv("SENTINEL_ID", profile.getId())
                 .withEnv("POSTGRES_HOST", OpenNMSContainer.DB_ALIAS)
-                .withEnv("POSTGRES_PORT", Integer.toString(PostgreSQLContainer.POSTGRESQL_PORT))
+                .withEnv("POSTGRES_PORT", Integer.toString(5432))
                 // User/pass are hardcoded in PostgreSQLContainer but are not exposed
                 .withEnv("POSTGRES_USER", "test")
                 .withEnv("POSTGRES_PASSWORD", "test")
@@ -107,7 +106,8 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                 .withEnv("OPENNMS_BROKER_USER", "admin")
                 .withEnv("OPENNMS_BROKER_PASS", "admin")
                 .withEnv("JACOCO_AGENT_ENABLED", "1")
-                .withEnv("JAVA_OPTS", "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom -Dorg.opennms.rrd.storeByForeignSource=true")
+                .withEnv("JAVA_OPTS",
+                        "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom -Dorg.opennms.rrd.storeByForeignSource=true")
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases(ALIAS)
                 .withCommand("-f")
@@ -149,17 +149,23 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
 
         // Copy configuration from $OPENNMS_HOME/etc
         final Path opennmsSourceEtcDirectory = new TargetRoot(getClass()).getPath("system-test-resources", "etc");
-        FileUtils.copyDirectory(opennmsSourceEtcDirectory.resolve("telemetryd-adapters").toFile(), etc.resolve("telemetryd-adapters").toFile());
-        FileUtils.copyDirectory(opennmsSourceEtcDirectory.resolve("resource-types.d").toFile(), etc.resolve("resource-types.d").toFile());
-        FileUtils.copyDirectory(opennmsSourceEtcDirectory.resolve("datacollection").toFile(), etc.resolve("datacollection").toFile());
-        FileUtils.copyFile(opennmsSourceEtcDirectory.resolve("datacollection-config.xml").toFile(), etc.resolve("datacollection-config.xml").toFile());
+        FileUtils.copyDirectory(opennmsSourceEtcDirectory.resolve("telemetryd-adapters").toFile(),
+                etc.resolve("telemetryd-adapters").toFile());
+        FileUtils.copyDirectory(opennmsSourceEtcDirectory.resolve("resource-types.d").toFile(),
+                etc.resolve("resource-types.d").toFile());
+        FileUtils.copyDirectory(opennmsSourceEtcDirectory.resolve("datacollection").toFile(),
+                etc.resolve("datacollection").toFile());
+        FileUtils.copyFile(opennmsSourceEtcDirectory.resolve("datacollection-config.xml").toFile(),
+                etc.resolve("datacollection-config.xml").toFile());
 
         // Copy over the fixed configuration from the class-path
-        FileUtils.copyDirectory(new File(MountableFile.forClasspathResource("sentinel-overlay").getFilesystemPath()), home.toFile());
+        FileUtils.copyDirectory(new File(MountableFile.forClasspathResource("sentinel-overlay").getFilesystemPath()),
+                home.toFile());
 
         final Properties sysProps = getSystemProperties();
         File propsFile = etc.resolve("custom.system.properties").toFile();
-        try (@SuppressWarnings("java:S6300") FileOutputStream fos = new FileOutputStream(propsFile)) {
+        try (@SuppressWarnings("java:S6300")
+        FileOutputStream fos = new FileOutputStream(propsFile)) {
             sysProps.store(fos, "Generated");
         }
 
@@ -168,29 +174,29 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         writeFeaturesBoot(bootD.resolve("stest.boot"), getFeaturesOnBoot());
 
         writeProps(etc.resolve("org.opennms.core.ipc.sink.kafka.consumer.cfg"),
-                ImmutableMap.<String,String>builder()
+                ImmutableMap.<String, String>builder()
                         .put("bootstrap.servers", OpenNMSContainer.KAFKA_ALIAS + ":9092")
                         .put("acks", "1")
                         .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
                         .build());
 
         writeProps(etc.resolve("org.opennms.core.ipc.sink.kafka.cfg"),
-                ImmutableMap.<String,String>builder()
+                ImmutableMap.<String, String>builder()
                         .put("bootstrap.servers", OpenNMSContainer.KAFKA_ALIAS + ":9092")
                         .put("acks", "1")
                         .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
                         .build());
 
         writeProps(etc.resolve("org.opennms.features.flows.persistence.elastic.cfg"),
-                ImmutableMap.<String,String>builder()
+                ImmutableMap.<String, String>builder()
                         .put("elasticUrl", "http://" + OpenNMSContainer.ELASTIC_ALIAS + ":9200")
                         .build());
 
         if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
             writeProps(etc.resolve("org.opennms.newts.config.cfg"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             .put("hostname", OpenNMSContainer.CASSANDRA_ALIAS)
-                            .put("port", Integer.toString(CassandraContainer.CQL_PORT))
+                            .put("port", Integer.toString(9042))
                             .build());
         }
     }
@@ -215,7 +221,7 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
             featuresOnBoot.add("sentinel-telemetry-jti");
             featuresOnBoot.add("sentinel-telemetry-nxos");
         }
-        
+
         switch (model.getBlobStoreStrategy()) {
             case NOOP:
                 featuresOnBoot.add("sentinel-blobstore-noop");
@@ -248,7 +254,7 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
 
     @Override
     public InetSocketAddress getSshAddress() {
-        return new InetSocketAddress(getContainerIpAddress(), getMappedPort(SENTINEL_SSH_PORT));
+        return new InetSocketAddress(getHost(), getMappedPort(SENTINEL_SSH_PORT));
     }
 
     @Override
@@ -263,7 +269,7 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
 
     public URL getWebUrl() {
         try {
-            return new URL(String.format("http://%s:%d/", getContainerIpAddress(), getMappedPort(SENTINEL_JETTY_PORT)));
+            return new URL(String.format("http://%s:%d/", getHost(), getMappedPort(SENTINEL_JETTY_PORT)));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -288,7 +294,9 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                     .atMost(5, MINUTES)
                     .pollInterval(10, SECONDS)
                     .failFast("container is no longer running", () -> !container.isRunning())
-                    .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
+                    .ignoreExceptionsMatching((e) -> {
+                        return e.getCause() != null && e.getCause() instanceof SocketException;
+                    })
                     .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
             LOG.info("Health check passed.");
 
@@ -299,7 +307,8 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
     @Override
     public void afterTest(TestDescription description, Optional<Throwable> throwable) {
         // not working yet in karaf-started JVMs
-        // KarafShellUtils.saveCoverage(this, description.getFilesystemFriendlyName(), ALIAS);
+        // KarafShellUtils.saveCoverage(this, description.getFilesystemFriendlyName(),
+        // ALIAS);
         retainLogsfNeeded(description.getFilesystemFriendlyName(), !throwable.isPresent());
     }
 
@@ -311,8 +320,9 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         await("calling gatherThreadDump")
                 .atMost(Duration.ofSeconds(120))
                 .untilAsserted(
-                        () -> { threadDump.set(DevDebugUtils.gatherThreadDump(this, targetLogFolder, null)); }
-                );
+                        () -> {
+                            threadDump.set(DevDebugUtils.gatherThreadDump(this, targetLogFolder, null));
+                        });
 
         LOG.info("Gathering logs...");
         // List of known log files we expect to find in the container

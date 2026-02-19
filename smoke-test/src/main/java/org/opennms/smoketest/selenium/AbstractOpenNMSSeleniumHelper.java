@@ -21,9 +21,9 @@
  */
 package org.opennms.smoketest.selenium;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
 
@@ -76,9 +76,11 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
-import org.junit.Rule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.TestWatcher;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -112,9 +114,9 @@ import org.xml.sax.InputSource;
 public abstract class AbstractOpenNMSSeleniumHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractOpenNMSSeleniumHelper.class);
 
-    public static final long   LOAD_TIMEOUT       = Long.getLong("org.opennms.smoketest.web-timeout", 120000l);
-    public static final long   REQ_TIMEOUT        = Long.getLong("org.opennms.smoketest.requisition-timeout", 240000l);
-    public static final int    MENU_ITEM_TIMEOUT  = 30;
+    public static final long LOAD_TIMEOUT = Long.getLong("org.opennms.smoketest.web-timeout", 120000l);
+    public static final long REQ_TIMEOUT = Long.getLong("org.opennms.smoketest.requisition-timeout", 240000l);
+    public static final int MENU_ITEM_TIMEOUT = 30;
 
     public static final String BASIC_AUTH_USERNAME = "admin";
     public static final String BASIC_AUTH_PASSWORD = "admin";
@@ -124,9 +126,9 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     public static final String PASSWORD_GATE_USERNAME = "admin";
     public static final String PASSWORD_GATE_PASSWORD = "admin";
 
-    public static final String REQUISITION_NAME   = "SeleniumTestGroup";
-    public static final String USER_NAME          = "SmokeTestUser";
-    public static final String GROUP_NAME         = "SmokeTestGroup";
+    public static final String REQUISITION_NAME = "SeleniumTestGroup";
+    public static final String USER_NAME = "SmokeTestUser";
+    public static final String GROUP_NAME = "SmokeTestGroup";
 
     public static final File DOWNLOADS_FOLDER = new File("target/downloads");
 
@@ -139,20 +141,24 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     public WebDriverWait requisitionWait = null;
 
     public abstract WebDriver getDriver();
+
     public abstract String getBaseUrlInternal();
+
     public abstract String getBaseUrlExternal();
 
-    @Rule
-    public TestWatcher m_watcher = new TestWatcher() {
+    @RegisterExtension
+    public final ExtensionContextHandler m_watcher = new ExtensionContextHandler();
+
+    public class ExtensionContextHandler implements BeforeEachCallback, AfterEachCallback, TestWatcher {
         @Override
-        protected void starting(final Description description) {
+        public void beforeEach(ExtensionContext context) {
             LOG.debug("Using driver: {}", getDriver());
             try {
                 setImplicitWait();
             } catch (WebDriverException e) {
                 e.printStackTrace();
             }
-            getDriver().manage().window().setPosition(new Point(0,0));
+            getDriver().manage().window().setPosition(new Point(0, 0));
             getDriver().manage().window().maximize();
             wait = new WebDriverWait(getDriver(), Duration.ofMillis(LOAD_TIMEOUT));
             requisitionWait = new WebDriverWait(getDriver(), Duration.ofMillis(REQ_TIMEOUT));
@@ -164,8 +170,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         }
 
         @Override
-        protected void failed(final Throwable e, final Description description) {
-            final String testName = description.getMethodName();
+        public void testFailed(ExtensionContext context, Throwable e) {
+            final String testName = context.getDisplayName();
             final WebDriver driver = getDriver();
 
             if (driver == null) {
@@ -176,14 +182,15 @@ public abstract class AbstractOpenNMSSeleniumHelper {
             LOG.debug("Test {} failed... attempting to take screenshot.", testName);
 
             // Reset the implicit wait since we can't trust the last value
-            driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 
             if (driver instanceof TakesScreenshot) {
-                final TakesScreenshot shot = (TakesScreenshot)driver;
+                final TakesScreenshot shot = (TakesScreenshot) driver;
 
                 try {
                     final Path from = shot.getScreenshotAs(OutputType.FILE).toPath();
-                    final Path to = Paths.get("target", "screenshots", description.getClassName() + "." + testName + ".png");
+                    final Path to = Paths.get("target", "screenshots",
+                            context.getRequiredTestClass().getName() + "." + testName + ".png");
                     LOG.debug("Screenshot saved to: {}", from);
 
                     try {
@@ -203,7 +210,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
             try {
                 LOG.debug("Attempting to dump DOM.");
                 final String domText = driver.findElement(By.tagName("html")).getAttribute("innerHTML");
-                final Path to = Paths.get("target", "contents", description.getClassName() + "." + testName + ".html");
+                final Path to = Paths.get("target", "contents",
+                        context.getRequiredTestClass().getName() + "." + testName + ".html");
 
                 try {
                     Files.createDirectories(to.getParent());
@@ -219,8 +227,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         }
 
         @Override
-        protected void finished(final Description description) {
-            final String testName = description.getMethodName();
+        public void afterEach(ExtensionContext context) {
+            final String testName = context.getDisplayName();
             LOG.debug("Test {} finished.", testName);
             cleanUp();
         }
@@ -236,15 +244,15 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                 LOG.error("Cleaning up failed. Future tests will be in an unhandled state.", e);
             }
         }
-    };
-
-    public WebDriver.Timeouts setImplicitWait() {
-        return setImplicitWait(LOAD_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
-    public WebDriver.Timeouts setImplicitWait(final long time, final TimeUnit unit) {
-        LOG.trace("Setting implicit wait to {} milliseconds.", unit.toMillis(time));
-        return getDriver().manage().timeouts().implicitlyWait(time, unit);
+    public WebDriver.Timeouts setImplicitWait() {
+        return setImplicitWait(Duration.ofMillis(LOAD_TIMEOUT));
+    }
+
+    public WebDriver.Timeouts setImplicitWait(final Duration duration) {
+        LOG.trace("Setting implicit wait to {} milliseconds.", duration.toMillis());
+        return getDriver().manage().timeouts().implicitlyWait(duration);
     }
 
     protected WebDriverWait waitFor(final long seconds) {
@@ -254,7 +262,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     protected void waitForClose(final By selector) {
         LOG.debug("waitForClose: {}", selector);
         try {
-            setImplicitWait(1, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(1));
             wait.until(new ExpectedCondition<Boolean>() {
                 @Override
                 public Boolean apply(final WebDriver input) {
@@ -273,11 +281,12 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                         element = input.findElement(selector);
                         final Dimension size = element.getSize();
 
-                        if (new Point(0,0).equals(location) && new Dimension(0,0).equals(size)) {
+                        if (new Point(0, 0).equals(location) && new Dimension(0, 0).equals(size)) {
                             LOG.debug("waitForClose: {} element technically exists, but is sized 0,0", element);
                             return true;
                         }
-                        LOG.debug("waitForClose: {} element still exists at location {} with size {}: {}", selector, location, size, element.getText());
+                        LOG.debug("waitForClose: {} element still exists at location {} with size {}: {}", selector,
+                                location, size, element.getText());
                         return false;
                     } catch (final NoSuchElementException | StaleElementReferenceException e) {
                         return true;
@@ -293,8 +302,10 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     }
 
     /**
-     * Standard login for smoke tests. Navigate to login page, log in as default admin user,
-     * skip the password gate page and then close the Usage Statistics Sharing dialog if present.
+     * Standard login for smoke tests. Navigate to login page, log in as default
+     * admin user,
+     * skip the password gate page and then close the Usage Statistics Sharing
+     * dialog if present.
      */
     public void login() {
         login(BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD, true, true, true, false);
@@ -303,20 +314,27 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     /**
      * Perform a login with given credentials and various options.
      *
-     * If login username/password is "admin/admin", this results in going to the Admin Password Gate page.
+     * If login username/password is "admin/admin", this results in going to the
+     * Admin Password Gate page.
      * 'skip' will skip having to change the password and continue to the main page.
      *
-     * @param username Username to use for the login
-     * @param password Password to use for the login
-     * @param skip If true, clicks Skip on the password gate page to avoid having to change the admin password
-     * @param closeUsageStatsSharing If true, close the Usage Statistics Sharing dialog if it appears
-     * @param navigateToLoginPage If true, navigate to the login page. Set to false to navigate
-     *     to a different page before calling this method, e.g. to test that redirect after login works.
+     * @param username               Username to use for the login
+     * @param password               Password to use for the login
+     * @param skip                   If true, clicks Skip on the password gate page
+     *                               to avoid having to change the admin password
+     * @param closeUsageStatsSharing If true, close the Usage Statistics Sharing
+     *                               dialog if it appears
+     * @param navigateToLoginPage    If true, navigate to the login page. Set to
+     *                               false to navigate
+     *                               to a different page before calling this method,
+     *                               e.g. to test that redirect after login works.
      */
-    public void login(final String username, final String password, final boolean skip, final boolean closeUsageStatsSharing,
-                      final boolean navigateToLoginPage, final boolean skipCookieDeletion) {
-        LOG.debug("Login: username={}, skip={}, closeUsageStatsSharing={}, navigateToLoginPage={}, skipCookieDeletion={}",
-            username, skip, closeUsageStatsSharing, navigateToLoginPage, skipCookieDeletion);
+    public void login(final String username, final String password, final boolean skip,
+            final boolean closeUsageStatsSharing,
+            final boolean navigateToLoginPage, final boolean skipCookieDeletion) {
+        LOG.debug(
+                "Login: username={}, skip={}, closeUsageStatsSharing={}, navigateToLoginPage={}, skipCookieDeletion={}",
+                username, skip, closeUsageStatsSharing, navigateToLoginPage, skipCookieDeletion);
 
         if (navigateToLoginPage) {
             if (!skipCookieDeletion) {
@@ -334,7 +352,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         clickElement(By.name("Login"));
 
         wait.until((WebDriver driver) -> {
-            return ! driver.getCurrentUrl().contains("login.jsp");
+            return !driver.getCurrentUrl().contains("login.jsp");
         });
 
         // bootstrap header, exists in all JSP-based OpenNMS pages
@@ -355,7 +373,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         Objects.requireNonNull(runnable);
         try {
             // Disable implicitlyWait
-            setImplicitWait(Math.max(0, implicitWait), TimeUnit.MILLISECONDS);
+            setImplicitWait(Duration.ofMillis(Math.max(0, implicitWait)));
             runnable.run();
         } finally {
             setImplicitWait();
@@ -403,7 +421,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     }
 
     /**
-     * Logging in with "admin/admin" will result in navigating to the passwordGate page,
+     * Logging in with "admin/admin" will result in navigating to the passwordGate
+     * page,
      * this clicks "Skip" to continue.
      */
     protected void skipPasswordGate(final String username, final String password) {
@@ -452,7 +471,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         WebElement element = null;
 
         try {
-            setImplicitWait(0, TimeUnit.MILLISECONDS);
+            setImplicitWait(Duration.ZERO);
             element = getDriver().findElement(by);
         } catch (final NoSuchElementException e) {
             return null;
@@ -467,7 +486,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         WebElement element = null;
 
         try {
-            setImplicitWait(2, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(2));
             element = getDriver().findElement(by);
         } catch (final NoSuchElementException e) {
             return null;
@@ -482,7 +501,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         WebElement element = null;
 
         try {
-            setImplicitWait(2, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(2));
             element = getDriver().findElement(by);
             assertTrue(!element.getText().contains(text));
         } catch (final NoSuchElementException e) {
@@ -560,7 +579,9 @@ public abstract class AbstractOpenNMSSeleniumHelper {
      * Click on a side menu item to navigate to the linked page.
      * See 'menu-template.json' for the menu and submenu IDs.
      * Note that the UI adds a prefix to the IDs to make sure they are unique.
-     * @param menuItemId the 'id' of the top-level menu item (not including the prefix)
+     * 
+     * @param menuItemId  the 'id' of the top-level menu item (not including the
+     *                    prefix)
      * @param subMenuText the text of the sub menu item under the menu item
      */
     protected void clickMenuItem(final String menuItemId, final String subMenuText, int timeout) {
@@ -585,13 +606,17 @@ public abstract class AbstractOpenNMSSeleniumHelper {
      * Find a side menu item.
      * See 'menu-template.json' for the menu and submenu IDs.
      * Note that the UI adds a prefix to the IDs to make sure they are unique.
-     * @param menuItemId the 'id' of the top-level menu item (not including the prefix)
-     * @param subMenuText the text of the sub menu item under the menu item
-     * @param isTopMenuItem if true, the item to find is a top menu item, not a submenu item. In
-     *                      this case, only 'menuItemId' is needed and 'subMenuText' should be left empty.
+     * 
+     * @param menuItemId    the 'id' of the top-level menu item (not including the
+     *                      prefix)
+     * @param subMenuText   the text of the sub menu item under the menu item
+     * @param isTopMenuItem if true, the item to find is a top menu item, not a
+     *                      submenu item. In
+     *                      this case, only 'menuItemId' is needed and 'subMenuText'
+     *                      should be left empty.
      */
     protected WebElement findMenuItemLink(final String menuItemId, final String subMenuText,
-                                          boolean isTopMenuItem, int timeout) {
+            boolean isTopMenuItem, int timeout) {
         LOG.debug("Finding {} menu item with id '{}' and text '{}'",
                 isTopMenuItem ? "top" : "", menuItemId, subMenuText);
 
@@ -612,9 +637,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         Unreliables.retryUntilTrue(timeout, TimeUnit.SECONDS, () -> {
             final Actions action = new Actions(getDriver());
 
-            final String topMenuXpath = isTopMenuItem ?
-                TOP_MENU_ONLY_XPATH.replace("$ID", TOP_MENU_PREFIX + menuItemId) :
-                TOP_MENU_XPATH.replace("$ID", TOP_MENU_PREFIX + menuItemId);
+            final String topMenuXpath = isTopMenuItem ? TOP_MENU_ONLY_XPATH.replace("$ID", TOP_MENU_PREFIX + menuItemId)
+                    : TOP_MENU_XPATH.replace("$ID", TOP_MENU_PREFIX + menuItemId);
 
             final WebElement topMenuElement = findElementByXpath(topMenuXpath);
             shortWait.until(ExpectedConditions.visibilityOf(topMenuElement));
@@ -663,9 +687,10 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
             final Actions action = new Actions(getDriver());
 
-            // Find the self service menu and hover over it so that the dropdown menu appears
+            // Find the self service menu and hover over it so that the dropdown menu
+            // appears
             final WebElement selfServiceMenu = findElementByXpath(SELF_SERVICE_BUTTON_XPATH);
-            shortWait.until(ExpectedConditions.visibilityOf(selfServiceMenu ));
+            shortWait.until(ExpectedConditions.visibilityOf(selfServiceMenu));
 
             action.moveToElement(selfServiceMenu).build().perform();
 
@@ -743,7 +768,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     public WebElement clickElement(final By by) {
         return waitUntil(new Callable<WebElement>() {
-            @Override public WebElement call() throws Exception {
+            @Override
+            public WebElement call() throws Exception {
                 final WebElement el = getElementImmediately(by);
                 el.click();
                 return el;
@@ -766,7 +792,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     public WebElement waitForElement(final WebDriverWait w, final By by) {
         return waitUntil(null, w, new Callable<WebElement>() {
-            @Override public WebElement call() throws Exception {
+            @Override
+            public WebElement call() throws Exception {
                 final WebElement el = getDriver().findElement(by);
                 if (el.isDisplayed() && el.isEnabled()) {
                     return el;
@@ -778,7 +805,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     public void enterAutocompleteText(final By textInput, final String text) {
         waitUntil(100L, null, new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 waitForElement(textInput).clear();
                 waitForElement(textInput).click();
                 waitForElement(textInput).sendKeys(Keys.chord(Keys.CONTROL, "a"), Keys.BACK_SPACE);
@@ -793,7 +821,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     public void clickUntilVaadinPopupAppears(final By by, final String title) {
         waitUntil(100L, null, new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 final WebDriver driver = getDriver();
                 WebElement popup = getVaadinPopup(driver, title);
 
@@ -832,7 +861,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     public void clickUntilVaadinPopupDisappears(final By by, final String title) {
         waitUntil(100L, null, new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 final WebDriver driver = getDriver();
                 WebElement popup = getVaadinPopup(driver, title);
 
@@ -850,7 +880,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                             sleepQuietly(50);
                         }
                     } catch (final Throwable t) {
-                        LOG.debug("clickUntilVaadinPopupDisappears: exception raised while attempting to click {}", by, t);
+                        LOG.debug("clickUntilVaadinPopupDisappears: exception raised while attempting to click {}", by,
+                                t);
                         return false;
                     }
 
@@ -898,7 +929,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         selectVaadinFrame();
         try {
             LOG.debug("Checking for Vaadin popup '{}'", title);
-            final By vaadinHeaderXpath = By.xpath("//div[@class='popupContent']//div[contains(text(), '" + title + "') and @class='v-window-header']");
+            final By vaadinHeaderXpath = By.xpath("//div[@class='popupContent']//div[contains(text(), '" + title
+                    + "') and @class='v-window-header']");
             final WebElement el = getElementImmediately(vaadinHeaderXpath);
             LOG.debug("Found Vaadin popup '{}': {}", title, el.toString());
             return el;
@@ -911,7 +943,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     public void selectByVisibleText(final String id, final String text) {
         LOG.debug("selectByVisibleText: id={}, text={}", id, text);
         waitUntil(null, null, new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 final Select select = getSelect(id);
                 select.selectByVisibleText(text);
                 return true;
@@ -927,7 +960,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         LOG.debug("Getting <div id='{}'><select />", id);
 
         final WebElement div = waitUntil(null, null, new Callable<WebElement>() {
-            @Override public WebElement call() throws Exception {
+            @Override
+            public WebElement call() throws Exception {
                 LOG.debug("Searching for id '{}'", id);
                 final WebElement el = getElementImmediately(By.id(id));
                 if (el != null && el.isDisplayed() && el.isEnabled()) {
@@ -978,19 +1012,23 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         return getDriver().findElements(By.xpath(xpath));
     }
 
-    public int countElementsMatchingCss(final String css) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public int countElementsMatchingCss(final String css)
+            throws InstantiationException, IllegalAccessException, ClassNotFoundException {
         LOG.debug("countElementsMatchingCss: selector={}", css);
 
-        // Selenium has a bug where the findElements(By) doesn't return elements; even if I attempt to do it manually
-        // using JavascriptExecutor.execute(), so... parse the DOM on the Java side instead.  :/
+        // Selenium has a bug where the findElements(By) doesn't return elements; even
+        // if I attempt to do it manually
+        // using JavascriptExecutor.execute(), so... parse the DOM on the Java side
+        // instead. :/
         final org.jsoup.nodes.Document doc = Jsoup.parse(getDriver().getPageSource());
         final Elements matching = doc.select(css);
         return matching.size();
 
-        // The original one-line implementation, for your edification.  Look at the majesty!
+        // The original one-line implementation, for your edification. Look at the
+        // majesty!
         // A single tear rolls down your cheek as you imagine what could have been, if
         // Selenium wasn't junk.
-        //return getDriver().findElements(By.cssSelector(css)).size();
+        // return getDriver().findElements(By.cssSelector(css)).size();
     }
 
     /**
@@ -1038,7 +1076,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
             waitForElement(selector).click();
             sleep(500);
 
-            if (text.length == 1 && text[0] != Keys.ENTER) { // special case, carriage-return for a previously-entered entry
+            if (text.length == 1 && text[0] != Keys.ENTER) { // special case, carriage-return for a previously-entered
+                                                             // entry
                 try {
                     final String elementText = waitForElement(shortWait, selector).getText();
                     final String elementValue = waitForElement(shortWait, selector).getAttribute("value");
@@ -1076,13 +1115,14 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         wait.until((ExpectedCondition<Boolean>) driver -> {
             String value;
             try {
-                setImplicitWait(200, TimeUnit.MILLISECONDS);
+                setImplicitWait(Duration.ofMillis(200));
                 value = driver.findElement(selector).getAttribute("value");
-            } catch(NoSuchElementException nse) {
+            } catch (NoSuchElementException nse) {
                 LOG.debug("Element not found yet.");
                 throw nse;
             } catch (StaleElementReferenceException sere) {
-                LOG.debug("Element was found but was already stale by the time we queried the attribute. Trying again.");
+                LOG.debug(
+                        "Element was found but was already stale by the time we queried the attribute. Trying again.");
                 value = driver.findElement(selector).getAttribute("value");
             } finally {
                 setImplicitWait();
@@ -1107,8 +1147,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
         final List<Integer> bounds = getAbsoluteBoundedRectangleOfElement(driver, element);
         final int windowHeight = driver.manage().window().getSize().getHeight();
-        final JavascriptExecutor je = (JavascriptExecutor)driver;
-        je.executeScript("window.scrollTo(0, " + (bounds.get(1) - (windowHeight/2)) + ");");
+        final JavascriptExecutor je = (JavascriptExecutor) driver;
+        je.executeScript("window.scrollTo(0, " + (bounds.get(1) - (windowHeight / 2)) + ");");
         return element;
     }
 
@@ -1121,10 +1161,11 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
         if (waitForElement) {
             try {
-                setImplicitWait(200, TimeUnit.MILLISECONDS);
+                setImplicitWait(Duration.ofMillis(200));
                 final WebElement element = wait.until(new ExpectedCondition<WebElement>() {
-                    @Override public WebElement apply(final WebDriver driver) {
-                        final WebElement el = waitForElement? waitForElement(by) : driver.findElement(by);
+                    @Override
+                    public WebElement apply(final WebDriver driver) {
+                        final WebElement el = waitForElement ? waitForElement(by) : driver.findElement(by);
                         return doScroll(driver, el);
                     }
 
@@ -1147,13 +1188,14 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         try {
             final List<Integer> bounds = getAbsoluteBoundedRectangleOfElement(driver, element);
             final var windowSize = driver.manage().window().getSize();
-            final JavascriptExecutor je = (JavascriptExecutor)driver;
+            final JavascriptExecutor je = (JavascriptExecutor) driver;
 
-            // If the left and right bounds of the element are within the width of the page, don't scroll (keep x = 0)
+            // If the left and right bounds of the element are within the width of the page,
+            // don't scroll (keep x = 0)
             final int x;
             if (bounds.get(0) < windowSize.width && (bounds.get(0) + bounds.get(2)) < windowSize.width) {
                 x = 0;
-            }  else {
+            } else {
                 x = bounds.get(0) - (windowSize.width / 2);
             }
 
@@ -1181,7 +1223,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
      */
     public void clickElementUntilElementDisappears(final By click, final By disappears) {
         waitUntil(100L, null, new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 try {
                     final WebElement element = getElementImmediately(disappears);
                     if (element == null) {
@@ -1190,7 +1233,9 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                 } catch (final NoSuchElementException e) {
                     return true;
                 } catch (final Throwable t) {
-                    LOG.warn("clickElementUntilItDisappears: disappearing element not gone yet: click={}, disappears={}", click, disappears, t);
+                    LOG.warn(
+                            "clickElementUntilItDisappears: disappearing element not gone yet: click={}, disappears={}",
+                            click, disappears, t);
                     return false;
                 }
                 try {
@@ -1199,7 +1244,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                         element.click();
                     }
                 } catch (final Throwable t) {
-                    LOG.warn("clickElementUntilItDisappears: unable to click clickable: click={}, disappears={}", click, disappears, t);
+                    LOG.warn("clickElementUntilItDisappears: unable to click clickable: click={}, disappears={}", click,
+                            disappears, t);
                 }
                 return false;
             }
@@ -1208,11 +1254,12 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     @SuppressWarnings("unchecked")
     protected static List<Integer> getAbsoluteBoundedRectangleOfElement(final WebDriver driver, final WebElement we) {
-        final JavascriptExecutor je = (JavascriptExecutor)driver;
+        final JavascriptExecutor je = (JavascriptExecutor) driver;
         final List<String> bounds = (ArrayList<String>) je.executeScript(
                 "var rect = arguments[0].getBoundingClientRect();" +
-                        "return [ '' + parseInt(rect.left + window.scrollX), '' + parseInt(rect.top + window.scrollY), '' + parseInt(rect.width), '' + parseInt(rect.height) ]", we);
-        assertEquals("bounding box array size returned from Javascript", 4, bounds.size());
+                        "return [ '' + parseInt(rect.left + window.scrollX), '' + parseInt(rect.top + window.scrollY), '' + parseInt(rect.width), '' + parseInt(rect.height) ]",
+                we);
+        assertEquals(4, bounds.size(), "bounding box array size returned from Javascript");
         final List<Integer> ret = new ArrayList<>(bounds.size());
         for (final String entry : bounds) {
             ret.add(Integer.valueOf(entry));
@@ -1233,7 +1280,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         waitUntil(elementToBeClickable(By.id(id)));
 
         try {
-            setImplicitWait(10, TimeUnit.MILLISECONDS);
+            setImplicitWait(Duration.ofMillis(10));
 
             try {
                 element = findElementById(id);
@@ -1242,7 +1289,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
             }
 
             final long waitUntil = System.currentTimeMillis() + 60000;
-            while (element == null || element.getAttribute("disabled") != null || !element.isDisplayed() || !element.isEnabled()) {
+            while (element == null || element.getAttribute("disabled") != null || !element.isDisplayed()
+                    || !element.isEnabled()) {
                 if (System.currentTimeMillis() >= waitUntil) {
                     break;
                 }
@@ -1297,9 +1345,9 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     }
 
     public <T> T waitUntil(final Long implicitWait, final WebDriverWait w, final ExpectedCondition<T> condition) {
-        final WebDriverWait wdw = w == null? wait : w;
+        final WebDriverWait wdw = w == null ? wait : w;
         try {
-            setImplicitWait(implicitWait == null? 50 : implicitWait, TimeUnit.MILLISECONDS);
+            setImplicitWait(Duration.ofMillis(implicitWait == null ? 50 : implicitWait));
             return wdw.until(condition);
         } finally {
             setImplicitWait();
@@ -1309,28 +1357,32 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     /**
      * Do an Http request with standard admin credentials and return status code.
      */
-    public static Integer doRequest(final HttpRequestBase request) throws ClientProtocolException, IOException, InterruptedException {
+    public static Integer doRequest(final HttpRequestBase request)
+            throws ClientProtocolException, IOException, InterruptedException {
         return getRequest(request, createBasicCredentials()).getStatus();
     }
 
     /**
      * Do an Http request, overriding credentials, and return status code.
      */
-    public static Integer doRequest(final HttpRequestBase request, UsernamePasswordCredentials credentials) throws ClientProtocolException, IOException, InterruptedException {
+    public static Integer doRequest(final HttpRequestBase request, UsernamePasswordCredentials credentials)
+            throws ClientProtocolException, IOException, InterruptedException {
         return getRequest(request, credentials).getStatus();
     }
 
     /**
      * Do an Http request using standard admin credentials.
      */
-    protected static ResponseData getRequest(final HttpRequestBase request) throws ClientProtocolException, IOException, InterruptedException {
+    protected static ResponseData getRequest(final HttpRequestBase request)
+            throws ClientProtocolException, IOException, InterruptedException {
         return getRequest(request, createBasicCredentials());
     }
 
     /**
      * Do an Http request with the given credentials.
      */
-    protected static ResponseData getRequest(final HttpRequestBase request, UsernamePasswordCredentials credentials) throws ClientProtocolException, IOException, InterruptedException {
+    protected static ResponseData getRequest(final HttpRequestBase request, UsernamePasswordCredentials credentials)
+            throws ClientProtocolException, IOException, InterruptedException {
         final CountDownLatch waitForCompletion = new CountDownLatch(1);
 
         final URI uri = request.getURI();
@@ -1351,7 +1403,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
         final ResponseHandler<ResponseData> responseHandler = new ResponseHandler<ResponseData>() {
             @Override
-            public ResponseData handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
+            public ResponseData handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
                 try {
                     final int status = response.getStatusLine().getStatusCode();
                     String responseText = null;
@@ -1391,7 +1444,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     public long getNodesInDatabase(final String foreignSource) {
         try {
-            final HttpGet request = new HttpGet(getBaseUrlExternal() + "opennms/rest/nodes?foreignSource=" + URLEncoder.encode(foreignSource, "UTF-8"));
+            final HttpGet request = new HttpGet(getBaseUrlExternal() + "opennms/rest/nodes?foreignSource="
+                    + URLEncoder.encode(foreignSource, "UTF-8"));
             final ResponseData rd = getRequest(request);
             LOG.debug("getNodesInDatabase: response={}", rd);
 
@@ -1408,7 +1462,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
     public boolean requisitionExists(final String foreignSource) {
         try {
             final String foreignSourceUrlFragment = URLEncoder.encode(foreignSource, "UTF-8");
-            final Integer status = doRequest(new HttpGet(getBaseUrlExternal() + "opennms/rest/requisitions/" + foreignSourceUrlFragment));
+            final Integer status = doRequest(
+                    new HttpGet(getBaseUrlExternal() + "opennms/rest/requisitions/" + foreignSourceUrlFragment));
             LOG.debug("requisitionExists: foreignSource={}, status={}", foreignSource, status);
             return status == 200;
         } catch (final IOException | InterruptedException e) {
@@ -1429,7 +1484,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                 nodesInRequisition = getNodesInRequisition(foreignSource);
                 nodesInDatabase = getNodesInDatabase(foreignSource);
 
-                LOG.debug("deleteExistingRequisition: nodesInRequisition={}, nodesInDatabase={}", nodesInRequisition, nodesInDatabase);
+                LOG.debug("deleteExistingRequisition: nodesInRequisition={}, nodesInDatabase={}", nodesInRequisition,
+                        nodesInDatabase);
 
                 final String foreignSourceUrlFragment = URLEncoder.encode(foreignSource, "UTF-8");
 
@@ -1449,7 +1505,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                 throw new OpenNMSTestException(e);
             }
             if (System.currentTimeMillis() > waitUntil) {
-                throw new OpenNMSTestException("Gave up waiting to delete requisition '" + foreignSource + "'.  This should totally not happen.");
+                throw new OpenNMSTestException("Gave up waiting to delete requisition '" + foreignSource
+                        + "'.  This should totally not happen.");
             }
         } while (requisitionExists(foreignSource));
     }
@@ -1460,7 +1517,7 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         final String selector = "//span[@data-foreignSource='" + requisitionName + "']";
         WebElement foreignSourceElement = null;
         try {
-            setImplicitWait(2, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(2));
             foreignSourceElement = getDriver().findElement(By.xpath(selector));
         } catch (final NoSuchElementException e) {
             // no match, treat as a no-op
@@ -1478,7 +1535,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     protected void createRequisition(final String foreignSource) {
         LOG.debug("Creating empty requisition: {}", foreignSource);
-        final String emptyRequisition = "<model-import xmlns=\"http://xmlns.opennms.org/xsd/config/model-import\" date-stamp=\"2013-03-29T11:36:55.901-04:00\" foreign-source=\"" + foreignSource + "\" last-import=\"2016-03-29T10:40:23.947-04:00\"></model-import>";
+        final String emptyRequisition = "<model-import xmlns=\"http://xmlns.opennms.org/xsd/config/model-import\" date-stamp=\"2013-03-29T11:36:55.901-04:00\" foreign-source=\""
+                + foreignSource + "\" last-import=\"2016-03-29T10:40:23.947-04:00\"></model-import>";
         createRequisition(foreignSource, emptyRequisition, 0);
     }
 
@@ -1490,7 +1548,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
             sendPost("/rest/requisitions", xml);
             requisitionWait.until(new WaitForNodesInRequisition(expectedNodes));
 
-            final HttpPut request = new HttpPut(getBaseUrlExternal() + "opennms/rest/requisitions/" + foreignSourceUrlFragment + "/import");
+            final HttpPut request = new HttpPut(
+                    getBaseUrlExternal() + "opennms/rest/requisitions/" + foreignSourceUrlFragment + "/import");
             final Integer status = doRequest(request);
             if (status == null || status < 200 || status >= 400) {
                 throw new OpenNMSTestException("Unknown status: " + status);
@@ -1518,7 +1577,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
             waitUntil(new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
-                    return 200 == doRequest(new HttpGet(getBaseUrlExternal() + "opennms/rest/foreignSources/" + URLEncoder.encode(foreignSource, Charset.defaultCharset().toString())));
+                    return 200 == doRequest(new HttpGet(getBaseUrlExternal() + "opennms/rest/foreignSources/"
+                            + URLEncoder.encode(foreignSource, Charset.defaultCharset().toString())));
                 }
             });
         } catch (final Exception e) {
@@ -1552,7 +1612,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
 
     protected long getNodesInRequisition(final String foreignSource) {
         try {
-            final HttpGet request = new HttpGet(getBaseUrlExternal() + "opennms/rest/requisitions/" + URLEncoder.encode(foreignSource, "UTF-8"));
+            final HttpGet request = new HttpGet(
+                    getBaseUrlExternal() + "opennms/rest/requisitions/" + URLEncoder.encode(foreignSource, "UTF-8"));
             final ResponseData rd = getRequest(request);
             LOG.debug("getNodesInRequisition: response={}", rd);
 
@@ -1612,11 +1673,13 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         return 0;
     }
 
-    protected void sendPost(final String urlFragment, final String body) throws ClientProtocolException, IOException, InterruptedException {
+    protected void sendPost(final String urlFragment, final String body)
+            throws ClientProtocolException, IOException, InterruptedException {
         sendPost(urlFragment, body, null);
     }
 
-    public void sendPost(final String urlFragment, final String body, final Integer expectedResponse) throws ClientProtocolException, IOException, InterruptedException {
+    public void sendPost(final String urlFragment, final String body, final Integer expectedResponse)
+            throws ClientProtocolException, IOException, InterruptedException {
         LOG.debug("sendPost: url={}, expectedResponse={}, body={}", urlFragment, expectedResponse, body);
         final HttpPost post = new HttpPost(buildUrlExternal(urlFragment));
         post.setEntity(new StringEntity(body, ContentType.APPLICATION_XML));
@@ -1632,16 +1695,19 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         }
     }
 
-    protected void sendPut(final String urlFragment, final String body) throws ClientProtocolException, IOException, InterruptedException {
+    protected void sendPut(final String urlFragment, final String body)
+            throws ClientProtocolException, IOException, InterruptedException {
         sendPut(urlFragment, body, null);
     }
 
-    protected void sendPut(final String urlFragment, final String body, final Integer expectedResponse) throws ClientProtocolException, IOException, InterruptedException {
+    protected void sendPut(final String urlFragment, final String body, final Integer expectedResponse)
+            throws ClientProtocolException, IOException, InterruptedException {
         sendPut(urlFragment, body, expectedResponse, createBasicCredentials());
     }
 
     protected void sendPut(final String urlFragment, final String body, final Integer expectedResponse,
-                           final UsernamePasswordCredentials credentials) throws ClientProtocolException, IOException, InterruptedException {
+            final UsernamePasswordCredentials credentials)
+            throws ClientProtocolException, IOException, InterruptedException {
         LOG.debug("sendPut: url={}, expectedResponse={}, body={}", urlFragment, expectedResponse, body);
         final HttpPut put = new HttpPut(buildUrlExternal(urlFragment));
         put.setEntity(new StringEntity(body, ContentType.APPLICATION_FORM_URLENCODED));
@@ -1659,13 +1725,16 @@ public abstract class AbstractOpenNMSSeleniumHelper {
         }
     }
 
-    protected void sendDelete(final String urlFragment) throws ClientProtocolException, IOException, InterruptedException {
+    protected void sendDelete(final String urlFragment)
+            throws ClientProtocolException, IOException, InterruptedException {
         sendDelete(urlFragment, null);
     }
 
-    protected void sendDelete(final String urlFragment, final Integer expectedResponse) throws ClientProtocolException, IOException, InterruptedException {
+    protected void sendDelete(final String urlFragment, final Integer expectedResponse)
+            throws ClientProtocolException, IOException, InterruptedException {
         LOG.debug("sendDelete: url={}, expectedResponse={}", urlFragment, expectedResponse);
-        final HttpDelete del = new HttpDelete(getBaseUrlExternal() + "opennms" + (urlFragment.startsWith("/") ? urlFragment : "/" + urlFragment));
+        final HttpDelete del = new HttpDelete(
+                getBaseUrlExternal() + "opennms" + (urlFragment.startsWith("/") ? urlFragment : "/" + urlFragment));
         final Integer response = doRequest(del);
         if (expectedResponse == null) {
             if (response == null || (response != 303 && response != 200 && response != 202 && response != 204)) {
@@ -1701,7 +1770,8 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                     return true;
                 }
             } catch (final Exception e) {
-                LOG.warn("WaitForNodesInDatabase: foreignSource={}, count={}: Failed while attempting to validate.", m_foreignSource, m_numberToMatch, e);
+                LOG.warn("WaitForNodesInDatabase: foreignSource={}, count={}: Failed while attempting to validate.",
+                        m_foreignSource, m_numberToMatch, e);
             }
             return null;
         }
@@ -1732,18 +1802,20 @@ public abstract class AbstractOpenNMSSeleniumHelper {
                     return true;
                 }
             } catch (final Exception e) {
-                LOG.warn("WaitForNodesInRequisition: foreignSource={}, expectedNodes={}: Failed to get nodes in requisition.", m_foreignSource, m_numberToMatch, e);
+                LOG.warn(
+                        "WaitForNodesInRequisition: foreignSource={}, expectedNodes={}: Failed to get nodes in requisition.",
+                        m_foreignSource, m_numberToMatch, e);
             }
             return null;
         }
     }
 
     protected String buildUrlInternal(String urlFragment) {
-        return getBaseUrlInternal() + "opennms" + (urlFragment.startsWith("/")? urlFragment : "/" + urlFragment);
+        return getBaseUrlInternal() + "opennms" + (urlFragment.startsWith("/") ? urlFragment : "/" + urlFragment);
     }
 
     protected String buildUrlExternal(String urlFragment) {
-        return getBaseUrlExternal() + "opennms" + (urlFragment.startsWith("/")? urlFragment : "/" + urlFragment);
+        return getBaseUrlExternal() + "opennms" + (urlFragment.startsWith("/") ? urlFragment : "/" + urlFragment);
     }
 
     public File getDownloadsFolder() {

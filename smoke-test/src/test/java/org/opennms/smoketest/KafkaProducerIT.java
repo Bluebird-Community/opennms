@@ -21,14 +21,12 @@
  */
 package org.opennms.smoketest;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -49,8 +47,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.hibernate.NodeDaoHibernate;
@@ -69,7 +67,7 @@ import org.opennms.smoketest.utils.SshClient;
 
 public class KafkaProducerIT extends BaseKafkaPersisterIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withOpenNMS(OpenNMSProfile.newBuilder()
                     .withKafkaProducerEnabled(true)
@@ -78,8 +76,9 @@ public class KafkaProducerIT extends BaseKafkaPersisterIT {
 
     @Test
     public void testKafkaAlarmStoreData() throws Exception {
-        await().atMost(2, MINUTES).pollInterval(15, SECONDS)
-                .until(this::triggerAlarmAndListReductionKeysInKtable, containsString("uei.opennms.org/alarms/trigger:::kafka-producer-test"));
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(15))
+                .until(this::triggerAlarmAndListReductionKeysInKtable,
+                        containsString("uei.opennms.org/alarms/trigger:::kafka-producer-test"));
     }
 
     private String triggerAlarmAndListReductionKeysInKtable() throws Exception {
@@ -105,26 +104,29 @@ public class KafkaProducerIT extends BaseKafkaPersisterIT {
         DetectorsOnMinionIT.addRequisition(stack.opennms().getRestClient(), null, localhost);
         HibernateDaoFactory daoFactory = stack.postgres().getDaoFactory();
         NodeDao nodeDao = daoFactory.getDao(NodeDaoHibernate.class);
-        final OnmsNode onmsNode = await().atMost(1, MINUTES).pollInterval(15, SECONDS)
+        final OnmsNode onmsNode = await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(15))
                 .until(DaoUtils.findMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class)
                         .ge("createTime", startOfTest)
                         .eq("label", localhost).toCriteria()), notNullValue());
 
         assertNotNull(onmsNode);
         String nodeId = onmsNode.getId().toString();
-        KafkaMessageConsumerRunner kafkaConsumer = new KafkaMessageConsumerRunner(stack.kafka().getBootstrapServers(), "metrics");
+        KafkaMessageConsumerRunner kafkaConsumer = new KafkaMessageConsumerRunner(stack.kafka().getBootstrapServers(),
+                "metrics");
         kafkaConsumer.setNodeId(nodeId);
         Executors.newSingleThreadExecutor().execute(kafkaConsumer);
-        await().atMost(2, MINUTES).pollInterval(15, SECONDS)
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(15))
                 .until(() -> persistCollectionData(stack, nodeId), containsString("Persisted collection"));
 
         // Can't get proto3 in here, so only verify non-null
-        await().atMost(1, MINUTES).pollInterval(15, SECONDS).until(kafkaConsumer::getValue, not(nullValue()));
+        await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(15)).until(kafkaConsumer::getValue,
+                not(nullValue()));
         kafkaConsumer.stop();
     }
 
     protected String persistCollectionData(OpenNMSStack stack, String nodeId) throws Exception {
-        return runCommandAndLogout(stack, "opennms:collect --node " + nodeId + " --persist org.opennms.netmgt.collectd.Jsr160Collector 127.0.0.1 port=18980");
+        return runCommandAndLogout(stack, "opennms:collect --node " + nodeId
+                + " --persist org.opennms.netmgt.collectd.Jsr160Collector 127.0.0.1 port=18980");
     }
 
     /**
@@ -136,8 +138,9 @@ public class KafkaProducerIT extends BaseKafkaPersisterIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println(command);
             pipe.println("logout");
-            await().atMost(2, MINUTES)
-                    .conditionEvaluationListener(new OnTimeOutLogger(() -> System.out.println("Shell output: " + sshClient.getStdoutOrNull())))
+            await().atMost(Duration.ofMinutes(2))
+                    .conditionEvaluationListener(new OnTimeOutLogger(
+                            () -> System.out.println("Shell output: " + sshClient.getStdoutOrNull())))
                     .until(sshClient.isShellClosedCallable());
             shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
         }

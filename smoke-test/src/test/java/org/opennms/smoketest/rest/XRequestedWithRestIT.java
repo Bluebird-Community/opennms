@@ -25,10 +25,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 
 import io.restassured.RestAssured;
@@ -36,19 +36,20 @@ import io.restassured.RestAssured;
 // Ensures if "X-Requeste-With" is set to "XMLHttpRequest" no "WWW-Authenticate" header is sent with the response
 public class XRequestedWithRestIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        // Always reset the session before the test since we expect no existing session/cookies to be present
+        // Always reset the session before the test since we expect no existing
+        // session/cookies to be present
         RestAssured.reset();
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
         RestAssured.basePath = "/opennms/rest/";
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         RestAssured.reset();
     }
@@ -59,13 +60,13 @@ public class XRequestedWithRestIT {
         RestAssured.given()
                 .get()
                 .then().assertThat()
-                    .header("WWW-Authenticate", containsString("Basic"));
+                .header("WWW-Authenticate", containsString("Basic"));
 
         // Verify header does not exist, if X-Request-With is set accordingly
         RestAssured.given()
-                    .header("X-Requested-With", "XMLHttpRequest")
+                .header("X-Requested-With", "XMLHttpRequest")
                 .get()
                 .then().assertThat()
-                    .header("WWW-Authenticate", is(nullValue()));
+                .header("WWW-Authenticate", is(nullValue()));
     }
 }

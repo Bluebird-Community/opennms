@@ -22,11 +22,10 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.greaterThan;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -34,9 +33,9 @@ import java.util.concurrent.Callable;
 import com.google.common.collect.Iterables;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.ClientProtocolException;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.netmgt.model.OnmsMonitoredService;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.netmgt.model.PrimaryType;
@@ -49,12 +48,12 @@ import org.opennms.smoketest.utils.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class DetectorsOnMinionIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(DetectorsOnMinionIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
     private static final String LOCALHOST = "127.0.0.1";
@@ -63,10 +62,10 @@ public class DetectorsOnMinionIT {
     public void checkServicesDetectedOnMinion() throws ClientProtocolException, IOException, InterruptedException {
         RestClient client = stack.opennms().getRestClient();
         addRequisition(client, "MINION", LOCALHOST);
-        await().atMost(5, MINUTES).pollDelay(0, SECONDS).pollInterval(30, SECONDS)
+        await().atMost(Duration.ofMinutes(5)).pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(30))
                 .until(getnumberOfServicesDetected(client), greaterThan(0));
     }
-    
+
     public static void addRequisition(RestClient client, String location, String ipAddress) {
 
         Requisition requisition = new Requisition("foreignSource");

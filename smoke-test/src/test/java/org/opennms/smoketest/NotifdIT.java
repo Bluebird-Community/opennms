@@ -23,15 +23,14 @@ package org.opennms.smoketest;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Duration;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
 import javax.ws.rs.core.Response;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.core.criteria.Criteria;
 import org.opennms.core.criteria.CriteriaBuilder;
@@ -48,55 +47,55 @@ import org.opennms.smoketest.utils.RestClient;
 
 public class NotifdIT {
 
-    private static final String NODE_LABEL = "node1";
-    private static final String IP_ADDRESS = "192.168.1.1";
+        private static final String NODE_LABEL = "node1";
+        private static final String IP_ADDRESS = "192.168.1.1";
 
-    @ClassRule
-    public static OpenNMSStack stack = OpenNMSStack.MINIMAL;
+        @RegisterExtension
+        public static OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @Test
-    public void testNotifdAutoAcknowledgeAlarm() {
-        RestClient restClient = stack.opennms().getRestClient();
+        @Test
+        public void testNotifdAutoAcknowledgeAlarm() {
+                RestClient restClient = stack.opennms().getRestClient();
 
-        //Add a node with interface
-        OnmsNode node = new OnmsNode();
-        node.setLabel(NODE_LABEL);
-        node.setType(OnmsNode.NodeType.ACTIVE);
-        node.setForeignSource("test");
-        node.setForeignId(NODE_LABEL);
-        Response response = restClient.addNode(node);
-        assertEquals(201, response.getStatus());
-        node = restClient.getNode("test:" + NODE_LABEL);
-        OnmsIpInterface ipInterface = new OnmsIpInterface();
-        ipInterface.setNode(node);
-        ipInterface.setIpAddress(InetAddressUtils.getInetAddress(IP_ADDRESS));
-        ipInterface.setIpHostName(IP_ADDRESS);
-        response = restClient.addInterface("test:" + NODE_LABEL, ipInterface);
-        assertEquals(201, response.getStatus());
+                // Add a node with interface
+                OnmsNode node = new OnmsNode();
+                node.setLabel(NODE_LABEL);
+                node.setType(OnmsNode.NodeType.ACTIVE);
+                node.setForeignSource("test");
+                node.setForeignId(NODE_LABEL);
+                Response response = restClient.addNode(node);
+                assertEquals(201, response.getStatus());
+                node = restClient.getNode("test:" + NODE_LABEL);
+                OnmsIpInterface ipInterface = new OnmsIpInterface();
+                ipInterface.setNode(node);
+                ipInterface.setIpAddress(InetAddressUtils.getInetAddress(IP_ADDRESS));
+                ipInterface.setIpHostName(IP_ADDRESS);
+                response = restClient.addInterface("test:" + NODE_LABEL, ipInterface);
+                assertEquals(201, response.getStatus());
 
-        // Send a node down event
-        EventBuilder builder = new EventBuilder(EventConstants.NODE_DOWN_EVENT_UEI, "test", new Date());
-        builder.setNode(node);
-        restClient.sendEvent(builder.getEvent());
+                // Send a node down event
+                EventBuilder builder = new EventBuilder(EventConstants.NODE_DOWN_EVENT_UEI, "test", new Date());
+                builder.setNode(node);
+                restClient.sendEvent(builder.getEvent());
 
-        // Check that a notification is generated for node down
-        NotificationDao notificationDao = stack.postgres().dao(NotificationDaoHibernate.class);
-        Criteria criteria = new CriteriaBuilder(OnmsNotification.class).createAlias("node", "node")
-                .eq("node.id", node.getId()).toCriteria();
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(10, TimeUnit.SECONDS)
-                .until(DaoUtils.countMatchingCallable(notificationDao, criteria), greaterThan(0));
+                // Check that a notification is generated for node down
+                NotificationDao notificationDao = stack.postgres().dao(NotificationDaoHibernate.class);
+                Criteria criteria = new CriteriaBuilder(OnmsNotification.class).createAlias("node", "node")
+                                .eq("node.id", node.getId()).toCriteria();
+                await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(10))
+                                .until(DaoUtils.countMatchingCallable(notificationDao, criteria), greaterThan(0));
 
-        // Send a node Up event
-        EventBuilder builder1 = new EventBuilder(EventConstants.NODE_UP_EVENT_UEI, "test", new Date());
-        builder1.setNode(node);
-        restClient.sendEvent(builder1.getEvent());
+                // Send a node Up event
+                EventBuilder builder1 = new EventBuilder(EventConstants.NODE_UP_EVENT_UEI, "test", new Date());
+                builder1.setNode(node);
+                restClient.sendEvent(builder1.getEvent());
 
-        // Check that notification is auto-acknowledged
-        criteria = new CriteriaBuilder(OnmsNotification.class).eq("answeredBy", "auto-acknowledged")
-                .createAlias("node", "node").eq("node.id", node.getId()).toCriteria();
+                // Check that notification is auto-acknowledged
+                criteria = new CriteriaBuilder(OnmsNotification.class).eq("answeredBy", "auto-acknowledged")
+                                .createAlias("node", "node").eq("node.id", node.getId()).toCriteria();
 
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS)
-                .until(DaoUtils.countMatchingCallable(notificationDao, criteria), greaterThan(0));
-    }
+                await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(5))
+                                .until(DaoUtils.countMatchingCallable(notificationDao, criteria), greaterThan(0));
+        }
 
 }

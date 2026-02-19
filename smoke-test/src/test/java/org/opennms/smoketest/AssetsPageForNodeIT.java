@@ -21,11 +21,11 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author <a href="mailto:agalue@opennms.org">Alejandro Galue</a>
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class AssetsPageForNodeIT extends OpenNMSSeleniumIT {
 
     /** The Constant LOG. */
@@ -47,17 +47,19 @@ public class AssetsPageForNodeIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         LOG.debug("creating node");
-        String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">" +
+        String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">"
+                +
                 "<assetRecord>" +
                 "<description>Right here, right now</description>" +
-                "</assetRecord>" +     
+                "</assetRecord>" +
                 "<labelSource>H</labelSource>" +
                 "<sysContact>The Owner</sysContact>" +
                 "<sysDescription>" +
-                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
+                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386"
+                +
                 "</sysDescription>" +
                 "<sysLocation>DevJam</sysLocation>" +
                 "<sysName>TestMachine1</sysName>" +
@@ -78,7 +80,7 @@ public class AssetsPageForNodeIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         sendDelete("rest/nodes/SmokeTests:TestMachine1", 202);
     }

@@ -28,8 +28,6 @@ import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
 import static com.spotify.hamcrest.jackson.JsonMatchers.jsonNull;
 import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
 import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -39,16 +37,18 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import java.io.PrintStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.features.deviceconfig.persistence.impl.DeviceConfigDaoImpl;
 import org.opennms.netmgt.dao.api.IpInterfaceDao;
@@ -80,7 +80,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 
 import com.google.common.collect.Iterables;
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.MinionTests.class)
+@Tag("MinionTests")
 public class DcbEndToEndIT {
     private static final String DCB_CONFIG_TYPE = "testcfg";
     private static final String DCB_USERNAME = "dcbuser";
@@ -93,22 +93,22 @@ public class DcbEndToEndIT {
     private static final String FOREIGN_SOURCE = "SmokeTests";
 
     private static final OpenNMSProfile OPENNMS_PROFILE = OpenNMSProfile.newBuilder()
-                                                                        .withFile("device-config/test.dcb", "etc/device-config/" + DCB_SCRIPT_NAME + ".dcb")
-                                                                        .build();
+            .withFile("device-config/test.dcb", "etc/device-config/" + DCB_SCRIPT_NAME + ".dcb")
+            .build();
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack STACK = OpenNMSStack.withModel(StackModel.newBuilder()
-                                                                              .withOpenNMS(OPENNMS_PROFILE)
-                                                                              .withMinion()
-                                                                              .build());
+            .withOpenNMS(OPENNMS_PROFILE)
+            .withMinion()
+            .build());
 
-    @ClassRule
+    @RegisterExtension
     public static final GenericContainer<?> TARGET_CONTAINER = new GenericContainer<>(
             new ImageFromDockerfile().withDockerfileFromBuilder(builder -> builder.from("linuxserver/openssh-server")
-                                                                 .run("apk add --update tftp-hpa")
-                                                                 .run("echo \"HostKeyAlgorithms ssh-ed25519\" >> /etc/ssh/sshd_config")
-                                                                 .run("kill -SIGHUP $(pgrep -f \"sshd\")")
-                                                                 .build()))
+                    .run("apk add --update tftp-hpa")
+                    .run("echo \"HostKeyAlgorithms ssh-ed25519\" >> /etc/ssh/sshd_config")
+                    .run("kill -SIGHUP $(pgrep -f \"sshd\")")
+                    .build()))
             .withEnv("PASSWORD_ACCESS", "true")
             .withEnv("SUDO_ACCESS", "true")
             .withEnv("USER_NAME", DCB_USERNAME)
@@ -129,7 +129,7 @@ public class DcbEndToEndIT {
 
     private static RestClient restClient;
 
-    @BeforeClass
+    @BeforeAll
     public static void setupClass() throws Exception {
         targetAddress = getContainerInternalIpAddress(TARGET_CONTAINER);
 
@@ -202,14 +202,16 @@ public class DcbEndToEndIT {
         final MonitoredServiceDao monitoredServiceDao = STACK.postgres().dao(MonitoredServiceDaoHibernate.class);
 
         localNode = await()
-                .atMost(3, MINUTES)
-                .pollInterval(30, SECONDS)
-                .until(DaoUtils.findMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class).eq("foreignId", "local").toCriteria()), notNullValue());
+                .atMost(Duration.ofMinutes(3))
+                .pollInterval(Duration.ofSeconds(30))
+                .until(DaoUtils.findMatchingCallable(nodeDao,
+                        new CriteriaBuilder(OnmsNode.class).eq("foreignId", "local").toCriteria()), notNullValue());
 
         remoteNode = await()
-                .atMost(3, MINUTES)
-                .pollInterval(30, SECONDS)
-                .until(DaoUtils.findMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class).eq("foreignId", "remote").toCriteria()), notNullValue());
+                .atMost(Duration.ofMinutes(3))
+                .pollInterval(Duration.ofSeconds(30))
+                .until(DaoUtils.findMatchingCallable(nodeDao,
+                        new CriteriaBuilder(OnmsNode.class).eq("foreignId", "remote").toCriteria()), notNullValue());
 
         localInterface = ipInterfaceDao.findPrimaryInterfaceByNodeId(localNode.getId());
         remoteInterface = ipInterfaceDao.findPrimaryInterfaceByNodeId(remoteNode.getId());
@@ -218,7 +220,7 @@ public class DcbEndToEndIT {
         remoteService = monitoredServiceDao.getPrimaryService(remoteNode.getId(), "DeviceConfig");
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         // Ensure there is no backup history for every test
         final var deviceConfigDao = STACK.postgres().dao(DeviceConfigDaoImpl.class);
@@ -228,33 +230,31 @@ public class DcbEndToEndIT {
 
     private static String getContainerInternalIpAddress(final GenericContainer<?> container) {
         return Iterables.getOnlyElement(container.getContainerInfo()
-                                                 .getNetworkSettings()
-                                                 .getNetworks()
-                                                 .entrySet())
-                        .getValue()
-                        .getIpAddress();
+                .getNetworkSettings()
+                .getNetworks()
+                .entrySet())
+                .getValue()
+                .getIpAddress();
     }
 
     @Test
     public void testTriggerBackupWithREST() throws Exception {
-        await().atMost(2, MINUTES)
-               .until(restClient::getBackups, is(nullValue()));
+        await().atMost(Duration.ofMinutes(2))
+                .until(restClient::getBackups, is(nullValue()));
 
         // Trigger local backup
         restClient.triggerBackup(new JSONArray(List.of(new JSONObject()
-                                                               .put("ipAddress", targetAddress)
-                                                               .put("location", STACK.minion().getLocation())
-                                                               .put("serviceName", DCB_SVC_NAME)
-                                                               .put("blocking", true))).toString());
-
+                .put("ipAddress", targetAddress)
+                .put("location", STACK.minion().getLocation())
+                .put("serviceName", DCB_SVC_NAME)
+                .put("blocking", true))).toString());
 
         // Trigger remote backup
         restClient.triggerBackup(new JSONArray(List.of(new JSONObject()
-                                                               .put("ipAddress", targetAddress)
-                                                               .put("location", MonitoringLocationDao.DEFAULT_MONITORING_LOCATION_ID)
-                                                               .put("serviceName", DCB_SVC_NAME)
-                                                               .put("blocking", true))).toString());
-
+                .put("ipAddress", targetAddress)
+                .put("location", MonitoringLocationDao.DEFAULT_MONITORING_LOCATION_ID)
+                .put("serviceName", DCB_SVC_NAME)
+                .put("blocking", true))).toString());
 
         assertThat(restClient.getBackups(), jsonArray(containsInAnyOrder(
                 jsonObject()
@@ -268,7 +268,9 @@ public class DcbEndToEndIT {
                         .where("isSuccessfulBackup", is(jsonBoolean(true)))
                         .where("backupStatus", is(jsonText("success")))
                         .where("scheduledInterval", is(jsonObject().where("DeviceConfig", is(jsonText("Never")))))
-                        .where("config", is(jsonText(containsString(String.format("%s %s\n", getContainerInternalIpAddress(STACK.opennms()), 6969))))),
+                        .where("config",
+                                is(jsonText(containsString(String.format("%s %s\n",
+                                        getContainerInternalIpAddress(STACK.opennms()), 6969))))),
                 jsonObject()
                         .where("nodeId", is(jsonInt(remoteNode.getId())))
                         .where("ipInterfaceId", is(jsonInt(remoteInterface.getId())))
@@ -280,36 +282,39 @@ public class DcbEndToEndIT {
                         .where("isSuccessfulBackup", is(jsonBoolean(true)))
                         .where("backupStatus", is(jsonText("success")))
                         .where("scheduledInterval", is(jsonObject().where("DeviceConfig", is(jsonText("Never")))))
-                        .where("config", is(jsonText(containsString(String.format("%s %s\n", getContainerInternalIpAddress(STACK.minion()), 6969))))))));
-        //                                                                                                                                               ^-- Yes, 8 closing braces
+                        .where("config", is(jsonText(containsString(
+                                String.format("%s %s\n", getContainerInternalIpAddress(STACK.minion()), 6969))))))));
+        // ^-- Yes, 8 closing braces
     }
 
     @Test
     public void testTriggerBackupWithCLI() throws Exception {
-        await().atMost(2, MINUTES)
-               .until(restClient::getBackups, is(nullValue()));
+        await().atMost(Duration.ofMinutes(2))
+                .until(restClient::getBackups, is(nullValue()));
 
         // Trigger local backup
         try (final SshClient sshClient = STACK.opennms().ssh(); final PrintStream pipe = sshClient.openShell()) {
-            pipe.printf("opennms:dcb-trigger -p -s %s -l %s %s%n", DCB_SVC_NAME, MonitoringLocationDao.DEFAULT_MONITORING_LOCATION_ID, targetAddress);
+            pipe.printf("opennms:dcb-trigger -p -s %s -l %s %s%n", DCB_SVC_NAME,
+                    MonitoringLocationDao.DEFAULT_MONITORING_LOCATION_ID, targetAddress);
             pipe.printf("logout%n");
 
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
         }
 
-        await().atMost(2, MINUTES)
-               .until(restClient::getBackups, jsonArray(hasSize(1)));
+        await().atMost(Duration.ofMinutes(2))
+                .until(restClient::getBackups, jsonArray(hasSize(1)));
 
         // Trigger remote backup
         try (final SshClient sshClient = STACK.opennms().ssh(); final PrintStream pipe = sshClient.openShell()) {
-            pipe.printf("opennms:dcb-trigger -p -s %s -l %s %s%n", DCB_SVC_NAME, STACK.minion().getLocation(), targetAddress);
+            pipe.printf("opennms:dcb-trigger -p -s %s -l %s %s%n", DCB_SVC_NAME, STACK.minion().getLocation(),
+                    targetAddress);
             pipe.printf("logout%n");
 
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
         }
 
-        await().atMost(2, MINUTES)
-               .until(restClient::getBackups, jsonArray(hasSize(2)));
+        await().atMost(Duration.ofMinutes(2))
+                .until(restClient::getBackups, jsonArray(hasSize(2)));
 
         assertThat(restClient.getBackups(), jsonArray(containsInAnyOrder(
                 jsonObject()
@@ -323,7 +328,9 @@ public class DcbEndToEndIT {
                         .where("isSuccessfulBackup", is(jsonBoolean(true)))
                         .where("backupStatus", is(jsonText("success")))
                         .where("scheduledInterval", is(jsonObject().where("DeviceConfig", is(jsonText("Never")))))
-                        .where("config", is(jsonText(containsString(String.format("%s %s\n", getContainerInternalIpAddress(STACK.opennms()), 6969))))),
+                        .where("config",
+                                is(jsonText(containsString(String.format("%s %s\n",
+                                        getContainerInternalIpAddress(STACK.opennms()), 6969))))),
                 jsonObject()
                         .where("nodeId", is(jsonInt(remoteNode.getId())))
                         .where("ipInterfaceId", is(jsonInt(remoteInterface.getId())))
@@ -335,23 +342,26 @@ public class DcbEndToEndIT {
                         .where("isSuccessfulBackup", is(jsonBoolean(true)))
                         .where("backupStatus", is(jsonText("success")))
                         .where("scheduledInterval", is(jsonObject().where("DeviceConfig", is(jsonText("Never")))))
-                        .where("config", is(jsonText(containsString(String.format("%s %s\n", getContainerInternalIpAddress(STACK.minion()), 6969))))))));
-        //                                                                                                                                               ^-- Yes, 8 closing braces
+                        .where("config", is(jsonText(containsString(
+                                String.format("%s %s\n", getContainerInternalIpAddress(STACK.minion()), 6969))))))));
+        // ^-- Yes, 8 closing braces
     }
 
     @Test
     public void testGetConfigWithCLI() throws Exception {
-        await().atMost(2, MINUTES)
-               .until(restClient::getBackups, is(nullValue()));
+        await().atMost(Duration.ofMinutes(2))
+                .until(restClient::getBackups, is(nullValue()));
 
         // Trigger local backup
         try (final SshClient sshClient = STACK.opennms().ssh(); final PrintStream pipe = sshClient.openShell()) {
-            pipe.printf("opennms:dcb-get -s %s -l %s %s%n", DCB_SVC_NAME, MonitoringLocationDao.DEFAULT_MONITORING_LOCATION_ID, targetAddress);
+            pipe.printf("opennms:dcb-get -s %s -l %s %s%n", DCB_SVC_NAME,
+                    MonitoringLocationDao.DEFAULT_MONITORING_LOCATION_ID, targetAddress);
             pipe.printf("logout%n");
 
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
 
-            assertThat(sshClient.getStdout(), containsString(String.format("%s %s", getContainerInternalIpAddress(STACK.opennms()), 6969)));
+            assertThat(sshClient.getStdout(),
+                    containsString(String.format("%s %s", getContainerInternalIpAddress(STACK.opennms()), 6969)));
         }
 
         // Trigger remote backup
@@ -359,15 +369,15 @@ public class DcbEndToEndIT {
             pipe.printf("opennms:dcb-get -s %s -l %s %s%n", DCB_SVC_NAME, STACK.minion().getLocation(), targetAddress);
             pipe.printf("logout%n");
 
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
 
-            assertThat(sshClient.getStdout(), containsString(String.format("%s %s", getContainerInternalIpAddress(STACK.minion()), 6969)));
+            assertThat(sshClient.getStdout(),
+                    containsString(String.format("%s %s", getContainerInternalIpAddress(STACK.minion()), 6969)));
         }
 
         // Ensure backup was not stored
-        await().atMost(2, MINUTES)
-               .until(restClient::getBackups, is(nullValue()));
+        await().atMost(Duration.ofMinutes(2))
+                .until(restClient::getBackups, is(nullValue()));
     }
 
-    // TODO: Add a test for running on multiple targets in parallel
 }

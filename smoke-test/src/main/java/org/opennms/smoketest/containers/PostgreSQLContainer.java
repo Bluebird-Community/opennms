@@ -43,18 +43,20 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-public class PostgreSQLContainer extends org.testcontainers.containers.PostgreSQLContainer<PostgreSQLContainer> implements TestLifecycleAware {
+public class PostgreSQLContainer extends org.testcontainers.postgresql.PostgreSQLContainer
+        implements TestLifecycleAware {
     private static final Logger LOG = LoggerFactory.getLogger(PostgreSQLContainer.class);
 
     private LoadingCache<Integer, HibernateDaoFactory> daoFactoryCache = CacheBuilder.newBuilder()
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build(new CacheLoader<Integer, HibernateDaoFactory>() {
-                        public HibernateDaoFactory load(Integer mappedPort) {
-                            // Connect to the PostgreSQL in the container
-                            final InetSocketAddress pgsql = new InetSocketAddress(getContainerIpAddress(), mappedPort);
-                            return new HibernateDaoFactory(pgsql);
-                        }
-                    });
+                @Override
+                public HibernateDaoFactory load(Integer mappedPort) {
+                    // Connect to the PostgreSQL in the container
+                    final InetSocketAddress pgsql = new InetSocketAddress(getHost(), mappedPort);
+                    return new HibernateDaoFactory(pgsql);
+                }
+            });
 
     private HibernateDaoFactory daoFactory;
 
@@ -81,7 +83,7 @@ public class PostgreSQLContainer extends org.testcontainers.containers.PostgreSQ
     public HibernateDaoFactory getDaoFactory() {
         try {
             // Cache the DAO factory by the mapped port
-            return daoFactoryCache.get(getMappedPort(POSTGRESQL_PORT));
+            return daoFactoryCache.get(getMappedPort(5432));
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -93,7 +95,8 @@ public class PostgreSQLContainer extends org.testcontainers.containers.PostgreSQ
 
     @Override
     public void afterTest(TestDescription description, Optional<Throwable> throwable) {
-        // Ensure that the next test creates a new DAO factory, if it happens it re-use the same instance of this container
+        // Ensure that the next test creates a new DAO factory, if it happens it re-use
+        // the same instance of this container
         daoFactoryCache.invalidateAll();
         retainLogsfNeeded(description.getFilesystemFriendlyName(), !throwable.isPresent());
     }

@@ -25,12 +25,12 @@ import io.restassured.http.ContentType;
 import org.hamcrest.Matchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MonitoringLocationRestIT extends AbstractRestIT {
 
@@ -62,7 +62,7 @@ public class MonitoringLocationRestIT extends AbstractRestIT {
         assertThat(jsonArray.getJSONObject(5).getString("location-name"), Matchers.is("EEE"));
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         addLocation("CCC");
         addLocation("BBB");
@@ -71,7 +71,7 @@ public class MonitoringLocationRestIT extends AbstractRestIT {
         addLocation("DDD");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         given().delete("aaa");
         given().delete("bbb");
@@ -81,7 +81,8 @@ public class MonitoringLocationRestIT extends AbstractRestIT {
     }
 
     public void addLocation(final String locationName) {
-        final String locationXml = "<location location-name=\""+locationName+"\" monitoring-area=\""+locationName+"\" priority=\"100\"/>";
+        final String locationXml = "<location location-name=\"" + locationName + "\" monitoring-area=\"" + locationName
+                + "\" priority=\"100\"/>";
         given().body(locationXml).contentType(ContentType.XML).post()
                 .then().assertThat()
                 .statusCode(201);

@@ -23,28 +23,28 @@ package org.opennms.smoketest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.containers.OpenNMSContainer;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 
 public class BrokenWebappIT {
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack BROKEN_WEBAPP = OpenNMSStack.minimal(
             b -> b.withFile(getBrokenLdapXml(), "jetty-webapps/opennms/WEB-INF/spring-security.d/ldap.xml"),
             b -> b.withWaitStrategy(c -> new AbstractWaitStrategy() {
-                        @Override
-                        protected void waitUntilReady() {
-                        }
-                    }));
+                @Override
+                protected void waitUntilReady() {
+                }
+            }));
 
     public static URL getBrokenLdapXml() {
         try {
@@ -52,7 +52,8 @@ public class BrokenWebappIT {
             var xml = Files.readString(source);
 
             // Remove an uncommented <beans:entry> element to create an XML syntax error
-            var brokenXml = xml.replaceFirst("(?m)<beans:entry>(\\s*<!-- Name of the LDAP group for OpenNMS administrators -->)", "$1");
+            var brokenXml = xml.replaceFirst(
+                    "(?m)<beans:entry>(\\s*<!-- Name of the LDAP group for OpenNMS administrators -->)", "$1");
             if (xml.equals(brokenXml)) {
                 fail("No substitutions were done in ldap.xml content\n" + xml);
             }

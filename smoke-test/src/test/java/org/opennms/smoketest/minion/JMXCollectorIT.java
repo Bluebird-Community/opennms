@@ -22,10 +22,9 @@
 package org.opennms.smoketest.minion;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.MinionTests;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.CommandTestUtils;
 import org.opennms.smoketest.utils.SshClient;
@@ -34,25 +33,25 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class JMXCollectorIT {
     private static final Logger LOG = LoggerFactory.getLogger(JMXCollectorIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
     @Test
     public void canPerformAdhocJmxCollection() throws Exception {
         final InetSocketAddress sshAddr = stack.opennms().getSshAddress();
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
                 // Issue the collection and verify that a known string appears in the output
-                // Which string it is doesn't really matter provided that it is only returned when the collection
+                // Which string it is doesn't really matter provided that it is only returned
+                // when the collection
                 // was successfull
                 .until(() -> doCollect(sshAddr), containsString("java_lang_type_OperatingSystem"));
     }
@@ -63,7 +62,7 @@ public class JMXCollectorIT {
             final PrintStream pipe = sshClient.openShell();
             pipe.println("opennms:collect -l MINION org.opennms.netmgt.collectd.Jsr160Collector 127.0.0.1 port=18980");
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
 
             // Sanitize the output
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());

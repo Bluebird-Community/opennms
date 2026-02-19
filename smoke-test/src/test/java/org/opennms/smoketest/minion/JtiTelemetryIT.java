@@ -22,24 +22,23 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.Criteria;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.EventDao;
@@ -53,7 +52,6 @@ import org.opennms.netmgt.model.resource.ResourceDTO;
 import org.opennms.netmgt.xml.event.Event;
 import org.opennms.netmgt.xml.event.Parm;
 import org.opennms.netmgt.xml.event.Value;
-import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.telemetry.Packet;
@@ -71,13 +69,13 @@ import org.slf4j.LoggerFactory;
  * @author cgorantla
  */
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class JtiTelemetryIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(JtiTelemetryIT.class);
     public static final String SENDER_IP = "192.168.1.1";
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
     @Test
@@ -85,7 +83,7 @@ public class JtiTelemetryIT {
         final Date startOfTest = new Date();
         final OnmsNode onmsNode = sendNewSuspectEvent(stack, false, startOfTest);
         final InetSocketAddress opennmsJtiPort = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.JTI);
-        await().atMost(1, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(1)).pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     sendJtiTelemetryMessage(opennmsJtiPort);
                     return matchRrdFileFromNodeResource(onmsNode.getId());
@@ -97,7 +95,7 @@ public class JtiTelemetryIT {
         final Date startOfTest = new Date();
         final OnmsNode onmsNode = sendNewSuspectEvent(stack, true, startOfTest);
         final InetSocketAddress minionJtiPort = stack.minion().getNetworkProtocolAddress(NetworkProtocol.JTI);
-        await().atMost(2, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(2)).pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     sendJtiTelemetryMessage(minionJtiPort);
                     return matchRrdFileFromNodeResource(onmsNode.getId());
@@ -112,7 +110,7 @@ public class JtiTelemetryIT {
         }
     }
 
-    public static boolean matchRrdFileFromNodeResource(Integer id)  {
+    public static boolean matchRrdFileFromNodeResource(Integer id) {
         final RestClient client = stack.opennms().getRestClient();
         final ResourceDTO resources = client.getResourcesForNode(Integer.toString(id));
         return resources.getChildren().getObjects().stream()
@@ -132,7 +130,7 @@ public class JtiTelemetryIT {
         minionEvent.setSeverity("4");
         String foreignSource = null;
         if (isMinion) {
-            foreignSource ="jti-test-minion";
+            foreignSource = "jti-test-minion";
             minionEvent.addParm(new Parm(EventConstants.PARM_FOREIGN_SOURCE, foreignSource));
             minionEvent.addParm(new Parm(EventConstants.PARM_FOREIGN_ID, "1212312341"));
             minionEvent.addParm(new Parm(EventConstants.PARM_LOCATION, stack.minion().getLocation()));
@@ -150,12 +148,15 @@ public class JtiTelemetryIT {
                 .eq("eventUei", EventConstants.NEW_SUSPECT_INTERFACE_EVENT_UEI).ge("eventTime", startOfTest)
                 .eq("ipAddr", Inet4Address.getByName(SENDER_IP)).toCriteria();
 
-        await().atMost(1, MINUTES).pollInterval(10, SECONDS).until(DaoUtils.countMatchingCallable(eventDao, criteria),
+        await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(10)).until(
+                DaoUtils.countMatchingCallable(eventDao, criteria),
                 greaterThan(0));
 
-        final OnmsNode onmsNode = await().atMost(1, MINUTES).pollInterval(5, SECONDS)
-                .until(DaoUtils.findMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class).eq("foreignSource", foreignSource)
-                        .ge("createTime", startOfTest).toCriteria()), notNullValue());
+        final OnmsNode onmsNode = await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(5))
+                .until(DaoUtils.findMatchingCallable(nodeDao,
+                        new CriteriaBuilder(OnmsNode.class).eq("foreignSource", foreignSource)
+                                .ge("createTime", startOfTest).toCriteria()),
+                        notNullValue());
 
         assertNotNull(onmsNode);
 

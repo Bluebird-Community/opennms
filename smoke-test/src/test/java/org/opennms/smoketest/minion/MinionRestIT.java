@@ -28,11 +28,11 @@ import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC
 
 import io.restassured.http.ContentType;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.slf4j.Logger;
@@ -43,66 +43,68 @@ import io.restassured.RestAssured;
 import java.util.Arrays;
 import java.util.List;
 
-
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class MinionRestIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MinionRestIT.class);
+        private static final Logger LOG = LoggerFactory.getLogger(MinionRestIT.class);
 
-    @ClassRule
-    public static final OpenNMSStack stack = OpenNMSStack.MINION;
+        @RegisterExtension
+        public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = stack.minion().getWebUrl().toString();
-        RestAssured.port = stack.minion().getWebPort();
-        RestAssured.authentication = preemptive().basic(BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD);
-    }
+        @BeforeEach
+        public void setUp() {
+                RestAssured.baseURI = stack.minion().getWebUrl().toString();
+                RestAssured.port = stack.minion().getWebPort();
+                RestAssured.authentication = preemptive().basic(BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD);
+        }
 
-    @Test
-    public void testMbeansOnMinionWithJolokia() throws Exception {
+        @Test
+        public void testMbeansOnMinionWithJolokia() throws Exception {
 
-        given().get("/jolokia")
-                .then().assertThat()
-                .statusCode(200);
+                given().get("/jolokia")
+                                .then().assertThat()
+                                .statusCode(200);
 
-        given().get("/jolokia/read/java.lang:type=Memory/HeapMemoryUsage")
-                .then().assertThat().body(Matchers.containsString("HeapMemoryUsage"));
+                given().get("/jolokia/read/java.lang:type=Memory/HeapMemoryUsage")
+                                .then().assertThat().body(Matchers.containsString("HeapMemoryUsage"));
 
-        given().get("/jolokia/read/org.opennms.core.ipc.sink.producer:name=*.dispatch,type=timers")
-                .then().assertThat().body(Matchers.containsString("Heartbeat"));
-    }
+                given().get("/jolokia/read/org.opennms.core.ipc.sink.producer:name=*.dispatch,type=timers")
+                                .then().assertThat().body(Matchers.containsString("Heartbeat"));
+        }
 
-    @Test
-    public void testRestHealthServiceOnMinion() throws Exception {
+        @Test
+        public void testRestHealthServiceOnMinion() throws Exception {
 
-        LOG.info("testing /minion/rest/health .........");
-        given().get("/minion/rest/health")
-                .then().log().ifStatusCodeIsEqualTo(200)
-                .statusCode(200);
+                LOG.info("testing /minion/rest/health .........");
+                given().get("/minion/rest/health")
+                                .then().log().ifStatusCodeIsEqualTo(200)
+                                .statusCode(200);
 
-        LOG.info("testing /minion/rest/health?tag=local .........");
-        List<String> localDescriptions = Arrays.asList("Verifying installed bundles", "Retrieving NodeDao", "DNS Lookups (Netty)", "Karaf extender");
-        List<String> descriptions = given().get("/minion/rest/health?tag=local")
-                .then()
-                .log().ifStatusCodeIsEqualTo(200)
-                .statusCode(200)
-                .body("healthy", Matchers.notNullValue())
-                .extract()
-                .body()
-                .jsonPath().getList("responses.description",String.class);
+                LOG.info("testing /minion/rest/health?tag=local .........");
+                List<String> localDescriptions = Arrays.asList("Verifying installed bundles", "Retrieving NodeDao",
+                                "DNS Lookups (Netty)", "Karaf extender");
+                List<String> descriptions = given().get("/minion/rest/health?tag=local")
+                                .then()
+                                .log().ifStatusCodeIsEqualTo(200)
+                                .statusCode(200)
+                                .body("healthy", Matchers.notNullValue())
+                                .extract()
+                                .body()
+                                .jsonPath().getList("responses.description", String.class);
 
-        LOG.info("descriptions in tag 'local' is: {}", Arrays.toString(descriptions.toArray()));
-        descriptions.stream().forEach(d-> Assert.assertTrue(
-                String.format("Service health description '%s' must be in %s or contain '%s'", d, localDescriptions, "Verifying Listener"),
-                localDescriptions.contains(d) || d.contains("Verifying Listener")));
+                LOG.info("descriptions in tag 'local' is: {}", Arrays.toString(descriptions.toArray()));
+                descriptions.stream().forEach(d -> Assertions.assertTrue(
+                                localDescriptions.contains(d) || d.contains("Verifying Listener"),
+                                String.format("Service health description '%s' must be in %s or contain '%s'", d,
+                                                localDescriptions, "Verifying Listener")));
 
-        LOG.info("testing /minion/rest/health/probe?tag=local  .......");
-        given().get("/minion/rest/health/probe?tag=local")
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .contentType(ContentType.TEXT)
-                .body(Matchers.anyOf(Matchers.equalTo("Everything is awesome"), Matchers.equalTo("Oh no, something is wrong")));
-    }
+                LOG.info("testing /minion/rest/health/probe?tag=local  .......");
+                given().get("/minion/rest/health/probe?tag=local")
+                                .then()
+                                .assertThat()
+                                .statusCode(200)
+                                .contentType(ContentType.TEXT)
+                                .body(Matchers.anyOf(Matchers.equalTo("Everything is awesome"),
+                                                Matchers.equalTo("Oh no, something is wrong")));
+        }
 }

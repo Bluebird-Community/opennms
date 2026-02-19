@@ -21,17 +21,17 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -40,11 +40,11 @@ import org.openqa.selenium.support.ui.Select;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class UserIT extends OpenNMSSeleniumIT {
     private static final Logger LOG = LoggerFactory.getLogger(UserIT.class);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         driver.get(getBaseUrlInternal() + "opennms/account/selfService/index.jsp");
     }
@@ -52,9 +52,11 @@ public class UserIT extends OpenNMSSeleniumIT {
     @Test
     public void testExpectedTextAndLinksArePresent() throws Exception {
         final List<WebElement> headers = driver.findElements(By.xpath("//div[@class='card-header']/span"));
-        assertEquals("Account page should have 2 panels", 2, headers.size());
-        assertEquals("Account page should have \"User Account Self-Service\" panel", "User Account Self-Service", headers.get(0).getText());
-        assertEquals("Account page should have \"User Account Self-Service Options\" panel", "Account Self-Service Options", headers.get(1).getText());
+        assertEquals(2, headers.size(), "Account page should have 2 panels");
+        assertEquals("User Account Self-Service", headers.get(0).getText(),
+                "Account page should have \"User Account Self-Service\" panel");
+        assertEquals("Account Self-Service Options", headers.get(1).getText(),
+                "Account page should have \"User Account Self-Service Options\" panel");
     }
 
     @Test
@@ -106,7 +108,8 @@ public class UserIT extends OpenNMSSeleniumIT {
         findElementByName("finish").click();
 
         findElementByLink(GROUP_NAME).click();
-        driver.findElement(By.xpath("//div[@class='card-header']/span[text()='Details for Group: " + GROUP_NAME + "']"));
+        driver.findElement(
+                By.xpath("//div[@class='card-header']/span[text()='Details for Group: " + GROUP_NAME + "']"));
 
         findElementByLink("Group List").click();
         findElementById(GROUP_NAME + ".doDelete").click();
@@ -138,7 +141,8 @@ public class UserIT extends OpenNMSSeleniumIT {
         }
     }
 
-    // "ZZ" so this test runs last, since we can't change the password back to "admin"
+    // "ZZ" so this test runs last, since we can't change the password back to
+    // "admin"
     @Test
     public void testZZChangeAdminPassword() throws Exception {
 
@@ -152,17 +156,17 @@ public class UserIT extends OpenNMSSeleniumIT {
 
     @Test
     public void testInvalidUserIds() {
-        checkInvalidUserId("John<b>Doe</b>",true);
-        checkInvalidUserId("Jane'Doe'",true);
-        checkInvalidUserId("John&Doe",true);
-        checkInvalidUserId("Jane\"\"Doe",true);
+        checkInvalidUserId("John<b>Doe</b>", true);
+        checkInvalidUserId("Jane'Doe'", true);
+        checkInvalidUserId("John&Doe", true);
+        checkInvalidUserId("Jane\"\"Doe", true);
     }
 
     @Test
     public void testValidUserIds() {
-        checkInvalidUserId("John-Doe",false);
-        checkInvalidUserId("Jane/Doe",false);
-        checkInvalidUserId("John.Doe",false);
+        checkInvalidUserId("John-Doe", false);
+        checkInvalidUserId("Jane/Doe", false);
+        checkInvalidUserId("John.Doe", false);
         checkInvalidUserId("Jane#Doe", false);
         checkInvalidUserId("John@Döe.com", false);
         checkInvalidUserId("JohnDoé", false);
@@ -170,17 +174,17 @@ public class UserIT extends OpenNMSSeleniumIT {
 
     @Test
     public void testInvalidGroupIds() {
-        checkInvalidGroupId("John<b>Doe</b>",true);
-        checkInvalidGroupId("Jane'Doe'",true);
-        checkInvalidGroupId("John&Doe",true);
-        checkInvalidGroupId("Jane\"\"Doe",true);
+        checkInvalidGroupId("John<b>Doe</b>", true);
+        checkInvalidGroupId("Jane'Doe'", true);
+        checkInvalidGroupId("John&Doe", true);
+        checkInvalidGroupId("Jane\"\"Doe", true);
     }
 
     @Test
     public void testValidGroupIds() {
-        checkInvalidGroupId("John-Doe",false);
-        checkInvalidGroupId("Jane/Doe",false);
-        checkInvalidGroupId("John.Doe",false);
+        checkInvalidGroupId("John-Doe", false);
+        checkInvalidGroupId("Jane/Doe", false);
+        checkInvalidGroupId("John.Doe", false);
         checkInvalidGroupId("Jane#Doe", false);
         checkInvalidGroupId("John@Döe.com", false);
         checkInvalidGroupId("JohnDoé", false);
@@ -199,7 +203,8 @@ public class UserIT extends OpenNMSSeleniumIT {
 
         if (mustFail) {
             try {
-                final Alert alert = wait.withTimeout(Duration.of(5, ChronoUnit.SECONDS)).until(ExpectedConditions.alertIsPresent());
+                final Alert alert = wait.withTimeout(Duration.of(5, ChronoUnit.SECONDS))
+                        .until(ExpectedConditions.alertIsPresent());
                 alert.dismiss();
             } catch (final Exception e) {
                 LOG.debug("Got an exception waiting for a 'invalid user ID' alert.", e);
@@ -222,7 +227,8 @@ public class UserIT extends OpenNMSSeleniumIT {
 
         if (mustFail) {
             try {
-                final Alert alert = wait.withTimeout(Duration.of(5, ChronoUnit.SECONDS)).until(ExpectedConditions.alertIsPresent());
+                final Alert alert = wait.withTimeout(Duration.of(5, ChronoUnit.SECONDS))
+                        .until(ExpectedConditions.alertIsPresent());
                 alert.dismiss();
             } catch (final Exception e) {
                 LOG.debug("Got an exception waiting for a 'invalid group ID' alert.", e);
@@ -265,10 +271,13 @@ public class UserIT extends OpenNMSSeleniumIT {
         assertTrue(wait.until(pageContainsText("ROLE_USER")));
 
         // now construct an exploit to set ROLE_ADMIN for user 'user'
-        final String html = "<form action='" + stack.opennms().getBaseUrlInternal() + "opennms/admin/userGroupView/users/updateUser' method='POST' enctype='application/x-www-form-urlencoded'>" +
+        final String html = "<form action='" + stack.opennms().getBaseUrlInternal()
+                + "opennms/admin/userGroupView/users/updateUser' method='POST' enctype='application/x-www-form-urlencoded'>"
+                +
                 "<input type='hidden' name='userID' value='user' />" +
                 "<input type='hidden' name='password' value=' ' />" +
-                "<input type='hidden' name='redirect' value='/admin/userGroupView/users/saveUser' /> <input type='hidden' name='fullName' value=' ' />" +
+                "<input type='hidden' name='redirect' value='/admin/userGroupView/users/saveUser' /> <input type='hidden' name='fullName' value=' ' />"
+                +
                 "<input type='hidden' name='userComments' value=' ' />" +
                 "<input type='hidden' name='configuredRoles' value='ROLE_ADMIN' />" +
                 "<input type='hidden' name='email' value=' ' />" +

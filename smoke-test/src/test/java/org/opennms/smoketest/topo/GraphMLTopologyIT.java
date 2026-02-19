@@ -21,7 +21,9 @@
  */
 package org.opennms.smoketest.topo;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,16 +32,15 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
 import static org.opennms.smoketest.TopologyIT.waitForTransition;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.opennms.core.xml.JaxbUtils;
 import org.opennms.features.topology.link.Layout;
 import org.opennms.features.topology.link.TopologyLinkBuilder;
@@ -62,18 +63,19 @@ import com.google.common.collect.Lists;
  *
  * @author mvrueden
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
 
     public static final String LABEL = "GraphML Topology Provider (test-graph)";
 
-    private final GraphmlDocument graphmlDocument = new GraphmlDocument("test-topology.xml", "/topology/graphml/test-topology.xml");
+    private final GraphmlDocument graphmlDocument = new GraphmlDocument("test-topology.xml",
+            "/topology/graphml/test-topology.xml");
 
     private TopologyIT.TopologyUIPage topologyUIPage;
 
     private RestClient restClient;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException, InterruptedException {
         restClient = stack.opennms().getRestClient();
 
@@ -89,14 +91,15 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
         importGraph();
         topologyUIPage = new TopologyIT.TopologyUIPage(this, getBaseUrlInternal());
         topologyUIPage.open();
-        // Select EnLinkd, otherwise the "GraphML Topology Provider (test-graph)" is always pre-selected due to history restoration
+        // Select EnLinkd, otherwise the "GraphML Topology Provider (test-graph)" is
+        // always pre-selected due to history restoration
         topologyUIPage.selectTopologyProvider(TopologyProvider.ENLINKD);
         // if Layers is opened then close to set initial condition
         topologyUIPage.closeLayerSelectionComponent();
         assertTrue(!topologyUIPage.isLayoutComponentVisible());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException, InterruptedException {
         deleteGraph();
     }
@@ -110,14 +113,15 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
         assertEquals(4, focusedVertices.size());
         assertEquals(4, topologyUIPage.getVisibleVertices().size());
         assertEquals(1, topologyUIPage.getSzl());
-        focusedVertices.sort(Comparator.comparing(TopologyIT.FocusedVertex::getNamespace).thenComparing(TopologyIT.FocusedVertex::getLabel));
+        focusedVertices.sort(Comparator.comparing(TopologyIT.FocusedVertex::getNamespace)
+                .thenComparing(TopologyIT.FocusedVertex::getLabel));
         assertEquals(
                 Lists.newArrayList(
                         focusVertex(topologyUIPage, "Acme:regions:", "East Region"),
                         focusVertex(topologyUIPage, "Acme:regions:", "North Region"),
                         focusVertex(topologyUIPage, "Acme:regions:", "South Region"),
-                        focusVertex(topologyUIPage, "Acme:regions:", "West Region")
-                ), focusedVertices);
+                        focusVertex(topologyUIPage, "Acme:regions:", "West Region")),
+                focusedVertices);
 
         // Search for and select a region
         final String regionName = "South";
@@ -129,7 +133,8 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
         assertEquals(4, focusedVertices.size());
         assertEquals(4, topologyUIPage.getVisibleVertices().size());
 
-        // Verify that the layout is the D3 Layout as this layer does not provide a preferredLayout
+        // Verify that the layout is the D3 Layout as this layer does not provide a
+        // preferredLayout
         assertEquals(Layout.D3, topologyUIPage.getSelectedLayout());
 
         // Switch Layer
@@ -141,7 +146,7 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
     }
 
     @Test
-    @Ignore("Flapping, see NMS-17889")
+    @Disabled("Flapping, see NMS-17889")
     public void verifySwitchesLayerOnSearchProperly() {
         topologyUIPage.selectTopologyProvider(() -> LABEL);
         TopologyIT.TopologyUISearchResults searchResult = topologyUIPage.search("South");
@@ -154,7 +159,7 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
     }
 
     @Test
-    @Ignore("Flapping, see NMS-17889")
+    @Disabled("Flapping, see NMS-17889")
     public void verifyNavigateToAndBreadcrumbs() {
         topologyUIPage.selectTopologyProvider(() -> LABEL);
         topologyUIPage.defaultFocus();
@@ -177,18 +182,20 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
         // Click on 1st element, should switch layer and add "child" to focus
         topologyUIPage.getBreadcrumbs().click("regions");
         assertEquals(Lists.newArrayList("regions"), topologyUIPage.getBreadcrumbs().getLabels());
-        assertEquals(Lists.newArrayList(focusVertex(topologyUIPage, "Acme:regions:", "East Region")), topologyUIPage.getFocusedVertices());
+        assertEquals(Lists.newArrayList(focusVertex(topologyUIPage, "Acme:regions:", "East Region")),
+                topologyUIPage.getFocusedVertices());
 
         // Click on last element should add all elements to focus
         topologyUIPage.getBreadcrumbs().click("regions");
         List<TopologyIT.FocusedVertex> focusedVertices = topologyUIPage.getFocusedVertices();
-        focusedVertices.sort(Comparator.comparing(TopologyIT.FocusedVertex::getNamespace).thenComparing(TopologyIT.FocusedVertex::getLabel));
+        focusedVertices.sort(Comparator.comparing(TopologyIT.FocusedVertex::getNamespace)
+                .thenComparing(TopologyIT.FocusedVertex::getLabel));
         assertEquals(Lists.newArrayList(
                 focusVertex(topologyUIPage, "Acme:regions:", "East Region"),
                 focusVertex(topologyUIPage, "Acme:regions:", "North Region"),
                 focusVertex(topologyUIPage, "Acme:regions:", "South Region"),
-                focusVertex(topologyUIPage, "Acme:regions:", "West Region")
-        ), focusedVertices); // all elements should be focused
+                focusVertex(topologyUIPage, "Acme:regions:", "West Region")), focusedVertices); // all elements should
+                                                                                                // be focused
     }
 
     @Test
@@ -203,11 +210,12 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
     }
 
     /**
-     * This method tests whether the GraphMLTopologyProvider can work with categories - searching, collapsing and expanding
+     * This method tests whether the GraphMLTopologyProvider can work with
+     * categories - searching, collapsing and expanding
      */
 
     @Test
-    @Ignore("Flaky test, see NMS-17889")
+    @Disabled("Flaky test, see NMS-17889")
     public void verifyCanFilterByCategory() throws IOException, InterruptedException {
         topologyUIPage.selectTopologyProvider(() -> LABEL);
         topologyUIPage.defaultFocus();
@@ -219,42 +227,45 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
 
         // Search for the first category
         topologyUIPage.search("Routers").selectItemThatContains("Routers");
-        Assert.assertNotNull(topologyUIPage.getVisibleVertices());
-        Assert.assertEquals(2, topologyUIPage.getVisibleVertices().size());
-        Assert.assertEquals("North 2", topologyUIPage.getVisibleVertices().get(0).getLabel());
-        Assert.assertEquals("North 3", topologyUIPage.getVisibleVertices().get(1).getLabel());
+        Assertions.assertNotNull(topologyUIPage.getVisibleVertices());
+        Assertions.assertEquals(2, topologyUIPage.getVisibleVertices().size());
+        Assertions.assertEquals("North 2", topologyUIPage.getVisibleVertices().get(0).getLabel());
+        Assertions.assertEquals("North 3", topologyUIPage.getVisibleVertices().get(1).getLabel());
 
-        // Collapse and verify that collapsing works and that the category is visible while the vertex - not
+        // Collapse and verify that collapsing works and that the category is visible
+        // while the vertex - not
         topologyUIPage.getFocusedVertices().get(0).collapse();
-        Assert.assertEquals(1, topologyUIPage.getVisibleVertices().size());
-        Assert.assertEquals("Routers", topologyUIPage.getVisibleVertices().get(0).getLabel());
+        Assertions.assertEquals(1, topologyUIPage.getVisibleVertices().size());
+        Assertions.assertEquals("Routers", topologyUIPage.getVisibleVertices().get(0).getLabel());
 
         // Search for the second category
-        //TODO Theoretically it should display 2 vertices - one for each category. But it does not due to a bug (see issue NMS-9423)
+        // TODO Theoretically it should display 2 vertices - one for each category. But
+        // it does not due to a bug (see issue NMS-9423)
         topologyUIPage.search("Servers").selectItemThatContains("Servers");
-        Assert.assertNotNull(topologyUIPage.getVisibleVertices());
-        Assert.assertEquals(1, topologyUIPage.getVisibleVertices().size());
-        Assert.assertEquals("Routers", topologyUIPage.getVisibleVertices().get(0).getLabel());
+        Assertions.assertNotNull(topologyUIPage.getVisibleVertices());
+        Assertions.assertEquals(1, topologyUIPage.getVisibleVertices().size());
+        Assertions.assertEquals("Routers", topologyUIPage.getVisibleVertices().get(0).getLabel());
 
         // Expand and verify that vertices are visible again (and not duplicated)
         topologyUIPage.getFocusedVertices().get(0).expand();
-        Assert.assertEquals(2, topologyUIPage.getVisibleVertices().size());
-        Assert.assertEquals("North 2", topologyUIPage.getVisibleVertices().get(0).getLabel());
-        Assert.assertEquals("North 3", topologyUIPage.getVisibleVertices().get(1).getLabel());
+        Assertions.assertEquals(2, topologyUIPage.getVisibleVertices().size());
+        Assertions.assertEquals("North 2", topologyUIPage.getVisibleVertices().get(0).getLabel());
+        Assertions.assertEquals("North 3", topologyUIPage.getVisibleVertices().get(1).getLabel());
 
-        // Collapse all and verify that vertices are not visible and that both categories are visible
+        // Collapse all and verify that vertices are not visible and that both
+        // categories are visible
         for (TopologyIT.FocusedVertex vertex : topologyUIPage.getFocusedVertices()) {
             vertex.collapse();
         }
-        Assert.assertEquals(2, topologyUIPage.getVisibleVertices().size());
-        Assert.assertEquals("Routers", topologyUIPage.getVisibleVertices().get(0).getLabel());
-        Assert.assertEquals("Servers", topologyUIPage.getVisibleVertices().get(1).getLabel());
+        Assertions.assertEquals(2, topologyUIPage.getVisibleVertices().size());
+        Assertions.assertEquals("Routers", topologyUIPage.getVisibleVertices().get(0).getLabel());
+        Assertions.assertEquals("Servers", topologyUIPage.getVisibleVertices().get(1).getLabel());
 
         topologyUIPage.clearFocus();
     }
 
     @Test
-    @Ignore("Flapping. Icon does now show, and context menu does not have 'Change Icon' option, only 'Clear Focus' and 'Refresh Now'")
+    @Disabled("Flapping. Icon does now show, and context menu does not have 'Change Icon' option, only 'Clear Focus' and 'Refresh Now'")
     public void verifyCanChangeIcon() throws IOException, InterruptedException {
         // Select Meta Topology and select target Topology
         topologyUIPage.selectTopologyProvider(() -> LABEL);
@@ -269,24 +280,25 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
 
         // Ensure icon is not yet changed
         if (newIconName.equals(currentIconName)) {
-            // We're already set to the target icon type, let's change it to something else before proceeding
+            // We're already set to the target icon type, let's change it to something else
+            // before proceeding
             topologyUIPage.findVertex(vertexName).changeIcon(otherIconName);
-            Assert.assertEquals(otherIconName, topologyUIPage.findVertex(vertexName).getIconName());
+            Assertions.assertEquals(otherIconName, topologyUIPage.findVertex(vertexName).getIconName());
         }
 
         // Change icon
         topologyUIPage.findVertex(vertexName).changeIcon(newIconName);
 
         // Verify icon has changed
-        Assert.assertEquals(newIconName, topologyUIPage.findVertex(vertexName).getIconName());
+        Assertions.assertEquals(newIconName, topologyUIPage.findVertex(vertexName).getIconName());
     }
 
     // See NMS-10451
     @Test
-    @Ignore("Flapping, see NMS-17889")
+    @Disabled("Flapping, see NMS-17889")
     public void verifyCanSelectNonVisibleVertex() {
         // Ensure nothing is visible for now
-        Assert.assertEquals(0, topologyUIPage.getVisibleVertices().size());
+        Assertions.assertEquals(0, topologyUIPage.getVisibleVertices().size());
 
         // Select Nodes tab and select node
         final TopologyIT.BrowserTab browserTab = topologyUIPage.getTab(TopologyIT.Tabs.Nodes);
@@ -295,13 +307,13 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
 
         // Verify that now the vertex is visible and in focus
         final List<TopologyIT.VisibleVertex> visibleVertices = topologyUIPage.getVisibleVertices();
-        Assert.assertEquals(1, visibleVertices.size());
-        Assert.assertEquals("North 2", visibleVertices.get(0).getLabel());
-        Assert.assertEquals(1, topologyUIPage.getFocusedVertices().size());
+        Assertions.assertEquals(1, visibleVertices.size());
+        Assertions.assertEquals("North 2", visibleVertices.get(0).getLabel());
+        Assertions.assertEquals(1, topologyUIPage.getFocusedVertices().size());
     }
 
     @Test
-    @Ignore("Started to fail after we added pluginRepository to override the jasper-third-party url in opennms-base-assembly pom file ; see NMS-16460")
+    @Disabled("Started to fail after we added pluginRepository to override the jasper-third-party url in opennms-base-assembly pom file ; see NMS-16460")
     public void verifyCanSetLayerViaUrlParameter() {
         adminPage(); // leave topology page to ensure the link actually works
         final String namespace = "acme:markets";
@@ -318,19 +330,21 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
         // DO NOT invoke .open()
         topologyUIPage = new TopologyIT.TopologyUIPage(this, getBaseUrlInternal());
         waitForTransition(this);
-        Assert.assertThat(topologyUIPage.getSzl(), is(0));
-        Assert.assertThat(topologyUIPage.getFocusedVertices(), hasItems(
+        assertThat(topologyUIPage.getSzl(), is(0));
+        assertThat(topologyUIPage.getFocusedVertices(), hasItems(
                 focusVertex(topologyUIPage, searchTokenNamespace, "North 2"),
                 focusVertex(topologyUIPage, searchTokenNamespace, "North 3")));
     }
 
     /**
-     * Creates and publishes a requisition with 2 dummy nodes with predefined parameters
+     * Creates and publishes a requisition with 2 dummy nodes with predefined
+     * parameters
      */
-    private void        createDummyNodes() throws IOException, InterruptedException {
+    private void createDummyNodes() throws IOException, InterruptedException {
 
         // First node has foreign ID "node1", label - "North 2" and category "Routers"
-        // Second node has foreign ID "node2", label - "North 3" and categories "Routers" and "Servers"
+        // Second node has foreign ID "node2", label - "North 3" and categories
+        // "Routers" and "Servers"
 
         final String foreignSourceXML = "<foreign-source name=\"" + OpenNMSSeleniumIT.REQUISITION_NAME + "\">\n" +
                 "<scan-interval>1d</scan-interval>\n" +
@@ -340,20 +354,20 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
         createForeignSource(REQUISITION_NAME, foreignSourceXML);
 
         String requisitionXML = "<model-import foreign-source=\"" + OpenNMSSeleniumIT.REQUISITION_NAME + "\">" +
-                                "   <node foreign-id=\"node1\" node-label=\"North 2\">" +
-                                "       <interface ip-addr=\"127.0.0.1\" status=\"1\" snmp-primary=\"N\">" +
-                                "           <monitored-service service-name=\"ICMP\"/>" +
-                                "       </interface>" +
-                                "       <category name=\"Routers\"/>" +
-                                "   </node>" +
-                                "   <node foreign-id=\"node2\" node-label=\"North 3\">" +
-                                "       <interface ip-addr=\"127.0.0.1\" status=\"1\" snmp-primary=\"N\">" +
-                                "           <monitored-service service-name=\"ICMP\"/>" +
-                                "       </interface>" +
-                                "       <category name=\"Routers\"/>" +
-                                "       <category name=\"Servers\"/>" +
-                                "   </node>" +
-                                "</model-import>";
+                "   <node foreign-id=\"node1\" node-label=\"North 2\">" +
+                "       <interface ip-addr=\"127.0.0.1\" status=\"1\" snmp-primary=\"N\">" +
+                "           <monitored-service service-name=\"ICMP\"/>" +
+                "       </interface>" +
+                "       <category name=\"Routers\"/>" +
+                "   </node>" +
+                "   <node foreign-id=\"node2\" node-label=\"North 3\">" +
+                "       <interface ip-addr=\"127.0.0.1\" status=\"1\" snmp-primary=\"N\">" +
+                "           <monitored-service service-name=\"ICMP\"/>" +
+                "       </interface>" +
+                "       <category name=\"Routers\"/>" +
+                "       <category name=\"Servers\"/>" +
+                "   </node>" +
+                "</model-import>";
         createRequisition(REQUISITION_NAME, requisitionXML, 2);
         // Send an event to force reload of topology
         final EventBuilder builder = new EventBuilder(EventConstants.RELOAD_TOPOLOGY_UEI, getClass().getSimpleName());
@@ -373,23 +387,26 @@ public class GraphMLTopologyIT extends OpenNMSSeleniumIT {
     private void importGraph() throws InterruptedException {
         graphmlDocument.create(restClient);
 
-        // We wait to give the GraphMLMetaTopologyFactory the chance to initialize the new Topology
+        // We wait to give the GraphMLMetaTopologyFactory the chance to initialize the
+        // new Topology
         Thread.sleep(20000);
     }
 
     private void deleteGraph() throws InterruptedException {
         graphmlDocument.delete(restClient);
 
-        // We wait to give the GraphMLMetaTopologyFactory the chance to clean up afterwards
+        // We wait to give the GraphMLMetaTopologyFactory the chance to clean up
+        // afterwards
         Thread.sleep(20000);
     }
 
-    private static TopologyIT.FocusedVertex focusVertex(TopologyIT.TopologyUIPage topologyUIPage, String namespace, String label) {
+    private static TopologyIT.FocusedVertex focusVertex(TopologyIT.TopologyUIPage topologyUIPage, String namespace,
+            String label) {
         return new TopologyIT.FocusedVertex(topologyUIPage, namespace, label);
     }
 
     @Test
-    @Ignore("this has been flapping :( ex https://app.circleci.com/pipelines/github/OpenNMS/opennms-prime/5532/workflows/2cf99655-819e-4bec-b1ab-77ce6a4e53fb/jobs/38645/tests")
+    @Disabled("this has been flapping :( ex https://app.circleci.com/pipelines/github/OpenNMS/opennms-prime/5532/workflows/2cf99655-819e-4bec-b1ab-77ce6a4e53fb/jobs/38645/tests")
     public void testNMS14379() throws Exception {
         importGraph();
         topologyUIPage.open();

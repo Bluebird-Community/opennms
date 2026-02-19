@@ -21,14 +21,13 @@
  */
 package org.opennms.smoketest.minion;
 
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.MinionTests;
+import org.junit.jupiter.api.Tag;
 import org.opennms.smoketest.stacks.IpcStrategy;
 
 /**
  * Helps to validate Twin with Kafka
  */
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class TrapdWithKafkaIT extends TrapIT {
 
     @Override

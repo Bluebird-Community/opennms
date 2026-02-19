@@ -21,16 +21,19 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ForecastIT extends OpenNMSSeleniumIT {
     @Test
     public void canLoadGraph() throws Exception {
         // Request a known graph with an invalid resource id
-        driver.get(getBaseUrlInternal() + "opennms/graph/forecast.jsp?resourceId=node[999].nodeSnmp[]&report=mib2.tcpopen");
+        driver.get(getBaseUrlInternal()
+                + "opennms/graph/forecast.jsp?resourceId=node[999].nodeSnmp[]&report=mib2.tcpopen");
         // The graph should be rendered
         findElementByXpath("//div[@class='flot-datatable-tabs']");
-        // It won't have any data, but this is sufficient to very that all of the required
-        // Javascript files have been loaded, and the AJAX call to get the graph was successful
+        // It won't have any data, but this is sufficient to very that all of the
+        // required
+        // Javascript files have been loaded, and the AJAX call to get the graph was
+        // successful
     }
 }

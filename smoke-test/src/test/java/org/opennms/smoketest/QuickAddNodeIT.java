@@ -21,12 +21,12 @@
  */
 package org.opennms.smoketest;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
@@ -44,7 +44,7 @@ public class QuickAddNodeIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         deleteTestRequisition();
         createTestRequisition();
@@ -52,11 +52,14 @@ public class QuickAddNodeIT extends OpenNMSSeleniumIT {
 
     /**
      * Tears down the test.
-     * <p>Be 100% sure that there are no left-overs on the testing OpenNMS installation.</p>
+     * <p>
+     * Be 100% sure that there are no left-overs on the testing OpenNMS
+     * installation.
+     * </p>
      *
      * @throws Exception the exception
      */
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         deleteTestRequisition();
     }
@@ -98,7 +101,8 @@ public class QuickAddNodeIT extends OpenNMSSeleniumIT {
         wait.until(new WaitForNodesInDatabase(1));
     }
 
-    protected WebElement enterTextAutocomplete(final By selector, final CharSequence... text) throws InterruptedException {
+    protected WebElement enterTextAutocomplete(final By selector, final CharSequence... text)
+            throws InterruptedException {
         final WebElement element = driver.findElement(selector);
         element.clear();
         element.click();
@@ -109,8 +113,8 @@ public class QuickAddNodeIT extends OpenNMSSeleniumIT {
         Thread.sleep(100);
 
         try {
-            setImplicitWait(5, TimeUnit.SECONDS);
-            final List<WebElement> matching = driver.findElements(By.cssSelector("a[title='"+text+"']"));
+            setImplicitWait(Duration.ofSeconds(5));
+            final List<WebElement> matching = driver.findElements(By.cssSelector("a[title='" + text + "']"));
 
             if (!matching.isEmpty()) {
                 findElementByCss("a[title='" + text + "']").click();

@@ -24,17 +24,19 @@ package org.opennms.smoketest.topo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.opennms.features.topology.link.TopologyProvider;
 import org.opennms.smoketest.BSMAdminIT;
 import org.opennms.smoketest.BSMAdminIT.BsmAdminPage;
@@ -49,14 +51,14 @@ import com.google.common.collect.Lists;
  *
  * @author jwhite
  */
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class BSMTopologyIT extends OpenNMSSeleniumIT {
 
     private BsmAdminPage bsmAdminPage;
     private TopologyUIPage topologyUiPage;
     private List<String> businessServiceNames = new ArrayList<>();
 
-    @Before
+    @BeforeEach
     public void setUp() throws InterruptedException {
         bsmAdminPage = new BsmAdminPage(this);
         topologyUiPage = new TopologyUIPage(this, getBaseUrlInternal());
@@ -68,7 +70,7 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
         topologyUiPage.selectTopologyProvider(TopologyProvider.BUSINESS_SERVICE);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         deleteBusinessServices(businessServiceNames);
     }
@@ -80,7 +82,7 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
 
         // Search for and select the first business service in our list
         final String businessServiceName = businessServiceNames.get(0);
-        topologyUiPage.search(businessServiceName.substring(0,  12)).selectItemThatContains(businessServiceName);
+        topologyUiPage.search(businessServiceName.substring(0, 12)).selectItemThatContains(businessServiceName);
 
         // We should have a single vertex in focus
         assertEquals(1, topologyUiPage.getFocusedVertices().size());
@@ -92,10 +94,11 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
         List<VisibleVertex> visibleVertices = topologyUiPage.getVisibleVertices();
         assertEquals(2, visibleVertices.size());
 
-        // The two vertices visible, should have the labels from the first two business services
+        // The two vertices visible, should have the labels from the first two business
+        // services
         Set<String> vertexNames = visibleVertices.stream()
-            .map(v -> v.getLabel())
-            .collect(Collectors.toSet());
+                .map(v -> v.getLabel())
+                .collect(Collectors.toSet());
         assertThat(vertexNames, hasItems(businessServiceNames.get(0), businessServiceNames.get(1)));
 
         // Now bump up the SZL
@@ -117,13 +120,14 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
         }
         String msg = String.format("Could not find all vertices for: %s, found: %s, candidates: %s",
                 businessServiceNames, sortedVertices, visibleVertices);
-        assertEquals(msg, 5, sortedVertices.size());
+        assertEquals(5, sortedVertices.size(), msg);
 
         // By default, we should be using the hierarchical layout,
         // so all of the vertices should be aligned horizontally
         int expectedX = sortedVertices.get(0).getLocation().getX();
         for (VisibleVertex visibleVertex : sortedVertices) {
-            assertEquals(visibleVertex + "is not at the expected location.", expectedX, visibleVertex.getLocation().getX());
+            assertEquals(expectedX, visibleVertex.getLocation().getX(),
+                    visibleVertex + "is not at the expected location.");
         }
 
         // and every vertex should be lower than the last
@@ -136,16 +140,16 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
 
         // Now verify that every vertex can be selected
         sortedVertices.stream()
-            .forEach(v -> v.select());
+                .forEach(v -> v.select());
     }
 
     // See NMS-8542
     @Test
     public void canChangeFocusWhenInSimulationMode() {
         // Ensure that simulation mode is disabled and enable it afterwards
-        Assert.assertEquals(Boolean.FALSE, topologyUiPage.isSimulationModeEnabled());
+        Assertions.assertEquals(Boolean.FALSE, topologyUiPage.isSimulationModeEnabled());
         topologyUiPage.clickOnMenuItemsWithLabels("Simulate", "Simulation Mode");
-        Assert.assertEquals(Boolean.TRUE, topologyUiPage.isSimulationModeEnabled());
+        Assertions.assertEquals(Boolean.TRUE, topologyUiPage.isSimulationModeEnabled());
 
         // Apply default focus before continuing
         topologyUiPage.clearFocus();
@@ -153,22 +157,22 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
         topologyUiPage.setSzl(4);
 
         // Verify pre conditions
-        Assert.assertTrue("We need at least 3 visible vertices", 3 <= topologyUiPage.getVisibleVertices().size());
-        Assert.assertTrue("Only one vertex should be in focus", 1 == topologyUiPage.getFocusedVertices().size());
-        Assert.assertTrue("At least one vertex must not be focused", topologyUiPage.getNotFocusedVertices().size() >= 1);
+        assertTrue(3 <= topologyUiPage.getVisibleVertices().size(), "We need at least 3 visible vertices");
+        assertTrue(1 == topologyUiPage.getFocusedVertices().size(), "Only one vertex should be in focus");
+        assertTrue(topologyUiPage.getNotFocusedVertices().size() >= 1, "At least one vertex must not be focused");
 
         // Add a vertex to focus, which is not yet in focus
         topologyUiPage.getNotFocusedVertices().get(0).contextMenu().addToFocus();
 
         // Simulation mode should still be enabled
-        Assert.assertEquals(Boolean.TRUE, topologyUiPage.isSimulationModeEnabled());
+        Assertions.assertEquals(Boolean.TRUE, topologyUiPage.isSimulationModeEnabled());
 
         // Set some vertex as focus
-        Assert.assertTrue("At least one vertex must not be focused", topologyUiPage.getNotFocusedVertices().size() >= 1);
+        assertTrue(topologyUiPage.getNotFocusedVertices().size() >= 1, "At least one vertex must not be focused");
         topologyUiPage.getNotFocusedVertices().get(0).contextMenu().setAsFocus();
 
         // Simulation mode should still be enabled
-        Assert.assertEquals(Boolean.TRUE, topologyUiPage.isSimulationModeEnabled());
+        Assertions.assertEquals(Boolean.TRUE, topologyUiPage.isSimulationModeEnabled());
     }
 
     // See NMS-10529
@@ -179,7 +183,7 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
 
         // Search for and select the first business service in our list and select it
         final String businessServiceName = businessServiceNames.get(0);
-        topologyUiPage.search(businessServiceName.substring(0,  12)).selectItemThatContains(businessServiceName);
+        topologyUiPage.search(businessServiceName.substring(0, 12)).selectItemThatContains(businessServiceName);
 
         // Now ensure that the "Business Service Status" is visible in the info panel
         pageContainsText("Business Service Status");
@@ -196,11 +200,12 @@ public class BSMTopologyIT extends OpenNMSSeleniumIT {
             bsmAdminPage.openNewDialog(eachServiceName).save();
         }
 
-        // Chain the business services, linking the 1st the 2nd, the 2nd to 3rd and so on...
+        // Chain the business services, linking the 1st the 2nd, the 2nd to 3rd and so
+        // on...
         for (int i = 0; i < businessServiceNames.size() - 1; i++) {
             bsmAdminPage.expandAll();
             final String linkFrom = businessServiceNames.get(i);
-            final String linkTo = businessServiceNames.get(i+1);
+            final String linkTo = businessServiceNames.get(i + 1);
             final BSMAdminIT.BsmAdminPageEditWindow bsmAdminPageEditWindow = bsmAdminPage.openEditDialog(linkFrom);
             bsmAdminPageEditWindow.addChildEdge(linkTo, "Identity", 1);
             bsmAdminPageEditWindow.save();

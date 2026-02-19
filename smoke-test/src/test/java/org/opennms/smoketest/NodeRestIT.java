@@ -21,15 +21,15 @@
  */
 package org.opennms.smoketest;
 
+import java.time.Duration;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.is;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.netmgt.model.OnmsIpInterface;
 import org.opennms.netmgt.model.OnmsMonitoredService;
@@ -44,7 +44,7 @@ import org.opennms.smoketest.utils.RestClient;
  */
 public class NodeRestIT {
 
-    @ClassRule
+    @RegisterExtension
     public static OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
     @Test
@@ -87,14 +87,14 @@ public class NodeRestIT {
         assertEquals(202, response.getStatus());
         // Verify that interface2 (192.168.1.2) was deleted
         // Since delete is asynchronous call, wait till Interface is deleted
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS)
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(5))
                 .until(() -> restClient.getResponseForInterface("test:node1", "192.168.1.2").getStatus(), is(404));
         // Add services on interface (192.168.1.1)
         OnmsMonitoredService service = new OnmsMonitoredService();
         OnmsServiceType serviceType = new OnmsServiceType();
         serviceType.setName("HTTP");
         service.setServiceType(serviceType);
-        // Verify that service http was added 
+        // Verify that service http was added
         response = restClient.addService("test:node1", "192.168.1.1", service);
         assertEquals(201, response.getStatus());
         // Add another service on interface (192.168.1.1)
@@ -102,7 +102,7 @@ public class NodeRestIT {
         OnmsServiceType serviceType2 = new OnmsServiceType();
         serviceType2.setName("SSH");
         service2.setServiceType(serviceType2);
-        // Verify that service https was added 
+        // Verify that service https was added
         response = restClient.addService("test:node1", "192.168.1.1", service2);
         assertEquals(201, response.getStatus());
         // Delete http service (asynchronous call, response will be 202)
@@ -111,9 +111,10 @@ public class NodeRestIT {
         // Delete https service (asynchronous call, response will be 202)
         response = restClient.deleteService("test:node1", "192.168.1.1", "SSH");
         assertEquals(202, response.getStatus());
-        // Verify that interface (192.168.1.1) was deleted since all services are deleted
+        // Verify that interface (192.168.1.1) was deleted since all services are
+        // deleted
         // Since node also doesn't exist, responde code will be 400
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS)
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(5))
                 .until(() -> restClient.getResponseForInterface("test:node1", "192.168.1.1").getStatus(), is(400));
         // Verify that node is also deleted
         response = restClient.getResponseForNode("test:node1");

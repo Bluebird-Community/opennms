@@ -23,29 +23,28 @@ package org.opennms.smoketest.minion;
 
 import java.nio.file.Path;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.MinionTests;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.MinionProfile;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.StackModel;
 import org.opennms.smoketest.utils.TestContainerUtils;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class MinionOverlayIT {
-    @ClassRule
-    public final static OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
-            .withMinions(new MinionProfile.Builder()
-                    // Copy a random file to the overlay for testing
-                    .withFile("empty-discovery-configuration.xml", "random-overlay-test-file")
-                    .build())
-            .build());
+        @RegisterExtension
+        public final static OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
+                        .withMinions(new MinionProfile.Builder()
+                                        // Copy a random file to the overlay for testing
+                                        .withFile("empty-discovery-configuration.xml", "random-overlay-test-file")
+                                        .build())
+                        .build());
 
-    @Test
-    public void testFileOverlay() {
-        // This will throw an exception if the file doesn't exist
-        TestContainerUtils.getFileFromContainerAsString(stack.minion(),
-                Path.of("/opt/minion/etc/random-overlay-test-file"));
-    }
+        @Test
+        public void testFileOverlay() {
+                // This will throw an exception if the file doesn't exist
+                TestContainerUtils.getFileFromContainerAsString(stack.minion(),
+                                Path.of("/opt/minion/etc/random-overlay-test-file"));
+        }
 }

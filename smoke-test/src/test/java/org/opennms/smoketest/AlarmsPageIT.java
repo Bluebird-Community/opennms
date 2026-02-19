@@ -21,12 +21,12 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.opennms.netmgt.events.api.EventConstants;
 import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.netmgt.xml.event.Event;
@@ -34,9 +34,9 @@ import org.opennms.smoketest.utils.RestClient;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class AlarmsPageIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void createAlarm() throws Exception {
         final EventBuilder builder = new EventBuilder(EventConstants.IMPORT_FAILED_UEI, "AlarmsPageTest");
         builder.setParam("importResource", "foo");
@@ -46,7 +46,7 @@ public class AlarmsPageIT extends OpenNMSSeleniumIT {
         restClient.sendEvent(ev);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         alarmsPage();
     }
@@ -67,7 +67,7 @@ public class AlarmsPageIT extends OpenNMSSeleniumIT {
     }
 
     @Test
-    public void testAllLinks() throws InterruptedException{
+    public void testAllLinks() throws InterruptedException {
         findElementByLink("All alarms (summary)").click();
         findElementByXpath("//a[@title='Show acknowledged alarm(s)']");
         assertElementDoesNotExist(By.cssSelector("//table//th//a[text()='First Event Time']"));

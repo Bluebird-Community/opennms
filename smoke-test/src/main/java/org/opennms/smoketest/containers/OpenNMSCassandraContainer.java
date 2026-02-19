@@ -25,7 +25,7 @@ import org.opennms.smoketest.utils.TestContainerUtils;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
-public class OpenNMSCassandraContainer extends org.testcontainers.containers.CassandraContainer<OpenNMSCassandraContainer> {
+public class OpenNMSCassandraContainer extends org.testcontainers.cassandra.CassandraContainer {
 
     public OpenNMSCassandraContainer() {
         // support 3 + 4, but always test against latest 3

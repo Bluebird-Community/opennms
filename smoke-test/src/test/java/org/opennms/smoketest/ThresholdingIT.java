@@ -32,6 +32,7 @@ import static org.opennms.netmgt.events.api.EventConstants.ABSOLUTE_CHANGE_THRES
 import static org.opennms.netmgt.events.api.EventConstants.HIGH_THRESHOLD_EVENT_UEI;
 
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.Set;
 import java.util.List;
@@ -44,9 +45,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 
 import org.hibernate.Hibernate;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.model.OnmsAlarm;
@@ -81,7 +83,7 @@ import com.google.common.collect.ImmutableList;
  * @author jwhite
  */
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class ThresholdingIT {
     private static final Logger LOG = LoggerFactory.getLogger(ThresholdingIT.class);
 
@@ -91,7 +93,7 @@ public class ThresholdingIT {
     private static final String TEST_NODE_CATEGORY = "ThresholdingTest";
     private static final String TEST_SVC_NAME = "SvcToThreshold";
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withOpenNMS(OpenNMSProfile.newBuilder()
                     .withFile("thresholding/poller-configuration.xml", "etc/poller-configuration.xml")
@@ -108,7 +110,7 @@ public class ThresholdingIT {
 
     private RestClient restClient;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         restClient = stack.opennms().getRestClient();
         // Delete the test node from a possible previous run
@@ -116,12 +118,16 @@ public class ThresholdingIT {
     }
 
     /**
-     * Goal: We want to trigger a threshold based on response time data from a service
+     * Goal: We want to trigger a threshold based on response time data from a
+     * service
      * monitored by the poller.
      *
-     * We achieve this by configuring a SystemExecuteMonitor for a node where the amount
-     * of time to sleep is passed in as a command line argument and is populated by the node
-     * meta-data. Controlling the delay then becomes as simple as changing the meta-data value.
+     * We achieve this by configuring a SystemExecuteMonitor for a node where the
+     * amount
+     * of time to sleep is passed in as a command line argument and is populated by
+     * the node
+     * meta-data. Controlling the delay then becomes as simple as changing the
+     * meta-data value.
      *
      */
     @Test
@@ -143,14 +149,14 @@ public class ThresholdingIT {
 
         // Wait for the high threshold to appear
         LOG.info("Waiting for high threshold alarm...");
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS)
+        await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(5))
                 .until(() -> getAlarmsUeisForNode(testNode.getId()), hasItem(HIGH_THRESHOLD_EVENT_UEI));
 
         // Now remove the delay
         setServiceDelay(0, TimeUnit.SECONDS);
 
         LOG.info("Waiting for high threshold alarm to clear...");
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS)
+        await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(5))
                 .until(() -> restClient.getAlarmsByEventUei(HIGH_THRESHOLD_EVENT_UEI)
                         .getObjects().get(0).getSeverity(), equalTo(OnmsSeverity.CLEARED));
     }
@@ -158,10 +164,12 @@ public class ThresholdingIT {
     /**
      * Goal: We want to trigger a threshold based on metrics collected by collectd.
      *
-     * We achieve this by configuring the JDBC collector to collect values from the node_metadata table,
+     * We achieve this by configuring the JDBC collector to collect values from the
+     * node_metadata table,
      * storing these in generic type resources, and thresholding on these values.
      *
-     * Controlling the thresholds becomes as simple as changing the meta-data values.
+     * Controlling the thresholds becomes as simple as changing the meta-data
+     * values.
      */
     @Test
     public void canTriggerAbsoluteChangeThreshold() {
@@ -177,14 +185,15 @@ public class ThresholdingIT {
         // Verify that no existing absoluteChangeExceeded event exists for the node
         assertThat(getEventsUeisForNode(testNode.getId()), not(hasItem(ABSOLUTE_CHANGE_THRESHOLD_EVENT_UEI)));
 
-        // We use a another distinct meta-data attribute since there's a bug with JDBC collector whereby it doesn't
+        // We use a another distinct meta-data attribute since there's a bug with JDBC
+        // collector whereby it doesn't
         // build generic type resources if there is only one result in the result-set
         final AtomicLong currentValue = new AtomicLong(0);
         final int absoluteChangeThreshold = 10;
 
         // Wait for the high threshold to appear
         LOG.info("Waiting for absolute change threshold event...");
-        await().atMost(2, TimeUnit.MINUTES).pollInterval(10, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS)
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10)).pollDelay(Duration.ofSeconds(1))
                 .until(() -> {
                     // Keep increasing the value until the threshold is hit
                     setServiceJitter(currentValue.getAndAdd(absoluteChangeThreshold), TimeUnit.SECONDS);
@@ -209,9 +218,9 @@ public class ThresholdingIT {
 
         final OnmsNode node = nodeDao.get(TEST_NODE_CRITERIA);
 
-	final List<OnmsMetaData> nodeMetadataList = new ArrayList<>();
-	nodeMetadataList.add(new OnmsMetaData("test", "svc-delay", Long.toString(unit.toMillis(duration))));
-	node.setMetaData(nodeMetadataList);
+        final List<OnmsMetaData> nodeMetadataList = new ArrayList<>();
+        nodeMetadataList.add(new OnmsMetaData("test", "svc-delay", Long.toString(unit.toMillis(duration))));
+        node.setMetaData(nodeMetadataList);
 
         nodeDao.saveOrUpdate(node);
     }
@@ -223,10 +232,10 @@ public class ThresholdingIT {
 
         final OnmsNode node = nodeDao.get(TEST_NODE_CRITERIA);
 
-	final List<OnmsMetaData> nodeMetadataList = new ArrayList<>();
-	nodeMetadataList.add(new OnmsMetaData("test", "svc-delay", Long.toString(0)));
-	nodeMetadataList.add(new OnmsMetaData("test", "svc-jitter", Long.toString(unit.toMillis(duration))));
-	node.setMetaData(nodeMetadataList);
+        final List<OnmsMetaData> nodeMetadataList = new ArrayList<>();
+        nodeMetadataList.add(new OnmsMetaData("test", "svc-delay", Long.toString(0)));
+        nodeMetadataList.add(new OnmsMetaData("test", "svc-jitter", Long.toString(unit.toMillis(duration))));
+        node.setMetaData(nodeMetadataList);
 
         nodeDao.saveOrUpdate(node);
     }
@@ -240,7 +249,7 @@ public class ThresholdingIT {
         node.setLabel(TEST_NODE_FID);
         node.setType(OnmsNode.NodeType.ACTIVE);
 
-	// Initial metadata configuration
+        // Initial metadata configuration
         node.addMetaData("test", "svc-delay", Integer.toString(0));
 
         // Create the node

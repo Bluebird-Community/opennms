@@ -20,27 +20,29 @@
  * License.
  */
 package org.opennms.smoketest;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.Select;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class KSCEditorIT extends OpenNMSSeleniumIT {
 
     protected void goToMainPage() {
         driver.get(getBaseUrlInternal() + "opennms/KSC/index.jsp");
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        // Create the test requisition, this will block until the test node is actually created
+        // Create the test requisition, this will block until the test node is actually
+        // created
         createRequisition();
     }
 
@@ -99,7 +101,7 @@ public class KSCEditorIT extends OpenNMSSeleniumIT {
         clickElementByXpath("//button[text()='Done with edits to this graph']");
         clickElementByXpath("//button[text()='Save Report']");
 
-        assertEquals("Smoke Test Report 1", findElementByName("report:Smoke Test Report 1").getText());        
+        assertEquals("Smoke Test Report 1", findElementByName("report:Smoke Test Report 1").getText());
 
         // view the report to confirm it's right
         waitForElement(By.name("report:Smoke Test Report 1"));
@@ -122,7 +124,8 @@ public class KSCEditorIT extends OpenNMSSeleniumIT {
         final Select gpl = new Select(findElementByName("graphs_per_line"));
         assertEquals("default", gpl.getFirstSelectedOption().getText());
 
-        // change graphs per line to 3, check "show timespan" and "show graphtype", and change the title
+        // change graphs per line to 3, check "show timespan" and "show graphtype", and
+        // change the title
         gpl.selectByVisibleText("3");
         clickElementByName("show_timespan");
         clickElementByName("show_graphtype");
@@ -163,7 +166,8 @@ public class KSCEditorIT extends OpenNMSSeleniumIT {
     }
 
     private void createRequisition() throws Exception {
-        final String req = "<model-import xmlns=\"http://xmlns.opennms.org/xsd/config/model-import\" date-stamp=\"2006-03-09T00:03:09\" foreign-source=\"" + REQUISITION_NAME + "\">" +
+        final String req = "<model-import xmlns=\"http://xmlns.opennms.org/xsd/config/model-import\" date-stamp=\"2006-03-09T00:03:09\" foreign-source=\""
+                + REQUISITION_NAME + "\">" +
                 "<node node-label=\"TestMachine1\" foreign-id=\"TestMachine1\">" +
                 "<interface ip-addr=\"127.0.0.1\" snmp-primary=\"P\" descr=\"localhost\">" +
                 "<monitored-service service-name=\"ICMP\"/>" +

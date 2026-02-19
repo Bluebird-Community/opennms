@@ -22,13 +22,11 @@
 package org.opennms.smoketest;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
@@ -39,18 +37,19 @@ import org.slf4j.LoggerFactory;
 
 public class UiPageTest extends OpenNMSSeleniumIT {
 
-    @Rule
-    public TestRule loggingRule = (base, description) -> {
-        LoggerFactory.getLogger(UiPageTest.this.getClass()).debug("Executing test: {}.{}()", description.getClassName(), description.getMethodName());
-        return base;
-    };
-
-    @Before
-    public void before() {
-        setImplicitWait(5, TimeUnit.SECONDS);
+    @BeforeEach
+    public void logTestStart(TestInfo testInfo) {
+        LoggerFactory.getLogger(this.getClass()).debug("Executing test: {}.{}()",
+                testInfo.getTestClass().map(Class::getName).orElse("unknown"),
+                testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("unknown"));
     }
 
-    @After
+    @BeforeEach
+    public void before() {
+        setImplicitWait(Duration.ofSeconds(5));
+    }
+
+    @AfterEach
     public void after() {
         setImplicitWait();
     }
@@ -61,7 +60,7 @@ public class UiPageTest extends OpenNMSSeleniumIT {
 
     protected <X> X execute(Supplier<X> supplier, int implicitWaitInSeconds) {
         try {
-            this.setImplicitWait(implicitWaitInSeconds, TimeUnit.SECONDS);
+            this.setImplicitWait(Duration.ofSeconds(implicitWaitInSeconds));
             return supplier.get();
         } finally {
             this.setImplicitWait();
@@ -77,8 +76,7 @@ public class UiPageTest extends OpenNMSSeleniumIT {
                     } catch (NoSuchElementException ex) {
                         return false;
                     }
-                }, 5 /* seconds */))
-        );
+                }, 5 /* seconds */)));
     }
 
 }

@@ -22,21 +22,20 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.CommandTestUtils;
@@ -57,15 +56,15 @@ import com.google.common.collect.ImmutableMap;
  * @author jwhite
  * @author chandrag
  */
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class DetectorsCommandIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(DetectorsCommandIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
-    private ImmutableMap<String, String> expectedDetectors = ImmutableMap.<String, String> builder()
+    private ImmutableMap<String, String> expectedDetectors = ImmutableMap.<String, String>builder()
             .put("ActiveMQ", "org.opennms.netmgt.provision.detector.jms.ActiveMQDetector")
             .put("BGP_Session", "org.opennms.netmgt.provision.detector.snmp.BgpSessionDetector")
             .put("BSF", "org.opennms.netmgt.provision.detector.bsf.BSFDetector")
@@ -115,15 +114,15 @@ public class DetectorsCommandIT {
     @Test
     public void canLoadDetectorsOnMinion() throws Exception {
         final InetSocketAddress sshAddr = stack.minion().getSshAddress();
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
-            .until(() -> listAndVerifyDetectors("Minion", sshAddr), hasSize(0));
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
+                .until(() -> listAndVerifyDetectors("Minion", sshAddr), hasSize(0));
     }
 
     @Test
     public void canLoadDetectorsOnOpenNMS() throws Exception {
         final InetSocketAddress sshAddr = stack.opennms().getSshAddress();
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
-            .until(() -> listAndVerifyDetectors("OpenNMS", sshAddr), hasSize(0));
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
+                .until(() -> listAndVerifyDetectors("OpenNMS", sshAddr), hasSize(0));
     }
 
     public List<String> listAndVerifyDetectors(String host, InetSocketAddress sshAddr) throws Exception {
@@ -133,7 +132,7 @@ public class DetectorsCommandIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println("opennms:list-detectors");
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
 
             // Parse the output
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
@@ -149,7 +148,7 @@ public class DetectorsCommandIT {
                     }
                 }
             }
-            LOG.info("Found detectors: {}",  detectorMap);
+            LOG.info("Found detectors: {}", detectorMap);
 
             // Verify
             for (String detectorName : expectedDetectors.keySet()) {

@@ -21,7 +21,7 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NRTGraphIT extends OpenNMSSeleniumIT {
     @Test
@@ -30,7 +30,9 @@ public class NRTGraphIT extends OpenNMSSeleniumIT {
         driver.get(getBaseUrlInternal() + "opennms/graph/nrtg.jsp?resourceId=node[999].nodeSnmp[]&report=mib2.tcpopen");
         // The graph should be rendered
         findElementByXpath("//div[@class='flot-datatable-tabs']");
-        // It won't have any data, but this is sufficient to very that all of the required
-        // Javascript files have been loaded, and the AJAX call to get the graph was successful
+        // It won't have any data, but this is sufficient to very that all of the
+        // required
+        // Javascript files have been loaded, and the AJAX call to get the graph was
+        // successful
     }
 }

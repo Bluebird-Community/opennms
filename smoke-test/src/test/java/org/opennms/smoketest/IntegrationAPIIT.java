@@ -22,27 +22,27 @@
 package org.opennms.smoketest;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.CommandTestUtils;
 import org.opennms.smoketest.utils.SshClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.MinionTests.class)
+@Tag("MinionTests")
 public class IntegrationAPIIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationAPIIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static OpenNMSStack stack = OpenNMSStack.MINION;
 
     @Test
@@ -53,7 +53,7 @@ public class IntegrationAPIIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println("feature:install opennms-plugin-sample");
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
         }
 
         // Install the sample plugin on Minion
@@ -62,7 +62,7 @@ public class IntegrationAPIIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println("feature:install minion-plugin-sample");
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
         }
 
         // Now wait until the health check passes on OpenNMS
@@ -75,20 +75,22 @@ public class IntegrationAPIIT {
         verifyHealthCheckWithDescription(opennmsSsh, "Sample Project :: Service Extensions on Minion");
     }
 
-    private static void verifyHealthCheckWithDescription(final InetSocketAddress sshAddress, String healthCheckDescription) {
+    private static void verifyHealthCheckWithDescription(final InetSocketAddress sshAddress,
+            String healthCheckDescription) {
         // Now wait until the health check passes
-        await().atMost(2, MINUTES)
-                .pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(2))
+                .pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     try (final SshClient sshClient = new SshClient(sshAddress, "admin", "admin")) {
                         final PrintStream pipe = sshClient.openShell();
                         pipe.println("opennms:health-check");
                         pipe.println("logout");
-                        await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+                        await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
 
                         // Read stdout and verify
                         String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
-                        shellOutput = org.apache.commons.lang.StringUtils.substringAfter(shellOutput, "opennms:health-check");
+                        shellOutput = org.apache.commons.lang.StringUtils.substringAfter(shellOutput,
+                                "opennms:health-check");
 
                         boolean healthCheckSuccess = false;
                         for (String line : shellOutput.split("\\r?\\n")) {

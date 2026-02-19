@@ -21,21 +21,21 @@
  */
 package org.opennms.smoketest;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class SupportPageIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         supportPage();
     }
@@ -53,7 +53,7 @@ public class SupportPageIT extends OpenNMSSeleniumIT {
         };
         assertEquals(links.length, countElementsMatchingCss("div.card-body a"));
         for (final String text : links) {
-            assertNotNull("Link with text '" + text + "' must exist.", driver.findElement(By.linkText(text)));
+            assertNotNull(driver.findElement(By.linkText(text)), "Link with text '" + text + "' must exist.");
         }
     }
 
@@ -63,10 +63,12 @@ public class SupportPageIT extends OpenNMSSeleniumIT {
 
         // checkboxes are selected by default
         final WebElement allCheckbox = driver.findElement(By.cssSelector("input[type=checkbox][name=all]"));
-        assertThat(driver.findElement(By.cssSelector("input[type=checkbox][name=plugins][value=Java]")).isSelected(), is(true));
+        assertThat(driver.findElement(By.cssSelector("input[type=checkbox][name=plugins][value=Java]")).isSelected(),
+                is(true));
 
         // deselect the "all" checkbox
         allCheckbox.click();
-        assertThat(driver.findElement(By.cssSelector("input[type=checkbox][name=plugins][value=Java]")).isSelected(), is(false));
+        assertThat(driver.findElement(By.cssSelector("input[type=checkbox][name=plugins][value=Java]")).isSelected(),
+                is(false));
     }
 }

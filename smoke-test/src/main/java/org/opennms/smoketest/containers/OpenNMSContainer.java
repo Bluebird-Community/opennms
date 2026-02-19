@@ -69,10 +69,8 @@ import org.opennms.smoketest.utils.TestContainerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.SelinuxContext;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
@@ -90,7 +88,8 @@ import com.google.common.collect.ImmutableMap;
  * @author jwhite
  */
 @SuppressWarnings("java:S2068")
-public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> implements KarafContainer<OpenNMSContainer>, TestLifecycleAware {
+public class OpenNMSContainer extends GenericContainer<OpenNMSContainer>
+        implements KarafContainer<OpenNMSContainer>, TestLifecycleAware {
     public static final String IMAGE = "local/core:latest";
     public static final String ALIAS = "opennms";
     public static final String DB_ALIAS = "db";
@@ -116,11 +115,12 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     private static final int OPENNMS_GRPC_PORT = 8990;
     private static final int OPENNMS_BMP_PORT = 11019;
     private static final int OPENNMS_TFTP_PORT = 6969;
-    private static final int GRAFANA_PORT =3000;
+    private static final int GRAFANA_PORT = 3000;
 
     private static final boolean COLLECT_COVERAGE = "true".equals(System.getProperty("coverage", "false"));
 
-    private static final Map<NetworkProtocol, Integer> networkProtocolMap = ImmutableMap.<NetworkProtocol, Integer>builder()
+    private static final Map<NetworkProtocol, Integer> networkProtocolMap = ImmutableMap
+            .<NetworkProtocol, Integer>builder()
             .put(NetworkProtocol.SSH, OPENNMS_SSH_PORT)
             .put(NetworkProtocol.HTTP, OPENNMS_WEB_PORT)
             .put(NetworkProtocol.JDWP, OPENNMS_DEBUG_PORT)
@@ -133,7 +133,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             .put(NetworkProtocol.GRPC, OPENNMS_GRPC_PORT)
             .put(NetworkProtocol.BMP, OPENNMS_BMP_PORT)
             .put(NetworkProtocol.TFTP, OPENNMS_TFTP_PORT)
-            .put(NetworkProtocol.GRAFANA,GRAFANA_PORT)
+            .put(NetworkProtocol.GRAFANA, GRAFANA_PORT)
             .build();
 
     private final StackModel model;
@@ -151,7 +151,8 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         // Generate a random UID if simulating an OpenShift environment
         if (model.isSimulateRestricedOpenShiftEnvironment()) {
             generatedUserId = ThreadLocalRandom.current().nextInt(
-                    TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MIN, TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MAX + 1);
+                    TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MIN,
+                    TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MAX + 1);
         }
 
         this.overlay = writeOverlay();
@@ -176,13 +177,15 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         }
 
         if (profile.isJvmDebuggingEnabled()) {
-            javaOpts += String.format(" -agentlib:jdwp=transport=dt_socket,server=y,address=*:%d,suspend=n", OPENNMS_DEBUG_PORT);
+            javaOpts += String.format(" -agentlib:jdwp=transport=dt_socket,server=y,address=*:%d,suspend=n",
+                    OPENNMS_DEBUG_PORT);
         }
 
         withExposedPorts(exposedPorts)
                 .withCreateContainerCmdModifier(createCmd -> {
                     TestContainerUtils.setGlobalMemAndCpuLimits(createCmd);
-                    // The framework doesn't support exposing UDP ports directly, so we use this hook to map some of the exposed ports to UDP
+                    // The framework doesn't support exposing UDP ports directly, so we use this
+                    // hook to map some of the exposed ports to UDP
                     TestContainerUtils.exposePortsAsUdp(createCmd, exposedUdpPorts);
                     // Use the generated UID and known GID when simulating OpenShift
                     if (model.isSimulateRestricedOpenShiftEnvironment()) {
@@ -190,7 +193,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                     }
                 })
                 .withEnv("POSTGRES_HOST", DB_ALIAS)
-                .withEnv("POSTGRES_PORT", Integer.toString(PostgreSQLContainer.POSTGRESQL_PORT))
+                .withEnv("POSTGRES_PORT", Integer.toString(5432))
                 // User/pass are hardcoded in PostgreSQLContainer but are not exposed
                 .withEnv("POSTGRES_USER", "test")
                 .withEnv("POSTGRES_PASSWORD", "test")
@@ -201,7 +204,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                 // We also set the corresponding properties explicitly in our overlay
                 .withEnv("OPENNMS_CASSANDRA_HOSTNAMES", CASSANDRA_ALIAS)
                 .withEnv("OPENNMS_CASSANDRA_KEYSPACE", "newts")
-                .withEnv("OPENNMS_CASSANDRA_PORT", Integer.toString(CassandraContainer.CQL_PORT))
+                .withEnv("OPENNMS_CASSANDRA_PORT", Integer.toString(9042))
                 .withEnv("OPENNMS_CASSANDRA_USERNAME", "cassandra")
                 .withEnv("OPENNMS_CASSANDRA_USERNAME", "cassandra")
                 .withEnv("JAVA_OPTS", javaOpts)
@@ -211,7 +214,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                 .waitingFor(Objects.requireNonNull(profile.getWaitStrategy()).apply(this))
                 .withLogConsumer(new Slf4jLogConsumer(logger()).withSeparateOutputStreams());
         addFileSystemBind(overlay.toString(),
-                        "/opt/opennms-overlay", BindMode.READ_ONLY, SelinuxContext.SINGLE);
+                "/opt/opennms-overlay", BindMode.READ_ONLY, SelinuxContext.SINGLE);
 
         for (var installFeature : profile.getInstallFeatures().entrySet()) {
             if (installFeature.getValue() != null) {
@@ -245,7 +248,8 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         OverlayUtils.copyFiles(profile.getFiles(), home);
 
         // Copy over files from the class-path
-        // Files ending in .j2 will be templated using Jinja2 with a context that has the model
+        // Files ending in .j2 will be templated using Jinja2 with a context that has
+        // the model
         OverlayUtils.copyAndTemplate("opennms-overlay", home, model);
 
         Path etc = home.resolve("etc");
@@ -254,15 +258,17 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
 
         final Properties sysProps = getSystemProperties();
         File propsFile = propsD.resolve("stest.properties").toFile();
-        try (@SuppressWarnings("java:S6300") FileOutputStream fos = new FileOutputStream(propsFile)) {
+        try (@SuppressWarnings("java:S6300")
+        FileOutputStream fos = new FileOutputStream(propsFile)) {
             sysProps.store(fos, "Generated");
         }
 
         // Set RUNAS to the generated UID to make our startup scripts happy
-        // This is not necessary in an OpenShift environment, since /etc/passwd is automatically populated with the entry
+        // This is not necessary in an OpenShift environment, since /etc/passwd is
+        // automatically populated with the entry
         if (model.isSimulateRestricedOpenShiftEnvironment()) {
             writeProps(etc.resolve("opennms.conf"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             .put("RUNAS", Integer.toString(generatedUserId))
                             .build());
         }
@@ -275,14 +281,14 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
 
         if (model.isElasticsearchEnabled()) {
             writeProps(etc.resolve("org.opennms.features.flows.persistence.elastic.cfg"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             .put("elasticUrl", "http://" + ELASTIC_ALIAS + ":9200")
                             // Try to use composable templates on OpenNMS
                             .put("useComposableTemplates", "true")
                             .build());
 
             writeProps(etc.resolve("org.opennms.plugin.elasticsearch.rest.forwarder.cfg"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             .put("elasticUrl", "http://" + ELASTIC_ALIAS + ":9200")
                             // Everything
                             .put("logAllEvents", Boolean.TRUE.toString())
@@ -294,19 +300,19 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                             .build());
 
             writeProps(etc.resolve("org.opennms.features.alarms.history.elastic.cfg"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             .put("elasticUrl", "http://" + ELASTIC_ALIAS + ":9200")
                             .build());
         }
 
         if (model.getOpenNMS().isKafkaProducerEnabled()) {
             writeProps(etc.resolve("org.opennms.features.kafka.producer.client.cfg"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             .put("bootstrap.servers", KAFKA_ALIAS + ":9092")
                             .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
                             .build());
             writeProps(etc.resolve("org.opennms.features.kafka.producer.cfg"),
-                    ImmutableMap.<String,String>builder()
+                    ImmutableMap.<String, String>builder()
                             // This is false by default, so we enable it here
                             .put("forward.metrics", Boolean.TRUE.toString())
                             .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
@@ -315,7 +321,8 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     }
 
     /**
-     * @return the URL in a form consumable by containers networked with this one using the alias and internal port
+     * @return the URL in a form consumable by containers networked with this one
+     *         using the alias and internal port
      */
     public URL getBaseUrlInternal() {
         try {
@@ -330,7 +337,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
      */
     public URL getBaseUrlExternal() {
         try {
-            return new URL(String.format("http://%s:%d/", getContainerIpAddress(), getMappedPort(OPENNMS_WEB_PORT)));
+            return new URL(String.format("http://%s:%d/", getHost(), getMappedPort(OPENNMS_WEB_PORT)));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -350,7 +357,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
 
     @Override
     public InetSocketAddress getSshAddress() {
-        return InetSocketAddress.createUnresolved(getContainerIpAddress(), getMappedPort(OPENNMS_SSH_PORT));
+        return InetSocketAddress.createUnresolved(getHost(), getMappedPort(OPENNMS_SSH_PORT));
     }
 
     @Override
@@ -368,7 +375,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     }
 
     public InetSocketAddress getWebAddress() {
-        return InetSocketAddress.createUnresolved(getContainerIpAddress(), getMappedPort(OPENNMS_WEB_PORT));
+        return InetSocketAddress.createUnresolved(getHost(), getMappedPort(OPENNMS_WEB_PORT));
     }
 
     public Properties getSystemProperties() {
@@ -397,7 +404,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             // Use Newts
             props.put("org.opennms.timeseries.strategy", "newts");
             props.put("org.opennms.newts.config.hostname", CASSANDRA_ALIAS);
-            props.put("org.opennms.newts.config.port", Integer.toString(CassandraContainer.CQL_PORT));
+            props.put("org.opennms.newts.config.port", Integer.toString(9042));
             props.put("org.opennms.rrd.storeByForeignSource", Boolean.TRUE.toString());
         }
 
@@ -409,7 +416,8 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         // disable Product Update Enrollment
         props.put("opennms.productUpdateEnrollment.show", "false");
 
-        // output Karaf logs to the console to help in debugging intermittent container startup failures
+        // output Karaf logs to the console to help in debugging intermittent container
+        // startup failures
         props.put("karaf.log.console", "INFO");
         return props;
     }
@@ -421,7 +429,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             featuresOnBoot.add(installFeature.getKey());
         }
 
-        if(IpcStrategy.GRPC.equals(model.getIpcStrategy())) {
+        if (IpcStrategy.GRPC.equals(model.getIpcStrategy())) {
             featuresOnBoot.add("opennms-core-ipc-grpc-server");
         }
         if (model.isElasticsearchEnabled()) {
@@ -451,7 +459,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             mappedPort = getMappedPort(port);
         }
 
-        return new InetSocketAddress(getContainerIpAddress(), mappedPort);
+        return new InetSocketAddress(getHost(), mappedPort);
     }
 
     public StackModel getModel() {
@@ -470,14 +478,13 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             try {
                 waitUntilReadyWrapped();
             } catch (Exception e) {
-                var logs =
-                        "\n\t\t----------------------------------------------------------\n"
-                                + container.getLogs()
+                var logs = "\n\t\t----------------------------------------------------------\n"
+                        + container.getLogs()
                                 .replaceFirst(
                                         "(?ms).*?(^An error occurred while attempting to start the .*?)\\s*^\\[INFO\\].*",
                                         "$1\n")
                                 .replaceAll("(?m)^", "\t\t")
-                                + "\t\t----------------------------------------------------------";
+                        + "\t\t----------------------------------------------------------";
 
                 throw e;
             }
@@ -491,7 +498,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                     .failFast("container is no longer running", () -> {
                         if (!container.isRunning()) {
                             LOG.error("Container stopped unexpectedly. Exit code: {}",
-                                container.getCurrentContainerInfo().getState().getExitCodeLong());
+                                    container.getCurrentContainerInfo().getState().getExitCodeLong());
                             LOG.error("Container logs:\n{}", container.getLogs());
                             return true;
                         }
@@ -499,7 +506,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                     })
                     .ignoreException(NotFoundException.class)
                     .until(() -> TestContainerUtils.getFileFromContainerAsString(container, managerLog),
-                    containsString("Starter: Beginning startup"));
+                            containsString("Starter: Beginning startup"));
             LOG.info("OpenNMS has begun starting up.");
 
             LOG.info("Waiting for OpenNMS REST API...");
@@ -510,12 +517,15 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                     .atMost(timeoutMins, MINUTES)
                     .pollInterval(10, SECONDS)
                     .failFast("container is no longer running", () -> !container.isRunning())
-                    .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
+                    .ignoreExceptionsMatching((e) -> {
+                        return e.getCause() != null && e.getCause() instanceof SocketException;
+                    })
                     .until(restClient::getDisplayVersion, notNullValue());
             LOG.info("OpenNMS REST API is online.");
 
             // Wait until all daemons have finished starting up
-            // This helps ensure that all of the sockets that should be up and listening i.e. teletrymd flows
+            // This helps ensure that all of the sockets that should be up and listening
+            // i.e. teletrymd flows
             // have been given a chance to bind
             LOG.info("Waiting for startup to complete.");
             await("waiting for startup to complete")
@@ -533,7 +543,9 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                     .atMost(5, MINUTES)
                     .pollInterval(10, SECONDS)
                     .failFast("container is no longer running", () -> !container.isRunning())
-                    .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
+                    .ignoreExceptionsMatching((e) -> {
+                        return e.getCause() != null && e.getCause() instanceof SocketException;
+                    })
                     .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
             LOG.info("Health check passed.");
 
@@ -549,11 +561,13 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     public void afterTest(final TestDescription description, final Optional<Throwable> throwable) {
         var pid = ProcessHandle.current().pid();
         if (afterTestCalled != null) {
-            LOG.warn("afterTest has already been called, not running on subsequent calls. My PID {}.", pid, new Exception("exception placeholder for stacktrace -- subsequent call location of afterTest"));
+            LOG.warn("afterTest has already been called, not running on subsequent calls. My PID {}.", pid,
+                    new Exception("exception placeholder for stacktrace -- subsequent call location of afterTest"));
             LOG.warn("original call location of afterTest", afterTestCalled);
             return;
         }
-        afterTestCalled = new Exception("exception placeholder for stacktrace -- original call location of afterTest; PID: " + pid);
+        afterTestCalled = new Exception(
+                "exception placeholder for stacktrace -- original call location of afterTest; PID: " + pid);
         if (COLLECT_COVERAGE) {
             KarafShellUtils.saveCoverage(this, description.getFilesystemFriendlyName(), ALIAS);
         }
@@ -573,8 +587,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                 "provisiond.log",
                 "telemetryd.log",
                 "trapd.log",
-                "web.log"
-        );
+                "web.log");
 
         Path targetLogFolder = Paths.get("target", "logs", prefix, ALIAS);
         DevDebugUtils.clearLogs(targetLogFolder);
@@ -583,8 +596,9 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         await("calling gatherThreadDump")
                 .atMost(Duration.ofSeconds(120))
                 .untilAsserted(
-                        () -> { threadDump.set(DevDebugUtils.gatherThreadDump(this, targetLogFolder, null)); }
-                );
+                        () -> {
+                            threadDump.set(DevDebugUtils.gatherThreadDump(this, targetLogFolder, null));
+                        });
 
         LOG.info("Gathering logs...");
         DevDebugUtils.copyLogs(this,

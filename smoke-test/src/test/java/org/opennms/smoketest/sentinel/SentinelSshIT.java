@@ -21,29 +21,26 @@
  */
 package org.opennms.smoketest.sentinel;
 
-
 import static org.opennms.smoketest.utils.KarafShellUtils.awaitHealthCheckSucceeded;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.SentinelTests;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
 public class SentinelSshIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(SentinelSshIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.SENTINEL;
 
     @Test
-    public void testSshHealthOnSentinel(){
-        //Test for no exception to occur
+    public void testSshHealthOnSentinel() {
+        // Test for no exception to occur
         LOG.info("Waiting for Sentinel ssh health check...");
         awaitHealthCheckSucceeded(stack.sentinel());
     }

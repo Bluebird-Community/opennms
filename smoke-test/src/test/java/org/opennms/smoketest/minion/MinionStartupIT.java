@@ -21,16 +21,16 @@
  */
 package org.opennms.smoketest.minion;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.containers.OpenNMSContainer;
 import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.MinionProfile;
@@ -38,7 +38,7 @@ import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.StackModel;
 import org.testcontainers.containers.Container;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class MinionStartupIT {
 
     final static Map<String, String> configuration = new TreeMap<>();
@@ -49,13 +49,15 @@ public class MinionStartupIT {
         configuration.put("MINION_ID", "Minion-Fulda");
     }
 
-    @ClassRule
+    @RegisterExtension
     public final static OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
-            // check Minion startup without files in 'opennms.properties.d' directory, see NMS-13347
+            // check Minion startup without files in 'opennms.properties.d' directory, see
+            // NMS-13347
             .withMinions(new MinionProfile.Builder()
                     .withId(configuration.get("MINION_ID"))
                     .withLocation(configuration.get("MINION_LOCATION"))
-                    .withLegacyConfiguration(configuration) // this will prevent any configuration files from being created
+                    .withLegacyConfiguration(configuration) // this will prevent any configuration files from being
+                                                            // created
                     .build())
             .build());
 
@@ -66,11 +68,10 @@ public class MinionStartupIT {
         // Do a sanity check and make sure that opennms.properties.d doesn't exist
         var dir = "/opt/minion/etc/opennms.properties.d";
         Container.ExecResult ls = stack.minion().execInContainer("/bin/ls", "-ld", dir);
-        assertNotEquals("The directory " + dir + " shouldn't be created in the container"
-                        + " when in legacy configuration mode, but 'ls -ld " + dir + "' returned a 0 exit code."
-                        + " Output from ls:\n"
-                        + ls.getStdout(),
-                0, ls.getExitCode());
+        assertNotEquals(0, ls.getExitCode(), "The directory " + dir + " shouldn't be created in the container"
+                + " when in legacy configuration mode, but 'ls -ld " + dir + "' returned a 0 exit code."
+                + " Output from ls:\n"
+                + ls.getStdout());
 
     }
 }

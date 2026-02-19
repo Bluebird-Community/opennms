@@ -24,13 +24,15 @@ package org.opennms.smoketest.graph;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.preemptive;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.hamcrest.Matchers;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.opennms.smoketest.OpenNMSSeleniumIT;
 import org.opennms.smoketest.utils.KarafShell;
 import org.rnorth.ducttape.unreliables.Unreliables;
@@ -39,14 +41,15 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
 /**
- * Verifies if exposing a GraphProvider will result in an exposed GraphContainerProvider
+ * Verifies if exposing a GraphProvider will result in an exposed
+ * GraphContainerProvider
  */
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class GraphProviderIT extends OpenNMSSeleniumIT {
 
     private KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Configure rest
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
@@ -73,19 +76,24 @@ public class GraphProviderIT extends OpenNMSSeleniumIT {
     @Test
     public void canImportGraphRepository() {
         karafShell.runCommand("feature:install opennms-graph-provider-persistence-test");
-        karafShell.runCommand("feature:list -i", output -> output.contains("opennms-graphs") && output.contains("opennms-graph-provider-persistence-test"));
-        karafShell.runCommand("opennms:graph-get --container persistence-example --namespace persistence-example.graph", output -> {
-            final JSONObject jsonGraph = readGraph(output);
-            return jsonGraph.getString("label").equals("Graph")
-                    && jsonGraph.getString("namespace").equals("persistence-example.graph");
-        });
+        karafShell.runCommand("feature:list -i", output -> output.contains("opennms-graphs")
+                && output.contains("opennms-graph-provider-persistence-test"));
+        karafShell.runCommand("opennms:graph-get --container persistence-example --namespace persistence-example.graph",
+                output -> {
+                    final JSONObject jsonGraph = readGraph(output);
+                    return jsonGraph.getString("label").equals("Graph")
+                            && jsonGraph.getString("namespace").equals("persistence-example.graph");
+                });
     }
 
     /*
-     * At some point while working on the new Graph Service API reloading the Bsmd did not correctly
-     * reload the BusinessServiceGraphProvider, instead a ClassNotFoundException was raised.
+     * At some point while working on the new Graph Service API reloading the Bsmd
+     * did not correctly
+     * reload the BusinessServiceGraphProvider, instead a ClassNotFoundException was
+     * raised.
      * When looking into the issue, it could not be reproduced anymore.
-     * However this test is going to fail if the issue re-surfaces at some later point.
+     * However this test is going to fail if the issue re-surfaces at some later
+     * point.
      */
     @Test
     public void canReloadBsmGraphProvider() {
@@ -103,7 +111,7 @@ public class GraphProviderIT extends OpenNMSSeleniumIT {
 
         // Generate hierarchie
         karafShell.runCommand("opennms:bsm-generate-hierarchies 5 2");
-        Unreliables.retryUntilSuccess(30, TimeUnit.SECONDS, () -> {
+        Unreliables.retryUntilSuccess((int) Duration.ofSeconds(30).getSeconds(), TimeUnit.SECONDS, () -> {
             given().log().ifValidationFails()
                     .accept(ContentType.JSON)
                     .get("/{containerId}/{namespace}", containerId, namespace)
@@ -116,7 +124,7 @@ public class GraphProviderIT extends OpenNMSSeleniumIT {
 
         // Delete hierarchy and verify daemon reloaded successful
         karafShell.runCommand("opennms:bsm-delete-generated-hierarchies");
-        Unreliables.retryUntilSuccess(30, TimeUnit.SECONDS, () -> {
+        Unreliables.retryUntilSuccess((int) Duration.ofSeconds(30).getSeconds(), TimeUnit.SECONDS, () -> {
             given().log().ifValidationFails()
                     .accept(ContentType.JSON)
                     .get("/{containerId}/{namespace}", containerId, namespace)

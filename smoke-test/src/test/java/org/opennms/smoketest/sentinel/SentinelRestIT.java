@@ -28,13 +28,12 @@ import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC
 
 import io.restassured.http.ContentType;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.Ignore;
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.SentinelTests;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,50 +43,54 @@ import io.restassured.RestAssured;
 import java.util.Arrays;
 import java.util.List;
 
-
 // @Category(SentinelTests.class)
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class SentinelRestIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SentinelRestIT.class);
+        private static final Logger LOG = LoggerFactory.getLogger(SentinelRestIT.class);
 
-    @ClassRule
-    public static final OpenNMSStack stack = OpenNMSStack.SENTINEL;
+        @RegisterExtension
+        public static final OpenNMSStack stack = OpenNMSStack.SENTINEL;
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = stack.sentinel().getWebUrl().toString();
-        RestAssured.port = stack.sentinel().getWebPort();
-        RestAssured.authentication = preemptive().basic(BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD);
-    }
+        @BeforeEach
+        public void setUp() {
+                RestAssured.baseURI = stack.sentinel().getWebUrl().toString();
+                RestAssured.port = stack.sentinel().getWebPort();
+                RestAssured.authentication = preemptive().basic(BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD);
+        }
 
-    public void testRestHealthServiceOnSentinel() throws Exception {
+        @Test
+        public void testRestHealthServiceOnSentinel() throws Exception {
 
-        LOG.info("testing /sentinel/rest/health .........");
-        given().get("/sentinel/rest/health")
-                .then().log().ifStatusCodeIsEqualTo(200)
-                .statusCode(200);
+                LOG.info("testing /sentinel/rest/health .........");
+                given().get("/sentinel/rest/health")
+                                .then().log().ifStatusCodeIsEqualTo(200)
+                                .statusCode(200);
 
-        LOG.info("testing /sentinel/rest/health?tag=local .........");
-        List<String> localDescriptions = Arrays.asList("Verifying installed bundles", "Retrieving NodeDao", "DNS Lookups (Netty)");
-        List<String> descriptions = given().get("/sentinel/rest/health?tag=local")
-                .then()
-                .log().ifStatusCodeIsEqualTo(200)
-                .statusCode(200)
-                .body("healthy", Matchers.notNullValue())
-                .extract()
-                .body()
-                .jsonPath().getList("responses.description",String.class);
+                LOG.info("testing /sentinel/rest/health?tag=local .........");
+                List<String> localDescriptions = Arrays.asList("Verifying installed bundles", "Retrieving NodeDao",
+                                "DNS Lookups (Netty)");
+                List<String> descriptions = given().get("/sentinel/rest/health?tag=local")
+                                .then()
+                                .log().ifStatusCodeIsEqualTo(200)
+                                .statusCode(200)
+                                .body("healthy", Matchers.notNullValue())
+                                .extract()
+                                .body()
+                                .jsonPath().getList("responses.description", String.class);
 
-        LOG.info("descriptions in tag 'local' is: {}", Arrays.toString(descriptions.toArray()));
-        descriptions.stream().forEach(d-> Assert.assertTrue(localDescriptions.contains(d) || d.contains("Verifying Listener")));
+                LOG.info("descriptions in tag 'local' is: {}", Arrays.toString(descriptions.toArray()));
+                descriptions.stream()
+                                .forEach(d -> Assertions.assertTrue(
+                                                localDescriptions.contains(d) || d.contains("Verifying Listener")));
 
-        LOG.info("testing /sentinel/rest/health/probe?tag=local  .......");
-        given().get("/sentinel/rest/health/probe?tag=local")
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .contentType(ContentType.TEXT)
-                .body(Matchers.anyOf(Matchers.equalTo("Everything is awesome"), Matchers.equalTo("Oh no, something is wrong")));
-    }
+                LOG.info("testing /sentinel/rest/health/probe?tag=local  .......");
+                given().get("/sentinel/rest/health/probe?tag=local")
+                                .then()
+                                .assertThat()
+                                .statusCode(200)
+                                .contentType(ContentType.TEXT)
+                                .body(Matchers.anyOf(Matchers.equalTo("Everything is awesome"),
+                                                Matchers.equalTo("Oh no, something is wrong")));
+        }
 }

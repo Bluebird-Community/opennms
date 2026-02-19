@@ -30,7 +30,7 @@ public class ElasticsearchContainer extends org.testcontainers.elasticsearch.Ela
 
     public ElasticsearchContainer() {
         super("docker.elastic.co/elasticsearch/elasticsearch:9.3.0");
-                 withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+        withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
                 .withEnv("xpack.security.enabled", "false")
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases(OpenNMSContainer.ELASTIC_ALIAS)
@@ -38,7 +38,7 @@ public class ElasticsearchContainer extends org.testcontainers.elasticsearch.Ela
     }
 
     public InetSocketAddress getRestAddress() {
-        return InetSocketAddress.createUnresolved(getContainerIpAddress(), getMappedPort(9200));
+        return InetSocketAddress.createUnresolved(getHost(), getMappedPort(9200));
     }
 
     public String getRestAddressString() {

@@ -21,14 +21,13 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-
 
 public class CategoriesBoxIT extends OpenNMSSeleniumIT {
 
-    @Before
+    @BeforeEach
     public void before() {
         frontPage();
     }

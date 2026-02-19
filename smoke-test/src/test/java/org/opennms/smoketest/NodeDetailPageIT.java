@@ -21,7 +21,7 @@
  */
 package org.opennms.smoketest;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import java.time.Duration;
 import static org.awaitility.Awaitility.await;
 
 import java.io.StringReader;
@@ -33,8 +33,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.http.client.methods.HttpGet;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.opennms.netmgt.events.api.EventConstants;
 import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.smoketest.selenium.ResponseData;
@@ -55,7 +55,8 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
         public NodeDetailPage(OpenNMSSeleniumIT testCase, int nodeId) {
             this.testCase = Objects.requireNonNull(testCase);
-            this.url = Objects.requireNonNull(testCase.getBaseUrlInternal()) + "opennms/element/node.jsp?node=" + nodeId;
+            this.url = Objects.requireNonNull(testCase.getBaseUrlInternal()) + "opennms/element/node.jsp?node="
+                    + nodeId;
         }
 
         public NodeDetailPage open() {
@@ -65,7 +66,8 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
         public TopologyIT.TopologyUIPage viewInTopology() {
             testCase.getDriver().findElement(By.linkText("View in Topology")).click();
-            final TopologyIT.TopologyUIPage topologyUIPage = new TopologyIT.TopologyUIPage(testCase, testCase.getBaseUrlInternal());
+            final TopologyIT.TopologyUIPage topologyUIPage = new TopologyIT.TopologyUIPage(testCase,
+                    testCase.getBaseUrlInternal());
             topologyUIPage.open();
             return topologyUIPage;
         }
@@ -77,11 +79,13 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
         try {
             // Create a node, we can actually reference
             deleteTestRequisition();
-            final String node = "<node type=\"A\" label=\"TestMachine\" foreignSource=\"" + REQUISITION_NAME + "\" foreignId=\"1\">" +
+            final String node = "<node type=\"A\" label=\"TestMachine\" foreignSource=\"" + REQUISITION_NAME
+                    + "\" foreignId=\"1\">" +
                     "<labelSource>H</labelSource>" +
                     "<sysContact>The Owner</sysContact>" +
                     "<sysDescription>" +
-                    "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
+                    "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386"
+                    +
                     "</sysDescription>" +
                     "<sysLocation>DevJam</sysLocation>" +
                     "<sysName>TestMachine</sysName>" +
@@ -90,19 +94,21 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
             sendPost("/rest/nodes", node, 201);
 
             // Get the node Id
-            final HttpGet httpGet = new HttpGet(getBaseUrlExternal() + "opennms/rest/nodes?label=TestMachine&foreignSource=SeleniumTestGroup");
+            final HttpGet httpGet = new HttpGet(
+                    getBaseUrlExternal() + "opennms/rest/nodes?label=TestMachine&foreignSource=SeleniumTestGroup");
             final ResponseData responseData = getRequest(httpGet);
-            Assert.assertNotNull(responseData.getResponseText());
+            Assertions.assertNotNull(responseData.getResponseText());
             final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             final DocumentBuilder builder = factory.newDocumentBuilder();
             final Document document = builder.parse(new InputSource(new StringReader(responseData.getResponseText())));
             final Element rootElement = document.getDocumentElement();
             final NodeList children = rootElement.getChildNodes();
-            Assert.assertEquals(1, children.getLength());
+            Assertions.assertEquals(1, children.getLength());
             final int nodeId = Integer.valueOf(children.item(0).getAttributes().getNamedItem("id").getNodeValue());
 
-            //force loading topology
-            final EventBuilder eventBuilder = new EventBuilder(EventConstants.RELOAD_TOPOLOGY_UEI, getClass().getSimpleName());
+            // force loading topology
+            final EventBuilder eventBuilder = new EventBuilder(EventConstants.RELOAD_TOPOLOGY_UEI,
+                    getClass().getSimpleName());
             eventBuilder.setParam(EventConstants.PARAM_TOPOLOGY_NAMESPACE, "all");
             stack.opennms().getRestClient().sendEvent(eventBuilder.getEvent());
             Thread.sleep(5000); // Wait to allow the event to be processed
@@ -113,8 +119,8 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
             // View in Topology and verify it works
             TopologyIT.TopologyUIPage topologyUIPage = nodeDetailPage.viewInTopology();
-            Assert.assertEquals(1, topologyUIPage.getFocusedVertices().size());
-            Assert.assertEquals("TestMachine", topologyUIPage.getFocusedVertices().get(0).getLabel());
+            Assertions.assertEquals(1, topologyUIPage.getFocusedVertices().size());
+            Assertions.assertEquals("TestMachine", topologyUIPage.getFocusedVertices().get(0).getLabel());
         } finally {
             deleteTestRequisition();
         }
@@ -125,9 +131,13 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
         final String foreignId = nodeLabel;
         final String foreignSourceAndForeignId = foreignSource + ":" + foreignId;
 
-        final String node = "<node type=\"A\" label=\""+nodeLabel+"\" foreignSource=\""+foreignSource+"\" foreignId=\""+foreignId+"\">" +
-                "<labelSource>H</labelSource><sysContact>Ulf</sysContact><sysDescription>Test System</sysDescription><sysLocation>Fulda</sysLocation>"+
-                "<sysName>"+nodeLabel+"</sysName><sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId><createTime>2019-03-11T07:12:46.421-04:00</createTime>" +
+        final String node = "<node type=\"A\" label=\"" + nodeLabel + "\" foreignSource=\"" + foreignSource
+                + "\" foreignId=\"" + foreignId + "\">" +
+                "<labelSource>H</labelSource><sysContact>Ulf</sysContact><sysDescription>Test System</sysDescription><sysLocation>Fulda</sysLocation>"
+                +
+                "<sysName>" + nodeLabel
+                + "</sysName><sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId><createTime>2019-03-11T07:12:46.421-04:00</createTime>"
+                +
                 "<lastCapsdPoll>2019-03-11T07:12:46.421-04:00</lastCapsdPoll></node>";
 
         sendPost("rest/nodes", node, 201);
@@ -135,10 +145,10 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
         for (int i = 0; i < numberOfInterfaces; i++) {
             final String ipAddress = "192.168.1." + (i + 1);
             final String ipInterface = "<ipInterface isManaged=\"M\" snmpPrimary=\"P\">" +
-                    "<ipAddress>"+ipAddress+"</ipAddress><hostName>"+nodeLabel+".local</hostName>" +
+                    "<ipAddress>" + ipAddress + "</ipAddress><hostName>" + nodeLabel + ".local</hostName>" +
                     "</ipInterface>";
 
-            sendPost("rest/nodes/"+foreignSourceAndForeignId+"/ipinterfaces", ipInterface, 201);
+            sendPost("rest/nodes/" + foreignSourceAndForeignId + "/ipinterfaces", ipInterface, 201);
         }
     }
 
@@ -147,41 +157,39 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
         try {
             createNodeWithInterfaces("nodeWith10Interfaces", 10);
             createNodeWithInterfaces("nodeWith11Interfaces", 11);
-            
-            getDriver().get(getBaseUrlInternal()+"opennms/element/node.jsp?node=test:nodeWith10Interfaces");
-            waitForElement(By.id("onms-interfaces"));
 
-            setImplicitWait(1, SECONDS);
-            Assert.assertEquals(1, driver.findElements(By.id("availability-box")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.1")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.2")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.3")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.4")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.5")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.6")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.7")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.8")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.9")).size());
-            Assert.assertEquals(1, driver.findElements(By.linkText("192.168.1.10")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.11")).size());
+            getDriver().get(getBaseUrlInternal() + "opennms/element/node.jsp?node=test:nodeWith10Interfaces");
+            waitForElement(By.id("onms-interfaces"));
+            setImplicitWait(Duration.ofSeconds(1));
+            Assertions.assertEquals(1, driver.findElements(By.id("availability-box")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.1")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.2")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.3")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.4")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.5")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.6")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.7")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.8")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.9")).size());
+            Assertions.assertEquals(1, driver.findElements(By.linkText("192.168.1.10")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.11")).size());
             setImplicitWait();
 
-            driver.get(getBaseUrlInternal()+"opennms/element/node.jsp?node=test:nodeWith11Interfaces");
+            driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=test:nodeWith11Interfaces");
             waitForElement(By.id("onms-interfaces"));
-
-            setImplicitWait(1, SECONDS);
-            Assert.assertEquals(0, driver.findElements(By.id("availability-box")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.1")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.2")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.3")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.4")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.5")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.6")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.7")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.8")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.9")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.10")).size());
-            Assert.assertEquals(0, driver.findElements(By.linkText("192.168.1.11")).size());
+            setImplicitWait(Duration.ofSeconds(1));
+            Assertions.assertEquals(0, driver.findElements(By.id("availability-box")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.1")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.2")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.3")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.4")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.5")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.6")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.7")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.8")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.9")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.10")).size());
+            Assertions.assertEquals(0, driver.findElements(By.linkText("192.168.1.11")).size());
             setImplicitWait();
         } finally {
             sendDelete("rest/nodes/test:nodeWith10Interfaces", 202);
@@ -192,9 +200,12 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
     @Test
     public void verifyTimeline() throws Exception {
         try {
-            final String node = "<node type=\"A\" label=\"myNode\" foreignSource=\"smoketests\" foreignId=\"nodeForeignId\">" +
-                    "<labelSource>H</labelSource><sysContact>Ulf</sysContact><sysDescription>Test System</sysDescription><sysLocation>Fulda</sysLocation>" +
-                    "<sysName>myNode</sysName><sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId><createTime>2019-03-11T07:12:46.421-04:00</createTime>" +
+            final String node = "<node type=\"A\" label=\"myNode\" foreignSource=\"smoketests\" foreignId=\"nodeForeignId\">"
+                    +
+                    "<labelSource>H</labelSource><sysContact>Ulf</sysContact><sysDescription>Test System</sysDescription><sysLocation>Fulda</sysLocation>"
+                    +
+                    "<sysName>myNode</sysName><sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId><createTime>2019-03-11T07:12:46.421-04:00</createTime>"
+                    +
                     "<lastCapsdPoll>2019-03-11T07:12:46.421-04:00</lastCapsdPoll></node>";
 
             sendPost("rest/nodes", node, 201);
@@ -209,13 +220,16 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
             driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=smoketests:nodeForeignId");
 
-            await().atMost(5, SECONDS)
-                    .pollInterval(1, SECONDS)
+            await().atMost(Duration.ofSeconds(5))
+                    .pollInterval(Duration.ofSeconds(1))
                     .until(() -> {
-                        final List<WebElement> timelineImages = getDriver().findElements(By.tagName("img")).stream().filter(i -> i.getAttribute("src").contains("timeline")).collect(Collectors.toList());
+                        final List<WebElement> timelineImages = getDriver().findElements(By.tagName("img")).stream()
+                                .filter(i -> i.getAttribute("src").contains("timeline")).collect(Collectors.toList());
                         if (timelineImages.size() >= 2) {
                             for (final WebElement timelineImage : timelineImages) {
-                                final Object result = ((JavascriptExecutor) driver).executeScript("return arguments[0].complete && typeof arguments[0].naturalWidth != \"undefined\" && arguments[0].naturalWidth > 0", timelineImage);
+                                final Object result = ((JavascriptExecutor) driver).executeScript(
+                                        "return arguments[0].complete && typeof arguments[0].naturalWidth != \"undefined\" && arguments[0].naturalWidth > 0",
+                                        timelineImage);
                                 if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
                                     return false;
                                 }

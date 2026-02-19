@@ -21,7 +21,7 @@
  */
 package org.opennms.smoketest.ui.framework;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -30,13 +30,13 @@ import org.openqa.selenium.WebElement;
 public abstract class UiElement extends Element {
     protected final String elementId;
 
-    public UiElement(final WebDriver driver, final String elementId, int implicitWait, TimeUnit implictWaitUnit) {
-        super(driver, implicitWait, implictWaitUnit);
+    public UiElement(final WebDriver driver, final String elementId, Duration implicitWait) {
+        super(driver, implicitWait);
         this.elementId = elementId;
     }
 
     public UiElement(final WebDriver driver, final String elementId) {
-        this(driver, elementId, 2, TimeUnit.SECONDS);
+        this(driver, elementId, Duration.ofSeconds(2));
     }
 
     protected WebElement getElement() {

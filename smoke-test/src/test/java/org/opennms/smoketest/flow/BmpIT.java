@@ -24,20 +24,20 @@ package org.opennms.smoketest.flow;
 import static org.awaitility.Awaitility.await;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.preemptive;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.netmgt.events.api.EventConstants;
 import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.netmgt.model.resource.ResourceDTO;
@@ -57,7 +57,7 @@ import com.google.common.collect.Sets;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class BmpIT {
     private static final Logger LOG = LoggerFactory.getLogger(BmpIT.class);
 
@@ -75,15 +75,14 @@ public class BmpIT {
             "adj_rib_in.rrd",
             "local_rib.rrd",
             "prefix_withdraw.rrd",
-            "update_withdraw.rrd"
-    );
+            "update_withdraw.rrd");
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withTelemetryProcessing()
             .build());
 
-    @Before
+    @BeforeEach
     public void setUp() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
@@ -91,7 +90,7 @@ public class BmpIT {
         RestAssured.authentication = preemptive().basic(BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         given().delete("SmokeTests:TestNode");
 
@@ -136,15 +135,15 @@ public class BmpIT {
         final InetSocketAddress bgpTelemetryAddress = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.BMP);
 
         final String node = "<node type=\"A\" label=\"TestNode\" foreignSource=\"SmokeTests\" foreignId=\"TestNode\">" +
-                            "<labelSource>H</labelSource>" +
-                            "<sysContact>Me</sysContact>" +
-                            "<sysDescription>Black Ops 4</sysDescription>" +
-                            "<sysLocation>German DevJam 2020</sysLocation>" +
-                            "<sysName>TestNode</sysName>" +
-                            "<sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId>" +
-                            "<createTime>2020-02-25T13:20:00.123-04:00</createTime>" +
-                            "<lastCapsdPoll>2020-02-25T13:21:00.456-04:00</lastCapsdPoll>" +
-                            "</node>";
+                "<labelSource>H</labelSource>" +
+                "<sysContact>Me</sysContact>" +
+                "<sysDescription>Black Ops 4</sysDescription>" +
+                "<sysLocation>German DevJam 2020</sysLocation>" +
+                "<sysName>TestNode</sysName>" +
+                "<sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId>" +
+                "<createTime>2020-02-25T13:20:00.123-04:00</createTime>" +
+                "<lastCapsdPoll>2020-02-25T13:21:00.456-04:00</lastCapsdPoll>" +
+                "</node>";
 
         given().body(node)
                 .basePath("/opennms/rest/nodes")
@@ -153,9 +152,9 @@ public class BmpIT {
                 .statusCode(201);
 
         final String ipInterface = "<ipInterface isManaged=\"M\" snmpPrimary=\"P\">" +
-                                   "<ipAddress>" + getLocalAddress() + "</ipAddress>" +
-                                   "<hostName>test-machine1.local</hostName>" +
-                                   "</ipInterface>";
+                "<ipAddress>" + getLocalAddress() + "</ipAddress>" +
+                "<hostName>test-machine1.local</hostName>" +
+                "</ipInterface>";
 
         given().body(ipInterface)
                 .basePath("/opennms/rest/nodes/SmokeTests:TestNode/ipinterfaces")
@@ -164,14 +163,15 @@ public class BmpIT {
                 .statusCode(201);
 
         // Restarting collectd after we have added a node to the db
-        final EventBuilder builder = new EventBuilder(EventConstants.RELOAD_DAEMON_CONFIG_UEI, getClass().getSimpleName());
+        final EventBuilder builder = new EventBuilder(EventConstants.RELOAD_DAEMON_CONFIG_UEI,
+                getClass().getSimpleName());
         builder.setParam(EventConstants.PARM_DAEMON_NAME, "collectd");
         stack.opennms().getRestClient().sendEvent(builder.getEvent());
         // Added command to build the cache after adding node through API
         KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
         karafShell.runCommand("opennms:sync-node-cache");
 
-        await().atMost(1, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(1)).pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     sendBmpTelemetryMessage(bgpTelemetryAddress);
                     return matchRrdFileFromNodeResource("SmokeTests:TestNode");

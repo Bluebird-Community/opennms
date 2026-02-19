@@ -37,8 +37,8 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,16 +52,19 @@ public class RestSessionIT extends OpenNMSSeleniumIT {
 
     private Header[] queryUri(final String uri, final String header) throws IOException {
         final HttpGet httpGet = new HttpGet(getBaseUrlExternal() + uri);
-        final HttpHost targetHost = new HttpHost(httpGet.getURI().getHost(), httpGet.getURI().getPort(), httpGet.getURI().getScheme());
+        final HttpHost targetHost = new HttpHost(httpGet.getURI().getHost(), httpGet.getURI().getPort(),
+                httpGet.getURI().getScheme());
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()), new UsernamePasswordCredentials("admin", "admin"));
+        credsProvider.setCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+                new UsernamePasswordCredentials("admin", "admin"));
         final AuthCache authCache = new BasicAuthCache();
         final BasicScheme basicAuth = new BasicScheme();
         authCache.put(targetHost, basicAuth);
         final HttpClientContext context = HttpClientContext.create();
         context.setCredentialsProvider(credsProvider);
         context.setAuthCache(authCache);
-        final CloseableHttpResponse closeableHttpResponse = HttpClients.createDefault().execute(targetHost, httpGet, context);
+        final CloseableHttpResponse closeableHttpResponse = HttpClients.createDefault().execute(targetHost, httpGet,
+                context);
         closeableHttpResponse.close();
         return closeableHttpResponse.getHeaders(header);
     }
@@ -76,10 +79,10 @@ public class RestSessionIT extends OpenNMSSeleniumIT {
         final String uri = "/opennms/rest/nodes";
         LOG.info("Checking for existing Set-Cookie header of response from V1 ReST Api '{}'", uri);
         final Header[] headers = queryUri(uri, "Set-Cookie");
-        for (final Header header : headers){
+        for (final Header header : headers) {
             LOG.error("Set-Cookie header found with value '{}'", header.getValue());
         }
-        Assert.assertEquals(0, headers.length);
+        Assertions.assertEquals(0, headers.length);
     }
 
     /**
@@ -92,9 +95,9 @@ public class RestSessionIT extends OpenNMSSeleniumIT {
         final String uri = "/opennms/api/v2/nodes";
         LOG.info("Checking for existing Set-Cookie header of response from V2 ReST Api '{}'", uri);
         final Header[] headers = queryUri(uri, "Set-Cookie");
-        for (final Header header : headers){
+        for (final Header header : headers) {
             LOG.error("Set-Cookie header found with value '{}'", header.getValue());
         }
-        Assert.assertEquals(0, headers.length);
+        Assertions.assertEquals(0, headers.length);
     }
 }

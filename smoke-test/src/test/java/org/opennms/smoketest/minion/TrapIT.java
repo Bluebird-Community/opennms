@@ -21,12 +21,11 @@
  */
 package org.opennms.smoketest.minion;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.time.Duration;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Date;
@@ -34,8 +33,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.Criteria;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.core.utils.InetAddressUtils;
@@ -65,12 +65,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author seth
  */
-// @Category(MinionTests.class)
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("MinionTests")
+@Tag("FlakyTests")
 public class TrapIT {
     private static final Logger LOG = LoggerFactory.getLogger(TrapIT.class);
 
-    @Rule
+    @RegisterExtension
     public final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withIpcStrategy(getIpcStrategy())
@@ -91,7 +91,8 @@ public class TrapIT {
         // Connect to the postgresql container
         EventDao eventDao = stack.postgres().dao(EventDaoHibernate.class);
 
-        // Parsing the message correctly relies on the customized syslogd-configuration.xml that is part of the OpenNMS image
+        // Parsing the message correctly relies on the customized
+        // syslogd-configuration.xml that is part of the OpenNMS image
         Criteria criteria = new CriteriaBuilder(OnmsEvent.class)
                 .eq("eventUei", "uei.opennms.org/generic/traps/SNMP_Warm_Start")
                 .ge("eventTime", startOfTest)
@@ -99,11 +100,11 @@ public class TrapIT {
                 .toCriteria();
 
         // Send traps to the Minion listener until one makes it through
-        await().atMost(5, MINUTES).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(5)).pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     sendTrap(trapAddr);
                     try {
-                        await().atMost(30, SECONDS).pollInterval(5, SECONDS)
+                        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(5))
                                 .until(DaoUtils.countMatchingCallable(eventDao, criteria), greaterThanOrEqualTo(1));
                     } catch (final Exception e) {
                         return false;
@@ -118,16 +119,19 @@ public class TrapIT {
             SnmpTrapBuilder pdu = SnmpUtils.getV2TrapBuilder();
             pdu.addVarBind(SnmpObjId.get(".1.3.6.1.2.1.1.3.0"), SnmpUtils.getValueFactory().getTimeTicks(0));
             // warmStart
-            pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.1.1.4.1.0"), SnmpUtils.getValueFactory().getObjectId(SnmpObjId.get(".1.3.6.1.6.3.1.1.5.2")));
-            pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.1.1.4.3.0"), SnmpUtils.getValueFactory().getObjectId(SnmpObjId.get(".1.3.6.1.4.1.5813")));
-            pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.18.1.3.0"), SnmpUtils.getValueFactory().getIpAddress(InetAddress.getByName("192.168.0.123")));
+            pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.1.1.4.1.0"),
+                    SnmpUtils.getValueFactory().getObjectId(SnmpObjId.get(".1.3.6.1.6.3.1.1.5.2")));
+            pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.1.1.4.3.0"),
+                    SnmpUtils.getValueFactory().getObjectId(SnmpObjId.get(".1.3.6.1.4.1.5813")));
+            pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.18.1.3.0"),
+                    SnmpUtils.getValueFactory().getIpAddress(InetAddress.getByName("192.168.0.123")));
             pdu.send(InetAddressUtils.str(trapAddr.getAddress()), trapAddr.getPort(), "public");
         } catch (Throwable e) {
             LOG.error(e.getMessage(), e);
         }
         LOG.info("Trap has been sent");
     }
-    
+
     @Test
     public void testSnmpV3TrapsOnMinion() {
         Date startOfTest = new Date();
@@ -149,13 +153,13 @@ public class TrapIT {
                 }
             }, 0, 5, TimeUnit.SECONDS);
             // Check if there is at least one alarm
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS)
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
                     .until(DaoUtils.countMatchingCallable(alarmDao, criteria), greaterThanOrEqualTo(1));
             // Check if multiple traps are getting received not just the first one
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS)
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
                     .until(DaoUtils.findMatchingCallable(alarmDao, new CriteriaBuilder(OnmsAlarm.class)
-                                    .eq("uei", "uei.opennms.org/generic/traps/EnterpriseDefault")
-                                    .ge("counter", 5).toCriteria()),
+                            .eq("uei", "uei.opennms.org/generic/traps/EnterpriseDefault")
+                            .ge("counter", 5).toCriteria()),
                             notNullValue());
         } finally {
             executor.shutdownNow();
@@ -168,7 +172,8 @@ public class TrapIT {
         pdu.addVarBind(SnmpObjId.get(".1.3.6.1.2.1.1.3.0"), SnmpUtils.getValueFactory().getTimeTicks(0));
         pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.1.1.4.1.0"),
                 SnmpUtils.getValueFactory().getObjectId(SnmpObjId.get(".1.3.6.1.6.3.1.1.5.4.0")));
-        pdu.send(InetAddressUtils.str(snmpAddress.getAddress()), snmpAddress.getPort(), SnmpConfiguration.AUTH_PRIV, "traptest",
+        pdu.send(InetAddressUtils.str(snmpAddress.getAddress()), snmpAddress.getPort(), SnmpConfiguration.AUTH_PRIV,
+                "traptest",
                 "0p3nNMSv3", "SHA-256", "0p3nNMSv3", "DES");
         LOG.info("V3 trap sent successfully");
 

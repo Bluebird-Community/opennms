@@ -21,28 +21,28 @@
  */
 package org.opennms.smoketest;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.Assert.assertThat;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
 import com.google.common.collect.Iterables;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class NodeListPageIT extends OpenNMSSeleniumIT {
     public final static SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("y-MM-dd'T'HH:mm:ss.SSSXXX");
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         deleteTestRequisition();
         createLocation("Pittsboro");
@@ -56,7 +56,7 @@ public class NodeListPageIT extends OpenNMSSeleniumIT {
         nodePage();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         deleteTestRequisition();
         deleteLocation("Pittsboro");
@@ -68,7 +68,8 @@ public class NodeListPageIT extends OpenNMSSeleniumIT {
     }
 
     private void createLocation(final String location) throws Exception {
-        sendPost("/rest/monitoringLocations", "<location location-name=\"" + location + "\" monitoring-area=\"" + location + "\"/>", 201);
+        sendPost("/rest/monitoringLocations",
+                "<location location-name=\"" + location + "\" monitoring-area=\"" + location + "\"/>", 201);
     }
 
     private void createNode(final String foreignId, final String location) throws Exception {
@@ -78,11 +79,15 @@ public class NodeListPageIT extends OpenNMSSeleniumIT {
     private void createNode(final String foreignId, final String location, boolean hasFlows) throws Exception {
         final String currentDate = SIMPLE_DATE_FORMAT.format(new Date());
 
-        final String node = "<node type=\"A\" " + (hasFlows ? "lastIngressFlow=\"" + currentDate + "\" lastEgressFlow=\"" + currentDate + "\"" : "") + " label=\"TestMachine " + foreignId + "\" foreignSource=\""+ REQUISITION_NAME +"\" foreignId=\"" + foreignId + "\">" +
+        final String node = "<node type=\"A\" "
+                + (hasFlows ? "lastIngressFlow=\"" + currentDate + "\" lastEgressFlow=\"" + currentDate + "\"" : "")
+                + " label=\"TestMachine " + foreignId + "\" foreignSource=\"" + REQUISITION_NAME + "\" foreignId=\""
+                + foreignId + "\">" +
                 "<labelSource>H</labelSource>" +
                 "<sysContact>The Owner</sysContact>" +
                 "<sysDescription>" +
-                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
+                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386"
+                +
                 "</sysDescription>" +
                 "<sysLocation>DevJam</sysLocation>" +
                 "<sysName>TestMachine" + foreignId + "</sysName>" +
@@ -121,12 +126,15 @@ public class NodeListPageIT extends OpenNMSSeleniumIT {
 
     @Test
     public void testAvailableLocations() throws Exception {
-        // We use hasItems() instead of containsInAnyOrder() at some points because other tests do
+        // We use hasItems() instead of containsInAnyOrder() at some points because
+        // other tests do
         // not properly clean up their created nodes ans locations.
 
         // Check if default selection is 'all locations' and all locations are listed
         findElementByXpath("//select[@id='monitoringLocation']//option[text()='All locations' and @selected]");
-        assertThat(Iterables.transform(driver.findElements(By.xpath("//select[@id='monitoringLocation']//option")), WebElement::getText),
+        assertThat(
+                Iterables.transform(driver.findElements(By.xpath("//select[@id='monitoringLocation']//option")),
+                        WebElement::getText),
                 hasItems("All locations",
                         "Pittsboro",
                         "Fulda"));

@@ -21,20 +21,21 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.netmgt.model.resource.ResourceDTO;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.KarafShell;
@@ -47,12 +48,12 @@ public class TimeseriesAPIIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(TimeseriesAPIIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static OpenNMSStack stack = OpenNMSStack.MINIMAL_WITH_DEFAULT_LOCALHOST;
 
     private KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException, InterruptedException {
         // Make sure the Karaf shell is healthy before we start
         KarafShellUtils.awaitHealthCheckSucceeded(stack.opennms());
@@ -60,16 +61,22 @@ public class TimeseriesAPIIT {
 
     @Test
     public void canLoadTimeseriesFeature() throws Exception {
-        assertTrue("no errors installing opennms-timeseries-api", karafShell.runCommandOnce("feature:install opennms-timeseries-api", output -> !output.toLowerCase().contains("error"), false));
+        assertTrue(karafShell.runCommandOnce(
+                "feature:install opennms-timeseries-api", output -> !output.toLowerCase().contains("error"), false),
+                "no errors installing opennms-timeseries-api");
 
         KarafShellUtils.testHealthCheckSucceeded(stack.opennms().getSshAddress());
     }
 
     @Test
-    @org.junit.Ignore
+    @Disabled
     public void testDualWrites() throws Exception {
-        assertTrue("no errors installing opennms-timeseries-api", karafShell.runCommandOnce("feature:install opennms-timeseries-api", output -> !output.toLowerCase().contains("error"), false));
-        assertTrue("no errors installing inmemory-timeseries-plugin", karafShell.runCommandOnce("feature:install inmemory-timeseries-plugin", output -> !output.toLowerCase().contains("error"), false));
+        assertTrue(karafShell.runCommandOnce(
+                "feature:install opennms-timeseries-api", output -> !output.toLowerCase().contains("error"), false),
+                "no errors installing opennms-timeseries-api");
+        assertTrue(karafShell.runCommandOnce("feature:install inmemory-timeseries-plugin",
+                output -> !output.toLowerCase().contains("error"), false),
+                "no errors installing inmemory-timeseries-plugin");
         KarafShellUtils.testHealthCheckSucceeded(stack.opennms().getSshAddress());
 
         final Set<String> originalRrdFiles = getRrdFiles();
@@ -79,13 +86,13 @@ public class TimeseriesAPIIT {
         originalRrdFiles.stream().forEach(r -> System.out.println(r));
         System.out.println("</RRD FILES>");
 
-        //Wait for data
-        await().atMost(5, TimeUnit.MINUTES)
-                .pollInterval(15, TimeUnit.SECONDS)
+        // Wait for data
+        await().atMost(Duration.ofMinutes(5))
+                .pollInterval(Duration.ofSeconds(15))
                 .until(() -> karafShell.runCommandOnce("opennms:get-tss-plugin-metrics",
                         output -> Arrays.stream(output.split("\n"))
-                                   .filter(line -> line.contains("data points"))
-                                   .count() >= originalRrdFiles.size(),
+                                .filter(line -> line.contains("data points"))
+                                .count() >= originalRrdFiles.size(),
                         false));
 
         // Collect metrics from plugin
@@ -95,14 +102,13 @@ public class TimeseriesAPIIT {
                 "opennms:get-tss-plugin-metrics",
                 output -> {
                     Arrays.stream(output.split("\n"))
-                           .filter(line -> line.contains("data points"))
-                           .forEach(line -> {
-                               System.out.println(line);
-                               karafMetrics.add(line);
-                           });
+                            .filter(line -> line.contains("data points"))
+                            .forEach(line -> {
+                                System.out.println(line);
+                                karafMetrics.add(line);
+                            });
                     return !karafMetrics.isEmpty();
-                }
-                , false);
+                }, false);
         System.out.println("</KARAF OUT>");
 
         Set<String> rrdFiles = getRrdFiles();
@@ -115,7 +121,8 @@ public class TimeseriesAPIIT {
         // Make sure all RRD files have corresponding entries stored in the plugin
         rrdFiles.stream().forEach(rrdFile -> {
             String metricName = rrdFile.substring(0, rrdFile.length() - 4);
-            assertTrue(metricName + " must contain a match in the kafka stream", karafMetrics.stream().anyMatch(x -> x.contains(metricName)));
+            assertTrue(karafMetrics.stream().anyMatch(x -> x.contains(metricName)),
+                    metricName + " must contain a match in the kafka stream");
         });
     }
 

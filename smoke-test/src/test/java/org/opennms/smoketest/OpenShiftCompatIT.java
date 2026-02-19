@@ -28,8 +28,8 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 import java.io.IOException;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.StackModel;
 import org.opennms.smoketest.utils.TestContainerUtils;
@@ -37,19 +37,21 @@ import org.testcontainers.containers.Container;
 
 public class OpenShiftCompatIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
-                .withSimulateRestricedOpenShiftEnvironment()
-                .build());
+            .withSimulateRestricedOpenShiftEnvironment()
+            .build());
 
     @Test
     public void canStartContainerWithRandomUid() throws IOException, InterruptedException {
         // Verify that the generated UID is in the desired range
-        assertThat(stack.opennms().getGeneratedUserId(), greaterThanOrEqualTo(TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MIN));
-        assertThat(stack.opennms().getGeneratedUserId(), lessThanOrEqualTo(TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MAX));
+        assertThat(stack.opennms().getGeneratedUserId(),
+                greaterThanOrEqualTo(TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MIN));
+        assertThat(stack.opennms().getGeneratedUserId(),
+                lessThanOrEqualTo(TestContainerUtils.OPENSHIFT_CONTAINER_UID_RANGE_MAX));
         // Verify that the effective UID/GID are what is expected
         Container.ExecResult result = stack.opennms().execInContainer("id");
         assertThat(result.getStdout().trim(),
-            equalTo(String.format("uid=%d gid=0(root) groups=0(root)", stack.opennms().getGeneratedUserId())));
+                equalTo(String.format("uid=%d gid=0(root) groups=0(root)", stack.opennms().getGeneratedUserId())));
     }
 }

@@ -21,8 +21,8 @@
  */
 package org.opennms.smoketest.flow;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.stacks.StackModel;
@@ -37,29 +37,32 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Verifies that sending flow packets to a single port is dispatching the flows in the according queues.
+ * Verifies that sending flow packets to a single port is dispatching the flows
+ * in the according queues.
  * See issue HZN-1270 for more details.
  */
 public class SinglePortFlowsIT {
 
-    @ClassRule
-    public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
-            .withTelemetryProcessing()
-            .build());
+        @RegisterExtension
+        public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
+                        .withTelemetryProcessing()
+                        .build());
 
-    // Verifies that when OpenNMS and ElasticSearch is running and configured, that sending a flow packet
-    // will actually be persisted in elastic
-    @Test
-    public void verifyFlowStack() throws Exception {
-        final InetSocketAddress flowTelemetryAddress = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.FLOWS);
-        final InetSocketAddress opennmsWebAddress = stack.opennms().getWebAddress();
-        final InetSocketAddress elasticRestAddress = InetSocketAddress.createUnresolved(
-                stack.elastic().getContainerIpAddress(), stack.elastic().getMappedPort(9200));
+        // Verifies that when OpenNMS and ElasticSearch is running and configured, that
+        // sending a flow packet
+        // will actually be persisted in elastic
+        @Test
+        public void verifyFlowStack() throws Exception {
+                final InetSocketAddress flowTelemetryAddress = stack.opennms()
+                                .getNetworkProtocolAddress(NetworkProtocol.FLOWS);
+                final InetSocketAddress opennmsWebAddress = stack.opennms().getWebAddress();
+                final InetSocketAddress elasticRestAddress = InetSocketAddress.createUnresolved(
+                                stack.elastic().getContainerIpAddress(), stack.elastic().getMappedPort(9200));
 
-        final FlowTester tester = new FlowTestBuilder()
-                .withFlowPackets(Packets.getFlowPackets(), Sender.udp(flowTelemetryAddress))
-                .verifyOpennmsRestEndpoint(opennmsWebAddress)
-                .build(elasticRestAddress);
-        tester.verifyFlows();
-    }
+                final FlowTester tester = new FlowTestBuilder()
+                                .withFlowPackets(Packets.getFlowPackets(), Sender.udp(flowTelemetryAddress))
+                                .verifyOpennmsRestEndpoint(opennmsWebAddress)
+                                .build(elasticRestAddress);
+                tester.verifyFlows();
+        }
 }

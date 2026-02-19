@@ -23,16 +23,16 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.base.Strings;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
@@ -44,69 +44,80 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class AdminPageIT extends OpenNMSSeleniumIT {
     private static final Logger LOG = LoggerFactory.getLogger(AdminPageIT.class);
 
     private final List<String[]> m_adminPageEntries = new ArrayList<>();
 
     private final String[][] m_adminPageEntriesAll = new String[][] {
-        // OpenNMS System
-        new String[] { "System Configuration", "//span[text()='OpenNMS Configuration']" },
-        new String[] { "Configure Users, Groups and On-Call Roles", "//span[text()='Users and Groups']" },
-        new String[] { "Connect to Zenith", "//span[text()='Zenith Connect']" },
+            // OpenNMS System
+            new String[] { "System Configuration", "//span[text()='OpenNMS Configuration']" },
+            new String[] { "Configure Users, Groups and On-Call Roles", "//span[text()='Users and Groups']" },
+            new String[] { "Connect to Zenith", "//span[text()='Zenith Connect']" },
 
-        // Provisioning
-        new String[] { "Manage Provisioning Requisitions", "//h4[contains(text(), 'Requisitions (')]" },
-        new String[] { "Import and Export Asset Information", "//span[text()='Import and Export Assets']" },
-        new String[] { "Manage Surveillance Categories", "//span[text()='Surveillance Categories']" },
-        new String[] { "Configure Discovery", "//span[text()='General Settings']" },
-        new String[] { "Run Single Discovery Scan", "//span[text()='Exclude Ranges']" },
-        new String[] { "Configure SNMP Community Names by IP Address", "//span[text()='SNMP Config Lookup']" },
-        new String[] { "Manually Add an Interface", "//span[text()='Enter IP Address']" },
-        new String[] { "Delete Nodes", "//span[text()='Delete Nodes']" },
-        new String[] { "Configure External Requisitions", "//h1[contains(text(), 'Configuration')]" },
-        new String[] { "Configure Geocoder Service", "//div/nav/ol/li[text()='Geocoder Configuration']" },
-        new String[] { "Secure Credentials Vault", "//*[text()='Add Credentials']" },
+            // Provisioning
+            new String[] { "Manage Provisioning Requisitions", "//h4[contains(text(), 'Requisitions (')]" },
+            new String[] { "Import and Export Asset Information", "//span[text()='Import and Export Assets']" },
+            new String[] { "Manage Surveillance Categories", "//span[text()='Surveillance Categories']" },
+            new String[] { "Configure Discovery", "//span[text()='General Settings']" },
+            new String[] { "Run Single Discovery Scan", "//span[text()='Exclude Ranges']" },
+            new String[] { "Configure SNMP Community Names by IP Address", "//span[text()='SNMP Config Lookup']" },
+            new String[] { "Manually Add an Interface", "//span[text()='Enter IP Address']" },
+            new String[] { "Delete Nodes", "//span[text()='Delete Nodes']" },
+            new String[] { "Configure External Requisitions", "//h1[contains(text(), 'Configuration')]" },
+            new String[] { "Configure Geocoder Service", "//div/nav/ol/li[text()='Geocoder Configuration']" },
+            new String[] { "Secure Credentials Vault", "//*[text()='Add Credentials']" },
 
-        // Flow Management
-        new String[] { "Manage Flow Classification", "//div/nav/ol/li[text()='Flow Classification']" },
+            // Flow Management
+            new String[] { "Manage Flow Classification", "//div/nav/ol/li[text()='Flow Classification']" },
 
-        // Event Management
-        new String[] { "Manually Send an Event", "//span[text()='Send Event to OpenNMS']" },
-        new String[] { "Configure Notifications", "//span[text()='Configure Notifications']" },
-        new String[] { "Manage Event Configurations", "//div[@id='app']//div[@class='event-config']//div[@class='heading']/h1[text()='Manage Event Configurations']" },
+            // Event Management
+            new String[] { "Manually Send an Event", "//span[text()='Send Event to OpenNMS']" },
+            new String[] { "Configure Notifications", "//span[text()='Configure Notifications']" },
+            new String[] { "Manage Event Configurations",
+                    "//div[@id='app']//div[@class='event-config']//div[@class='heading']/h1[text()='Manage Event Configurations']" },
 
-        // Service Monitoring
-        new String[] { "Configure Scheduled Outages", "//form//input[@value='New Name']" },
-        new String[] { "Manage and Unmanage Interfaces and Services", "//span[text()='Manage and Unmanage Interfaces and Services']" },
-        new String[] { "Manage Business Services", "//div[@id='content']/iframe[@name='bsm-admin-page']" },
+            // Service Monitoring
+            new String[] { "Configure Scheduled Outages", "//form//input[@value='New Name']" },
+            new String[] { "Manage and Unmanage Interfaces and Services",
+                    "//span[text()='Manage and Unmanage Interfaces and Services']" },
+            new String[] { "Manage Business Services", "//div[@id='content']/iframe[@name='bsm-admin-page']" },
 
-        // Performance Measurement
-        new String[] { "Configure SNMP Collections and Data Collection Groups", "//div[@id='content']/iframe[@name='mib-compiler-snmp']" },
-        new String[] { "Configure SNMP Data Collection per Interface", "//span[text()='Manage SNMP Data Collection per Interface']" },
-        new String[] { "Configure Thresholds", "//span[text()='Threshold Configuration']" },
+            // Performance Measurement
+            new String[] { "Configure SNMP Collections and Data Collection Groups",
+                    "//div[@id='content']/iframe[@name='mib-compiler-snmp']" },
+            new String[] { "Configure SNMP Data Collection per Interface",
+                    "//span[text()='Manage SNMP Data Collection per Interface']" },
+            new String[] { "Configure Thresholds", "//span[text()='Threshold Configuration']" },
 
-        // Distributed Monitoring
-        new String[] { "Manage Monitoring Locations", "//div[contains(@class,'card')]/table//tr//a[text()='Location Name']" },
-        new String[] { "Manage Applications", "//span[text()='Applications']" },
-        new String[] { "Manage Minions", "//div[contains(@class,'card')]/table//th/a[text()='Location']" },
+            // Distributed Monitoring
+            new String[] { "Manage Monitoring Locations",
+                    "//div[contains(@class,'card')]/table//tr//a[text()='Location Name']" },
+            new String[] { "Manage Applications", "//span[text()='Applications']" },
+            new String[] { "Manage Minions", "//div[contains(@class,'card')]/table//th/a[text()='Location']" },
 
-        // Additional Tools
-        new String[] { "Configure Grafana Endpoints (Reports only)", "//div/ul/li/a[contains(text(),'Grafana Endpoints')]" },
-        new String[] { "Instrumentation Log Reader", "//span[text()='Filtering']" },
-        new String[] { "SNMP MIB Compiler", "//div[@id='content']/iframe[@name='mib-compiler']" },
-        new String[] { "Ops Board Configuration", "//div[@id='content']/iframe[@name='wallboard-config']" },
-        new String[] { "Surveillance Views Configuration", "//div[@id='content']/iframe[@name='surveillance-views-config']" },
-        new String[] { "JMX Configuration Generator", "//div[@id='content']/iframe[@name='jmx-config-ui']" },
-        new String[] { "Usage Statistics Sharing", "//div[contains(@class, 'card')]//span[text()='Usage Statistics Sharing']" },
-        new String[] { "Product Update Enrollment", "//div[contains(@class, 'admin-product-update-enrollment-form-wrapper')]" }
+            // Additional Tools
+            new String[] { "Configure Grafana Endpoints (Reports only)",
+                    "//div/ul/li/a[contains(text(),'Grafana Endpoints')]" },
+            new String[] { "Instrumentation Log Reader", "//span[text()='Filtering']" },
+            new String[] { "SNMP MIB Compiler", "//div[@id='content']/iframe[@name='mib-compiler']" },
+            new String[] { "Ops Board Configuration", "//div[@id='content']/iframe[@name='wallboard-config']" },
+            new String[] { "Surveillance Views Configuration",
+                    "//div[@id='content']/iframe[@name='surveillance-views-config']" },
+            new String[] { "JMX Configuration Generator", "//div[@id='content']/iframe[@name='jmx-config-ui']" },
+            new String[] { "Usage Statistics Sharing",
+                    "//div[contains(@class, 'card')]//span[text()='Usage Statistics Sharing']" },
+            new String[] { "Product Update Enrollment",
+                    "//div[contains(@class, 'admin-product-update-enrollment-form-wrapper')]" }
     };
 
     private void initAdminPageEntries() {
-        // Determine actual links displayed on the Admin page based on some configuration properties
+        // Determine actual links displayed on the Admin page based on some
+        // configuration properties
         if (m_adminPageEntries.isEmpty()) {
-            boolean displayZenithConnect = Strings.nullToEmpty(System.getProperty("opennms.zenithConnect.enabled")).equals("true");
+            boolean displayZenithConnect = Strings.nullToEmpty(System.getProperty("opennms.zenithConnect.enabled"))
+                    .equals("true");
 
             for (final String[] entry : m_adminPageEntriesAll) {
                 // omit this link if Zenith Connect is disabled
@@ -119,7 +130,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         initAdminPageEntries();
         adminPage();
@@ -148,7 +159,8 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         findElementByXpath("//div[contains(@class,'card-body')]");
 
         final int count = countElementsMatchingCss("div.card-body > ul > li > a");
-        assertEquals("We expect " + m_adminPageEntries.size() + " link entries on the admin page.", m_adminPageEntries.size(), count);
+        assertEquals(m_adminPageEntries.size(), count,
+                "We expect " + m_adminPageEntries.size() + " link entries on the admin page.");
 
         for (final String[] entry : m_adminPageEntries) {
             LOG.debug("Looking for link element: '{}', page with xpath: {}", entry[0], entry[1]);
@@ -156,7 +168,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
             adminPage();
 
             WebElement linkElement = findElementByLink(entry[0]);
-            assertNotNull("Did not find link element", linkElement);
+            assertNotNull(linkElement, "Did not find link element");
 
             scrollToElement(linkElement);
             linkElement.click();
@@ -166,7 +178,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testCopyrightYear() {
         LOG.info("Starting testCopyrightYear");
         login();
@@ -174,7 +186,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
 
         WebElement footerElem = findElementByXpath("//div[@id='content']/footer[@id='footer']");
 
-        assertNotNull("Did not find footer", footerElem);
+        assertNotNull(footerElem, "Did not find footer");
         String footer = footerElem.getText();
 
         Year thisYear = Year.now();
@@ -182,7 +194,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         Matcher matcher = pattern.matcher(footer);
         boolean matchFound = matcher.find();
 
-        assertTrue("Is the year in the footer equal to current? - ", matchFound);
+        assertTrue(matchFound, "Is the year in the footer equal to current? - ");
     }
 
     @Test
@@ -214,7 +226,8 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         // now click the edit link...
         findElementByXpath("//*[@id=\"content\"]/table/tbody/tr[2]/td[2]/a").click();
         // ...and check for the given text.
-        // This will fail if the text is not properly escaped, as a user dialogue will appear.
+        // This will fail if the text is not properly escaped, as a user dialogue will
+        // appear.
         waitUntil(pageContainsText("Edit application foobar"));
     }
 }

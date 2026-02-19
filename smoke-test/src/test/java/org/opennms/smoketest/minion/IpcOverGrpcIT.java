@@ -22,14 +22,14 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
 import static org.opennms.smoketest.minion.RpcOverKafkaIT.addRequisition;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import java.time.Duration;
+
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.OpenNMSStack;
@@ -37,12 +37,12 @@ import org.opennms.smoketest.stacks.StackModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class IpcOverGrpcIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(IpcOverGrpcIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withIpcStrategy(IpcStrategy.GRPC)
@@ -54,8 +54,9 @@ public class IpcOverGrpcIT {
     public void verifyGrpcRpcWithTcpServiceDetection() {
         // Add node and interface with minion location.
         addRequisition(stack.opennms().getRestClient(), stack.minion().getLocation(), LOCALHOST);
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS)
-                .until(() -> RpcOverKafkaIT.detectTcpAtLocationMinion(stack), containsString("'TCP' WAS detected on 127.0.0.1"));
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15))
+                .until(() -> RpcOverKafkaIT.detectTcpAtLocationMinion(stack),
+                        containsString("'TCP' WAS detected on 127.0.0.1"));
     }
 
 }

@@ -25,17 +25,17 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.http.client.ClientProtocolException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 
@@ -47,20 +47,20 @@ import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
 
-/** Contains cross concern  */
+/** Contains cross concern */
 public class WebappIT {
 
-  @ClassRule
+  @RegisterExtension
   public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
     RestAssured.port = stack.opennms().getWebPort();
     RestAssured.basePath = "/opennms/";
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     RestAssured.reset();
   }
@@ -73,21 +73,23 @@ public class WebappIT {
   @Test
   public void canRetrieveProductInfo() throws ClientProtocolException, IOException, InterruptedException {
     // Retrieve the info summary
-    final String json  = given()
-        .auth().basic(AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME, AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD)
+    final String json = given()
+        .auth()
+        .basic(AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME, AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD)
         .get("rest/info")
         .then().statusCode(200)
         .extract().response().body().print();
 
     // The expected payload looks like:
-    //  {"packageDescription":"OpenNMS","displayVersion":"XX.X.X-SNAPSHOT","packageName":"opennms","version":"XX.X.X", "ticketerConfig":{"enabled":false, "plugin": null}}
+    // {"packageDescription":"OpenNMS","displayVersion":"XX.X.X-SNAPSHOT","packageName":"opennms","version":"XX.X.X",
+    // "ticketerConfig":{"enabled":false, "plugin": null}}
     final ObjectMapper mapper = new ObjectMapper();
     final JsonNode infoObject = mapper.readTree(json);
 
     // Verify that some value is present for each of the known keys
     for (String key : Arrays.asList("packageDescription", "displayVersion", "packageName", "version")) {
-      assertTrue(String.format("Expected value for key '%s', but none was found. Info returned: %s", key, json),
-          !Strings.isNullOrEmpty(infoObject.get(key).asText()));
+      assertTrue(!Strings.isNullOrEmpty(infoObject.get(key).asText()),
+          String.format("Expected value for key '%s', but none was found. Info returned: %s", key, json));
     }
     assertNotNull(infoObject.get("ticketerConfig"));
   }
@@ -103,7 +105,8 @@ public class WebappIT {
 
   @Test
   public void verifyNoCachingOfRequestWithSessionIdInUrl() {
-    // if an internal page is called we get a 302 with the Location header that contains the sessionid which we don't want to cache
+    // if an internal page is called we get a 302 with the Location header that
+    // contains the sessionid which we don't want to cache
     String sessionId = given().redirects().follow(false)
         .log().all()
         .get("admin/classification/index.jsp")
@@ -113,7 +116,7 @@ public class WebappIT {
     given()
         .log().all()
         .spec(noEncoding)
-        .get("login.jsp;jsessionid="+sessionId)
+        .get("login.jsp;jsessionid=" + sessionId)
         .then().assertThat()
         .log().all()
         .statusCode(200)
@@ -124,17 +127,17 @@ public class WebappIT {
   @Test
   public void verifyNoCachingOnStartPage() {
     given().get("index.jsp").then().assertThat()
-            .statusCode(200)
-            .header("Cache-Control", is("no-store"))
-            .header("Pragma", is("no-cache"));
+        .statusCode(200)
+        .header("Cache-Control", is("no-store"))
+        .header("Pragma", is("no-cache"));
   }
 
   @Test
   public void verifyCachingOnStaticAssets() {
     given().get("assets/vendor.min.js").then().assertThat()
-            .statusCode(200)
-            .header("Cache-Control", not("no-store"))
-            .header("Pragma", not("no-cache"));
+        .statusCode(200)
+        .header("Cache-Control", not("no-store"))
+        .header("Pragma", not("no-cache"));
   }
 
 }

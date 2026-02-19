@@ -26,8 +26,8 @@ import static io.restassured.RestAssured.preemptive;
 
 import java.util.Objects;
 
-import org.junit.Before;
-import org.junit.ClassRule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.OpenNMSSeleniumIT;
 import org.opennms.smoketest.containers.OpenNMSContainer;
 import org.opennms.smoketest.stacks.OpenNMSStack;
@@ -36,7 +36,7 @@ import io.restassured.RestAssured;
 
 public abstract class AbstractRestIT extends OpenNMSSeleniumIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
     public enum Version {
@@ -55,9 +55,10 @@ public abstract class AbstractRestIT extends OpenNMSSeleniumIT {
         this.path = "/opennms" + version.path + Objects.requireNonNull(path);
     }
 
-    @Before
+    @BeforeEach
     public void before() {
-        // Always reset the session before the test since we expect no existing session/cookies to be present
+        // Always reset the session before the test since we expect no existing
+        // session/cookies to be present
         RestAssured.reset();
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();

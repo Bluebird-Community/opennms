@@ -25,11 +25,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.opennms.smoketest.containers.OpenNMSCassandraContainer;
 import org.opennms.smoketest.containers.ElasticsearchContainer;
 import org.opennms.smoketest.containers.JaegerContainer;
@@ -40,6 +41,7 @@ import org.opennms.smoketest.containers.PostgreSQLContainer;
 import org.opennms.smoketest.containers.SentinelContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 
 /**
@@ -51,20 +53,23 @@ import org.testcontainers.utility.DockerImageName;
  * direct API access with proper interfaces or simple references to the sockets.
  *
  * Given a {@link StackModel} this class will create the appropriate containers
- * and chain their initialization in a way that allows the stack to come up cleanly.
+ * and chain their initialization in a way that allows the stack to come up
+ * cleanly.
  *
  * @author jwhite
  */
-public final class OpenNMSStack implements TestRule {
+public final class OpenNMSStack implements BeforeAllCallback, AfterAllCallback {
 
     /**
-     * This creates an empty OpenNMS stack for testing with locally-installed components outside of Docker.
+     * This creates an empty OpenNMS stack for testing with locally-installed
+     * components outside of Docker.
      */
     public static final OpenNMSStack NONE = new OpenNMSStack();
 
-	public static final OpenNMSStack MINIMAL = minimal();
+    public static final OpenNMSStack MINIMAL = minimal();
 
-	public static final OpenNMSStack MINIMAL_WITH_DEFAULT_LOCALHOST = OpenNMSStack.withModel(StackModel.newBuilder().build());
+    public static final OpenNMSStack MINIMAL_WITH_DEFAULT_LOCALHOST = OpenNMSStack
+            .withModel(StackModel.newBuilder().build());
 
     public static final OpenNMSStack MINION = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
@@ -86,8 +91,6 @@ public final class OpenNMSStack implements TestRule {
     public static OpenNMSStack withModel(StackModel model) {
         return new OpenNMSStack(model);
     }
-
-    private final TestRule delegateTestRule;
 
     private final PostgreSQLContainer postgreSQLContainer;
 
@@ -120,7 +123,8 @@ public final class OpenNMSStack implements TestRule {
     }
 
     /**
-     * Create an empty OpenNMS stack for testing with locally-installed components outside of Docker.
+     * Create an empty OpenNMS stack for testing with locally-installed components
+     * outside of Docker.
      */
     private OpenNMSStack() {
         postgreSQLContainer = null;
@@ -129,26 +133,23 @@ public final class OpenNMSStack implements TestRule {
         kafkaContainer = null;
         cassandraContainer = null;
         opennmsContainer = new LocalOpenNMS();
-        minionContainers = Collections.EMPTY_LIST;
-        sentinelContainers = Collections.EMPTY_LIST;
+        minionContainers = Collections.emptyList();
+        sentinelContainers = Collections.emptyList();
 
-        delegateTestRule = RuleChain.emptyRuleChain();
     }
 
     private OpenNMSStack(StackModel model) {
         postgreSQLContainer = new PostgreSQLContainer();
-        RuleChain chain = RuleChain.outerRule(postgreSQLContainer);
 
         if (model.isJaegerEnabled()) {
             jaegerContainer = new JaegerContainer();
-            chain = chain.around(jaegerContainer);
+
         } else {
             jaegerContainer = null;
         }
 
         if (model.isElasticsearchEnabled()) {
             elasticsearchContainer = new ElasticsearchContainer();
-            chain = chain.around(elasticsearchContainer);
         } else {
             elasticsearchContainer = null;
         }
@@ -161,7 +162,6 @@ public final class OpenNMSStack implements TestRule {
                     .withEnv("KAFKA_HEAP_OPTS", "-Xms256m -Xmx256m")
                     .withNetwork(Network.SHARED)
                     .withNetworkAliases(OpenNMSContainer.KAFKA_ALIAS);
-            chain = chain.around(kafkaContainer);
         } else {
             kafkaContainer = null;
         }
@@ -170,19 +170,16 @@ public final class OpenNMSStack implements TestRule {
             cassandraContainer = new OpenNMSCassandraContainer();
             cassandraContainer.withNetwork(Network.SHARED)
                     .withNetworkAliases(OpenNMSContainer.CASSANDRA_ALIAS);
-            chain = chain.around(cassandraContainer);
         } else {
             cassandraContainer = null;
         }
 
         opennmsContainer = new OpenNMSContainer(model, model.getOpenNMS());
-        chain = chain.around(opennmsContainer);
 
         final List<MinionContainer> minions = new ArrayList<>(model.getMinions().size());
         for (final MinionProfile profile : model.getMinions()) {
             final MinionContainer minion = new MinionContainer(model, profile);
             minions.add(minion);
-            chain = chain.around(minion);
         }
         minionContainers = Collections.unmodifiableList(minions);
 
@@ -190,11 +187,9 @@ public final class OpenNMSStack implements TestRule {
         for (SentinelProfile profile : model.getSentinels()) {
             final SentinelContainer sentinel = new SentinelContainer(model, profile);
             sentinels.add(sentinel);
-            chain = chain.around(sentinel);
         }
         sentinelContainers = Collections.unmodifiableList(sentinels);
 
-        delegateTestRule = chain;
     }
 
     public OpenNMSContainer opennms() {
@@ -229,6 +224,7 @@ public final class OpenNMSStack implements TestRule {
         }
         return jaegerContainer;
     }
+
     public ElasticsearchContainer elastic() {
         if (elasticsearchContainer == null) {
             throw new IllegalStateException("Elasticsearch container is not enabled in this stack.");
@@ -247,10 +243,21 @@ public final class OpenNMSStack implements TestRule {
         return kafkaContainer;
     }
 
-    @Override
-    public Statement apply(Statement base, Description description) {
-        // Delegate to the test rule we built during initialization
-        return delegateTestRule.apply(base, description);
+    private List<org.testcontainers.lifecycle.Startable> getContainers() {
+        return Stream.concat(
+                Stream.of(postgreSQLContainer, jaegerContainer, elasticsearchContainer, kafkaContainer,
+                        cassandraContainer, opennmsContainer),
+                Stream.concat(minionContainers.stream(), sentinelContainers.stream()))
+                .filter(java.util.Objects::nonNull).collect(Collectors.toList());
     }
 
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        Startables.deepStart(getContainers()).join();
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        getContainers().forEach(org.testcontainers.lifecycle.Startable::stop);
+    }
 }

@@ -30,19 +30,19 @@ import static io.restassured.RestAssured.when;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 
 import io.restassured.RestAssured;
 
 public class DataChoicesRestServiceIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @Before
+    @BeforeEach
     public void before() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
@@ -53,9 +53,9 @@ public class DataChoicesRestServiceIT {
     @Test
     public void verifyGetStatus() {
         given()
-            .queryParam("action", "disable")
-        .when()
-            .get("/rest/datachoices/status")
+                .queryParam("action", "disable")
+                .when()
+                .get("/rest/datachoices/status")
                 .then()
                 .statusCode(200);
     }
@@ -67,10 +67,10 @@ public class DataChoicesRestServiceIT {
         dto.put("enabled", true);
 
         given()
-            .contentType("application/json")
-            .body(dto)
-        .when()
-            .post("/rest/datachoices/status")
+                .contentType("application/json")
+                .body(dto)
+                .when()
+                .post("/rest/datachoices/status")
                 .then()
                 .statusCode(202);
     }

@@ -23,26 +23,23 @@ package org.opennms.smoketest.sentinel;
 
 import static org.awaitility.Awaitility.await;
 import static io.restassured.RestAssured.preemptive;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.hibernate.NodeDaoHibernate;
@@ -71,7 +68,8 @@ import io.restassured.response.Response;
 /**
  * Consolidates all non flow telemetry adapter tests
  */
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
+@Timeout(value = 20, unit = java.util.concurrent.TimeUnit.MINUTES)
 public abstract class AbstractAdapterIT {
 
     // Helper Object to create a requisition from
@@ -110,10 +108,7 @@ public abstract class AbstractAdapterIT {
         }
     }
 
-    @Rule
-    public Timeout timeout = new Timeout(20, TimeUnit.MINUTES);
-
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withSentinel()
@@ -129,12 +124,14 @@ public abstract class AbstractAdapterIT {
         final InetSocketAddress opennmsHttpAddress = stack.opennms().getWebAddress();
 
         // Configure RestAssured
-        RestAssured.baseURI = String.format("http://%s:%s/opennms", opennmsHttpAddress.getHostName(), opennmsHttpAddress.getPort());
+        RestAssured.baseURI = String.format("http://%s:%s/opennms", opennmsHttpAddress.getHostName(),
+                opennmsHttpAddress.getPort());
         RestAssured.port = opennmsHttpAddress.getPort();
         RestAssured.basePath = "/rest";
         RestAssured.authentication = preemptive().basic(OpenNMSContainer.ADMIN_USER, OpenNMSContainer.ADMIN_PASSWORD);
 
-        // The package send may contain a node, which must be created in order to have the adapter store it to newts
+        // The package send may contain a node, which must be created in order to have
+        // the adapter store it to newts
         // so we check if this is the case and afterwards create the requisition
         final RequisitionCreateInfo requisitionToCreate = getRequisitionToCreate();
         if (requisitionToCreate != null) {
@@ -145,7 +142,8 @@ public abstract class AbstractAdapterIT {
         new KarafShell(sentinelSshAddress).verifyLog(getSentinelReadyVerificationFunction());
 
         // If a new requisition was created, also probably new nodes are available.
-        // However, sentinel may not know about it yet, so we manually sync the InterfaceToNodeCache in order to
+        // However, sentinel may not know about it yet, so we manually sync the
+        // InterfaceToNodeCache in order to
         // "see" the new nodes and interfaces.
         if (requisitionToCreate != null) {
             new KarafShell(sentinelSshAddress).runCommand("opennms:sync-node-cache");
@@ -157,9 +155,9 @@ public abstract class AbstractAdapterIT {
         // Ensure no measurement data available
         final Response response = RestAssured.given().accept(ContentType.JSON)
                 .get("/measurements/" + resourceId);
-        Assert.assertEquals(404, response.statusCode());
+        Assertions.assertEquals(404, response.statusCode());
 
-        await().atMost(3, TimeUnit.MINUTES).pollInterval(10, TimeUnit.SECONDS).until(
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(10)).until(
                 () -> {
                     // Send packet to Minion
                     sendTelemetryMessage();
@@ -167,8 +165,7 @@ public abstract class AbstractAdapterIT {
                     final Response theResponse = RestAssured.given().accept(ContentType.JSON)
                             .get("/measurements/" + resourceId);
                     return theResponse.statusCode() == 200;
-                }
-        );
+                });
     }
 
     // Hook to allow tests to send custom messages to minion
@@ -177,14 +174,16 @@ public abstract class AbstractAdapterIT {
     // The resource id to check for the test
     protected abstract String getResourceId();
 
-    // A function to parse the log output of sentinel in order to verify if sentinel is ready (e.g. adapter has been started)
-    protected abstract Function<String,Boolean> getSentinelReadyVerificationFunction();
+    // A function to parse the log output of sentinel in order to verify if sentinel
+    // is ready (e.g. adapter has been started)
+    protected abstract Function<String, Boolean> getSentinelReadyVerificationFunction();
 
     // Some tests require a requisition, if provided it will be created
     protected abstract RequisitionCreateInfo getRequisitionToCreate();
 
     // Creates the requisition
-    static OnmsNode createRequisition(RequisitionCreateInfo createInfo, InetSocketAddress opennmsHttp, HibernateDaoFactory daoFactory) {
+    static OnmsNode createRequisition(RequisitionCreateInfo createInfo, InetSocketAddress opennmsHttp,
+            HibernateDaoFactory daoFactory) {
         Objects.requireNonNull(createInfo);
         Objects.requireNonNull(opennmsHttp);
         Objects.requireNonNull(daoFactory);
@@ -197,7 +196,7 @@ public abstract class AbstractAdapterIT {
 
         // Verify creation
         final NodeDao nodeDao = daoFactory.getDao(NodeDaoHibernate.class);
-        final OnmsNode onmsNode = await().atMost(3, MINUTES).pollInterval(30, SECONDS)
+        final OnmsNode onmsNode = await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(30))
                 .until(DaoUtils.findMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class)
                         .eq("foreignSource", createInfo.foreignSource)
                         .eq("foreignId", createInfo.foreignId)

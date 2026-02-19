@@ -27,12 +27,12 @@ import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.netmgt.flows.rest.classification.GroupDTO;
 import org.opennms.netmgt.flows.rest.classification.RuleDTO;
 import org.opennms.netmgt.flows.rest.classification.RuleDTOBuilder;
@@ -48,6 +48,7 @@ import org.opennms.smoketest.telemetry.FlowTester;
 import org.opennms.smoketest.telemetry.Packets;
 import org.opennms.smoketest.telemetry.Sender;
 import org.opennms.smoketest.utils.KarafShell;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,13 +61,11 @@ import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 import io.searchbox.indices.DeleteIndex;
 
-@Category(org.opennms.smoketest.junit.SentinelTests.class)
+@Tag("SentinelTests")
+@Timeout(value = 20, unit = java.util.concurrent.TimeUnit.MINUTES)
 public abstract class AbstractFlowIT {
 
-    @Rule
-    public Timeout timeout = new Timeout(20, TimeUnit.MINUTES);
-
-    @Rule
+    @RegisterExtension
     public final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withSentinel()
@@ -98,7 +97,8 @@ public abstract class AbstractFlowIT {
                 .withIpfixPacket(sender)
                 .withSFlowPacket(sender)
                 .verifyBeforeSendingFlows(theTester -> {
-                    // We don't know in which order the the tests are executed so we delete all previously created flows
+                    // We don't know in which order the the tests are executed so we delete all
+                    // previously created flows
                     try {
                         theTester.getJestClient().execute(new DeleteIndex.Builder("netflow-*").build());
                     } catch (IOException e) {
@@ -139,7 +139,7 @@ public abstract class AbstractFlowIT {
             client.execute(new DeleteIndex.Builder("netflow-*").build());
 
             // Verify nothing is created yet
-            await().atMost(2, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS).until(() -> {
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5)).until(() -> {
                 final Search query = new Search.Builder("").addIndex("netflow-*").build();
                 final SearchResult result = client.execute(query);
                 return SearchResultUtils.getTotal(result) == 0;
@@ -149,7 +149,7 @@ public abstract class AbstractFlowIT {
             Packets.Netflow5.send(Sender.udp(minionFlowAddress));
 
             // Verify it was classified properly
-            await().atMost(2, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS).until(() -> {
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5)).until(() -> {
                 // Verify it has been created properly
                 final Search query = new Search.Builder(buildApplicationQuery("ssh")).addIndex("netflow-*").build();
                 final SearchResult result = client.execute(query);
@@ -162,16 +162,16 @@ public abstract class AbstractFlowIT {
             // Verify that sentinel reloaded the rules
             new KarafShell(sentinelSshAddress).runCommand(
                     "opennms:classify-flow --protocol tcp --srcAddress 127.0.0.1 --srcPort 55000 --dstAddress 8.8.8.8 --destPort 22 --exporterAddress 127.0.0.1",
-                    output -> output.contains("custom-rule")
-            );
+                    output -> output.contains("custom-rule"));
 
             // Send Flow again
             Packets.Netflow5.send(Sender.udp(minionFlowAddress));
 
             // Verify it was classified according the new rule
-            await().atMost(2, TimeUnit.MINUTES).pollInterval(5, TimeUnit.SECONDS).until(() -> {
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5)).until(() -> {
                 // Verify it has been created properly
-                final Search query = new Search.Builder(buildApplicationQuery("custom-rule")).addIndex("netflow-*").build();
+                final Search query = new Search.Builder(buildApplicationQuery("custom-rule")).addIndex("netflow-*")
+                        .build();
                 final SearchResult result = client.execute(query);
                 return SearchResultUtils.getTotal(result) == 2;
             });
@@ -207,7 +207,7 @@ public abstract class AbstractFlowIT {
         RestAssured.authentication = preemptive().basic(OpenNMSContainer.ADMIN_USER, OpenNMSContainer.ADMIN_PASSWORD);
 
         // Fetch Group
-        final GroupDTO group =  given().get("groups/2") // user-defined group
+        final GroupDTO group = given().get("groups/2") // user-defined group
                 .then().log().body(true)
                 .assertThat().statusCode(200)
                 .extract().response().as(GroupDTO.class);

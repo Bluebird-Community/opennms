@@ -45,7 +45,7 @@ public class WebhookEndpointContainer extends GenericContainer<WebhookEndpointCo
 
     public URL getBaseUrlExternal() {
         try {
-            return new URL(String.format("http://%s:%d/", getContainerIpAddress(), getMappedPort(PORT)));
+            return new URL(String.format("http://%s:%d/", getHost(), getMappedPort(PORT)));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

@@ -21,17 +21,15 @@
  */
 package org.opennms.smoketest;
 
+import java.time.Duration;
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.opennms.netmgt.events.api.EventConstants.RELOAD_DAEMON_CONFIG_SUCCESSFUL_UEI;
 
 import java.io.PrintStream;
 import java.util.Date;
-import java.util.concurrent.Callable;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.core.daemon.DaemonReloadEnum;
 import org.opennms.netmgt.dao.api.EventDao;
@@ -46,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class ReloadDaemonIT {
     private static final Logger LOG = LoggerFactory.getLogger(ReloadDaemonIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
     @Test
@@ -63,26 +61,24 @@ public class ReloadDaemonIT {
             final PrintStream pipe = sshClient.openShell();
             pipe.println("opennms:reload-daemon " + daemonName);
             pipe.println("logout");
-            await().atMost(30, SECONDS).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofSeconds(30)).until(sshClient.isShellClosedCallable());
         }
 
         final EventDao eventDao = stack.postgres().getDaoFactory().getDao(EventDaoHibernate.class);
-        await().atMost(2, MINUTES).pollInterval(2, SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                long eventCount = eventDao.findMatching(
-                        new CriteriaBuilder(OnmsEvent.class)
-                                .alias("eventParameters", "eventParameters")
-                                .ge("eventCreateTime", startOfTest)
-                                .eq("eventUei", RELOAD_DAEMON_CONFIG_SUCCESSFUL_UEI)
-                                .toCriteria()
-                ).stream()
-                        .filter(e -> e.getEventParameters().stream()
-                                .anyMatch(p -> EventConstants.PARM_DAEMON_NAME.equals(p.getName()) && daemonName.equals(p.getValue())))
-                        .count();
-                LOG.info("Waiting for {} event (count = {})", daemonName, eventCount);
-                return eventCount > 0;
-            }
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(2)).until(() -> {
+            long eventCount = eventDao.findMatching(
+                    new CriteriaBuilder(OnmsEvent.class)
+                            .alias("eventParameters", "eventParameters")
+                            .ge("eventCreateTime", startOfTest)
+                            .eq("eventUei", RELOAD_DAEMON_CONFIG_SUCCESSFUL_UEI)
+                            .toCriteria())
+                    .stream()
+                    .filter(e -> e.getEventParameters().stream()
+                            .anyMatch(p -> EventConstants.PARM_DAEMON_NAME.equals(p.getName())
+                                    && daemonName.equals(p.getValue())))
+                    .count();
+            LOG.info("Waiting for {} event (count = {})", daemonName, eventCount);
+            return eventCount > 0;
         });
     }
 }

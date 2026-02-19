@@ -21,7 +21,7 @@
  */
 package org.opennms.smoketest.minion;
 
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 import org.opennms.smoketest.stacks.IpcStrategy;
 
 /**
@@ -31,8 +31,7 @@ import org.opennms.smoketest.stacks.IpcStrategy;
  * 
  * @author Seth
  */
-//@Category(MinionTests.class)
-@Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class MinionHeartbeatOutageKafkaIT extends MinionHeartbeatOutageIT {
 
     @Override

@@ -22,9 +22,9 @@
 package org.opennms.smoketest;
 
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,11 +35,12 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.opennms.core.web.HttpClientWrapper;
 
 /**
- * Verifies that the OpenNMS ReST endpoints handle uncatched Exceptions accordingly and do not return the general JSP error page.
+ * Verifies that the OpenNMS ReST endpoints handle uncatched Exceptions
+ * accordingly and do not return the general JSP error page.
  * See HZN-1108.
  */
 public class ErrorResponseIT extends OpenNMSSeleniumIT {
@@ -47,7 +48,8 @@ public class ErrorResponseIT extends OpenNMSSeleniumIT {
     @Test
     public void verifyErrorResponseV1() throws IOException {
         try (HttpClientWrapper client = createClientWrapper()) {
-            // "INVALID-XML" is not a valid graphml definition, therefore unmarshalling will fail.
+            // "INVALID-XML" is not a valid graphml definition, therefore unmarshalling will
+            // fail.
             HttpPost httpPost = new HttpPost(getBaseUrlExternal() + "opennms/rest/graphml/test-graph");
             httpPost.setHeader("Accept", "application/xml");
             httpPost.setHeader("Content-Type", "application/xml");
@@ -77,7 +79,8 @@ public class ErrorResponseIT extends OpenNMSSeleniumIT {
     private static void verify(CloseableHttpResponse response) throws IOException {
         assertEquals(500, response.getStatusLine().getStatusCode());
 
-        // Verify response entity. It should contain error information and should not be the JSP
+        // Verify response entity. It should contain error information and should not be
+        // the JSP
         final String responseEntity = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))
                 .lines().collect(Collectors.joining("\n")).trim();
         assertThat(responseEntity, not(containsString("<!DOCTYPE html>")));

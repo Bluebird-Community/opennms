@@ -23,12 +23,12 @@ package org.opennms.smoketest;
 
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author <a href="mailto:agalue@opennms.org">Alejandro Galue</a>
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class InterfacesOnNodePageIT extends OpenNMSSeleniumIT {
 
     /** The Constant LOG. */
@@ -50,16 +50,18 @@ public class InterfacesOnNodePageIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // Creating a node
 
         LOG.debug("creating node");
-        String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">" +
+        String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">"
+                +
                 "<labelSource>H</labelSource>" +
                 "<sysContact>The Owner</sysContact>" +
                 "<sysDescription>" +
-                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
+                "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386"
+                +
                 "</sysDescription>" +
                 "<sysLocation>DevJam</sysLocation>" +
                 "<sysName>TestMachine1</sysName>" +
@@ -82,7 +84,7 @@ public class InterfacesOnNodePageIT extends OpenNMSSeleniumIT {
 
         // Adding SNMP Interfaces
 
-        for (int i = 1; i < 3; i ++) {
+        for (int i = 1; i < 3; i++) {
             LOG.debug("creating snmp interface " + i);
             String snmpInterface = "<snmpInterface collectFlag=\"C\" ifIndex=\"" + i + "\" pollFlag=\"N\">" +
                     "<ifAdminStatus>1</ifAdminStatus>" +
@@ -107,7 +109,7 @@ public class InterfacesOnNodePageIT extends OpenNMSSeleniumIT {
      *
      * @throws Exception the exception
      */
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         sendDelete("rest/nodes/SmokeTests:TestMachine1", 202);
     }
@@ -120,22 +122,22 @@ public class InterfacesOnNodePageIT extends OpenNMSSeleniumIT {
     @Test
     public void testNodePage() throws Exception {
         // Verify main banner
-        Assert.assertEquals("TestMachine1", findElementByCss("h5 div.NPnode strong").getText());
+        Assertions.assertEquals("TestMachine1", findElementByCss("h5 div.NPnode strong").getText());
 
         // Verify IP Interfaces
         List<WebElement> elements = driver.findElements(By.cssSelector("div.tab-pane.ng-scope.active td.ng-binding"));
-        Assert.assertEquals("10.10.10.10", elements.get(0).getText());
-        Assert.assertEquals("test-machine1.local", elements.get(1).getText());
+        Assertions.assertEquals("10.10.10.10", elements.get(0).getText());
+        Assertions.assertEquals("test-machine1.local", elements.get(1).getText());
 
         // Click on SNMP Interfaces Tab
         findElementByLink("SNMP Interfaces").click();
 
         // Verify SNMP Interfaces
         elements = driver.findElements(By.cssSelector("div.tab-pane.ng-scope.active td.ng-binding"));
-        Assert.assertEquals("1", elements.get(0).getText());
-        Assert.assertEquals("eth1", elements.get(1).getText());
-        Assert.assertEquals("eth1", elements.get(2).getText());
-        Assert.assertEquals("LAN Access 1", elements.get(3).getText());
+        Assertions.assertEquals("1", elements.get(0).getText());
+        Assertions.assertEquals("eth1", elements.get(1).getText());
+        Assertions.assertEquals("eth1", elements.get(2).getText());
+        Assertions.assertEquals("LAN Access 1", elements.get(3).getText());
     }
 
 }

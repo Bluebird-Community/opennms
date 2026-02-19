@@ -22,39 +22,37 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintStream;
+import java.time.Duration;
 import java.util.Date;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.opennms.core.criteria.CriteriaBuilder;
-import org.opennms.netmgt.dao.api.EventDao;
-import org.opennms.netmgt.dao.hibernate.EventDaoHibernate;
 import org.opennms.netmgt.model.OnmsEvent;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.junit.SentinelTests;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.StackModel;
+import org.opennms.core.criteria.CriteriaBuilder;
+import org.opennms.netmgt.dao.api.EventDao;
+import org.opennms.netmgt.dao.hibernate.EventDaoHibernate;
 import org.opennms.smoketest.utils.DaoUtils;
 import org.opennms.smoketest.utils.HibernateDaoFactory;
 import org.opennms.smoketest.utils.SshClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
 public class EventSinkIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventSinkIT.class);
 
-
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withSentinel()
@@ -64,28 +62,32 @@ public class EventSinkIT {
     @Test
     public void canReceiveEventsFromMinion() {
         Date startOfTest = new Date();
-        assertTrue("failed to send event from Minion", sendEventFromMinion());
+        assertTrue(sendEventFromMinion(), "failed to send event from Minion");
         HibernateDaoFactory daoFactory = stack.postgres().getDaoFactory();
         EventDao eventDao = daoFactory.getDao(EventDaoHibernate.class);
-        final OnmsEvent onmsEvent = await().atMost(2, MINUTES).pollInterval(10, SECONDS)
-                .until(DaoUtils.findMatchingCallable(eventDao, new CriteriaBuilder(OnmsEvent.class).eq("eventUei", "uei.opennms.org/alarms/trigger")
-                        .eq("eventSource", "KarafShell_send-event").ge("eventCreateTime", startOfTest).toCriteria()), notNullValue());
+        final OnmsEvent onmsEvent = await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10))
+                .until(DaoUtils.findMatchingCallable(eventDao,
+                        new CriteriaBuilder(OnmsEvent.class).eq("eventUei", "uei.opennms.org/alarms/trigger")
+                                .eq("eventSource", "KarafShell_send-event").ge("eventCreateTime", startOfTest)
+                                .toCriteria()),
+                        notNullValue());
 
-        assertNotNull("The event sent is not received at OpenNMS", onmsEvent);
+        assertNotNull(onmsEvent, "The event sent is not received at OpenNMS");
     }
-
 
     @Test
     public void canReceiveEventsFromSentinel() {
         Date startOfTest = new Date();
-        assertTrue("failed to send event from Sentinel", sendEventFromSentinel());
+        assertTrue(sendEventFromSentinel(), "failed to send event from Sentinel");
         HibernateDaoFactory daoFactory = stack.postgres().getDaoFactory();
         EventDao eventDao = daoFactory.getDao(EventDaoHibernate.class);
-        final OnmsEvent onmsEvent = await().atMost(2, MINUTES).pollInterval(10, SECONDS)
-                .until(DaoUtils.findMatchingCallable(eventDao, new CriteriaBuilder(OnmsEvent.class).eq("eventUei", "uei.opennms.org/threshold/relativeChangeExceeded")
-                        .eq("eventSource", "KarafShell_send-event").ge("eventCreateTime", startOfTest).toCriteria()), notNullValue());
+        final OnmsEvent onmsEvent = await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10))
+                .until(DaoUtils.findMatchingCallable(eventDao, new CriteriaBuilder(OnmsEvent.class)
+                        .eq("eventUei", "uei.opennms.org/threshold/relativeChangeExceeded")
+                        .eq("eventSource", "KarafShell_send-event").ge("eventCreateTime", startOfTest).toCriteria()),
+                        notNullValue());
 
-        assertNotNull("The event sent is not received at OpenNMS", onmsEvent);
+        assertNotNull(onmsEvent, "The event sent is not received at OpenNMS");
     }
 
     private boolean sendEventFromMinion() {
@@ -95,7 +97,7 @@ public class EventSinkIT {
             pipe.println("opennms:send-event 'uei.opennms.org/alarms/trigger'");
             pipe.println("logout");
 
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
             // Grab the output
             String shellOutput = sshClient.getStdout();
             LOG.info("opennms:send-event output: {}", shellOutput);
@@ -114,7 +116,7 @@ public class EventSinkIT {
             pipe.println("opennms:send-event 'uei.opennms.org/threshold/relativeChangeExceeded'");
             pipe.println("logout");
 
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
             // Grab the output
             String shellOutput = sshClient.getStdout();
             LOG.info("opennms:send-event output: {}", shellOutput);

@@ -22,11 +22,9 @@
 package org.opennms.smoketest;
 
 import static io.restassured.RestAssured.given;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable;
 
 import java.io.ByteArrayOutputStream;
@@ -40,11 +38,10 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.hamcrest.Matchers;
 import org.json.JSONArray;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.containers.WebhookEndpointContainer;
 import org.opennms.smoketest.ui.framework.Button;
 import org.opennms.smoketest.ui.framework.CheckBox;
@@ -74,12 +71,12 @@ public class DatabaseReportPageIT extends UiPageTest {
 
     private static Logger LOG = LoggerFactory.getLogger(DatabaseReportPageIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static WebhookEndpointContainer webhookEndpointContainer = new WebhookEndpointContainer();
 
     private DatabaseReportPage page;
 
-    @Before
+    @BeforeEach
     public void before() {
         page = new DatabaseReportPage(getDriver(), getBaseUrlInternal());
         page.open();
@@ -101,7 +98,7 @@ public class DatabaseReportPageIT extends UiPageTest {
 
         // Verify Creation
         final File downloadedFile = new File(getDownloadsFolder(), EarlyMorningReport.filename(Formats.PDF));
-        await().atMost(2, MINUTES).pollInterval(5, SECONDS).until(() -> {
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5)).until(() -> {
             LOG.debug("Expecting file '{}' to exist: {}", downloadedFile, downloadedFile.exists());
             return downloadedFile.exists();
         });
@@ -116,17 +113,16 @@ public class DatabaseReportPageIT extends UiPageTest {
 
         // Verify delivery
         new PersistedReportsTab(getDriver()).open();
-        await().atMost(2, MINUTES).pollInterval(5, SECONDS)
-                .until( () -> {
-                        new Button(driver, "action.refresh").click();
-                        final Optional<PersistedReportElement> any = new PersistedReportsTab(getDriver())
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
+                .until(() -> {
+                    new Button(driver, "action.refresh").click();
+                    final Optional<PersistedReportElement> any = new PersistedReportsTab(getDriver())
                             .open()
                             .getPersistedReports().stream()
                             .filter((input) -> input.title.equals(EarlyMorningReport.id + " admin"))
                             .findAny();
-                        return any.isPresent();
-                    }
-                );
+                    return any.isPresent();
+                });
     }
 
     @Test
@@ -141,7 +137,8 @@ public class DatabaseReportPageIT extends UiPageTest {
         final Optional<ReportScheduleElement> any = new ScheduledReportsTab(getDriver())
                 .open()
                 .getScheduledReports().stream()
-                .filter((input) -> input.templateName.equals(EarlyMorningReport.id) && input.cronExpression.equals(cronExpression))
+                .filter((input) -> input.templateName.equals(EarlyMorningReport.id)
+                        && input.cronExpression.equals(cronExpression))
                 .findAny();
         assertThat(any.isPresent(), is(true));
         assertThat(any.get().cronExpression, is(cronExpression));
@@ -160,7 +157,8 @@ public class DatabaseReportPageIT extends UiPageTest {
         final Optional<ReportScheduleElement> any = new ScheduledReportsTab(getDriver())
                 .open()
                 .getScheduledReports().stream()
-                .filter((input) -> input.templateName.equals(EarlyMorningReport.id) && input.cronExpression.equals(cronExpression))
+                .filter((input) -> input.templateName.equals(EarlyMorningReport.id)
+                        && input.cronExpression.equals(cronExpression))
                 .findAny();
         LOG.debug("One schedule matching the schedule: {}", any.isPresent());
         assertThat(any.isPresent(), is(true));
@@ -170,21 +168,22 @@ public class DatabaseReportPageIT extends UiPageTest {
         new ScheduledReportsTab(getDriver())
                 .open()
                 .updateSchedule(EarlyMorningReport.id + " admin",
-                      DeliveryOptions.DEFAULTS
-                              .emailRecipients(Lists.newArrayList("opennms-test@opennms.org")), // See NMS-12432 for more details
-                      updatedCronExpression);
+                        DeliveryOptions.DEFAULTS
+                                .emailRecipients(Lists.newArrayList("opennms-test@opennms.org")), // See NMS-12432 for
+                                                                                                  // more details
+                        updatedCronExpression);
 
         // Verify it actually was persisted and the UI reloaded
         LOG.debug("Checking if schedule was updated...");
         final Optional<ReportScheduleElement> findMe = new ScheduledReportsTab(getDriver())
                 .open()
                 .getScheduledReports().stream()
-                .filter((input) -> input.templateName.equals(EarlyMorningReport.id) && input.cronExpression.equals(updatedCronExpression))
+                .filter((input) -> input.templateName.equals(EarlyMorningReport.id)
+                        && input.cronExpression.equals(updatedCronExpression))
                 .findAny();
         LOG.debug("Schedule was edited, now verify exactly one schedule matches: {}", findMe.isPresent());
         assertThat(findMe.isPresent(), is(true));
     }
-
 
     // Verifies that a generated Report can be send to an HTTP Endpoint
     @Test
@@ -195,43 +194,43 @@ public class DatabaseReportPageIT extends UiPageTest {
 
         // Verify nothing was posted yet
         given().basePath("/files").get()
-            .then()
-            .statusCode(200)
-            .body("size()", is(0));
+                .then()
+                .statusCode(200)
+                .body("size()", is(0));
 
         // Trigger Delivery of the report
         new ReportTemplateTab(getDriver()).open()
-            .select(EarlyMorningReport.name)
-            .deliverReport(new DeliveryOptions()
-                .format(Formats.PDF)
-                .postToEndpoint("http://opennms-dummy-http-endpoint:8080/files?instanceId=:instanceId")
-            );
+                .select(EarlyMorningReport.name)
+                .deliverReport(new DeliveryOptions()
+                        .format(Formats.PDF)
+                        .postToEndpoint("http://opennms-dummy-http-endpoint:8080/files?instanceId=:instanceId"));
 
         // Ensure it was posted
-        await().atMost(2, MINUTES).pollInterval(10, SECONDS).until(
-            () -> {
-                final String response = given().basePath("/files").get()
-                        .then()
-                        .statusCode(200)
-                        .extract().response().asString();
-                final JSONArray array = new JSONArray(response);
-                if (array.length() == 1) {
-                    // Read PDF
-                    final String filename = array.getJSONObject(0).getString("name");
-                    final InputStream input = given().basePath("/files/" + filename).get()
-                        .then()
-                        .statusCode(200)
-                        .contentType("application/pdf")
-                        .extract().body().asInputStream();
-                    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    ByteStreams.copy(input, outputStream);;
-                    final byte[] receivedBytes = outputStream.toByteArray();
-                    if (receivedBytes.length > 0) {
-                        return true;
+        await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10)).until(
+                () -> {
+                    final String response = given().basePath("/files").get()
+                            .then()
+                            .statusCode(200)
+                            .extract().response().asString();
+                    final JSONArray array = new JSONArray(response);
+                    if (array.length() == 1) {
+                        // Read PDF
+                        final String filename = array.getJSONObject(0).getString("name");
+                        final InputStream input = given().basePath("/files/" + filename).get()
+                                .then()
+                                .statusCode(200)
+                                .contentType("application/pdf")
+                                .extract().body().asInputStream();
+                        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        ByteStreams.copy(input, outputStream);
+                        ;
+                        final byte[] receivedBytes = outputStream.toByteArray();
+                        if (receivedBytes.length > 0) {
+                            return true;
+                        }
                     }
-                }
-                return false;
-            });
+                    return false;
+                });
     }
 
     public interface EarlyMorningReport {
@@ -280,8 +279,10 @@ public class DatabaseReportPageIT extends UiPageTest {
             // The list of database reports is long enough that scrolling is needed
             ((JavascriptExecutor) getDriver()).executeScript("arguments[0].click();", element);
 
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS).until(() -> execute(() -> getDriver().findElements(By.id("loading-bar-spinner")).isEmpty()));
-            await().atMost(15, SECONDS).pollInterval(2, SECONDS).until(() -> findElementById("execute") != null);
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
+                    .until(() -> execute(() -> getDriver().findElements(By.id("loading-bar-spinner")).isEmpty()));
+            await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofSeconds(2))
+                    .until(() -> findElementById("execute") != null);
             return this;
         }
 
@@ -297,7 +298,7 @@ public class DatabaseReportPageIT extends UiPageTest {
         public ReportTemplateTab open() {
             LOG.debug("Open Report Template Tab");
             getElement().click();
-            assertThat(isActive(), Matchers.is(true));
+            assertThat(isActive(), is(true));
             return this;
         }
 
@@ -314,7 +315,7 @@ public class DatabaseReportPageIT extends UiPageTest {
 
             ensureReportIsSelected();
             final WebElement executeButton = execute(() -> findElementById("execute"));
-            assertThat(executeButton.getText(), Matchers.is("Create Report"));
+            assertThat(executeButton.getText(), is("Create Report"));
             executeButton.click();
             return this;
         }
@@ -326,13 +327,14 @@ public class DatabaseReportPageIT extends UiPageTest {
 
             // Finally deliver the report
             final WebElement executeButton = execute(() -> findElementById("execute"));
-            assertThat(executeButton.getText(), Matchers.is("Deliver Report"));
+            assertThat(executeButton.getText(), is("Deliver Report"));
             executeButton.click();
 
             // Verify it was scheduled for delivery
-            await().atMost(2, MINUTES)
-                    .pollInterval(5, SECONDS)
-                    .until(() -> findElementByXpath("//div[contains(@class, 'alert alert-success') and contains(text(), 'The report was scheduled for delivery')]") != null);
+            await().atMost(Duration.ofMinutes(2))
+                    .pollInterval(Duration.ofSeconds(5))
+                    .until(() -> findElementByXpath(
+                            "//div[contains(@class, 'alert alert-success') and contains(text(), 'The report was scheduled for delivery')]") != null);
             return this;
         }
 
@@ -343,13 +345,14 @@ public class DatabaseReportPageIT extends UiPageTest {
                     .applyDeliveryOptions(options)
                     .applyCronExpression(cronExpression);
             final WebElement executeButton = execute(() -> findElementById("execute"));
-            assertThat(executeButton.getText(), Matchers.is("Schedule Report"));
+            assertThat(executeButton.getText(), is("Schedule Report"));
             executeButton.click();
 
             // Verify it was scheduled
-            await().atMost(2, MINUTES)
-                    .pollInterval(5, SECONDS)
-                    .until(() -> findElementByXpath("//div[contains(@class, 'alert alert-success') and contains(text(), 'The report was scheduled')]") != null);
+            await().atMost(Duration.ofMinutes(2))
+                    .pollInterval(Duration.ofSeconds(5))
+                    .until(() -> findElementByXpath(
+                            "//div[contains(@class, 'alert alert-success') and contains(text(), 'The report was scheduled')]") != null);
             LOG.debug("Report scheduled!");
             return this;
         }
@@ -361,7 +364,8 @@ public class DatabaseReportPageIT extends UiPageTest {
         }
 
         private String getSelectedTemplate() {
-            final List<WebElement> elements = getDriver().findElements(By.xpath("//div[contains(@class, 'list-group')]//a[contains(@class, 'list-group-item') and contains(@class, 'active')]/h5"));
+            final List<WebElement> elements = getDriver().findElements(By.xpath(
+                    "//div[contains(@class, 'list-group')]//a[contains(@class, 'list-group-item') and contains(@class, 'active')]/h5"));
             if (!elements.isEmpty()) {
                 return elements.get(0).getText();
             }
@@ -423,7 +427,8 @@ public class DatabaseReportPageIT extends UiPageTest {
             }
             new CheckBox(driver, "scheduleTypeCustom").setSelected(true);
             new TextInput(driver, "customCronExpressionInput").setInput(cronExpression);
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS).until(() -> findElementById("customCronExpressionInput").getAttribute("value").equals(cronExpression));
+            await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5)).until(
+                    () -> findElementById("customCronExpressionInput").getAttribute("value").equals(cronExpression));
             return this;
         }
     }
@@ -437,7 +442,7 @@ public class DatabaseReportPageIT extends UiPageTest {
         public PersistedReportsTab open() {
             LOG.debug("Open Persisted Reports Tab");
             getElement().click();
-            assertThat(isActive(), Matchers.is(true));
+            assertThat(isActive(), is(true));
             return this;
         }
 
@@ -466,7 +471,8 @@ public class DatabaseReportPageIT extends UiPageTest {
         public void deleteAll() {
             if (!getPersistedReports().isEmpty()) {
                 new DeleteAllButton(driver).click();
-                await().atMost(2, MINUTES).pollInterval(5, SECONDS).until(() -> getPersistedReports().isEmpty());
+                await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
+                        .until(() -> getPersistedReports().isEmpty());
             }
         }
     }
@@ -484,7 +490,7 @@ public class DatabaseReportPageIT extends UiPageTest {
                     .ignoring(Exception.class)
                     .until(driver -> elementToBeClickable(getElement()));
             getElement().click();
-            assertThat(isActive(), Matchers.is(true));
+            assertThat(isActive(), is(true));
             return this;
         }
 
@@ -514,7 +520,8 @@ public class DatabaseReportPageIT extends UiPageTest {
         public void deleteAll() {
             if (!getScheduledReports().isEmpty()) {
                 new DeleteAllButton(driver).click();
-                await().atMost(2, MINUTES).pollInterval(5, SECONDS).until(() -> getScheduledReports().isEmpty());
+                await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(5))
+                        .until(() -> getScheduledReports().isEmpty());
             }
         }
 
@@ -617,20 +624,24 @@ public class DatabaseReportPageIT extends UiPageTest {
         }
 
         public void edit(DeliveryOptions deliveryOptions, String cronExpression) {
-            LOG.debug("Try updating report schedule for trigger '{}' with delivery options {} and cron expression '{}'", triggerName, deliveryOptions, cronExpression);
-            final WebDriverWait webDriverWait = new WebDriverWait(getDriver(), Duration.ofSeconds(30), Duration.ofMillis(1000));
+            LOG.debug("Try updating report schedule for trigger '{}' with delivery options {} and cron expression '{}'",
+                    triggerName, deliveryOptions, cronExpression);
+            final WebDriverWait webDriverWait = new WebDriverWait(getDriver(), Duration.ofSeconds(30),
+                    Duration.ofMillis(1000));
             execute(() -> findElementById("action.edit." + triggerName)).click();
             webDriverWait.until((driver) -> execute(() -> driver.findElements(By.id("loading-bar-spinner")).isEmpty())
                     && findElementById("action.update." + triggerName) != null
                     && findElementById("persistToggle").isDisplayed()
                     && findElementById("sendMailToggle").isDisplayed()
-                    && org.opennms.smoketest.selenium.ExpectedConditions.pageContainsText("Edit Schedule").apply(driver));
+                    && org.opennms.smoketest.selenium.ExpectedConditions.pageContainsText("Edit Schedule")
+                            .apply(driver));
             new ReportDetailsForm(getDriver())
                     .editMode(true)
                     .applyDeliveryOptions(deliveryOptions)
                     .applyCronExpression(cronExpression);
             execute(() -> findElementById("action.update." + triggerName)).click();
-            execute(() -> webDriverWait.until(ExpectedConditions.not(org.opennms.smoketest.selenium.ExpectedConditions.pageContainsText("Edit Schedule"))));
+            execute(() -> webDriverWait.until(ExpectedConditions
+                    .not(org.opennms.smoketest.selenium.ExpectedConditions.pageContainsText("Edit Schedule"))));
             LOG.debug("Report schedule for trigger '{}' was updated!", triggerName);
         }
     }

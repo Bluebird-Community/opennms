@@ -22,16 +22,16 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertThat;
 
+import java.time.Duration;
 import java.util.Date;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.MinionDao;
 import org.opennms.netmgt.dao.api.NodeDao;
@@ -43,13 +43,13 @@ import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.DaoUtils;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class MinionHeartBeatIT {
 
-	@ClassRule
+	@RegisterExtension
 	public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
-    @Test
+	@Test
 	public void minionHeartBeatTestForLastUpdated() {
 
 		final String fs = "Minions";
@@ -62,18 +62,18 @@ public class MinionHeartBeatIT {
 
 		// The heartbeat runs every minute so if we miss the first one, poll long enough
 		// to catch the next one
-		await().atMost(90, SECONDS)
-			   .pollInterval(5, SECONDS)
-			   .until(DaoUtils.countMatchingCallable(minionDao, new CriteriaBuilder(OnmsMinion.class)
-															 .ge("lastUpdated", startOfTest)
-															 .toCriteria()), greaterThan(0));
+		await().atMost(Duration.ofSeconds(90))
+				.pollInterval(Duration.ofSeconds(5))
+				.until(DaoUtils.countMatchingCallable(minionDao, new CriteriaBuilder(OnmsMinion.class)
+						.ge("lastUpdated", startOfTest)
+						.toCriteria()), greaterThan(0));
 
-		await().atMost(180, SECONDS)
-			   .pollInterval(5, SECONDS)
-			   .until(DaoUtils.countMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class)
-															 .eq("foreignSource", fs)
-															 .eq("foreignId", fid)
-															 .toCriteria()), equalTo(1));
+		await().atMost(Duration.ofSeconds(180))
+				.pollInterval(Duration.ofSeconds(5))
+				.until(DaoUtils.countMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class)
+						.eq("foreignSource", fs)
+						.eq("foreignId", fid)
+						.toCriteria()), equalTo(1));
 
 		assertThat(nodeDao.get(fs + ":" + fid).getLocation().getLocationName(), equalTo(location));
 	}

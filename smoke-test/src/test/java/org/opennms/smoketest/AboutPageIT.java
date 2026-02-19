@@ -23,16 +23,16 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 
 public class AboutPageIT extends OpenNMSSeleniumIT {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         driver.get(getBaseUrlInternal() + "opennms/about/index.jsp");
     }

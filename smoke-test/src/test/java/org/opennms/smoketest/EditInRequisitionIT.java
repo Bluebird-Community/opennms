@@ -21,15 +21,15 @@
  */
 package org.opennms.smoketest;
 
-import static org.awaitility.Awaitility.with;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
@@ -38,15 +38,15 @@ import org.slf4j.LoggerFactory;
 public class EditInRequisitionIT extends OpenNMSSeleniumIT {
     private static final Logger LOG = LoggerFactory.getLogger(EditInRequisitionIT.class);
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         createRequisition();
         createNode();
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        setImplicitWait(Duration.ofSeconds(5));
         LOG.debug("Timeout for element lookup decreased to five seconds");
     }
 
-    @After
+    @AfterEach
     public void after() throws Exception {
         deleteRequisition();
         deleteNode();
@@ -58,21 +58,22 @@ public class EditInRequisitionIT extends OpenNMSSeleniumIT {
 
         driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=my-foreign-source:my-foreign-id");
         final WebElement viewEvents = waitForElement(By.linkText("View Events"));
-        Assert.assertNotNull("Link 'View Events' should appear on the node page.", viewEvents);
+        assertNotNull(viewEvents, "Link 'View Events' should appear on the node page.");
 
-        driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+        setImplicitWait(Duration.ofSeconds(1));
         final WebElement editInRequisition = getElementWithoutWaiting(By.linkText("Edit in Requisition"));
-        Assert.assertNull("Link 'Edit in Requisition' should not appear on the node page!", editInRequisition);
+        assertNull(editInRequisition, "Link 'Edit in Requisition' should not appear on the node page!");
     }
 
     @Test
     public void testIfDeployed() throws Exception {
         LOG.debug("Check whether the 'Edit in Requisition' link appear for nodes in database and requisition...");
 
-        driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=" + OpenNMSSeleniumIT.REQUISITION_NAME + ":my-foreign-id-1");
+        driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=" + OpenNMSSeleniumIT.REQUISITION_NAME
+                + ":my-foreign-id-1");
 
         final WebElement webElement = waitForElement(By.linkText("Edit in Requisition"));
-        Assert.assertNotNull("Link 'Edit in Requisition' should appear on the node page.", webElement);
+        assertNotNull(webElement, "Link 'Edit in Requisition' should appear on the node page.");
         webElement.click();
 
         waitUntil(pageContainsText("Node my-node-1 at " + OpenNMSSeleniumIT.REQUISITION_NAME));
@@ -80,15 +81,17 @@ public class EditInRequisitionIT extends OpenNMSSeleniumIT {
 
     @Test
     public void testIfPending() throws Exception {
-        LOG.debug("Check whether the 'Edit in Requisition' link appear for nodes in database that are not in a requisition anymore...");
+        LOG.debug(
+                "Check whether the 'Edit in Requisition' link appear for nodes in database that are not in a requisition anymore...");
 
-        driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=" + OpenNMSSeleniumIT.REQUISITION_NAME + ":my-foreign-id-2");
+        driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=" + OpenNMSSeleniumIT.REQUISITION_NAME
+                + ":my-foreign-id-2");
 
         final WebElement viewEvents = waitForElement(By.linkText("View Events"));
-        Assert.assertNotNull("Link 'View Events' should appear on the node page.", viewEvents);
+        assertNotNull(viewEvents, "Link 'View Events' should appear on the node page.");
 
         final WebElement editInRequisition = getElementWithoutWaiting(By.linkText("Edit in Requisition"));
-        Assert.assertNull("Link 'Edit in Requisition' should not appear on the node page!", editInRequisition);
+        assertNull(editInRequisition, "Link 'Edit in Requisition' should not appear on the node page!");
     }
 
     private void deleteRequisition() throws Exception {
@@ -97,7 +100,8 @@ public class EditInRequisitionIT extends OpenNMSSeleniumIT {
     }
 
     private void createNode() throws Exception {
-        final String node = "<node type=\"A\" label=\"my-node\" foreignSource=\"my-foreign-source\" foreignId=\"my-foreign-id\">" +
+        final String node = "<node type=\"A\" label=\"my-node\" foreignSource=\"my-foreign-source\" foreignId=\"my-foreign-id\">"
+                +
                 "<labelSource>H</labelSource>" +
                 "<sysContact>Me</sysContact>" +
                 "<sysDescription>WOPR</sysDescription>" +
@@ -147,8 +151,10 @@ public class EditInRequisitionIT extends OpenNMSSeleniumIT {
         // Now, delete one node from requisition...
         sendDelete("rest/requisitions/" + OpenNMSSeleniumIT.REQUISITION_NAME + "/nodes/my-foreign-id-2");
 
-        // ...and assure that 'my-foreign-id-2' is in database but not in requisition anymore.
-        with().pollInterval(1, SECONDS).await().atMost(30, SECONDS).until(() -> (getNodesInRequisition(OpenNMSSeleniumIT.REQUISITION_NAME) == 1));
+        // ...and assure that 'my-foreign-id-2' is in database but not in requisition
+        // anymore.
+        await().pollInterval(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(30))
+                .until(() -> (getNodesInRequisition(OpenNMSSeleniumIT.REQUISITION_NAME) == 1));
         LOG.debug("Created requisition '" + OpenNMSSeleniumIT.REQUISITION_NAME + "'");
     }
 

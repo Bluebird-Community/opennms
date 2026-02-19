@@ -22,15 +22,14 @@
 package org.opennms.smoketest;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
 
+import java.time.Duration;
 import java.util.Date;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.ResourceReferenceDao;
 import org.opennms.netmgt.dao.api.StatisticsReportDao;
@@ -44,7 +43,7 @@ import org.opennms.smoketest.utils.HibernateDaoFactory;
 
 public class StatisticsReportsIT extends OpenNMSSeleniumIT {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         driver.get(getBaseUrlInternal() + "opennms/statisticsReports/index.htm");
     }
@@ -77,13 +76,13 @@ public class StatisticsReportsIT extends OpenNMSSeleniumIT {
         report.addData(data);
 
         statisticsReportDao.save(report);
-        await().atMost(1, MINUTES).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(1)).pollInterval(Duration.ofSeconds(5))
                 .until(DaoUtils.findMatchingCallable(statisticsReportDao,
                         new CriteriaBuilder(StatisticsReport.class).ge("startDate", startOfTest).toCriteria()),
                         notNullValue());
         driver.navigate().refresh();
 
-        assertNotNull(findElementByLink("Hourly Top 10 responses across all nodes"));
+        Assertions.assertNotNull(findElementByLink("Hourly Top 10 responses across all nodes"));
     }
 
 }

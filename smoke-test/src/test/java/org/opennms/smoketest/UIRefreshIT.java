@@ -21,15 +21,13 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.smoketest.utils.RestClient;
 import org.openqa.selenium.By;
@@ -37,10 +35,9 @@ import org.openqa.selenium.By;
 /**
  * Basic validation of the new UI
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UIRefreshIT extends OpenNMSSeleniumIT {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // Connect to our instance
         final RestClient restClient = stack.opennms().getRestClient();
@@ -64,7 +61,7 @@ public class UIRefreshIT extends OpenNMSSeleniumIT {
         clickMenuItem("inventoryMenu", "Structured Node List");
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         sendDelete("rest/nodes/test:node1", 202);
     }

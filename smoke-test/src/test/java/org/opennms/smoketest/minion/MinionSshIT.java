@@ -21,28 +21,25 @@
  */
 package org.opennms.smoketest.minion;
 
-
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.MinionTests;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.KarafShellUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class MinionSshIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(MinionSshIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
     @Test
-    public void testSshHealthOnMinion(){
-        //Test for no exception to occur
+    public void testSshHealthOnMinion() {
+        // Test for no exception to occur
         LOG.info("Waiting for Minion ssh health check...");
         KarafShellUtils.awaitHealthCheckSucceeded(stack.minion());
     }

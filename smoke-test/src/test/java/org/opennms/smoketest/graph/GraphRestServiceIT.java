@@ -24,25 +24,25 @@ package org.opennms.smoketest.graph;
 import static org.awaitility.Awaitility.await;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.preemptive;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.InetAddress;
+import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import org.hamcrest.Matchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.netmgt.dao.hibernate.ApplicationDaoHibernate;
 import org.opennms.netmgt.dao.hibernate.OutageDaoHibernate;
@@ -68,7 +68,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class GraphRestServiceIT extends OpenNMSSeleniumIT {
     private static final Logger LOG = LoggerFactory.getLogger(GraphRestServiceIT.class);
     private static final String CONTAINER_ID = "test";
@@ -77,7 +77,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
     private final KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
     private GraphmlDocument graphmlDocument;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
@@ -91,7 +91,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
         cleanUpApplications();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         RestAssured.reset();
         graphmlDocument.delete(restClient);
@@ -141,27 +141,32 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .body("[0].graphs.size()", Matchers.is(1))
                 .body("[0].graphs[0].namespace", Matchers.is("application"))
                 .body("[0].graphs[0].label", Matchers.is("Application Graph"))
-                .body("[0].graphs[0].description", Matchers.is("Displays all defined applications and their calculated states."))
+                .body("[0].graphs[0].description",
+                        Matchers.is("Displays all defined applications and their calculated states."))
 
                 .body("[1].id", Matchers.is("bsm"))
                 .body("[1].label", Matchers.is("Business Service Graph"))
                 .body("[1].graphs.size()", Matchers.is(1))
                 .body("[1].graphs[0].namespace", Matchers.is("bsm"))
                 .body("[1].graphs[0].label", Matchers.is("Business Service Graph"))
-                .body("[1].graphs[0].description", Matchers.is("Displays the hierarchy of the defined Business Services and their computed operational states."))
+                .body("[1].graphs[0].description", Matchers.is(
+                        "Displays the hierarchy of the defined Business Services and their computed operational states."))
 
                 .body("[2].id", Matchers.is("enlinkd"))
                 .body("[2].label", Matchers.is("Enlinkd Graphs"))
                 .body("[2].graphs.size()", Matchers.is(11))
                 .body("[2].graphs[0].namespace", Matchers.is("nodes"))
                 .body("[2].graphs[0].label", Matchers.is("All"))
-                .body("[2].graphs[0].description", Matchers.is("This Topology Provider displays the topology information discovered by the Enhanced Linkd daemon. It uses the SNMP information of several protocols like OSPF, ISIS, LLDP and CDP to generate an overall topology."))
+                .body("[2].graphs[0].description", Matchers.is(
+                        "This Topology Provider displays the topology information discovered by the Enhanced Linkd daemon. It uses the SNMP information of several protocols like OSPF, ISIS, LLDP and CDP to generate an overall topology."))
                 .body("[2].graphs[1].namespace", Matchers.is("nodes:Bridge"))
                 .body("[2].graphs[1].label", Matchers.is("Bridge"))
-                .body("[2].graphs[1].description", Matchers.is("This Topology Provider displays the Bridge topology information discovered by Enhanced Linkd daemon."))
+                .body("[2].graphs[1].description", Matchers.is(
+                        "This Topology Provider displays the Bridge topology information discovered by Enhanced Linkd daemon."))
                 .body("[2].graphs[2].namespace", Matchers.is("nodes:Cdp"))
                 .body("[2].graphs[2].label", Matchers.is("Cdp"))
-                .body("[2].graphs[2].description", Matchers.is("This Topology Provider displays the Cisco Discovery Protocol topology information discovered by the Enhanced Linkd daemon."))
+                .body("[2].graphs[2].description", Matchers.is(
+                        "This Topology Provider displays the Cisco Discovery Protocol topology information discovered by the Enhanced Linkd daemon."))
                 .body("[2].graphs[3].namespace", Matchers.is("nodes:Isis"))
                 .body("[2].graphs[4].namespace", Matchers.is("nodes:Layer2"))
                 .body("[2].graphs[5].namespace", Matchers.is("nodes:Layer3"))
@@ -171,7 +176,8 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .body("[2].graphs[9].namespace", Matchers.is("nodes:OspfArea"))
                 .body("[2].graphs[10].namespace", Matchers.is("nodes:UserDefined"))
                 .body("[2].graphs[10].label", Matchers.is("UserDefined"))
-                .body("[2].graphs[10].description", Matchers.is("This Topology Provider displays the User Defined topology information."))
+                .body("[2].graphs[10].description",
+                        Matchers.is("This Topology Provider displays the User Defined topology information."))
 
                 .body("[3].id", Matchers.is(CONTAINER_ID))
                 .body("[3].label", Matchers.is(GraphMLTopologyIT.LABEL))
@@ -186,8 +192,8 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .body("[4].graphs.size()", Matchers.is(1))
                 .body("[4].graphs[0].namespace", Matchers.is("vmware"))
                 .body("[4].graphs[0].label", Matchers.is("VMware Topology Provider"))
-                .body("[4].graphs[0].description", Matchers.is("The VMware Topology Provider displays the infrastructure information gathered by the VMware Provisioning process."))
-                ;
+                .body("[4].graphs[0].description", Matchers.is(
+                        "The VMware Topology Provider displays the infrastructure information gathered by the VMware Provisioning process."));
     }
 
     @Test
@@ -237,49 +243,49 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
 
     @Test
     public void verifySuggest() {
-    	createGraphMLAndWaitUntilDone(graphmlDocument);
+        createGraphMLAndWaitUntilDone(graphmlDocument);
         given().log().ifValidationFails()
-               .params("s", "unknown")
-               .accept(ContentType.JSON)
-               .get("/search/suggestions/{namespace}/", "acme:regions")
-               .then().log().ifValidationFails()
-               .statusCode(204);
+                .params("s", "unknown")
+                .accept(ContentType.JSON)
+                .get("/search/suggestions/{namespace}/", "acme:regions")
+                .then().log().ifValidationFails()
+                .statusCode(204);
 
         given().log().ifValidationFails()
-               .params("s", "North Region")
-               .accept(ContentType.JSON)
-               .get("/search/suggestions/{namespace}/", "acme:regions")
-               .then().log().ifValidationFails()
-               .statusCode(200)
-               .contentType(ContentType.JSON)
-               .body("[0].context", Matchers.is("GenericVertex"))
-               .body("[0].label", Matchers.is("North Region"))      
-               .body("[0].provider", Matchers.is("LabelSearchProvider"))
-               .body("", Matchers.hasSize(1));
+                .params("s", "North Region")
+                .accept(ContentType.JSON)
+                .get("/search/suggestions/{namespace}/", "acme:regions")
+                .then().log().ifValidationFails()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .body("[0].context", Matchers.is("GenericVertex"))
+                .body("[0].label", Matchers.is("North Region"))
+                .body("[0].provider", Matchers.is("LabelSearchProvider"))
+                .body("", Matchers.hasSize(1));
     }
 
     @Test
     public void verifySearch() {
-    	createGraphMLAndWaitUntilDone(graphmlDocument);
+        createGraphMLAndWaitUntilDone(graphmlDocument);
         given().log().ifValidationFails()
-               .params("providerId", "LabelSearchProvider")
-               .params("criteria", "unknown")
-               .accept(ContentType.JSON)
-               .get("/search/results/{namespace}", "acme:regions")
-               .then().log().ifValidationFails()
-               .statusCode(204);
+                .params("providerId", "LabelSearchProvider")
+                .params("criteria", "unknown")
+                .accept(ContentType.JSON)
+                .get("/search/results/{namespace}", "acme:regions")
+                .then().log().ifValidationFails()
+                .statusCode(204);
 
         given().log().ifValidationFails()
-               .params("providerId", "LabelSearchProvider")
-               .params("criteria", "North Region")
-               .accept(ContentType.JSON)
-               .get("/search/results/{namespace}/", "acme:regions")
-               .then().log().ifValidationFails()
-               .statusCode(200)
-               .contentType(ContentType.JSON)
-               .body("[0].namespace", Matchers.is("acme:regions"))
-               .body("[0].id", Matchers.is("north"))
-               .body("", Matchers.hasSize(1));
+                .params("providerId", "LabelSearchProvider")
+                .params("criteria", "North Region")
+                .accept(ContentType.JSON)
+                .get("/search/results/{namespace}/", "acme:regions")
+                .then().log().ifValidationFails()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .body("[0].namespace", Matchers.is("acme:regions"))
+                .body("[0].id", Matchers.is("north"))
+                .body("", Matchers.hasSize(1));
     }
 
     @Test
@@ -330,7 +336,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .body("vertices[0].id", Matchers.is("v1.1"))
                 .body("vertices[1].id", Matchers.is("v1.1.1"));
 
-        //  Increase SZL
+        // Increase SZL
         query.put("semanticZoomLevel", 2);
         given().log().ifValidationFails()
                 .contentType(ContentType.JSON)
@@ -486,13 +492,15 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
         // get the application
         final List<OnmsApplication> applications = restClient.getApplications();
         System.err.println("applications=" + applications);
-        final Optional<OnmsApplication> app = applications.stream().filter(a -> applicationName.equals(a.getName())).findFirst();
+        final Optional<OnmsApplication> app = applications.stream().filter(a -> applicationName.equals(a.getName()))
+                .findFirst();
         if (!app.isPresent()) {
             throw new IllegalStateException("Failed to retrieve application '" + applicationName + "'");
         }
         final OnmsApplication application = app.get();
 
-        // Force application provider to reload (otherwise we have to wait until cache is invalidated)
+        // Force application provider to reload (otherwise we have to wait until cache
+        // is invalidated)
         awaitForApplicationStatus(application, "Normal");
 
         final List<OnmsNode> nodes = restClient.getNodes();
@@ -520,14 +528,16 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .body("vertices[2].status.count", Matchers.is(0));
 
         // Prepare simulated outages
-        final Event nodeLostServiceEvent = new EventBuilder(EventConstants.PERSPECTIVE_NODE_LOST_SERVICE_UEI, getClass().getSimpleName())
+        final Event nodeLostServiceEvent = new EventBuilder(EventConstants.PERSPECTIVE_NODE_LOST_SERVICE_UEI,
+                getClass().getSimpleName())
                 .setNodeid(nodeId1)
                 .setInterface(localhost)
                 .setService(testServiceName)
                 .setParam(perspectiveKey, perspectiveName)
                 .setSeverity(minorSeverity)
                 .getEvent();
-        final Event nodeLostServiceEventApp2 = new EventBuilder(EventConstants.PERSPECTIVE_NODE_LOST_SERVICE_UEI, getClass().getSimpleName())
+        final Event nodeLostServiceEventApp2 = new EventBuilder(EventConstants.PERSPECTIVE_NODE_LOST_SERVICE_UEI,
+                getClass().getSimpleName())
                 .setNodeid(nodeId2)
                 .setInterface(localhost)
                 .setService(testServiceName)
@@ -542,13 +552,17 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
         clickElement(By.xpath("//span[@class='v-menubar-menuitem-caption' and contains(text(), 'Application')]"));
 
         // Waiting for perspective poller to detect services as UP
-        await().atMost(2, MINUTES)
-               .until(() -> this.restClient.getEventsForNodeByEventUei(nodeId1, EventConstants.PERSPECTIVE_NODE_REGAINED_SERVICE_UEI).getTotalCount(),
-                      Matchers.greaterThan(0));
+        await().atMost(Duration.ofMinutes(2))
+                .until(() -> this.restClient
+                        .getEventsForNodeByEventUei(nodeId1, EventConstants.PERSPECTIVE_NODE_REGAINED_SERVICE_UEI)
+                        .getTotalCount(),
+                        Matchers.greaterThan(0));
 
-        await().atMost(2, MINUTES)
-               .until(() -> this.restClient.getEventsForNodeByEventUei(nodeId2, EventConstants.PERSPECTIVE_NODE_REGAINED_SERVICE_UEI).getTotalCount(),
-                      Matchers.greaterThan(0));
+        await().atMost(Duration.ofMinutes(2))
+                .until(() -> this.restClient
+                        .getEventsForNodeByEventUei(nodeId2, EventConstants.PERSPECTIVE_NODE_REGAINED_SERVICE_UEI)
+                        .getTotalCount(),
+                        Matchers.greaterThan(0));
 
         // Take service down, reload graph and verify
         restClient.sendEvent(nodeLostServiceEvent);
@@ -570,7 +584,9 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
         assertThat(applicationViewResponse2.length(), Matchers.is(3));
         verifyStatus(applicationViewResponse2.getVertexByApplicationId(application.getId()), "Critical", 2);
         verifyStatus(applicationViewResponse2.getVertexByNodeId(nodeId1), "Minor", 1);
-        verifyStatus(applicationViewResponse2.getVertexByNodeId(nodeId2), "Critical", 1); // we expect the same severity as the interface with the highest severity
+        verifyStatus(applicationViewResponse2.getVertexByNodeId(nodeId2), "Critical", 1); // we expect the same severity
+                                                                                          // as the interface with the
+                                                                                          // highest severity
     }
 
     private void awaitForApplicationStatus(final OnmsApplication application, final String severity) {
@@ -578,7 +594,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .put("semanticZoomLevel", 1)
                 .put("verticesInFocus", Lists.newArrayList(String.format("Application:%s", application.getId())));
         await()
-                .atMost(2, MINUTES)
+                .atMost(Duration.ofMinutes(2))
                 .until(() -> {
                     karafShell.runCommand("opennms:graph-force-reload --container application");
                     final String status = new ApplicationViewResponse(getApplicationViewResponse(query.toString()))
@@ -643,23 +659,24 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .statusCode(404);
     }
 
-    // If the reduceFunction is exposed properly, it means bsm provider is exposing custom json renderers
+    // If the reduceFunction is exposed properly, it means bsm provider is exposing
+    // custom json renderers
     @Test
     public void verifyCustomJsonRenderer() {
         try {
             karafShell.runCommand("opennms:bsm-generate-hierarchies 5 2");
             given().log().ifValidationFails()
-                .get("{container_id}/{namespace}", "bsm", "bsm")
-                .then()
-                .log().ifValidationFails()
-                .statusCode(200)
-                .contentType(ContentType.JSON)
-                .body("vertices", Matchers.hasSize(5))
-                .body("vertices[0].reduceFunction.type", Matchers.is("highestseverity"))
-                .body("vertices[1].reduceFunction.type", Matchers.is("highestseverity"))
-                .body("vertices[2].reduceFunction.type", Matchers.is("highestseverity"))
-                .body("vertices[3].reduceFunction.type", Matchers.is("highestseverity"))
-                .body("vertices[4].reduceFunction.type", Matchers.is("highestseverity"));
+                    .get("{container_id}/{namespace}", "bsm", "bsm")
+                    .then()
+                    .log().ifValidationFails()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("vertices", Matchers.hasSize(5))
+                    .body("vertices[0].reduceFunction.type", Matchers.is("highestseverity"))
+                    .body("vertices[1].reduceFunction.type", Matchers.is("highestseverity"))
+                    .body("vertices[2].reduceFunction.type", Matchers.is("highestseverity"))
+                    .body("vertices[3].reduceFunction.type", Matchers.is("highestseverity"))
+                    .body("vertices[4].reduceFunction.type", Matchers.is("highestseverity"));
         } finally {
             karafShell.runCommand("opennms:bsm-delete-generated-hierarchies");
         }
@@ -667,7 +684,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
 
     private void createGraphMLAndWaitUntilDone(GraphmlDocument graphmlDocument) {
         graphmlDocument.create(restClient);
-	await().atMost(30, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(5)).untilAsserted(() -> {
             given().accept(ContentType.JSON).get()
                     .then().statusCode(200)
                     .contentType(ContentType.JSON)
@@ -678,6 +695,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                     .body("[4].id", Matchers.is("vmware"));
         });
     }
+
     private void createRequisition() {
         // Create nodes in OpenNMS
         final String foreignSourceXML = "<foreign-source name=\"" + OpenNMSSeleniumIT.REQUISITION_NAME + "\">\n" +
@@ -732,7 +750,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
         }
 
         public JSONObject getVertexByApplicationId(int applicationId) {
-            for (int i=0; i<vertices.length(); i++) {
+            for (int i = 0; i < vertices.length(); i++) {
                 final JSONObject eachVertex = vertices.getJSONObject(i);
                 if (eachVertex.has("applicationId")
                         && Objects.equals(eachVertex.getString("applicationId"), Integer.toString(applicationId))) {
@@ -743,7 +761,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
         }
 
         public JSONObject getVertexByNodeId(int nodeId) {
-            for (int i=0; i<vertices.length(); i++) {
+            for (int i = 0; i < vertices.length(); i++) {
                 final JSONObject eachVertex = vertices.getJSONObject(i);
                 if (eachVertex.has("nodeCriteria")
                         && Objects.equals(eachVertex.getString("nodeCriteria"), Integer.toString(nodeId))) {

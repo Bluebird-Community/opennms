@@ -26,11 +26,11 @@ import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.http.ContentType;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.AlarmDao;
 import org.opennms.netmgt.dao.hibernate.AlarmDaoHibernate;
@@ -42,193 +42,189 @@ import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.DaoUtils;
 import org.opennms.smoketest.utils.RestClient;
 import java.io.PrintStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.preemptive;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class SituationRestServicesIT {
 
-    @ClassRule
-    public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
+        @RegisterExtension
+        public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    private RestClient restClient;
+        private RestClient restClient;
 
-    private static   Integer situationId;
+        private static Integer situationId;
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
-        RestAssured.port = stack.opennms().getWebPort();
-        RestAssured.basePath = "/opennms/api/v2";
-        RestAssured.authentication = preemptive()
-                .basic(AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD);
-        restClient = stack.opennms().getRestClient();
-    }
-
-    private int fetchRelatedCount() {
-        return given()
-                .accept(ContentType.JSON)
-                .queryParam("limit", 2)
-                .queryParam("offset", 0)
-                .when()
-                .get("/situations")
-                .then()
-                .statusCode(200)
-                .extract()
-                .path("alarm[0].relatedAlarms.size()");
-    }
-
-    @Test
-    public void test1_createSituation() {
-
-        restClient.sendEvent(getServiceProblemEvent("Major", "uei.opennms.org/bsm/serviceProblem"));
-        restClient.sendEvent(getServiceProblemEvent("Minor", "uei.opennms.org/traps/A10/axFan1Failure"));
-
-        await().atMost(2, TimeUnit.MINUTES).pollInterval(10, TimeUnit.SECONDS)
-                .until(() -> restClient.getAlarms().size() >= 2);
-
-        List<Integer> alarmIds = new ArrayList<>();
-        for (OnmsAlarm alarm : restClient.getAlarms().getObjects()) {
-            alarmIds.add(alarm.getId());
+        @BeforeEach
+        public void setUp() {
+                RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
+                RestAssured.port = stack.opennms().getWebPort();
+                RestAssured.basePath = "/opennms/api/v2";
+                RestAssured.authentication = preemptive()
+                                .basic(AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
+                                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD);
+                restClient = stack.opennms().getRestClient();
         }
 
-        JSONObject payload = new JSONObject()
-                .put("alarmIdList", new JSONArray(alarmIds))
-                .put("diagnosticText", "diagnosticText")
-                .put("description", "description")
-                .put("feedback", "feedback");
+        private int fetchRelatedCount() {
+                return given()
+                                .accept(ContentType.JSON)
+                                .queryParam("limit", 2)
+                                .queryParam("offset", 0)
+                                .when()
+                                .get("/situations")
+                                .then()
+                                .statusCode(200)
+                                .extract()
+                                .path("alarm[0].relatedAlarms.size()");
+        }
 
-        given().auth().basic(
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD
-                )
-                .contentType(ContentType.JSON)
-                .body(payload.toString())
-                .when()
-                .post("/situations/create")
-                .then()
-                .statusCode(200);
+        @Test
+        public void test1_createSituation() {
 
-        situationId = given()
-                .accept(ContentType.JSON)
-                .queryParam("limit", 2)
-                .queryParam("offset", 0)
-                .when()
-                .get("/situations")
-                .then()
-                .statusCode(200)
-                .body("alarm.size()", equalTo(1))
-                .extract().path("alarm[0].id");
+                restClient.sendEvent(getServiceProblemEvent("Major", "uei.opennms.org/bsm/serviceProblem"));
+                restClient.sendEvent(getServiceProblemEvent("Minor", "uei.opennms.org/traps/A10/axFan1Failure"));
 
-        assertNotNull("Situation ID must be set", situationId);
-    }
+                await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10))
+                                .until(() -> restClient.getAlarms().size() >= 2);
 
-    @Test
-    public void test2_addAlarm() {
-        final int beforeCount = fetchRelatedCount();
-        restClient.sendEvent(
-                getServiceProblemEvent("Minor", "uei.opennms.org/traps/A10/axLowerPowerSupplyFailure")
-        );
+                List<Integer> alarmIds = new ArrayList<>();
+                for (OnmsAlarm alarm : restClient.getAlarms().getObjects()) {
+                        alarmIds.add(alarm.getId());
+                }
 
-        AlarmDao dao = stack.postgres().getDaoFactory().getDao(AlarmDaoHibernate.class);
-        OnmsAlarm newAlarm = await().atMost(2, TimeUnit.MINUTES).pollInterval(10, TimeUnit.SECONDS)
-                .until(DaoUtils.findMatchingCallable(
-                        dao,
-                        new CriteriaBuilder(OnmsAlarm.class)
-                                .eq("uei", "uei.opennms.org/traps/A10/axLowerPowerSupplyFailure")
-                                .toCriteria()), notNullValue());
+                JSONObject payload = new JSONObject()
+                                .put("alarmIdList", new JSONArray(alarmIds))
+                                .put("diagnosticText", "diagnosticText")
+                                .put("description", "description")
+                                .put("feedback", "feedback");
 
-        assertEquals(1L, (long)newAlarm.getCounter());
+                given().auth().basic(
+                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
+                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD)
+                                .contentType(ContentType.JSON)
+                                .body(payload.toString())
+                                .when()
+                                .post("/situations/create")
+                                .then()
+                                .statusCode(200);
 
-        JSONObject assoc = new JSONObject()
-                .put("alarmIdList", new JSONArray(List.of(newAlarm.getId())))
-                .put("situationId", situationId);
+                situationId = given()
+                                .accept(ContentType.JSON)
+                                .queryParam("limit", 2)
+                                .queryParam("offset", 0)
+                                .when()
+                                .get("/situations")
+                                .then()
+                                .statusCode(200)
+                                .body("alarm.size()", equalTo(1))
+                                .extract().path("alarm[0].id");
 
-        given().auth().basic(
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD
-                )
-                .contentType(ContentType.JSON)
-                .body(assoc.toString())
-                .when()
-                .post("/situations/associateAlarm")
-                .then()
-                .statusCode(200);
+                assertNotNull(situationId, "Situation ID must be set");
+        }
 
-        await().atMost(2, TimeUnit.MINUTES).until(() -> fetchRelatedCount() == beforeCount + 1);
-        assertEquals("Should add exactly one alarm", beforeCount + 1, fetchRelatedCount());
-    }
+        @Test
+        public void test2_addAlarm() {
+                final int beforeCount = fetchRelatedCount();
+                restClient.sendEvent(
+                                getServiceProblemEvent("Minor", "uei.opennms.org/traps/A10/axLowerPowerSupplyFailure"));
 
-    @Test
-    public void test3_removeAlarm() {
-        final int beforeCount = fetchRelatedCount();
-        AlarmDao dao = stack.postgres().getDaoFactory().getDao(AlarmDaoHibernate.class);
-        OnmsAlarm target = await().atMost(2, TimeUnit.MINUTES).pollInterval(10, TimeUnit.SECONDS)
-                .until(DaoUtils.findMatchingCallable(
-                        dao,
-                        new CriteriaBuilder(OnmsAlarm.class)
-                                .eq("uei", "uei.opennms.org/traps/A10/axLowerPowerSupplyFailure")
-                                .toCriteria()), notNullValue());
+                AlarmDao dao = stack.postgres().getDaoFactory().getDao(AlarmDaoHibernate.class);
+                OnmsAlarm newAlarm = await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10))
+                                .until(DaoUtils.findMatchingCallable(
+                                                dao,
+                                                new CriteriaBuilder(OnmsAlarm.class)
+                                                                .eq("uei", "uei.opennms.org/traps/A10/axLowerPowerSupplyFailure")
+                                                                .toCriteria()),
+                                                notNullValue());
 
-        assertEquals(1L, (long)target.getCounter());
+                assertEquals(1L, (long) newAlarm.getCounter());
 
-        JSONObject removal = new JSONObject()
-                .put("alarmIdList", new JSONArray(List.of(target.getId())))
-                .put("situationId", situationId);
+                JSONObject assoc = new JSONObject()
+                                .put("alarmIdList", new JSONArray(List.of(newAlarm.getId())))
+                                .put("situationId", situationId);
 
-        given().auth().basic(
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD
-                )
-                .contentType(ContentType.JSON)
-                .body(removal.toString())
-                .when()
-                .delete("/situations/removeAlarm")
-                .then()
-                .statusCode(200);
+                given().auth().basic(
+                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
+                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD)
+                                .contentType(ContentType.JSON)
+                                .body(assoc.toString())
+                                .when()
+                                .post("/situations/associateAlarm")
+                                .then()
+                                .statusCode(200);
 
-        await().atMost(2, TimeUnit.MINUTES).until(() -> fetchRelatedCount() == beforeCount - 1);
-        assertEquals("Should remove exactly one alarm", beforeCount - 1, fetchRelatedCount());
-    }
+                await().atMost(Duration.ofMinutes(2)).until(() -> fetchRelatedCount() == beforeCount + 1);
+                assertEquals(beforeCount + 1, fetchRelatedCount(), "Should add exactly one alarm");
+        }
 
-    @Test
-    public void test4_clearSituation() {
-        PrintStream log = System.out;
-        RequestLoggingFilter logFilter = new RequestLoggingFilter(log);
-        JSONObject clear = new JSONObject().put("situationId", situationId);
-        given().filter(logFilter)
-                .auth().basic(
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
-                        AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD
-                )
-                .contentType(ContentType.JSON)
-                .body(clear.toString())
-                .when()
-                .post("/situations/clear")
-                .then()
-                .statusCode(equalTo(200));
+        @Test
+        public void test3_removeAlarm() {
+                final int beforeCount = fetchRelatedCount();
+                AlarmDao dao = stack.postgres().getDaoFactory().getDao(AlarmDaoHibernate.class);
+                OnmsAlarm target = await().atMost(Duration.ofMinutes(2)).pollInterval(Duration.ofSeconds(10))
+                                .until(DaoUtils.findMatchingCallable(
+                                                dao,
+                                                new CriteriaBuilder(OnmsAlarm.class)
+                                                                .eq("uei", "uei.opennms.org/traps/A10/axLowerPowerSupplyFailure")
+                                                                .toCriteria()),
+                                                notNullValue());
 
-        given()
-                .accept(ContentType.JSON)
-                .queryParam("limit", 2)
-                .queryParam("offset", 0)
-                .when()
-                .get("/situations")
-                .then()
-                .statusCode(equalTo(200));
-    }
+                assertEquals(1L, (long) target.getCounter());
 
-    private Event getServiceProblemEvent(String severity, String uei) {
-        return new EventBuilder(uei, "test").setSeverity(severity).getEvent();
-    }
+                JSONObject removal = new JSONObject()
+                                .put("alarmIdList", new JSONArray(List.of(target.getId())))
+                                .put("situationId", situationId);
+
+                given().auth().basic(
+                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
+                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD)
+                                .contentType(ContentType.JSON)
+                                .body(removal.toString())
+                                .when()
+                                .delete("/situations/removeAlarm")
+                                .then()
+                                .statusCode(200);
+
+                await().atMost(Duration.ofMinutes(2)).until(() -> fetchRelatedCount() == beforeCount - 1);
+                assertEquals(beforeCount - 1, fetchRelatedCount(), "Should remove exactly one alarm");
+        }
+
+        @Test
+        public void test4_clearSituation() {
+                PrintStream log = System.out;
+                RequestLoggingFilter logFilter = new RequestLoggingFilter(log);
+                JSONObject clear = new JSONObject().put("situationId", situationId);
+                given().filter(logFilter)
+                                .auth().basic(
+                                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME,
+                                                AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD)
+                                .contentType(ContentType.JSON)
+                                .body(clear.toString())
+                                .when()
+                                .post("/situations/clear")
+                                .then()
+                                .statusCode(equalTo(200));
+
+                given()
+                                .accept(ContentType.JSON)
+                                .queryParam("limit", 2)
+                                .queryParam("offset", 0)
+                                .when()
+                                .get("/situations")
+                                .then()
+                                .statusCode(equalTo(200));
+        }
+
+        private Event getServiceProblemEvent(String severity, String uei) {
+                return new EventBuilder(uei, "test").setSeverity(severity).getEvent();
+        }
 }

@@ -28,11 +28,10 @@
 
 package org.opennms.smoketest.minion;
 
-import org.junit.experimental.categories.Category;
-import org.opennms.smoketest.junit.MinionTests;
+import org.junit.jupiter.api.Tag;
 import org.opennms.smoketest.stacks.IpcStrategy;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class TrapWithGrpcIT extends TrapIT {
 
     @Override

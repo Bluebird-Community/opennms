@@ -21,21 +21,22 @@
  */
 package org.opennms.smoketest;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import java.time.Duration;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class SearchPageIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         deleteTestRequisition();
         searchPage();
@@ -52,7 +53,8 @@ public class SearchPageIT extends OpenNMSSeleniumIT {
 
     @Test
     public void testAllFormsArePresent() throws Exception {
-        await().atMost(20, SECONDS).pollInterval(5, SECONDS).until(() -> countElementsMatchingCss("form") == 12);
+        await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(5))
+                .until(() -> countElementsMatchingCss("form") == 12);
 
         for (final String matchingElement : new String[] {
                 "input[@id='byname_nodename']",

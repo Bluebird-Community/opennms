@@ -22,20 +22,19 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.time.Duration;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.hibernate.NodeDaoHibernate;
@@ -46,7 +45,6 @@ import org.opennms.netmgt.provision.persist.requisition.Requisition;
 import org.opennms.netmgt.provision.persist.requisition.RequisitionInterface;
 import org.opennms.netmgt.provision.persist.requisition.RequisitionNode;
 import org.opennms.smoketest.stacks.OpenNMSStack;
-import org.opennms.smoketest.junit.MinionTests;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.telemetry.Packet;
 import org.opennms.smoketest.telemetry.Packets;
@@ -56,12 +54,12 @@ import org.opennms.smoketest.utils.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Category(MinionTests.class)
+@Tag("MinionTests")
 public class NxosTelemetryIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(NxosTelemetryIT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
     @Test
@@ -69,7 +67,7 @@ public class NxosTelemetryIT {
         final Date startOfTest = new Date();
         final OnmsNode onmsNode = addRequisition(stack, false, startOfTest);
         final InetSocketAddress opennmsNxosPort = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.NXOS);
-        await().atMost(1, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(1)).pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     sendNxosTelemetryMessage(opennmsNxosPort);
                     return matchRrdFileFromNodeResource(onmsNode.getId());
@@ -81,7 +79,7 @@ public class NxosTelemetryIT {
         final Date startOfTest = new Date();
         final OnmsNode onmsNode = addRequisition(stack, true, startOfTest);
         final InetSocketAddress minionNxosPort = stack.minion().getNetworkProtocolAddress(NetworkProtocol.NXOS);
-        await().atMost(2, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(2)).pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     sendNxosTelemetryMessage(minionNxosPort);
                     return matchRrdFileFromNodeResource(onmsNode.getId());
@@ -133,7 +131,7 @@ public class NxosTelemetryIT {
 
         NodeDao nodeDao = stack.postgres().dao(NodeDaoHibernate.class);
 
-        final OnmsNode onmsNode = await().atMost(3, MINUTES).pollInterval(30, SECONDS)
+        final OnmsNode onmsNode = await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(30))
                 .until(DaoUtils.findMatchingCallable(nodeDao, new CriteriaBuilder(OnmsNode.class)
                         .ge("createTime", startOfTest).eq("label", label).toCriteria()), notNullValue());
 

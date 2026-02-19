@@ -22,19 +22,17 @@
 package org.opennms.smoketest.sentinel;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.PrintStream;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.junit.SentinelTests;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.SentinelProfile;
@@ -45,13 +43,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // Verifies that all exposed service DAOs can be loaded in a sentinel container
-@Category(SentinelTests.class)
+@Tag("SentinelTests")
+@Timeout(value = 20, unit = TimeUnit.MINUTES)
 public class DaoIT {
 
-    @Rule
-    public Timeout timeout = new Timeout(20, TimeUnit.MINUTES);
-
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
             .withMinion()
             .withSentinels(SentinelProfile.newBuilder()
@@ -66,24 +62,24 @@ public class DaoIT {
     @Test
     public void verifyDaos() {
         // Ensure we are actually started the sink and are ready to listen for messages
-        await().atMost(5, MINUTES)
-                .pollInterval(5, SECONDS)
+        await().atMost(Duration.ofMinutes(5))
+                .pollInterval(Duration.ofSeconds(5))
                 .until(() -> {
                     try (final SshClient sshClient = stack.sentinel().ssh()) {
                         final PrintStream pipe = sshClient.openShell();
-                        final String command ="bundle:list";
+                        final String command = "bundle:list";
                         pipe.println(command);
                         pipe.println("logout");
 
                         // Wait for karaf to process the commands
-                        await().atMost(10, SECONDS).until(sshClient.isShellClosedCallable());
+                        await().atMost(Duration.ofSeconds(10)).until(sshClient.isShellClosedCallable());
 
                         // Read stdout and verify
                         final String shellOutput = sshClient.getStdout();
                         final boolean bundleActive = Arrays.stream(shellOutput.split("\n"))
-                                            .filter(row -> row.contains("OpenNMS :: Features :: Distributed :: DAO :: Test"))
-                                            .findFirst().filter(bundle -> bundle.contains("Active"))
-                                            .isPresent();
+                                .filter(row -> row.contains("OpenNMS :: Features :: Distributed :: DAO :: Test"))
+                                .findFirst().filter(bundle -> bundle.contains("Active"))
+                                .isPresent();
                         logger.info(command);
                         logger.info("{}", shellOutput);
                         return bundleActive;

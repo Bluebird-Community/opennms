@@ -21,8 +21,7 @@
  */
 package org.opennms.smoketest;
 
-import org.junit.Test;
-import org.junit.runner.JUnitCore;
+import org.junit.jupiter.api.Test;
 import org.opennms.smoketest.containers.OpenNMSContainer;
 import org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper;
 import org.opennms.smoketest.utils.DevDebugUtils;
@@ -40,10 +39,12 @@ import java.util.concurrent.TimeUnit;
  * To use it, run the main() method in one session, and update your test to
  * extend this class temporarily.
  *
- * In order to test against a local environment (one that is already setup on the host running the tests)
+ * In order to test against a local environment (one that is already setup on
+ * the host running the tests)
  * use the constructor that only specific the web driver URL.
  *
- * In order to test against an existing environments created in the containers, set both the
+ * In order to test against an existing environments created in the containers,
+ * set both the
  * web driver URL and the web URL.
  *
  * @author jwhite
@@ -74,9 +75,12 @@ public class OpenNMSSeleniumDebugIT extends AbstractOpenNMSSeleniumHelper {
 
     @Override
     public String getBaseUrlInternal() {
-        // In order to support local setups where Selenium is running in a container, but OpenNMS is running on the target
-        // host, we need to alter the internal URL to something that the container can reach
-        return DevDebugUtils.convertToContainerAccessibleUrl(opennmsWebUrl, OpenNMSContainer.ALIAS, OpenNMSContainer.OPENNMS_WEB_PORT);
+        // In order to support local setups where Selenium is running in a container,
+        // but OpenNMS is running on the target
+        // host, we need to alter the internal URL to something that the container can
+        // reach
+        return DevDebugUtils.convertToContainerAccessibleUrl(opennmsWebUrl, OpenNMSContainer.ALIAS,
+                OpenNMSContainer.OPENNMS_WEB_PORT);
     }
 
     @Override
@@ -93,7 +97,13 @@ public class OpenNMSSeleniumDebugIT extends AbstractOpenNMSSeleniumHelper {
         }
     }
 
-    public static void main(String... args) {
-        JUnitCore.runClasses(DebugIT.class);
-    }
+    /*
+     * public static void main(String... args) {
+     * LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+     * .selectors(selectClass(DebugIT.class))
+     * .build();
+     * Launcher launcher = LauncherFactory.create();
+     * launcher.execute(request);
+     * }
+     */
 }

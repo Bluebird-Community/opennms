@@ -21,9 +21,9 @@
  */
 package org.opennms.smoketest;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,10 +32,11 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.opennms.smoketest.ui.framework.TextInput;
 import org.opennms.smoketest.ui.framework.Toggle;
 import org.openqa.selenium.By;
@@ -48,7 +49,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 /* Flapping. See NMS-12114 */
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class GeocoderServiceConfigurationPageIT extends UiPageTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(GeocoderServiceConfigurationPageIT.class);
@@ -66,14 +67,14 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
     private interface Geocoders {
         Geocoder GOOGLE = new Geocoder("google", "Google");
         Geocoder MAPQUEST = new Geocoder("mapquest", "Mapquest");
-        Geocoder NOMINATIM = new Geocoder("nominatim","Nominatim");
+        Geocoder NOMINATIM = new Geocoder("nominatim", "Nominatim");
     }
 
     private ArrayList<TabData> expectedTabs;
 
     private Page uiPage;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         resetConfiguration();
         uiPage = new Page(getBaseUrlInternal());
@@ -81,12 +82,11 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
                 new TabData("settings", "Settings", true),
                 new TabData(Geocoders.GOOGLE.id, Geocoders.GOOGLE.label, false),
                 new TabData(Geocoders.MAPQUEST.id, Geocoders.MAPQUEST.label, false),
-                new TabData(Geocoders.NOMINATIM.id, Geocoders.NOMINATIM.label, false)
-        );
+                new TabData(Geocoders.NOMINATIM.id, Geocoders.NOMINATIM.label, false));
         uiPage.open();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         try {
             resetConfiguration();
@@ -245,11 +245,14 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
 
         public List<Tab> getTabs() {
             return execute(() -> {
-                final List<WebElement> tabElements = driver.findElements(By.xpath("//ul[@id='tabs']//li/a[@data-name]"));
+                final List<WebElement> tabElements = driver
+                        .findElements(By.xpath("//ul[@id='tabs']//li/a[@data-name]"));
                 return tabElements.stream().map(eachTab -> {
                     final String name = eachTab.getAttribute("data-name");
-                    final List<WebElement> spanElements = driver.findElements(By.xpath("//ul[@id='tabs']//li/a[@data-name='" + name + "']/span"));
-                    final String label = spanElements.isEmpty() ? eachTab.getText() : eachTab.getText().replace(spanElements.get(0).getText(), "");
+                    final List<WebElement> spanElements = driver
+                            .findElements(By.xpath("//ul[@id='tabs']//li/a[@data-name='" + name + "']/span"));
+                    final String label = spanElements.isEmpty() ? eachTab.getText()
+                            : eachTab.getText().replace(spanElements.get(0).getText(), "");
                     return new Tab(this, name.trim(), label.trim());
                 }).collect(Collectors.toList());
             });
@@ -285,7 +288,8 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
         public void click() {
             getElement().click();
             sleep(2000);
-            new WebDriverWait(driver, Duration.ofSeconds(5)).until((ExpectedCondition<Boolean>) input -> page.getTab(name).isActive());
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until((ExpectedCondition<Boolean>) input -> page.getTab(name).isActive());
         }
 
         public WebElement getElement() {
@@ -317,7 +321,7 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
             // Click if value has changed or should be disabled
             if (newGeocoder == null && activeGeocoder != null) {
                 new Toggle(getDriver(), getToggleId(activeGeocoder)).toggle();
-            } else if (!Objects.equals(newGeocoder, activeGeocoder)){
+            } else if (!Objects.equals(newGeocoder, activeGeocoder)) {
                 new Toggle(getDriver(), getToggleId(newGeocoder)).toggle();
             }
         }
@@ -328,7 +332,8 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
 
         public String getActiveGeocoder() {
             return execute(() -> {
-                final List<WebElement> elements = driver.findElements(By.xpath("//div[contains(@class, 'toggle') and not(contains(@class,'off')) and not (contains(@class, 'toggle-group'))]/./.."));
+                final List<WebElement> elements = driver.findElements(By.xpath(
+                        "//div[contains(@class, 'toggle') and not(contains(@class,'off')) and not (contains(@class, 'toggle-group'))]/./.."));
                 if (elements.isEmpty()) {
                     return null;
                 }
@@ -345,17 +350,22 @@ public class GeocoderServiceConfigurationPageIT extends UiPageTest {
         }
 
         public boolean isConfiguredProperly() {
-            return execute(() -> driver.findElements(By.xpath(String.format(TAB_XPATH, getName()) + "//i[@class='fa fa-exclamation-triangle']")).isEmpty());
+            return execute(() -> driver
+                    .findElements(
+                            By.xpath(String.format(TAB_XPATH, getName()) + "//i[@class='fa fa-exclamation-triangle']"))
+                    .isEmpty());
         }
 
         public boolean isDirty() {
-            boolean hasChanges = execute(() -> driver.findElements(By.xpath("//p[text() = 'You have unsaved changes' and contains(@class, 'text-warning')]"))).isEmpty() == false;
+            boolean hasChanges = execute(() -> driver.findElements(
+                    By.xpath("//p[text() = 'You have unsaved changes' and contains(@class, 'text-warning')]")))
+                    .isEmpty() == false;
             return hasChanges;
         }
 
         public void update() {
-           getSaveButtonElement().click();
-           new WebDriverWait(driver, Duration.ofSeconds(5), Duration.ofMillis(500)).until(webDriver -> !isDirty());
+            getSaveButtonElement().click();
+            new WebDriverWait(driver, Duration.ofSeconds(5), Duration.ofMillis(500)).until(webDriver -> !isDirty());
         }
 
         WebElement getSaveButtonElement() {

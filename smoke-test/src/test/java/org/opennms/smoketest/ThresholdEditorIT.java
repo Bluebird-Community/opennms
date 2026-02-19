@@ -20,25 +20,28 @@
  * License.
  */
 package org.opennms.smoketest;
-import static org.junit.Assert.assertEquals;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.Select;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@TestMethodOrder(MethodOrderer.MethodName.class)
+@Tag("FlakyTests")
 public class ThresholdEditorIT extends OpenNMSSeleniumIT {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         thresholdsPage();
     }
+
     protected void thresholdsPage() {
         driver.get(getBaseUrlInternal() + "opennms/admin/thresholds/index.htm");
     }
+
     @Test
     public void a_testAllTextIsPresent() throws Exception {
         // main threshold page
@@ -54,6 +57,7 @@ public class ThresholdEditorIT extends OpenNMSSeleniumIT {
         findElementByXpath("//a[text()='Create New Expression-based Threshold']");
         findElementByXpath("//span[text()='Help']");
     }
+
     @Test
     public void b_testCreateNewThreshold() throws Exception {
         clickElement(By.xpath("//a[contains(@href, 'groupName=cisco&editGroup')]"));
@@ -97,6 +101,7 @@ public class ThresholdEditorIT extends OpenNMSSeleniumIT {
         assertEquals("uei.opennms.org/triggered", findElementByCss("td[name='threshold.4.triggeredUEI'").getText());
         assertEquals("uei.opennms.org/rearmed", findElementByCss("td[name='threshold.4.rearmedUEI'").getText());
     }
+
     @Test
     public void c_testEditThreshold() throws Exception {
         clickElement(By.xpath("//a[contains(@href, 'groupName=cisco&editGroup')]"));
@@ -147,9 +152,12 @@ public class ThresholdEditorIT extends OpenNMSSeleniumIT {
         assertEquals("0.1", findElementByCss("td[name='threshold.4.value'").getText());
         assertEquals("0.2", findElementByCss("td[name='threshold.4.rearm'").getText());
         assertEquals("2", findElementByCss("td[name='threshold.4.trigger'").getText());
-        assertEquals("uei.opennms.org/so-very-triggered", findElementByCss("td[name='threshold.4.triggeredUEI'").getText());
-        assertEquals("uei.opennms.org/you-call-that-rearmed", findElementByCss("td[name='threshold.4.rearmedUEI'").getText());
+        assertEquals("uei.opennms.org/so-very-triggered",
+                findElementByCss("td[name='threshold.4.triggeredUEI'").getText());
+        assertEquals("uei.opennms.org/you-call-that-rearmed",
+                findElementByCss("td[name='threshold.4.rearmedUEI'").getText());
     }
+
     @Test
     public void d_testDeleteThreshold() throws Exception {
         clickElement(By.xpath("//a[contains(@href, 'groupName=cisco&editGroup')]"));
@@ -159,6 +167,7 @@ public class ThresholdEditorIT extends OpenNMSSeleniumIT {
         waitForElement(By.xpath("//span[text()='Basic Thresholds']"));
         assertEquals(5, countElementsMatchingCss(".edit-group-basic-thresholds tr"));
     }
+
     @Test
     public void e_testCreateNewExpression() throws Exception {
         clickElement(By.xpath("//a[contains(@href, 'groupName=cisco&editGroup')]"));
@@ -202,6 +211,7 @@ public class ThresholdEditorIT extends OpenNMSSeleniumIT {
         assertEquals("uei.opennms.org/triggered", findElementByCss("td[name='expression.0.triggeredUEI'").getText());
         assertEquals("uei.opennms.org/rearmed", findElementByCss("td[name='expression.0.rearmedUEI'").getText());
     }
+
     @Test
     public void f_testEditExpression() throws Exception {
         clickElement(By.xpath("//a[contains(@href, 'groupName=cisco&editGroup')]"));
@@ -252,9 +262,12 @@ public class ThresholdEditorIT extends OpenNMSSeleniumIT {
         assertEquals("0.1", findElementByCss("td[name='expression.0.value'").getText());
         assertEquals("0.2", findElementByCss("td[name='expression.0.rearm'").getText());
         assertEquals("2", findElementByCss("td[name='expression.0.trigger'").getText());
-        assertEquals("uei.opennms.org/so-very-triggered", findElementByCss("td[name='expression.0.triggeredUEI'").getText());
-        assertEquals("uei.opennms.org/you-call-that-rearmed", findElementByCss("td[name='expression.0.rearmedUEI'").getText());
+        assertEquals("uei.opennms.org/so-very-triggered",
+                findElementByCss("td[name='expression.0.triggeredUEI'").getText());
+        assertEquals("uei.opennms.org/you-call-that-rearmed",
+                findElementByCss("td[name='expression.0.rearmedUEI'").getText());
     }
+
     @Test
     public void g_testDeleteExpression() throws Exception {
         clickElement(By.xpath("//a[contains(@href, 'groupName=cisco&editGroup')]"));

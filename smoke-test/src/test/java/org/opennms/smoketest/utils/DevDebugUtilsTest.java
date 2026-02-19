@@ -27,21 +27,25 @@ import static org.opennms.smoketest.utils.DevDebugUtils.CONTAINER_HOST_M2_SYS_PR
 
 import java.util.concurrent.Callable;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DevDebugUtilsTest {
 
     @Test
     public void canConvertToContainerAccessibleUrl() {
         withClearedContainerHost(() -> {
-            assertThat(DevDebugUtils.convertToContainerAccessibleUrl("http://127.0.0.1:39995/path?query=x", "opennms", 8980),
+            assertThat(
+                    DevDebugUtils.convertToContainerAccessibleUrl("http://127.0.0.1:39995/path?query=x", "opennms",
+                            8980),
                     equalTo("http://opennms:8980/path?query=x"));
             return null;
         });
 
         withClearedContainerHost(() -> {
             System.setProperty(CONTAINER_HOST_M2_SYS_PROP, "beer");
-            assertThat(DevDebugUtils.convertToContainerAccessibleUrl("http://127.0.0.1:39995/path?query=x", "opennms", 8980),
+            assertThat(
+                    DevDebugUtils.convertToContainerAccessibleUrl("http://127.0.0.1:39995/path?query=x", "opennms",
+                            8980),
                     equalTo("http://beer:39995/path?query=x"));
             return null;
         });

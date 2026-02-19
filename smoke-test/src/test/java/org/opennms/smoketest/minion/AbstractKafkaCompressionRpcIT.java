@@ -22,16 +22,15 @@
 package org.opennms.smoketest.minion;
 
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
 
 import java.io.PrintStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.opennms.netmgt.model.PrimaryType;
 import org.opennms.netmgt.provision.persist.requisition.Requisition;
 import org.opennms.netmgt.provision.persist.requisition.RequisitionInterface;
@@ -50,12 +49,10 @@ public abstract class AbstractKafkaCompressionRpcIT {
 
     protected abstract OpenNMSStack stack();
 
-
-
     @Test
     public void verifyKafkaRpcWithTcpServiceDetection() {
         addRequisition(stack().opennms().getRestClient(), stack().minion().getLocation(), LOCALHOST);
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15))
                 .until(() -> detectTcpAtLocationMinion(stack()), containsString("'TCP' WAS detected on 127.0.0.1"));
     }
 
@@ -64,7 +61,7 @@ public abstract class AbstractKafkaCompressionRpcIT {
             PrintStream pipe = sshClient.openShell();
             pipe.println(String.format("detect -l %s TCP 127.0.0.1 port=8201", stack.minion().getLocation()));
             pipe.println("logout");
-            await().atMost(90, SECONDS).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofSeconds(90)).until(sshClient.isShellClosedCallable());
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
             shellOutput = StringUtils.substringAfter(shellOutput, "detect -l");
             LOG.info("Detect output: {}", shellOutput);
@@ -74,7 +71,7 @@ public abstract class AbstractKafkaCompressionRpcIT {
 
     @Test
     public void verifyKafkaRpcWithJdbcServiceDetection() {
-        await().atMost(3, MINUTES).pollInterval(15, SECONDS).pollDelay(0, SECONDS)
+        await().atMost(Duration.ofMinutes(3)).pollInterval(Duration.ofSeconds(15)).pollDelay(Duration.ZERO)
                 .until(this::detectJdbcAtLocationMinion, containsString("'JDBC' WAS detected"));
     }
 
@@ -84,9 +81,10 @@ public abstract class AbstractKafkaCompressionRpcIT {
         try (final SshClient sshClient = stack().opennms().ssh()) {
             // Perform JDBC service detection on Minion
             final PrintStream pipe = sshClient.openShell();
-            pipe.println(String.format("detect -l %s JDBC 127.0.0.1 url=%s user=opennms password=opennms", stack().minion().getLocation(), jdbcUrl));
+            pipe.println(String.format("detect -l %s JDBC 127.0.0.1 url=%s user=opennms password=opennms",
+                    stack().minion().getLocation(), jdbcUrl));
             pipe.println("logout");
-            await().atMost(1, MINUTES).until(sshClient.isShellClosedCallable());
+            await().atMost(Duration.ofMinutes(1)).until(sshClient.isShellClosedCallable());
             // Sanitize the output
             String shellOutput = CommandTestUtils.stripAnsiCodes(sshClient.getStdout());
             shellOutput = StringUtils.substringAfter(shellOutput, "detect -l");
@@ -113,6 +111,5 @@ public abstract class AbstractKafkaCompressionRpcIT {
         client.addOrReplaceRequisition(requisition);
         client.importRequisition("foreignSource");
     }
-
 
 }

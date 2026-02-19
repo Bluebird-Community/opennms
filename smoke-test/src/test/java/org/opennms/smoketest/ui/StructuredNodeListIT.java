@@ -21,15 +21,15 @@
  */
 package org.opennms.smoketest.ui;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -43,7 +43,7 @@ import org.opennms.smoketest.utils.RestClient;
 public class StructuredNodeListIT extends OpenNMSSeleniumIT {
     protected int savedNodeId;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // Add a node 'test:node1' for use in testing
 
@@ -71,7 +71,7 @@ public class StructuredNodeListIT extends OpenNMSSeleniumIT {
         getDriver().get(getBaseUrlInternal() + "opennms/ui/index.html#/nodes");
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         sendDelete("rest/nodes/test:node1", 202);
     }
@@ -89,13 +89,15 @@ public class StructuredNodeListIT extends OpenNMSSeleniumIT {
         findElementByXpath("//div[@class='node-table']/table/tbody/tr/td/a[text()='Test_Node1']");
 
         // find the node link
-        String nodeLinkXpath = String.format("//div[@class='node-table']/table/tbody/tr/td/a[contains(@href, 'element/node.jsp?node=%d')]", savedNodeId);
+        String nodeLinkXpath = String.format(
+                "//div[@class='node-table']/table/tbody/tr/td/a[contains(@href, 'element/node.jsp?node=%d')]",
+                savedNodeId);
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(nodeLinkXpath)));
 
         WebElement nodeLink = findElementByXpath(nodeLinkXpath);
-        assertNotNull("Node link element was not found.", nodeLink);
-        assertTrue("Node link element was not displayed.", nodeLink.isDisplayed());
+        assertNotNull(nodeLink, "Node link element was not found.");
+        assertTrue(nodeLink.isDisplayed(), "Node link element was not displayed.");
 
         // Sleep for 500ms before clicking, otherwise link may be obscured
         sleepQuietly(500);
@@ -107,4 +109,3 @@ public class StructuredNodeListIT extends OpenNMSSeleniumIT {
         wait.until(pageContainsText("Node: Test_Node1"));
     }
 }
-

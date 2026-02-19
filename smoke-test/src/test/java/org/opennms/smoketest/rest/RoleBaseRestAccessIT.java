@@ -22,19 +22,20 @@
 package org.opennms.smoketest.rest;
 
 import io.restassured.RestAssured;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import static org.awaitility.Awaitility.await;
 import static io.restassured.RestAssured.given;
+
 public class RoleBaseRestAccessIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
@@ -44,14 +45,13 @@ public class RoleBaseRestAccessIT {
 
     @Test
     public void addUserWthoutRESTRoleAndCheckApisAccess() {
-        String xmlPayload =
-                "<user>" +
-                        "<user-id>testuser</user-id>" +
-                        "<full-name>API Test User</full-name>" +
-                        "<password>testuser123</password>" +
-                        "<passwordSalt>true</passwordSalt>" +
-                        "<role>ROLE_USER</role>" +
-                        "</user>";
+        String xmlPayload = "<user>" +
+                "<user-id>testuser</user-id>" +
+                "<full-name>API Test User</full-name>" +
+                "<password>testuser123</password>" +
+                "<passwordSalt>true</passwordSalt>" +
+                "<role>ROLE_USER</role>" +
+                "</user>";
 
         given()
                 .auth().basic("admin", "admin")
@@ -65,7 +65,7 @@ public class RoleBaseRestAccessIT {
                 .log().all()
                 .statusCode(201);
 
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(2, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofSeconds(2)).untilAsserted(() -> {
             given()
                     .auth().basic("testuser", "testuser123")
                     .when()
@@ -74,19 +74,17 @@ public class RoleBaseRestAccessIT {
                     .statusCode(403);
         });
 
-
     }
 
     @Test
     public void addUserWthRESTRoleAndCheckApisAccess() {
-        String xmlPayload =
-                "<user>" +
-                        "<user-id>testuser1</user-id>" +
-                        "<full-name>API Test User</full-name>" +
-                        "<password>testuser1231</password>" +
-                        "<passwordSalt>true</passwordSalt>" +
-                        "<role>ROLE_REST</role>" +
-                        "</user>";
+        String xmlPayload = "<user>" +
+                "<user-id>testuser1</user-id>" +
+                "<full-name>API Test User</full-name>" +
+                "<password>testuser1231</password>" +
+                "<passwordSalt>true</passwordSalt>" +
+                "<role>ROLE_REST</role>" +
+                "</user>";
 
         given()
                 .auth().basic("admin", "admin")
@@ -100,7 +98,7 @@ public class RoleBaseRestAccessIT {
                 .log().all()
                 .statusCode(201);
 
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(2, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofSeconds(2)).untilAsserted(() -> {
             given()
                     .auth().basic("testuser1", "testuser1231")
                     .when()
@@ -109,8 +107,6 @@ public class RoleBaseRestAccessIT {
                     .statusCode(200);
         });
 
-
     }
-
 
 }

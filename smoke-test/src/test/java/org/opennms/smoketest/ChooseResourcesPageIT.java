@@ -22,9 +22,8 @@
 package org.opennms.smoketest;
 
 import java.time.Duration;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -44,7 +43,8 @@ public class ChooseResourcesPageIT extends OpenNMSSeleniumIT {
 
     @Test
     public void testNMS15292() {
-        final String[] parameters = {"zoom=true", "generatedId=4ab5197d-7435-30d5-85ea-437432ff8e44", "nodeCriteria=42", "reports=all"};
+        final String[] parameters = { "zoom=true", "generatedId=4ab5197d-7435-30d5-85ea-437432ff8e44",
+                "nodeCriteria=42", "reports=all" };
         final String scriptTag = "%22%3E%3Cscript%3Ealert(%27Failed!%27)%3B%3C%2Fscript%3E";
 
         for (final String parameter : parameters) {
@@ -59,11 +59,13 @@ public class ChooseResourcesPageIT extends OpenNMSSeleniumIT {
             // INITIALIZE
             // Creating a node
             LOG.debug("creating node");
-            String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">" +
+            String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"SmokeTests\" foreignId=\"TestMachine1\">"
+                    +
                     "<labelSource>H</labelSource>" +
                     "<sysContact>The Owner</sysContact>" +
                     "<sysDescription>" +
-                    "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
+                    "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386"
+                    +
                     "</sysDescription>" +
                     "<sysLocation>DevJam</sysLocation>" +
                     "<sysName>TestMachine1</sysName>" +
@@ -84,7 +86,7 @@ public class ChooseResourcesPageIT extends OpenNMSSeleniumIT {
             LOG.debug("interface created!");
 
             // Adding SNMP Interfaces
-            for (int i = 1; i < 3; i ++) {
+            for (int i = 1; i < 3; i++) {
                 LOG.debug("creating snmp interface " + i);
                 String snmpInterface = "<snmpInterface collectFlag=\"C\" ifIndex=\"" + i + "\" pollFlag=\"N\">" +
                         "<ifAdminStatus>1</ifAdminStatus>" +
@@ -109,11 +111,11 @@ public class ChooseResourcesPageIT extends OpenNMSSeleniumIT {
 
             // Verify Title/Link
             WebElement title = findElementByXpath("//h4/strong/a[text()='TestMachine1']");
-            Assert.assertNotNull(title);
+            Assertions.assertNotNull(title);
 
             // There are no RRD/Newts data, so it should show the default banner.
             WebElement banner = findElementByXpath("//h1[text()='There are no resources for this node']");
-            Assert.assertNotNull(banner);
+            Assertions.assertNotNull(banner);
         } finally {
             // CLEANUP
             sendDelete("rest/nodes/SmokeTests:TestMachine1", 202);

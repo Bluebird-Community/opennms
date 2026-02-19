@@ -25,11 +25,10 @@ import static org.awaitility.Awaitility.await;
 import static io.restassured.RestAssured.authentication;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.preemptive;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,19 +38,20 @@ import javax.xml.bind.JAXB;
 import org.hamcrest.Matchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.opennms.netmgt.model.OnmsUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.restassured.http.ContentType;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@TestMethodOrder(MethodOrderer.MethodName.class)
+@Tag("FlakyTests")
 public class ReportRestIT extends AbstractRestIT {
     private static final Logger LOG = LoggerFactory.getLogger(ReportRestIT.class);
 
@@ -65,12 +65,14 @@ public class ReportRestIT extends AbstractRestIT {
         super(Version.V1, "reports");
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException, InterruptedException {
         final JSONObject usersObject = getUsers();
         if (usersObject.getInt("count") == 2) { // Only create users if not already created
-            postUser(createUser("test", "Test User", "test@opennms.org", "21232F297A57A5A743894A0E4A801FC3" /* admin */,  "ROLE_USER"));
-            postUser(createUser("ulf", "Report Designer", "ulf@opennms.org", "21232F297A57A5A743894A0E4A801FC3" /* admin */, "ROLE_REPORT_DESIGNER", "ROLE_USER"));
+            postUser(createUser("test", "Test User", "test@opennms.org", "21232F297A57A5A743894A0E4A801FC3" /* admin */,
+                    "ROLE_USER"));
+            postUser(createUser("ulf", "Report Designer", "ulf@opennms.org",
+                    "21232F297A57A5A743894A0E4A801FC3" /* admin */, "ROLE_REPORT_DESIGNER", "ROLE_USER"));
             // wait for the user config cache to refresh
             Thread.sleep(1100);
         }
@@ -95,7 +97,7 @@ public class ReportRestIT extends AbstractRestIT {
         reportParameters.put("cronExpression", "0 */1 * * * ?"); // only used for scheduling reports
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException, InterruptedException {
         applyDefaultCredentials();
 
@@ -110,13 +112,13 @@ public class ReportRestIT extends AbstractRestIT {
 
     @Test
     public void verifyPermissionsForPrivilegedUsers() {
-        final String[][] users = new String[][]{
+        final String[][] users = new String[][] {
                 // username, password
-                new String[]{"admin", "admin"},
-                new String[]{"ulf", "admin"}
+                new String[] { "admin", "admin" },
+                new String[] { "ulf", "admin" }
         };
 
-         /*
+        /*
          * Verify as privileged users
          */
         for (String[] user : users) {
@@ -139,10 +141,10 @@ public class ReportRestIT extends AbstractRestIT {
              * Delivered Reports
              */
             // Verify list already persisted reports (none yet)
-            await().atMost(1, MINUTES).untilAsserted(() -> {
+            await().atMost(Duration.ofMinutes(1)).untilAsserted(() -> {
                 LOG.debug("validating no persisted reports exist");
                 given().get("persisted").then().statusCode(204);
-            }); 
+            });
 
             // Verify deliver report works
             LOG.debug("delivering a report for {}", user[0]);
@@ -156,21 +158,21 @@ public class ReportRestIT extends AbstractRestIT {
             // Verify list already persisted reports work (one)
             LOG.debug("validating report for {} is persisted", user[0]);
             final AtomicReference<Integer> persistedId = new AtomicReference<>(-1);
-            await().atMost(5, MINUTES).pollInterval(5, SECONDS).untilAsserted(() -> {
-                        final String response = given().get("persisted")
-                                .then().log().status()
-                                .assertThat()
-                                .statusCode(200)
-                                .body("", Matchers.hasSize(1))
-                                .extract().response().asString();
-                        final JSONArray persistedReports = new JSONArray(response);
-                        if (persistedReports.length() == 1) {
-                            persistedId.set(persistedReports.getJSONObject(0).getInt("id"));
-                            return; // pass
-                        }
-                        throw new IllegalStateException("Invalid Result returned. Expected 1 report, but got " + persistedReports.length());
-                    }
-            );
+            await().atMost(Duration.ofMinutes(5)).pollInterval(Duration.ofSeconds(5)).untilAsserted(() -> {
+                final String response = given().get("persisted")
+                        .then().log().status()
+                        .assertThat()
+                        .statusCode(200)
+                        .body("", Matchers.hasSize(1))
+                        .extract().response().asString();
+                final JSONArray persistedReports = new JSONArray(response);
+                if (persistedReports.length() == 1) {
+                    persistedId.set(persistedReports.getJSONObject(0).getInt("id"));
+                    return; // pass
+                }
+                throw new IllegalStateException(
+                        "Invalid Result returned. Expected 1 report, but got " + persistedReports.length());
+            });
 
             LOG.debug("deleting persisted report");
 
@@ -184,7 +186,7 @@ public class ReportRestIT extends AbstractRestIT {
              * Scheduled Reports
              */
             // Verify listing scheduled report works (none yet)
-            await().atMost(1, MINUTES).untilAsserted(() -> {
+            await().atMost(Duration.ofMinutes(1)).untilAsserted(() -> {
                 LOG.debug("validating no scheduled reports exist");
                 given().get("scheduled").then().statusCode(204);
             });
@@ -259,7 +261,7 @@ public class ReportRestIT extends AbstractRestIT {
         given().delete("scheduled").then().statusCode(202);
 
         LOG.debug("verifying reports have been deleted");
-        await().atMost(1, MINUTES).until(new Callable<Boolean>() {
+        await().atMost(Duration.ofMinutes(1)).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 try {
@@ -274,7 +276,8 @@ public class ReportRestIT extends AbstractRestIT {
     }
 
     private static JSONObject getUsers() {
-        final String responseBody = given().log().uri().accept(ContentType.JSON).get("../users").then().log().all().statusCode(200).extract().response().asString();
+        final String responseBody = given().log().uri().accept(ContentType.JSON).get("../users").then().log().all()
+                .statusCode(200).extract().response().asString();
         final JSONObject usersObject = new JSONObject(responseBody);
         return usersObject;
     }
@@ -286,7 +289,8 @@ public class ReportRestIT extends AbstractRestIT {
         sendPost("/rest/users", new String(outputStream.toByteArray()));
     }
 
-    private static OnmsUser createUser(String userId, String username, String userEmail, String userPasswordHash, String... roles) {
+    private static OnmsUser createUser(String userId, String username, String userEmail, String userPasswordHash,
+            String... roles) {
         final OnmsUser user = new OnmsUser();
         user.setUsername(userId);
         user.setFullName(username);

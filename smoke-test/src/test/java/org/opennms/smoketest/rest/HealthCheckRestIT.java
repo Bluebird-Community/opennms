@@ -22,27 +22,28 @@
 package org.opennms.smoketest.rest;
 
 import static io.restassured.RestAssured.preemptive;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME;
 
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.utils.KarafShell;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class HealthCheckRestIT {
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
-    @Before
+    @BeforeEach
     public void before() {
         RestAssured.baseURI = stack.opennms().getBaseUrlExternal().toString();
         RestAssured.port = stack.opennms().getWebPort();
@@ -53,9 +54,9 @@ public class HealthCheckRestIT {
     public void verifyProbeHealthWithoutAuthenticationOK() {
         final String response = RestAssured.get("probe")
                 .then().assertThat()
-                    .statusCode(200)
-                    .contentType(ContentType.TEXT)
-                    .header("Health", "Everything is awesome")
+                .statusCode(200)
+                .contentType(ContentType.TEXT)
+                .header("Health", "Everything is awesome")
                 .extract().response().asString();
         assertThat(response, Matchers.is("Everything is awesome"));
     }
@@ -65,8 +66,8 @@ public class HealthCheckRestIT {
         // Configure the elastic url incorrectly, so the rest health probe returns 599
         final KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
         karafShell.runCommand("config:edit org.opennms.features.flows.persistence.elastic\n" +
-            "config:property-set elasticUrl 192.0.2.200\n" +
-            "config:update");
+                "config:property-set elasticUrl 192.0.2.200\n" +
+                "config:update");
 
         // Execute the request, but limit the timeout to 1 second
         final String response = RestAssured.get("probe?t=1000")

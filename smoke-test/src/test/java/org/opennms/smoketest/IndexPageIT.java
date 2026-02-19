@@ -21,15 +21,15 @@
  */
 package org.opennms.smoketest;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author <a href="mailto:agalue@opennms.org">Alejandro Galue</a>
  */
-@org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
+@Tag("FlakyTests")
 public class IndexPageIT extends OpenNMSSeleniumIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(IndexPageIT.class);
@@ -57,17 +57,20 @@ public class IndexPageIT extends OpenNMSSeleniumIT {
     @Test
     public void canRenderSearchBoxes() throws Exception {
         driver.get(getBaseUrlInternal() + "opennms/index.jsp");
-        // The following input fields will exist on index.jsp, only if includes/search-box.jsp is rendered and processed by AngularJS
+        // The following input fields will exist on index.jsp, only if
+        // includes/search-box.jsp is rendered and processed by AngularJS
         WebElement asyncKsc = findElementByXpath("//input[@ng-model='asyncKsc']");
-        Assert.assertNotNull(asyncKsc);
+        assertNotNull(asyncKsc);
         WebElement asyncNode = findElementByXpath("//input[@ng-model='asyncNode']");
-        Assert.assertNotNull(asyncNode);
+        assertNotNull(asyncNode);
     }
 
     @Test
     public void verifyStatusMap() {
-        // In order to have anything show up, we have to create a node with long/lat information first
-        // A interface and service which does not exist is used, in order to provoke an alarm beeing sent by opennms
+        // In order to have anything show up, we have to create a node with long/lat
+        // information first
+        // A interface and service which does not exist is used, in order to provoke an
+        // alarm beeing sent by opennms
         // to have a status >= Warning
         // INITIALIZE
         LOG.info("Initializing foreign source with no detectors");
@@ -89,15 +92,17 @@ public class IndexPageIT extends OpenNMSSeleniumIT {
                 "</model-import>";
         createRequisition(REQUISITION_NAME, requisitionXML, 1);
 
-        // try every 5 seconds, for 120 seconds, until the service on 127.0.0.2 has been detected as "down", or fail afterwards
+        // try every 5 seconds, for 120 seconds, until the service on 127.0.0.2 has been
+        // detected as "down", or fail afterwards
         try {
-            setImplicitWait(5, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(5));
             new WebDriverWait(driver, Duration.ofSeconds(120)).until(input -> {
                 // refresh page
                 input.get(getBaseUrlInternal() + "opennms/index.jsp");
 
                 // Wait until we have markers
-                List<WebElement> markerElements = input.findElements(By.xpath("//*[contains(@class, 'leaflet-marker-icon')]"));
+                List<WebElement> markerElements = input
+                        .findElements(By.xpath("//*[contains(@class, 'leaflet-marker-icon')]"));
                 return !markerElements.isEmpty();
             });
         } finally {
@@ -109,7 +114,7 @@ public class IndexPageIT extends OpenNMSSeleniumIT {
         final Set<Cookie> cookies = driver.manage().getCookies();
         for (final Cookie cookie : cookies) {
             if (cookie.getName().equalsIgnoreCase("JSESSIONID")) {
-                return cookie.getValue().replaceAll(";.*$","");
+                return cookie.getValue().replaceAll(";.*$", "");
             }
         }
         return null;

@@ -21,8 +21,8 @@
  */
 package org.opennms.smoketest.ui.framework;
 
+import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper;
@@ -36,17 +36,15 @@ public abstract class Element {
     protected final Logger LOG = LoggerFactory.getLogger(getClass());
 
     protected final WebDriver driver;
-    private final int implicitWait;
-    private final TimeUnit implicitWaitUnit;
+    private final Duration implicitWait;
 
-    public Element(final WebDriver driver, int implicitWait, TimeUnit implictWaitUnit) {
+    public Element(final WebDriver driver, Duration implicitWait) {
         this.driver = Objects.requireNonNull(driver);
-        this.implicitWait = implicitWait;
-        this.implicitWaitUnit = Objects.requireNonNull(implictWaitUnit);
+        this.implicitWait = Objects.requireNonNull(implicitWait);
     }
 
     public Element(final WebDriver driver) {
-        this(driver, 2, TimeUnit.SECONDS);
+        this(driver, Duration.ofSeconds(2));
     }
 
     public WebElement findElementById(final String id) {
@@ -80,10 +78,10 @@ public abstract class Element {
 
     protected <X> X execute(Supplier<X> supplier) {
         try {
-            driver.manage().timeouts().implicitlyWait(implicitWait, implicitWaitUnit.SECONDS);
+            driver.manage().timeouts().implicitlyWait(implicitWait);
             return supplier.get();
         } finally {
-            driver.manage().timeouts().implicitlyWait(AbstractOpenNMSSeleniumHelper.LOAD_TIMEOUT, TimeUnit.MILLISECONDS);
+            driver.manage().timeouts().implicitlyWait(Duration.ofMillis(AbstractOpenNMSSeleniumHelper.LOAD_TIMEOUT));
         }
     }
 }

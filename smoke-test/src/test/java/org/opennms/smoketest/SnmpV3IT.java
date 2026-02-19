@@ -21,8 +21,8 @@
  */
 package org.opennms.smoketest;
 
+import java.time.Duration;
 import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -32,8 +32,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.opennms.core.criteria.Criteria;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.core.utils.InetAddressUtils;
@@ -55,7 +55,7 @@ public class SnmpV3IT {
 
     private static final Logger LOG = LoggerFactory.getLogger(SnmpV3IT.class);
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
 
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -80,12 +80,13 @@ public class SnmpV3IT {
                 }
             }, 0, 5, TimeUnit.SECONDS);
             // Check if there is at least one alarm
-            await().atMost(30, SECONDS).pollInterval(5, SECONDS).pollDelay(5, SECONDS)
+            await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(5))
                     .until(DaoUtils.countMatchingCallable(alarmDao, criteria), greaterThanOrEqualTo(1));
             // Check if multiple traps are getting received not just the first one
-            await().atMost(30, SECONDS).pollInterval(5, SECONDS).pollDelay(5, SECONDS)
+            await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(5)).pollDelay(Duration.ofSeconds(5))
                     .until(DaoUtils.findMatchingCallable(alarmDao, new CriteriaBuilder(OnmsAlarm.class)
-                                    .eq("uei", "uei.opennms.org/generic/traps/EnterpriseDefault").ge("counter", 3).toCriteria()),
+                            .eq("uei", "uei.opennms.org/generic/traps/EnterpriseDefault").ge("counter", 3)
+                            .toCriteria()),
                             notNullValue());
         } finally {
             // Make sure we always shutdown the thread pool, even when the test fails
@@ -98,8 +99,9 @@ public class SnmpV3IT {
         pdu.addVarBind(SnmpObjId.get(".1.3.6.1.2.1.1.3.0"), SnmpUtils.getValueFactory().getTimeTicks(0));
         pdu.addVarBind(SnmpObjId.get(".1.3.6.1.6.3.1.1.4.1.0"),
                 SnmpUtils.getValueFactory().getObjectId(SnmpObjId.get(".1.3.6.1.6.3.1.1.5.4.0")));
-        pdu.send(InetAddressUtils.str(snmpAddress.getAddress()), snmpAddress.getPort(), SnmpConfiguration.AUTH_PRIV, "traptest",
-        "0p3nNMSv3", "SHA-256", "0p3nNMSv3", "DES");
+        pdu.send(InetAddressUtils.str(snmpAddress.getAddress()), snmpAddress.getPort(), SnmpConfiguration.AUTH_PRIV,
+                "traptest",
+                "0p3nNMSv3", "SHA-256", "0p3nNMSv3", "DES");
         LOG.info("V3 trap sent successfully");
     }
 

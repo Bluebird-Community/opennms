@@ -23,18 +23,16 @@ package org.opennms.smoketest.opsboard;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.fail;
 import static org.openqa.selenium.support.ui.ExpectedConditions.not;
 
 import java.lang.NullPointerException;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.opennms.smoketest.OpenNMSSeleniumIT;
 import org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper;
 import org.opennms.smoketest.selenium.AbstractPage;
@@ -53,13 +51,13 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
 
     private OpsBoardAdminPage adminPage;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         this.adminPage = new OpsBoardAdminPage(this).open();
         this.adminPage.removeAll();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         LOG.debug("Tearing down. Removing all boards.");
         this.adminPage.open(); // reload page to reset any invalid state
@@ -68,10 +66,13 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
 
     // See NMS-12166
     // @Test(timeout = 300000)
-    // 'header-component_connector.js' loads with 'superQuiet' and 'fromVaadin' query params
+    // 'header-component_connector.js' loads with 'superQuiet' and 'fromVaadin'
+    // query params
     // 'fromVaadin' means we load the new menu
-    // However, when dashlet is loaded inside the wallboard, we want 'superQuiet' only so it doesn't display the menu
-    @Ignore("Need to hide the new menu when dashlet embedded in ops board.")
+    // However, when dashlet is loaded inside the wallboard, we want 'superQuiet'
+    // only so it doesn't display the menu
+    @Disabled("Need to hide the new menu when dashlet embedded in ops board.")
+    @Test
     public void testHeaderHiddenForTopologyUI() {
         final OpsBoardAdminEditorPage testBoard = adminPage.createNew("testBoard");
         testBoard.addDashlet(new DashletBuilder()
@@ -83,13 +84,14 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
         testBoard.preview();
 
         try {
-            setImplicitWait(5, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(5));
             new WebDriverWait(driver, Duration.ofSeconds(5)).until(not(pageContainsText("Access denied")));
             new WebDriverWait(driver, Duration.ofSeconds(5)).until(pageContainsText("Topology"));
 
             // Verify that the header is hidden
-            // This method can throw StateElementReference exceptions, so we try multiple times
-            await().atMost(1, TimeUnit.MINUTES)
+            // This method can throw StateElementReference exceptions, so we try multiple
+            // times
+            await().atMost(Duration.ofMinutes(1))
                     .ignoreExceptionsInstanceOf(WebDriverException.class)
                     .ignoreExceptionsInstanceOf(NullPointerException.class)
                     .until(() -> driver.switchTo().parentFrame()
@@ -114,7 +116,7 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
 
         // Now ensure that access was NOT denied
         try {
-            setImplicitWait(1, TimeUnit.SECONDS);
+            setImplicitWait(Duration.ofSeconds(1));
             new WebDriverWait(driver, Duration.ofSeconds(5)).until(not(pageContainsText("Access denied")));
             new WebDriverWait(driver, Duration.ofSeconds(5)).until(pageContainsText("Surveillance view"));
         } finally {
@@ -124,7 +126,7 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
 
     // See NMS-10515
     @Test
-    @org.springframework.test.annotation.IfProfileValue(name="runFlappers", value="true")
+    @org.springframework.test.annotation.IfProfileValue(name = "runFlappers", value = "true")
     public void canCreateAndUseDeepLink() {
         final OpsBoardAdminEditorPage testBoard = adminPage.createNew("My-Wallboard");
         testBoard.addDashlet(new DashletBuilder()
@@ -185,8 +187,9 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
         }
 
         public OpsBoardAdminPage removeAll() {
-            List<WebElement> elements = findElements(By.xpath("//*[@class='v-button-caption' and contains(text(), 'Remove')]"));
-            while(elements.size() > 0) {
+            List<WebElement> elements = findElements(
+                    By.xpath("//*[@class='v-button-caption' and contains(text(), 'Remove')]"));
+            while (elements.size() > 0) {
                 final WebElement element = elements.get(0);
                 element.click();
                 this.testCase.waitUntil(new ExpectedCondition<Boolean>() {
@@ -236,7 +239,8 @@ public class OpsBoardAdminPageIT extends OpenNMSSeleniumIT {
                 enterText(By.id("opsboard.title"), dashletConfig.getTitle());
             }
             if (dashletConfig.getType() != null) {
-                new Select(findElement(By.xpath("//*[@id='opsboard.type']//select"))).selectByVisibleText(dashletConfig.getType());
+                new Select(findElement(By.xpath("//*[@id='opsboard.type']//select")))
+                        .selectByVisibleText(dashletConfig.getType());
             }
             return this;
         }

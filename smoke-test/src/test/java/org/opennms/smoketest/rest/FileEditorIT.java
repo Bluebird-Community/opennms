@@ -49,10 +49,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.mina.util.Base64;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.jvnet.hk2.annotations.Optional;
 import org.opennms.netmgt.model.OnmsUser;
 import org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper;
@@ -76,7 +76,6 @@ import static io.restassured.RestAssured.preemptive;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_PASSWORD;
 import static org.opennms.smoketest.selenium.AbstractOpenNMSSeleniumHelper.BASIC_AUTH_USERNAME;
 
-
 /**
  * Test class for testing API of File Editor
  *
@@ -90,10 +89,10 @@ public class FileEditorIT {
     private static final String USERNAME = "editor";
     private static final String PASSWORD = "admin";
 
-    @ClassRule
+    @RegisterExtension
     public static final OpenNMSStack STACK = OpenNMSStack.MINIMAL;
 
-    @Before
+    @BeforeEach
     public void setUp() throws InterruptedException {
 
         RestAssured.baseURI = STACK.opennms().getBaseUrlExternal().toString();
@@ -122,8 +121,10 @@ public class FileEditorIT {
                                     file))
                     .build();
 
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body, USERNAME, PASSWORD);
-            Assert.assertEquals(200, resp.code());
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body,
+                    USERNAME, PASSWORD);
+            Assertions.assertEquals(200, resp.code());
         } catch (IOException e) {
             LOG.error("Upload of a new file failed. Response code: {}", e.toString());
         }
@@ -134,16 +135,20 @@ public class FileEditorIT {
                 .build();
 
         try {
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body, USERNAME, PASSWORD);
-            Assert.assertEquals(200, resp.code());
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body,
+                    USERNAME, PASSWORD);
+            Assertions.assertEquals(200, resp.code());
         } catch (IOException e) {
             LOG.error("Update the context of a new file failed. Response code: {}", e.toString());
         }
 
         // get file
         try {
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "GET", null, USERNAME, PASSWORD);
-            Assert.assertEquals(200, resp.code());
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "GET", null,
+                    USERNAME, PASSWORD);
+            Assertions.assertEquals(200, resp.code());
         } catch (IOException e) {
             LOG.error("Getting a list of files failed. Response code: {}}", e.toString());
         }
@@ -152,8 +157,10 @@ public class FileEditorIT {
         MediaType mediaType = MediaType.parse("text/plain");
         body = RequestBody.create(mediaType, "");
         try {
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "DELETE", body, USERNAME, PASSWORD);
-            Assert.assertEquals(200, resp.code());
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "DELETE", body,
+                    USERNAME, PASSWORD);
+            Assertions.assertEquals(200, resp.code());
         } catch (IOException e) {
             LOG.error("Removing of a file failed. Response code: {}", e.toString());
         }
@@ -175,15 +182,18 @@ public class FileEditorIT {
                                     file))
                     .build();
 
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body, USERNAME, PASSWORD);
-            Assert.assertEquals(400, resp.code());
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body,
+                    USERNAME, PASSWORD);
+            Assertions.assertEquals(400, resp.code());
         } catch (IOException e) {
             LOG.error("Upload of unsupported file failed. Response code: {}", e.toString());
         }
     }
 
     /**
-     * Test that the File Editor will deny changes when invalid XML format is uploaded for an XML file
+     * Test that the File Editor will deny changes when invalid XML format is
+     * uploaded for an XML file
      */
     @Test
     public void updateFailsOnXmlValidation() {
@@ -197,16 +207,19 @@ public class FileEditorIT {
                                     file))
                     .build();
 
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + file.getName(), "POST", body, USERNAME, PASSWORD);
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + file.getName(), "POST",
+                    body, USERNAME, PASSWORD);
             resp.close();
 
             body = new MultipartBody.Builder().setType(MultipartBody.FORM)
                     .addFormDataPart("upload", "OpenNMS Smoke Test")
                     .build();
 
-            resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + file.getName(), "POST", body, USERNAME, PASSWORD);
+            resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + file.getName(),
+                    "POST", body, USERNAME, PASSWORD);
 
-            Assert.assertEquals(400, resp.code());
+            Assertions.assertEquals(400, resp.code());
         } catch (IOException e) {
             LOG.error("Update of the context with incorrect data failed. Response code: {}}", e.toString());
         }
@@ -226,8 +239,10 @@ public class FileEditorIT {
                                     file))
                     .build();
 
-            Response resp = postRequest(STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body, "admin", PASSWORD);
-            Assert.assertEquals(403, resp.code());
+            Response resp = postRequest(
+                    STACK.opennms().getBaseUrlExternal() + REST_FILESYSTEM + "/contents?f=" + FILE_NAME, "POST", body,
+                    "admin", PASSWORD);
+            Assertions.assertEquals(403, resp.code());
         } catch (IOException e) {
             LOG.error("Test of uploading of a new file with incorrect role failed. Response code: {}", e.toString());
         }
@@ -253,7 +268,8 @@ public class FileEditorIT {
      * @return
      * @throws IOException
      */
-    private Response postRequest(String url, String method, @Nullable RequestBody body, String username, String password) throws IOException {
+    private Response postRequest(String url, String method, @Nullable RequestBody body, String username,
+            String password) throws IOException {
         LOG.info("creating request");
 
         OkHttpClient client = new OkHttpClient().newBuilder()
@@ -276,10 +292,13 @@ public class FileEditorIT {
     private void addUserAPI() {
         LOG.info("User creation request");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        JAXB.marshal(createUser("editor", "File Editor", "editor@opennms.org", "21232F297A57A5A743894A0E4A801FC3" /* admin */, "ROLE_FILESYSTEM_EDITOR", "ROLE_USER"), outputStream);
+        JAXB.marshal(
+                createUser("editor", "File Editor", "editor@opennms.org",
+                        "21232F297A57A5A743894A0E4A801FC3" /* admin */, "ROLE_FILESYSTEM_EDITOR", "ROLE_USER"),
+                outputStream);
 
-
-        final HttpPost post = new HttpPost(STACK.opennms().getBaseUrlExternal().toString() + "/opennms" + "/rest/users");
+        final HttpPost post = new HttpPost(
+                STACK.opennms().getBaseUrlExternal().toString() + "/opennms" + "/rest/users");
         post.setEntity(new StringEntity(new String(outputStream.toByteArray()), ContentType.APPLICATION_XML));
         Integer response = 0;
         try {
@@ -293,6 +312,7 @@ public class FileEditorIT {
 
     /**
      * User object creation method
+     * 
      * @param userId
      * @param username
      * @param userEmail
@@ -300,7 +320,8 @@ public class FileEditorIT {
      * @param roles
      * @return User Object
      */
-    private static OnmsUser createUser(String userId, String username, String userEmail, String userPasswordHash, String... roles) {
+    private static OnmsUser createUser(String userId, String username, String userEmail, String userPasswordHash,
+            String... roles) {
         final OnmsUser user = new OnmsUser();
         user.setUsername(userId);
         user.setFullName(username);
@@ -312,4 +333,3 @@ public class FileEditorIT {
     }
 
 }
-
