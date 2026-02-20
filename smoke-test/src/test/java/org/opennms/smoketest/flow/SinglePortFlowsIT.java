@@ -33,8 +33,6 @@ import org.opennms.smoketest.telemetry.Packets;
 import org.opennms.smoketest.telemetry.Sender;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Verifies that sending flow packets to a single port is dispatching the flows

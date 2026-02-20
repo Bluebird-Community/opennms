@@ -25,7 +25,7 @@ import static org.awaitility.Awaitility.with;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -54,10 +54,12 @@ import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 
 /**
- * Simple helper which sends a defined set of {@link FlowPacket}s to OpenNMS or Minion and afterwards verifies
+ * Simple helper which sends a defined set of {@link FlowPacket}s to OpenNMS or
+ * Minion and afterwards verifies
  * the data at the elastic endpoints.
  * <p>
- * Optionally, it can also run verifications before sending flows or check the results at the OpenNMS ReST endpoint as well.
+ * Optionally, it can also run verifications before sending flows or check the
+ * results at the OpenNMS ReST endpoint as well.
  *
  * @author mvrueden
  */
@@ -95,45 +97,34 @@ public class FlowTester {
 
     private JestClient client;
 
-    public FlowTester(InetSocketAddress elasticAddress, InetSocketAddress opennmsWebAddress, List<Delivery> deliveries) {
+    public FlowTester(InetSocketAddress elasticAddress, InetSocketAddress opennmsWebAddress,
+            List<Delivery> deliveries) {
         this.elasticRestAddress = Objects.requireNonNull(elasticAddress);
         this.deliveries = Objects.requireNonNull(deliveries);
         this.totalFlowCount = deliveries.stream().mapToInt(delivery -> delivery.packet.getFlowCount()).sum();
 
         if (totalFlowCount <= 0) {
-            throw new IllegalStateException("Cannot verify flow creation/procession, as total flow count is <= 0, but must be > 0");
+            throw new IllegalStateException(
+                    "Cannot verify flow creation/procession, as total flow count is <= 0, but must be > 0");
         }
-
-        if (opennmsWebAddress != null) {
-            final RestClient restclient = new RestClient(opennmsWebAddress);
-
-            // No flows should be present
-            runBefore.add(flowTester -> assertEquals(Long.valueOf(0L), restclient.getFlowCount(0L, System.currentTimeMillis())));
-
-
-            // Verify the flow count via the REST API
-            runAfter.add(flowTester -> {
-                with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
-                    .until(() -> restclient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount));
-            });
-        }
-
 
         if (opennmsWebAddress != null) {
             final RestClient restClient = new RestClient(opennmsWebAddress);
 
             // No flows should be present
-            runBefore.add((flowTester) -> assertEquals(Long.valueOf(0L), restClient.getFlowCount(0L, System.currentTimeMillis())));
-
+            runBefore.add((flowTester) -> assertEquals(Long.valueOf(0L),
+                    restClient.getFlowCount(0L, System.currentTimeMillis())));
 
             // Verify the flow count via the REST API
             runAfter.add((flowTester) -> with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
-                                     .until(() -> restClient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount)));
+                    .until(() -> restClient.getFlowCount(0L, System.currentTimeMillis()),
+                            equalTo((long) totalFlowCount)));
         }
     }
 
     public void verifyFlows() throws IOException {
-        final String elasticRestUrl = String.format("http://%s:%d", elasticRestAddress.getHostString(), elasticRestAddress.getPort());
+        final String elasticRestUrl = String.format("http://%s:%d", elasticRestAddress.getHostString(),
+                elasticRestAddress.getPort());
 
         // Build the Elastic Rest Client
         final JestClientFactory factory = new JestClientFactory();
@@ -149,7 +140,7 @@ public class FlowTester {
 
             // Group the packets by protocol
             final Map<NetflowVersion, List<Delivery>> delivieriesByProtocol = deliveries.stream()
-                                                                                        .collect(Collectors.groupingBy(delivery -> delivery.packet.getNetflowVersion()));
+                    .collect(Collectors.groupingBy(delivery -> delivery.packet.getNetflowVersion()));
             LOG.info("Verifying flows. Expecting to persist {} flows across protocols: {}",
                     totalFlowCount, delivieriesByProtocol.keySet());
 
@@ -163,7 +154,8 @@ public class FlowTester {
 
             for (NetflowVersion netflowVersion : delivieriesByProtocol.keySet()) {
                 final List<Delivery> deliveriesForProtocol = delivieriesByProtocol.get(netflowVersion);
-                final int numFlowsExpected = deliveriesForProtocol.stream().mapToInt(delivery -> delivery.packet.getFlowCount()).sum();
+                final int numFlowsExpected = deliveriesForProtocol.stream()
+                        .mapToInt(delivery -> delivery.packet.getFlowCount()).sum();
 
                 LOG.info("Verifying flows for {}", netflowVersion);
                 verify(() -> {
@@ -175,11 +167,14 @@ public class FlowTester {
                     final SearchResult response = client.execute(new Search.Builder(query)
                             .addIndex("netflow-*")
                             .build());
-                    LOG.info("Response {} with {} flow documents: {}", response.isSucceeded() ? "successful" : "failed", SearchResultUtils.getTotal(response), response.getJsonString());
-                    final boolean foundAllFlowsForProtocol = response.isSucceeded() && SearchResultUtils.getTotal(response) >= numFlowsExpected;
+                    LOG.info("Response {} with {} flow documents: {}", response.isSucceeded() ? "successful" : "failed",
+                            SearchResultUtils.getTotal(response), response.getJsonString());
+                    final boolean foundAllFlowsForProtocol = response.isSucceeded()
+                            && SearchResultUtils.getTotal(response) >= numFlowsExpected;
 
                     if (!foundAllFlowsForProtocol) {
-                        // If we haven't found them all yet, try sending all the packets for this protocol again.
+                        // If we haven't found them all yet, try sending all the packets for this
+                        // protocol again.
                         // We do this since the flows are UDP packages and aren't 100% reliable.
                         // This test is only concerned that they eventually do make their way into ES.
                         for (Delivery delivery : deliveriesForProtocol) {

@@ -35,7 +35,7 @@
     </listener>
 
     {# Only enable queue processing when Sentinel is not enabled. #}
-    {% if model.sentinels.isEmpty() %}
+    {% if model.getSentinels().isEmpty() %}
     <queue name="Netflow-5">
         <adapter name="Netflow-5-Adapter" class-name="org.opennms.netmgt.telemetry.protocols.netflow.adapter.netflow5.Netflow5Adapter" enabled="true">
         </adapter>
