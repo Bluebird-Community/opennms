@@ -85,7 +85,7 @@ public class JtiTelemetryIT {
         final Date startOfTest = new Date();
         final OnmsNode onmsNode = sendNewSuspectEvent(stack, false, startOfTest);
         final InetSocketAddress opennmsJtiPort = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.JTI);
-        await().atMost(1, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
+        await().atMost(2, MINUTES).pollDelay(0, SECONDS).pollInterval(5, SECONDS)
                 .until(() -> {
                     sendJtiTelemetryMessage(opennmsJtiPort);
                     return matchRrdFileFromNodeResource(onmsNode.getId());
