@@ -1,0 +1,54 @@
+<resource-types>
+    <resourceType name="ptpbaseSystemEntry" label="PTP System" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseSystemDomainEntry" label="PTP SystemDomain" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockCurrentDSEntry" label="PTP ClockCurrentDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockParentDSEntry" label="PTP ClockParentDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockDefaultDSEntry" label="PTP ClockDefaultDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockRunningEntry" label="PTP ClockRunning" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockTimePropertiesDSEntry" label="PTP ClockTimePropertiesDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockTransDefaultDSEntry" label="PTP ClockTransDefaultDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockPortEntry" label="PTP ClockPort" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockPortDSEntry" label="PTP ClockPortDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockPortRunningEntry" label="PTP ClockPortRunning" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockPortTransDSEntry" label="PTP ClockPortTransDS" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+    <resourceType name="ptpbaseClockPortAssociateEntry" label="PTP ClockPortAssociate" resourceLabel="${index}">
+        <persistenceSelectorStrategy class="org.opennms.netmgt.collection.support.PersistAllSelectorStrategy"/>
+        <storageStrategy class="org.opennms.netmgt.collection.support.IndexStorageStrategy"/>
+    </resourceType>
+</resource-types>
