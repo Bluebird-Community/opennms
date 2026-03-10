@@ -513,10 +513,8 @@
             "filters": {
                 "branches": {
                     "only": [
-                        "develop",
                         "/^master-.*/",
-                        "/^release-.*/",
-                        "/^foundation.*/"
+                        "/^release-.*/"
                     ]
                 },
                 "user_overridable": false
