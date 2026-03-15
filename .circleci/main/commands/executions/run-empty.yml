@@ -1,8 +1,0 @@
-commands:
-  run-empty:
-    description: "Run a simple ls command"
-    steps:
-      - run:
-          name: ls
-          command: |
-            ls
