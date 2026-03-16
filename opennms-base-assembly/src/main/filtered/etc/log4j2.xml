@@ -217,10 +217,6 @@
       <appender-ref ref="RoutingAppender"/>
       <appender-ref ref="\${console.daemon.output}"/>
     </logger>
-    <logger name="com.datastax.driver" additivity="false" level="INFO">
-      <appender-ref ref="RoutingAppender"/>
-      <appender-ref ref="\${console.daemon.output}"/>
-    </logger>
     <logger name="org.snmp4j.transport" additivity="false" level="ERROR">
       <appender-ref ref="RoutingAppender"/>
       <appender-ref ref="\${console.daemon.output}"/>

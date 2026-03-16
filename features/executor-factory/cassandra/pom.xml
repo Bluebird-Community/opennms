@@ -28,50 +28,8 @@
   </build>
   <dependencies>
     <dependency>
-        <groupId>org.opennms</groupId>
-        <artifactId>opennms-util</artifactId>
-    </dependency>
-    <!-- Needed for Cassandra -->
-    <dependency>
-      <groupId>org.opennms.dependencies</groupId>
-      <artifactId>jackson1-dependencies</artifactId>
-      <type>pom</type>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-all</artifactId>
-      <version>2.1.6</version>
-      <exclusions>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </exclusion>
-        <!-- snappy-java has OSGi loading problems because of JNI bits -->
-        <exclusion>
-          <groupId>org.xerial.snappy</groupId>
-          <artifactId>snappy-java</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.boundary</groupId>
-          <artifactId>high-scale-lib</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.raccoonfink</groupId>
-      <artifactId>high-scale-lib</artifactId>
-      <version>2.0.0</version>
+      <groupId>org.opennms</groupId>
+      <artifactId>opennms-util</artifactId>
     </dependency>
   </dependencies>
-  <repositories>
-    <repository>
-      <id>bluebird-releases</id>
-      <name>🚀 Maven Bluebird</name>
-      <url>https://repo.maven.bluebirdops.org/releases</url>
-    </repository>
-  </repositories>
 </project>

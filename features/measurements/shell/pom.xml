@@ -39,11 +39,6 @@
       <artifactId>org.opennms.features.measurements.api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.opennms.newts</groupId>
-      <artifactId>newts-api</artifactId>
-      <version>${newtsVersion}</version>
-    </dependency>
-    <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-dao-api</artifactId>
     </dependency>

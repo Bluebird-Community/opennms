@@ -25,6 +25,5 @@
     <module>opennms-identity</module>
     <module>service-registry</module>
     <module>kv-store</module>
-    <module>distributed-cassandra</module>
   </modules>
 </project>

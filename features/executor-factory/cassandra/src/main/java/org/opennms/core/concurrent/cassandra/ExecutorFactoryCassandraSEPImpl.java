@@ -22,29 +22,18 @@
 package org.opennms.core.concurrent.cassandra;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.cassandra.concurrent.JMXEnabledSharedExecutorPool;
-import org.apache.cassandra.concurrent.SharedExecutorPool;
-import org.apache.cassandra.config.Config;
 import org.opennms.core.concurrent.ExecutorFactory;
+import org.opennms.core.concurrent.LogPreservingThreadFactory;
 
 /**
- * This {@link ExecutorFactory} returns {@link ExecutorService} instances that are 
- * implemented with Cassandra's high performance, low-context-switching 
- * {@link SharedExecutorPool}.
+ * This {@link ExecutorFactory} returns {@link ExecutorService} instances backed
+ * by a standard {@link ThreadPoolExecutor} with named threads.
  */
 public class ExecutorFactoryCassandraSEPImpl implements ExecutorFactory {
-	/**
-	 * Create a shared executor pool for all of the threads used in this class
-	 * 
-	 * TODO: Make this into a map of separate pools per daemon?
-	 */
-	public static final JMXEnabledSharedExecutorPool SHARED = new JMXEnabledSharedExecutorPool("OpenNMS");
-
-	static {
-		// Turn Cassandra client mode on so that we can use the {@link SharedExecutorPool} classes.
-		Config.setClientMode(true);
-	}
 
 	@Override
 	public ExecutorService newExecutor(String daemonName, String executorName) {
@@ -58,7 +47,13 @@ public class ExecutorFactoryCassandraSEPImpl implements ExecutorFactory {
 
 	@Override
 	public ExecutorService newExecutor(int threads, int queueSize, String daemonName, String executorName) {
-		// Yes, the last two arguments are supposed to be reversed
-		return SHARED.newExecutor(threads, queueSize, executorName, daemonName);
+		return new ThreadPoolExecutor(
+			threads,
+			threads,
+			1000L,
+			TimeUnit.MILLISECONDS,
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new LogPreservingThreadFactory(daemonName + "-" + executorName, Integer.MAX_VALUE)
+		);
 	}
 }

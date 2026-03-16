@@ -64,11 +64,6 @@ import org.opennms.netmgt.model.ResourceId;
 import org.opennms.netmgt.model.ResourcePath;
 import org.opennms.netmgt.model.RrdGraphAttribute;
 import org.opennms.netmgt.timeseries.TimeseriesStorageManagerImpl;
-import org.opennms.newts.api.Measurement;
-import org.opennms.newts.api.Resource;
-import org.opennms.newts.api.Results.Row;
-import org.opennms.newts.api.Timestamp;
-
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -264,11 +259,6 @@ public class TimeseriesFetchStrategyTest {
         }
         Set<OnmsAttribute> attributes = resource.getAttributes();
         attributes.add(new RrdGraphAttribute(attr, "", newtsResourceId));
-
-        Resource res = new Resource(newtsResourceId);
-        Row<Measurement> row = new Row<Measurement>(Timestamp.fromEpochSeconds(0), res);
-        Measurement measurement = new Measurement(Timestamp.fromEpochSeconds(0), res, label, 0.0d);
-        row.addElement(measurement);
 
         String name = ds != null ? ds : attr;
 

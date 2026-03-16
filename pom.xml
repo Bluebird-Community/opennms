@@ -1732,8 +1732,6 @@
     <bsonVersion>3.5.0</bsonVersion>
     <caffeineVersion>2.8.0</caffeineVersion>
     <camelVersion>2.21.5</camelVersion>
-    <!-- Match (or beat) Newts version -->
-    <cassandraVersion>4.17.0</cassandraVersion>
     <cloverVersion>3.2.0</cloverVersion>
     <commonsBeanutilsVersion>1.11.0</commonsBeanutilsVersion>
     <commonsChainVersion>1.2</commonsChainVersion>
@@ -1908,8 +1906,6 @@
     <mockitoVersion>3.12.4</mockitoVersion>
     <netty3Version>3.10.6.Final</netty3Version>
     <netty4Version>4.1.128.Final</netty4Version>
-    <newtsVersion>3.0.0</newtsVersion>
-    <newtsOsgiVersion>3.0.0</newtsOsgiVersion>
     <paxCdiVersion>1.1.4</paxCdiVersion>
     <paxExamVersion>4.13.5</paxExamVersion>
     <pktsVersion>3.0.10</pktsVersion>
@@ -2366,7 +2362,7 @@
         <build.skip.tarball>true</build.skip.tarball>
       </properties>
       <modules>
-        <module>smoke-test</module>
+        <module>e2e-tests</module>
       </modules>
     </profile>
     <profile>

@@ -66,7 +66,6 @@ import org.opennms.smoketest.utils.TestContainerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -91,7 +90,6 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     public static final String DB_ALIAS = "db";
     public static final String KAFKA_ALIAS = "kafka";
     public static final String ELASTIC_ALIAS = "elastic";
-    public static final String CASSANDRA_ALIAS = "cassandra";
 
     public static final String ADMIN_USER = "admin";
     public static final String ADMIN_PASSWORD = "admin";
@@ -152,9 +150,6 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         this.overlay = writeOverlay();
 
         String containerCommand = "-s";
-        if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
-            this.withEnv("OPENNMS_TIMESERIES_STRATEGY", model.getTimeSeriesStrategy().name().toLowerCase());
-        }
 
         final Integer[] exposedPorts = networkProtocolMap.entrySet().stream()
                 .filter(e -> InternetProtocol.TCP.equals(e.getKey().getIpProtocol()))
@@ -192,13 +187,6 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
                 .withEnv("OPENNMS_DBNAME", "opennms")
                 .withEnv("OPENNMS_DBUSER", "opennms")
                 .withEnv("OPENNMS_DBPASS", "opennms")
-                // These are expected to be set when using Newts
-                // We also set the corresponding properties explicitly in our overlay
-                .withEnv("OPENNMS_CASSANDRA_HOSTNAMES", CASSANDRA_ALIAS)
-                .withEnv("OPENNMS_CASSANDRA_KEYSPACE", "newts")
-                .withEnv("OPENNMS_CASSANDRA_PORT", Integer.toString(CassandraContainer.CQL_PORT))
-                .withEnv("OPENNMS_CASSANDRA_USERNAME", "cassandra")
-                .withEnv("OPENNMS_CASSANDRA_USERNAME", "cassandra")
                 .withEnv("JAVA_OPTS", javaOpts)
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases(ALIAS)
@@ -388,12 +376,6 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             props.put("org.opennms.rrd.strategyClass", "org.opennms.netmgt.rrd.rrdtool.MultithreadedJniRrdStrategy");
             props.put("org.opennms.rrd.interfaceJar", "/usr/share/java/jrrd2.jar");
             props.put("opennms.library.jrrd2", "/usr/lib/jni/libjrrd2.so");
-        } else if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
-            // Use Newts
-            props.put("org.opennms.timeseries.strategy", "newts");
-            props.put("org.opennms.newts.config.hostname", CASSANDRA_ALIAS);
-            props.put("org.opennms.newts.config.port", Integer.toString(CassandraContainer.CQL_PORT));
-            props.put("org.opennms.rrd.storeByForeignSource", Boolean.TRUE.toString());
         }
 
         if (model.isJaegerEnabled()) {

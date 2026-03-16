@@ -21,10 +21,6 @@
  */
 package org.opennms.smoketest.stacks;
 
-/**
- * RRD vs Newts
- */
 public enum TimeSeriesStrategy {
-    RRD,
-    NEWTS
+    RRD
 }

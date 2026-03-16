@@ -73,7 +73,6 @@ public class UsageStatisticsReportDTOTest {
             "\"availableProcessors\":null," +
             "\"businessEdgeCount\":0," +
             "\"coreFlowsPersisted\":0," +
-            "\"coreNewtsSamplesInserted\":0," +
             "\"coreQueuedUpdatesCompleted\":0," +
             "\"coreTssWritesCompleted\":0," +
             "\"cpuUtilization\":null," +

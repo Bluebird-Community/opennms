@@ -21,7 +21,6 @@
  */
 package org.opennms.netmgt.timeseries.sampleread;
 
-import static org.opennms.netmgt.timeseries.sampleread.aggregation.NewtsConverterUtils.samplesToNewtsRowIterator;
 
 import java.io.File;
 import java.time.Duration;
@@ -294,7 +293,7 @@ public class TimeseriesFetchStrategy implements MeasurementFetchStrategy {
                         .metric(metric)
                         .currentSources(currentSources)
                         .lag(lag)
-                        .build().process(samplesToNewtsRowIterator(timeSeriesData));
+                        .build().process(timeSeriesData);
             }
             allDataPoints.put(source, timeSeriesData.getDataPoints());
         }

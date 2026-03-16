@@ -22,6 +22,5 @@
 package org.opennms.smoketest.stacks;
 
 public enum BlobStoreStrategy {
-    NEWTS_CASSANDRA,
     NOOP
 }

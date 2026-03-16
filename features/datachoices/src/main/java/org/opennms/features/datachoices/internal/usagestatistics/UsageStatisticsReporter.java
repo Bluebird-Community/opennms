@@ -105,7 +105,6 @@ public class UsageStatisticsReporter implements StateChangeHandler {
     private static final String JMX_OBJ_OPENNMS_POLLERD = "OpenNMS:Name=Pollerd";
     private static final String JMX_OBJ_OPENNMS_EVENTLOGS_PROCESS = "org.opennms.netmgt.eventd:name=eventlogs.process,type=timers";
     private static final String JMX_OBJ_OPENNMS_FLOWS_PERSISTED = "org.opennms.netmgt.flows:name=flowsPersisted,type=meters";
-    private static final String JMX_OBJ_OPENNMS_REPO_SAMPLE_INSERTED = "org.opennms.newts:name=repository.samples-inserted,type=meters";
     private static final String JMX_OBJ_OPENNMS_QUEUED = "OpenNMS:Name=Queued";
     private static final String JMX_OBJ_OPENNMS_TSS = "org.opennms.timeseries:name=samples.write.integration";
     private static final String JMX_ATTR_FREE_PHYSICAL_MEMORY_SIZE = "FreePhysicalMemorySize";
@@ -413,10 +412,6 @@ public class UsageStatisticsReporter implements StateChangeHandler {
         Object coreFlowsPersistedObj = getJmxAttribute(JMX_OBJ_OPENNMS_FLOWS_PERSISTED, JMX_ATTR_COUNT);
         if (coreFlowsPersistedObj != null) {
             usageStatisticsReport.setCoreFlowsPersisted((long) coreFlowsPersistedObj);
-        }
-        Object coreNewtsSamplesInsertedObj = getJmxAttribute(JMX_OBJ_OPENNMS_REPO_SAMPLE_INSERTED, JMX_ATTR_COUNT);
-        if (coreNewtsSamplesInsertedObj != null) {
-            usageStatisticsReport.setCoreNewtsSamplesInserted((long) coreNewtsSamplesInsertedObj);
         }
         Object coreQueuedUpdatesCompletedObj = getJmxAttribute(JMX_OBJ_OPENNMS_QUEUED, JMX_ATTR_UPDATES_COMPLETED);
         if (coreQueuedUpdatesCompletedObj != null) {

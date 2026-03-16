@@ -16,7 +16,6 @@
     <module>atomikos</module>
     <module>camel</module>
     <module>camel-test</module>
-    <module>cassandra-test</module>
     <module>cxf</module>
     <module>dnsjava</module>
     <module>drools</module>
@@ -44,7 +43,6 @@
     <module>liquibase</module>
     <module>mina</module>
     <module>netty</module>
-    <module>newts</module>
     <module>oia</module>
     <module>owasp</module>
     <module>pax-exam</module>

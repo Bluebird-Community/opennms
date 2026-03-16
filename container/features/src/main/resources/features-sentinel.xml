@@ -9,9 +9,6 @@
     <repository>mvn:${project.groupId}/${project.artifactId}/${project.version}/xml/core</repository>
     <repository>mvn:${project.groupId}/${project.artifactId}/${project.version}/xml/features</repository>
 
-    <!-- Newts Features -->
-    <repository>mvn:org.opennms.newts/newts-karaf/${newtsVersion}/xml/features</repository>
-
     <!-- ActiveMQ service features -->
     <repository>mvn:org.apache.karaf.features/enterprise/${karafVersion}/xml/features</repository>
     <repository>mvn:org.apache.activemq/activemq-karaf/${activemqVersion}/xml/features</repository>
@@ -217,14 +214,6 @@
         <bundle>mvn:org.opennms.features.distributed/coordination-shell/${project.version}</bundle>
     </feature>
 
-    <!-- Newts -->
-    <feature name="sentinel-newts" description="OpenNMS :: Sentinel :: Newts" version="${project.version}">
-        <feature version="${guavaOsgiVersion}" prerequisite="true">guava</feature>
-        <feature version="${cassandraVersion}" prerequisite="true">cassandra-driver</feature>
-        <feature>sentinel-core</feature>
-        <feature>opennms-newts</feature>
-    </feature>
-
     <feature name="sentinel-kvstore-api"
              description="OpenNMS :: Features :: Distributed :: Key Value Store :: API"
              version="${project.version}">
@@ -239,29 +228,6 @@
         <bundle>mvn:org.opennms.features.distributed/org.opennms.features.distributed.kv-store.blob.no-op/${project.version}</bundle>
     </feature>
     
-    <feature name="sentinel-distributed-cassandra-api"
-             description="OpenNMS :: Features :: Distributed :: Cassandra :: API"
-             version="${project.version}">
-        <bundle>mvn:org.opennms.features.distributed/org.opennms.features.distributed.cassandra.api/${project.version}</bundle>
-    </feature>
-    
-    <feature name="sentinel-newts-cassandra"
-             description="OpenNMS :: Features :: Distributed :: Cassandra :: Newts Impl." version="${project.version}">
-        <feature version="${cassandraVersion}" prerequisite="true">cassandra-driver</feature>
-        <feature>sentinel-newts</feature>
-        <feature>sentinel-distributed-cassandra-api</feature>
-        <bundle>mvn:org.opennms.features.distributed/org.opennms.features.distributed.cassandra.newts-impl/${project.version}</bundle>
-    </feature>
-
-    <feature name="sentinel-blobstore-cassandra"
-             description="OpenNMS :: Features :: Distributed :: Key Value Store :: Blob :: Cassandra"
-             version="${project.version}">
-        <feature>sentinel-newts-cassandra</feature>
-        <feature>opennms-blobstore-shell</feature>
-        <feature>sentinel-kvstore-api</feature>
-        <bundle>mvn:org.opennms.features.distributed/org.opennms.features.distributed.kv-store.blob.cassandra/${project.version}</bundle>
-    </feature>
-
     <feature name="sentinel-jsonstore-postgres"
              description="OpenNMS :: Features :: Distributed :: Key Value Store :: JSON :: Postgres"
              version="${project.version}">

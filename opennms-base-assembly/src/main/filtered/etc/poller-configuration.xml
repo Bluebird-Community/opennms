@@ -2,59 +2,6 @@
    <node-outage status="on" pollAllIfNoCriticalServiceDefined="true">
       <critical-service name="ICMP" />
    </node-outage>
-   <package name="cassandra-via-jmx">
-      <filter>IPADDR != '0.0.0.0'</filter>
-      <rrd step="300">
-         <rra>RRA:AVERAGE:0.5:1:2016</rra>
-         <rra>RRA:AVERAGE:0.5:12:1488</rra>
-         <rra>RRA:AVERAGE:0.5:288:366</rra>
-         <rra>RRA:MAX:0.5:288:366</rra>
-         <rra>RRA:MIN:0.5:288:366</rra>
-      </rrd>
-      <service name="JMX-Cassandra" interval="300000" user-defined="false" status="on">
-         <parameter key="port" value="${requisition:port|detector:port|7199}" />
-         <parameter key="retry" value="${requisition:poller-retry|requisition:retry|detector:retry|2}" />
-         <parameter key="timeout" value="${requisition:poller-timeout|requisition:timeout|detector:timeout|3000}" />
-         <parameter key="protocol" value="${requisition:protocol|detector:protocol|rmi}" />
-         <parameter key="urlPath" value="${requisition:urlPath|detector:urlPath|/jmxrmi}" />
-         <parameter key="rrd-base-name" value="jmx-cassandra" />
-         <parameter key="ds-name" value="jmx-cassandra" />
-         <parameter key="thresholding-enabled" value="true" />
-         <parameter key="factory" value="${requisition:factory|detector:factory|PASSWORD_CLEAR}" />
-         <parameter key="username" value="${requisition:username|detector:username|cassandra-username}" />
-         <parameter key="password" value="${requisition:password|detector:password|cassandra-password}" />
-         <parameter key="rrd-repository" value="${install.share.dir}/rrd/response" />
-         <parameter key="beans.storage" value="${requisition:beans.storage|detector:beans.storage|org.apache.cassandra.db:type=StorageService}" />
-         <parameter key="tests.operational" value="${requisition:tests.operational|detector:tests.operational|storage.OperationMode == 'NORMAL'}" />
-         <parameter key="tests.joined" value="${requisition:tests.joined|detector:tests.joined|storage.Joined}" />
-      </service>
-      <service name="JMX-Cassandra-Newts" interval="300000" user-defined="false" status="on">
-         <parameter key="port" value="${requisition:port|detector:port|7199}" />
-         <parameter key="retry" value="${requisition:poller-retry|requisition:retry|detector:retry|2}" />
-         <parameter key="timeout" value="${requisition:poller-timeout|requisition:timeout|detector:timeout|3000}" />
-         <parameter key="protocol" value="${requisition:protocol|detector:protocol|rmi}" />
-         <parameter key="urlPath" value="${requisition:urlPath|detector:urlPath|/jmxrmi}" />
-         <parameter key="rrd-base-name" value="jmx-cassandra-newts" />
-         <parameter key="ds-name" value="jmx-cassandra-newts" />
-         <parameter key="thresholding-enabled" value="true" />
-         <parameter key="factory" value="${requisition:factory|detector:factory|PASSWORD_CLEAR}" />
-         <parameter key="username" value="${requisition:username|detector:username|cassandra-username}" />
-         <parameter key="password" value="${requisition:password|detector:password|cassandra-password}" />
-         <parameter key="rrd-repository" value="${install.share.dir}/rrd/response" />
-         <parameter key="beans.samples" value="${requisition:beans.samples|detector:beans.samples|org.apache.cassandra.db:type=ColumnFamilies,keyspace=newts,columnfamily=samples}" />
-         <parameter key="tests.samples" value="${requisition:tests.samples|detector:tests.samples|samples.ColumnFamilyName == 'samples'}" />
-         <parameter key="beans.terms" value="${requisition:beans.terms|detector:beans.terms|org.apache.cassandra.db:type=ColumnFamilies,keyspace=newts,columnfamily=terms}" />
-         <parameter key="tests.terms" value="${requisition:tests.terms|detector:tests.terms|terms.ColumnFamilyName == 'terms'}" />
-         <parameter key="beans.resource_attributes" value="${requisition:beans.resource_attributes|detector:beans.resource_attributes|org.apache.cassandra.db:type=ColumnFamilies,keyspace=newts,columnfamily=resource_attributes}" />
-         <parameter key="tests.resource_attributes" value="${requisition:tests.resource_attributes|detector:tests.resource_attributes|resource_attributes.ColumnFamilyName == 'resource_attributes'}" />
-         <parameter key="beans.resource_metrics" value="${requisition:beans.resource_metrics|detector:beans.resource_metrics|org.apache.cassandra.db:type=ColumnFamilies,keyspace=newts,columnfamily=resource_metrics}" />
-         <parameter key="tests.resource_metrics" value="${requisition:tests.resource_metrics|detector:tests.resource_metrics|resource_metrics.ColumnFamilyName == 'resource_metrics'}" />
-      </service>
-      <downtime begin="0" end="300000" interval="30000" /><!-- 30s, 0, 5m -->
-      <downtime begin="300000" end="43200000" interval="300000" /><!-- 5m, 5m, 12h -->
-      <downtime begin="43200000" end="432000000" interval="600000" /><!-- 10m, 12h, 5d -->
-      <downtime begin="432000000" interval="3600000" /><!-- 1h, 5d -->
-   </package>
    <package name="example1">
       <filter>IPADDR != '0.0.0.0'</filter>
       <include-range begin="1.1.1.1" end="254.254.254.254" />
@@ -364,8 +311,6 @@
       <downtime begin="0" interval="300000" /><!-- 300s -->
    </package>
 
-   <monitor service="JMX-Cassandra" class-name="org.opennms.netmgt.poller.monitors.Jsr160Monitor" />
-   <monitor service="JMX-Cassandra-Newts" class-name="org.opennms.netmgt.poller.monitors.Jsr160Monitor" />
    <monitor service="ICMP" class-name="org.opennms.netmgt.poller.monitors.IcmpMonitor" />
    <monitor service="StrafePing" class-name="org.opennms.netmgt.poller.monitors.StrafePingMonitor" />
    <monitor service="HTTP" class-name="org.opennms.netmgt.poller.monitors.HttpMonitor" />

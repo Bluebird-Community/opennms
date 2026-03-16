@@ -42,7 +42,6 @@ import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.stacks.StackModel;
-import org.opennms.smoketest.stacks.TimeSeriesStrategy;
 import org.opennms.smoketest.telemetry.FlowTestBuilder;
 import org.opennms.smoketest.telemetry.FlowTester;
 import org.opennms.smoketest.telemetry.Packets;
@@ -71,7 +70,6 @@ public abstract class AbstractFlowIT {
             .withMinion()
             .withSentinel()
             .withIpcStrategy(getIpcStrategy())
-            .withTimeSeriesStrategy(TimeSeriesStrategy.NEWTS)
             .withTelemetryProcessing()
             .build());
 

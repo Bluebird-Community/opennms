@@ -49,7 +49,6 @@ import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
 import org.opennms.netmgt.timeseries.TimeseriesStorageManager;
 import org.opennms.netmgt.timeseries.stats.StatisticsCollector;
 import org.opennms.netmgt.timeseries.stats.StatisticsCollectorImpl;
-import org.opennms.newts.api.Resource;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Throwables;
@@ -96,7 +95,6 @@ public class RingBufferTimeseriesWriterTest {
      */
     @Test
     public void samplesAreDroppedWhenRingBufferIsFull() throws Exception {
-        Resource x = new Resource("x");
         int ringBufferSize = 1024;
         int numWriterThreads = 8;
 

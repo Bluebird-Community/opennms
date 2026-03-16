@@ -30,7 +30,6 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.opennms.smoketest.containers.OpenNMSCassandraContainer;
 import org.opennms.smoketest.containers.ElasticsearchContainer;
 import org.opennms.smoketest.containers.JaegerContainer;
 import org.opennms.smoketest.containers.LocalOpenNMS;
@@ -99,8 +98,6 @@ public final class OpenNMSStack implements TestRule {
 
     private final ElasticsearchContainer elasticsearchContainer;
 
-    private final OpenNMSCassandraContainer cassandraContainer;
-
     private final List<MinionContainer> minionContainers;
 
     private final List<SentinelContainer> sentinelContainers;
@@ -127,7 +124,6 @@ public final class OpenNMSStack implements TestRule {
         jaegerContainer = null;
         elasticsearchContainer = null;
         kafkaContainer = null;
-        cassandraContainer = null;
         opennmsContainer = new LocalOpenNMS();
         minionContainers = Collections.EMPTY_LIST;
         sentinelContainers = Collections.EMPTY_LIST;
@@ -164,15 +160,6 @@ public final class OpenNMSStack implements TestRule {
             chain = chain.around(kafkaContainer);
         } else {
             kafkaContainer = null;
-        }
-
-        if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
-            cassandraContainer = new OpenNMSCassandraContainer();
-            cassandraContainer.withNetwork(Network.SHARED)
-                    .withNetworkAliases(OpenNMSContainer.CASSANDRA_ALIAS);
-            chain = chain.around(cassandraContainer);
-        } else {
-            cassandraContainer = null;
         }
 
         opennmsContainer = new OpenNMSContainer(model, model.getOpenNMS());

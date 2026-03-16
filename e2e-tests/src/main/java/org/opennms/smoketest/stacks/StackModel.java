@@ -266,10 +266,6 @@ public class StackModel {
             if (telemetryProcessingEnabled) {
                 // Enable Elasticsearch when telemetry/flows are enabled
                 elasticsearchEnabled = true;
-                // If Sentinels are being used, then enable Newts
-                if (!sentinels.isEmpty()) {
-                    timeSeriesStrategy = TimeSeriesStrategy.NEWTS;
-                }
             }
             return new StackModel(this);
         }

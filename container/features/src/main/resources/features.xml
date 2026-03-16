@@ -12,8 +12,6 @@
     <repository>mvn:org.apache.karaf.features/standard/${karafVersion}/xml/features</repository>
     <repository>mvn:org.apache.karaf.features/enterprise/${karafVersion}/xml/features</repository>
 
-    <!-- Newts Features -->
-    <repository>mvn:org.opennms.newts/newts-karaf/${newtsVersion}/xml/features</repository>
     <feature name="opennms-camel-amqp" version="${project.version}" description="OpenNMS :: Features :: AMQP :: Camel Wrapper">
         <!-- start this early so camel-amqp doesn't use its old version -->
         <bundle start-level="${earlyStartLevel}">mvn:org.apache.qpid/proton-j/0.34.0</bundle>
@@ -2052,17 +2050,6 @@
         <bundle>mvn:org.opennms.features.scv/org.opennms.features.scv.rest/${project.version}</bundle>
     </feature>
 
-    <feature name="opennms-newts-api" description="OpenNMS :: Newts API" version="${project.version}">
-        <bundle dependency="true">mvn:com.fasterxml.jackson.core/jackson-core/${jackson2Version}</bundle>
-        <bundle dependency="true">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson2Version}</bundle>
-        <bundle dependency="true">mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson2Version}</bundle>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guavaVersion}</bundle>
-        <bundle dependency="true">mvn:com.google.guava/failureaccess/${guavaFailureaccessVersion}</bundle>
-        <bundle dependency="true">mvn:org.apache.commons/commons-jexl3/${commonsJexl3Version}</bundle>
-        <bundle>mvn:org.opennms.newts/newts-api/${newtsVersion}</bundle>
-        <bundle>mvn:org.opennms.newts/newts-aggregate/${newtsVersion}</bundle>
-    </feature>
-
     <feature name="opennms-timeseries-api" description="OpenNMS :: Timeseries Storage API" version="${project.version}">
         <feature>dropwizard-metrics</feature>
         <feature version="${guavaOsgiVersion}" prerequisite="true">guava</feature>
@@ -2073,7 +2060,6 @@
         <feature>opennms-core-ipc-rpc-api</feature>
         <feature version="${opennmsApiVersion}">opennms-integration-api</feature>
         <feature>opennms-mate-impl</feature>
-        <feature>opennms-newts-api</feature>
 
         <bundle dependency="true">mvn:com.lmax/disruptor/${lmaxDisruptorVersion}</bundle>
         <bundle dependency="true">wrap:mvn:net.agkn/hll/${hllVersion}</bundle>
@@ -2087,27 +2073,6 @@
         <feature>opennms-timeseries-api</feature>
         <bundle dependency="true">wrap:mvn:com.google.re2j/re2j/${re2jVersion}</bundle>
         <bundle >mvn:org.opennms.features/inmemory-timeseries-plugin/${project.version}</bundle>
-    </feature>
-
-    <feature name="opennms-newts" description="OpenNMS :: Newts" version="${project.version}">
-        <feature>commons-pool2</feature>
-        <feature>groovy</feature>
-        <feature version="${guavaOsgiVersion}" prerequisite="true">guava</feature>
-        <feature>opennms-measurements-api</feature>
-        <feature>opennms-collection-api</feature>
-        <feature>opennms-dao-api</feature>
-        <feature>newts-cassandra</feature>
-        <feature>newts-cassandra-search</feature>
-        <feature>fst</feature>
-
-        <bundle dependency="true">wrap:mvn:com.googlecode.concurrent-trees/concurrent-trees/${concurrentTreesVersion}</bundle>
-        <bundle dependency="true">mvn:com.lmax/disruptor/${lmaxDisruptorVersion}</bundle>
-        <bundle dependency="true">wrap:mvn:com.swrve/rate-limited-logger/${rateLimitedLoggerVersion}</bundle>
-        <bundle dependency="true">mvn:redis.clients/jedis/2.8.1</bundle>
-        <bundle dependency="true">mvn:args4j/args4j/${args4jVersion}</bundle>
-
-        <bundle>mvn:org.opennms.features.collection/org.opennms.features.collection.persistence.osgi/${project.version}</bundle>
-        <bundle>mvn:org.opennms.features/org.opennms.features.newts/${project.version}</bundle>
     </feature>
 
     <feature name="opennms-grpc-exporter" description="OpenNMS :: Grpc :: Exporter" version="${project.version}">

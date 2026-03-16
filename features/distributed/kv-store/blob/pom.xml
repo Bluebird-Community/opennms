@@ -14,7 +14,6 @@
         <module>in-memory</module>
         <module>blob-shell</module>
         <module>no-op</module>
-        <module>cassandra</module>
         <module>postgres-impl</module>
         <module>blob-itests</module>
     </modules>

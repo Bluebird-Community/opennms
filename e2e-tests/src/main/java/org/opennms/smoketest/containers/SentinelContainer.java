@@ -52,7 +52,6 @@ import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.JsonStoreStrategy;
 import org.opennms.smoketest.stacks.SentinelProfile;
 import org.opennms.smoketest.stacks.StackModel;
-import org.opennms.smoketest.stacks.TimeSeriesStrategy;
 import org.opennms.smoketest.utils.DevDebugUtils;
 import org.opennms.smoketest.utils.OverlayUtils;
 import org.opennms.smoketest.utils.RestHealthClient;
@@ -62,7 +61,6 @@ import org.opennms.smoketest.utils.TestContainerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -186,13 +184,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                         .put("elasticUrl", "http://" + OpenNMSContainer.ELASTIC_ALIAS + ":9200")
                         .build());
 
-        if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
-            writeProps(etc.resolve("org.opennms.newts.config.cfg"),
-                    ImmutableMap.<String,String>builder()
-                            .put("hostname", OpenNMSContainer.CASSANDRA_ALIAS)
-                            .put("port", Integer.toString(CassandraContainer.CQL_PORT))
-                            .build());
-        }
     }
 
     public List<String> getFeaturesOnBoot() {
@@ -205,9 +196,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         } else if (IpcStrategy.JMS.equals(model.getIpcStrategy())) {
             featuresOnBoot.add("sentinel-jms");
         }
-        if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
-            featuresOnBoot.add("sentinel-newts");
-        }
         if (model.isTelemetryProcessingEnabled()) {
             featuresOnBoot.add("sentinel-flows");
             featuresOnBoot.add("sentinel-telemetry-bmp");
@@ -219,9 +207,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         switch (model.getBlobStoreStrategy()) {
             case NOOP:
                 featuresOnBoot.add("sentinel-blobstore-noop");
-                break;
-            case NEWTS_CASSANDRA:
-                featuresOnBoot.add("sentinel-blobstore-cassandra");
                 break;
         }
 
