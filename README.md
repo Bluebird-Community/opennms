@@ -8,31 +8,33 @@ Highly customizable and scalable, BluebirdOps integrates with your business appl
 
 * **Full inventory management**
 
-	Flexible provisioning system provides many ways to interoperate with configuration management systems.
+  Flexible provisioning system provides many ways to interoperate with configuration management systems.
 
 * **Extensive data collection**
 
-	Works with many industry-standard data collection protocols with no need to write or maintain third-party plugins: SNMP, JSON, WinRM, XML, SQL, JMX, SFTP, FTP, JDBC, HTTP, HTTPS, VMware, WS-Management, Prometheus.
+  Works with many industry-standard data collection protocols with no need to write or maintain third-party plugins: SNMP, JSON, WinRM, XML, SQL, JMX, SFTP, FTP, JDBC, HTTP, HTTPS, VMware, WS-Management, Prometheus.
 
 * **Robust traffic management**
 
-	Supports the following flow protocols: (NetFlow v5/v9, IPFIX, sFlow). 300,000+ flows/sec. BGP Monitoring support implementing the OpenBMP standards for BGP messages and metrics. Deep-dive analysis, enterprise reporting.
+  Supports the following flow protocols: (NetFlow v5/v9, IPFIX, sFlow). 300,000+ flows/sec.
+  BGP Monitoring support implementing the OpenBMP standards for BGP messages and metrics. Deep-dive analysis, enterprise reporting.
 
 * **Digital experience monitoring**
 
-	 Use the BluebirdOps Minion to monitor a service’s latency and availability from different perspectives.
+  Use the BluebirdOps Minion to monitor a service’s latency and availability from different perspectives.
 
 * **Robust configuration**
 
-	Configure most features through the web UI or XML scripting, including thresholding, provisioning, event and flow management, service monitoring, and performance measurement.
+  Configure most features through the web UI or XML scripting, including thresholding, provisioning, event and flow management, service monitoring, and performance measurement.
 
 * **Scalability**
 
-	Scale through Sentinels for flow persistence, Minions for Flow, BMP, SNMP trap, and Syslog ingest, and embedded ActiveMQ to Kafka message brokers.
+  Scale through Sentinels for flow persistence, Minions for Flow, BMP, SNMP trap, and Syslog ingest, and embedded ActiveMQ to Kafka message brokers.
 
 * **Enterprise reporting and  visualization**
 
-	Customizable dashboards that you can export as a PDF. Resource graphs, database reports, charts. Define and customize complex layered topologies to integrate topology maps into your service problem management workflow.
+  Customizable dashboards that you can export as a PDF. 
+  Resource graphs, database reports, charts. Define and customize complex layered topologies to integrate topology maps into your service problem management workflow.
 
 ## 👩‍🏭 Installation
 
@@ -90,7 +92,7 @@ opennms/horizon                 latest                    0539bff17aa0   51 seco
 ### 📦 RPM and DEB Packages
 
 You need to run `make` before you can create RPM and DEB packages.
-All DEB and RPM packages for Core, Minion and Sentinel can be created with the shortcut.
+All DEB and RPM packages for Core, Minion, and Sentinel can be created with the shortcut.
 
 ```console
 make all-pkgs
@@ -112,15 +114,14 @@ make core-pkg-deb \
 [![Hosted By: Cloudsmith](https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=for-the-badge)](https://cloudsmith.com)
 
 Package repository hosting is graciously provided by  [Cloudsmith](https://cloudsmith.com).
-Cloudsmith is the only fully hosted, cloud-native, universal package management solution, that
-enables your organization to create, store and share packages in any format, to any place, with total
-confidence.
+Cloudsmith is the only fully hosted, cloud-native, universal package management solution that enables your organization to create, store, and share packages in any format, to any place, with total confidence.
 
 ## Licenses
 
 The BlueBirdOps software, as distributed here, is Copyright © 2026 by the BlueBirdOps contributors.
 
-BlueBirdOps is a derivative work, containing original code, included code, and modified code that was published under the GNU Affero General Public License or a compatible license. Please see the source code for detailed copyright notices, but some notable copyright holders are listed below:
+BlueBirdOps is a derivative job, containing original code, included code, and modified code that was published under the GNU Affero General Public License or a compatible license.
+Please see the source code for detailed copyright notices, but some notable copyright holders are listed below:
 
 * The OpenNMS Horizon 34.x code base is Copyright © 2002-2026 by The OpenNMS Group, Inc.
 * Source code files whose comments list other copyright holders are as indicated therein.

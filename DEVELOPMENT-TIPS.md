@@ -395,6 +395,6 @@ Then, for each relevant branch (`foundation-2023`, `foundation-2024`, etc.), upd
 * [core Dockerfile](opennms-container/core/Dockerfile)
 * [minion Dockerfile](opennms-container/minion/Dockerfile)
 * [sentinel Dockerfile](opennms-container/sentinel/Dockerfile)
-* [smoke test](smoke-test/src/main/java/org/opennms/smoketest/containers/MockCloudContainer.java)
+* [smoke test](e2e-tests/src/main/java/org/opennms/smoketest/containers/MockCloudContainer.java)
 
 Someday we'll get around to parameterizing this so it's defined in a single file. 😅

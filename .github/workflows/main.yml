@@ -35,7 +35,7 @@ jobs:
           make
       - name: Run quick smoke test
         run: |
-          make quick-smoke
+          make smoke
       - name: Publish Quick Smoke Test Report
         if: success() || failure()
         uses: scacap/action-surefire-report@v1
