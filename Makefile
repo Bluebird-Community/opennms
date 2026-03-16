@@ -304,7 +304,7 @@ ifeq (,$(wildcard ./opennms-full-assembly/target/opennms-full-assembly-*-core.ta
 	@exit 1
 endif
 	mkdir -p opennms-container/core/tarball-root && \
-	tar xzf opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz -C opennms-container/core/tarball-root && \
+	tar xzf opennms-full-assembly/target/opennms-full-assembly-$(OPENNMS_VERSION)-core.tar.gz -C opennms-container/core/tarball-root && \
 	cd opennms-container/core && \
 	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
     docker build --platform=$(OCI_PLATFORM) \
@@ -327,7 +327,7 @@ ifeq (,$(wildcard ./opennms-assemblies/minion/target/org.opennms.assemblies.mini
 	@exit 1
 endif
 	mkdir -p opennms-container/minion/tarball-root && \
-	tar xzf opennms-assemblies/minion/target/org.opennms.assemblies.minion-*-minion.tar.gz --strip-component 1 -C opennms-container/minion/tarball-root && \
+	tar xzf opennms-assemblies/minion/target/org.opennms.assemblies.minion-$(OPENNMS_VERSION)-minion.tar.gz --strip-component 1 -C opennms-container/minion/tarball-root && \
 	cd opennms-container/minion && \
 	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
 	cat minion-config-schema.yml.in | sed -e 's,@VERSION@,$(OPENNMS_VERSION),' \
@@ -354,7 +354,7 @@ ifeq (,$(wildcard ./opennms-assemblies/sentinel/target/org.opennms.assemblies.se
 	@exit 1
 endif
 	mkdir -p opennms-container/sentinel/tarball-root && \
-	tar xzf opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*-sentinel.tar.gz --strip-component 1 -C opennms-container/sentinel/tarball-root
+	tar xzf opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-$(OPENNMS_VERSION)-sentinel.tar.gz --strip-component 1 -C opennms-container/sentinel/tarball-root
 	cd opennms-container/sentinel && \
 	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
     docker build --platform=$(OCI_PLATFORM) \
