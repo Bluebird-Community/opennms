@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opennms</groupId>
-  <artifactId>e2e-test</artifactId>
+  <artifactId>e2e-tests</artifactId>
   <version>36.0.2-SNAPSHOT</version>
   <name>BluebirdOps E2E Tests</name>
   <url>https://github.com/Bluebird-Community/opennms</url>

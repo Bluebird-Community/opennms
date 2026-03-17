@@ -93,7 +93,7 @@
     <module>../opennms-rrd/opennms-rrd-rrdtool/opennms-rrdtool-api</module>
     <module>../opennms-util</module>
     <module>../opennms-web-api</module>
-    <module>../smoke-test</module>
+    <module>../e2e-tests</module>
   </modules>
   <build>
     <plugins>

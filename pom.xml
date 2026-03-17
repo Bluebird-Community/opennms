@@ -2366,7 +2366,7 @@
         <build.skip.tarball>true</build.skip.tarball>
       </properties>
       <modules>
-        <module>smoke-test</module>
+        <module>e2e-tests</module>
       </modules>
     </profile>
     <profile>
