@@ -278,8 +278,8 @@ public class DaoWebOutageRepositoryIT implements InitializingBean {
     public void testGetAlarmIdAndExistsForOutageLostServiceEventWithNullOutage() {
         WebOutageRepository.AlarmIdInfo alarmIdInfo = m_daoOutageRepo.getAlarmIdAndExistsForOutageLostServiceEvent(null);
 
-        assertEquals(0L, alarmIdInfo.alarmId);
-        assertFalse(alarmIdInfo.alarmExists);
+        assertEquals(0L, alarmIdInfo.alarmId());
+        assertFalse(alarmIdInfo.alarmExists());
     }
 
     @Test
@@ -290,8 +290,8 @@ public class DaoWebOutageRepositoryIT implements InitializingBean {
 
         WebOutageRepository.AlarmIdInfo alarmIdInfo = m_daoOutageRepo.getAlarmIdAndExistsForOutageLostServiceEvent(outage);
 
-        assertEquals(0L, alarmIdInfo.alarmId);
-        assertFalse(alarmIdInfo.alarmExists);
+        assertEquals(0L, alarmIdInfo.alarmId());
+        assertFalse(alarmIdInfo.alarmExists());
     }
 
     @Test
@@ -317,7 +317,7 @@ public class DaoWebOutageRepositoryIT implements InitializingBean {
 
         WebOutageRepository.AlarmIdInfo alarmIdInfo = m_daoOutageRepo.getAlarmIdAndExistsForOutageLostServiceEvent(outage);
 
-        assertEquals(alarm.getId().longValue(), alarmIdInfo.alarmId);
-        assertTrue(alarmIdInfo.alarmExists);
+        assertEquals(alarm.getId().longValue(), alarmIdInfo.alarmId());
+        assertTrue(alarmIdInfo.alarmExists());
     }
 }

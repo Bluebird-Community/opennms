@@ -32,15 +32,7 @@ import org.opennms.web.outage.filter.OutageCriteria;
  * @since 1.8.1
  */
 public interface WebOutageRepository {
-    public static class AlarmIdInfo {
-        public long alarmId;
-        public boolean alarmExists;
-
-        public AlarmIdInfo(long alarmId, boolean alarmExists) {
-            this.alarmId = alarmId;
-            this.alarmExists = alarmExists;
-        }
-    }
+    public static record AlarmIdInfo(long alarmId, boolean alarmExists) {}
 
     /**
      * <p>countMatchingOutages</p>
@@ -93,6 +85,7 @@ public interface WebOutageRepository {
      * @return
      */
     public abstract OutageSummary[] getCurrentOutages(int rows);
+
 
     /**
      * Get the alarm ID for the outage lost service event, if any.

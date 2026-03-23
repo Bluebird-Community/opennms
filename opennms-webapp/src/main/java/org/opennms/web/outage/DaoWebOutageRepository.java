@@ -66,7 +66,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 public class DaoWebOutageRepository implements WebOutageRepository, InitializingBean {
     private static final Logger LOG = LoggerFactory.getLogger(DaoWebOutageRepository.class);
-    
+
     @Autowired
     private OutageDao m_outageDao;
     
@@ -78,7 +78,7 @@ public class DaoWebOutageRepository implements WebOutageRepository, Initializing
 
     @Autowired
     private AlarmDao m_alarmDao;
-    
+
     @Override
     public void afterPropertiesSet() throws Exception {
         BeanUtils.assertAutowiring(this);
@@ -363,27 +363,29 @@ public class DaoWebOutageRepository implements WebOutageRepository, Initializing
             return new AlarmIdInfo(0L, false);
         }
 
-        int alarmId = 0;
+        long alarmId = 0L;
         boolean alarmExists = false;
 
         try {
-            final int eventId = outage.lostServiceEventId != null ? outage.lostServiceEventId : 0;
+            final long eventId = outage.lostServiceEventId != null ? outage.lostServiceEventId : 0L;
 
-            if (eventId > 0) {
+            if (eventId > 0L) {
                 OnmsEvent event = m_eventDao.get(eventId);
 
                 if (event != null) {
-                    alarmId = event.getAlarm() != null ? event.getAlarm().getId() : 0;
+                    alarmId = event.getAlarm() != null ? event.getAlarm().getId() : 0L;
                 }
 
-                if (alarmId > 0) {
-                    OnmsAlarm alarm = m_alarmDao.get(alarmId);
+                int alarmIdInt = alarmId > 0L && alarmId < Integer.MAX_VALUE ? (int) alarmId : 0;
+
+                if (alarmIdInt > 0) {
+                    OnmsAlarm alarm = m_alarmDao.get(alarmIdInt);
                     alarmExists = alarm != null;
                 }
             }
         } catch (HibernateObjectRetrievalFailureException | ObjectNotFoundException e) {
             LOG.debug("Did not find event or alarm in getAlarmIdAndExistsForOutageLostServiceEvent. " +
-                    "This is expected if the alarm was already cleared and removed: {}", e.getMessage(), e);
+                   "This is expected if the alarm was already cleared and removed: {}", e.getMessage(), e);
         }
 
         return new AlarmIdInfo(alarmId, alarmExists);

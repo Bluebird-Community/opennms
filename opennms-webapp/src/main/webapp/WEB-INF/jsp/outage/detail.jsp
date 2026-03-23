@@ -39,7 +39,7 @@
 %>
 
 <%
-	  Outage outage = (Outage)request.getAttribute("outage");
+	  Outage outage = (Outage) request.getAttribute("outage");
 
     if (outage == null) {
         throw new org.opennms.web.outage.OutageIdNotFoundException( "An outage with this ID was not found.", WebSecurityUtils.sanitizeString((String)request.getAttribute("id")) );

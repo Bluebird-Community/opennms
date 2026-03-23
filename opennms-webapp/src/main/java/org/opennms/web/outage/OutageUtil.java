@@ -462,7 +462,7 @@ public abstract class OutageUtil extends Object {
         String days = daysPart > 0 ? String.format("%d %s, ", daysPart, daysPart == 1 ? "day" : "days") : "";
 
         String result = String.format("%s%dh%dm%ds", days,
-        duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart());
+                duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart());
 
         return result;
     }
