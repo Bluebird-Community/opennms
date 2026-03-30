@@ -343,8 +343,7 @@
                 "docker-publish-account"
             ],
             "variations": [
-                "linux/arm64",
-                "linux/arm/v7"
+                "linux/arm64"
             ],
             "requires": [
                 "smoke-test-core",
@@ -358,8 +357,7 @@
                 "docker-publish-account"
             ],
             "variations": [
-                "linux/arm64",
-                "linux/arm/v7"
+                "linux/arm64"
             ],
             "requires": [
                 "smoke-test-core",
@@ -373,8 +371,7 @@
                 "docker-publish-account"
             ],
             "variations": [
-                "linux/arm64",
-                "linux/arm/v7"
+                "linux/arm64"
             ],
             "requires": [
                 "smoke-test-core",
