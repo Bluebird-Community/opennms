@@ -189,7 +189,8 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "horizon-rpm-build": {
@@ -208,7 +209,8 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "sentinel-rpm-build": {
@@ -227,7 +229,8 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "smoke-test-core": {
@@ -279,7 +282,8 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "tarball-assembly-only": {
@@ -306,7 +310,8 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "horizon-deb-build": {
@@ -325,7 +330,8 @@
                     "only": [
                         "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "minion-image-single-arch-linux-amd64": {
