@@ -441,7 +441,10 @@
                 "sentinel-deb-build",
                 "sentinel-rpm-build",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
@@ -501,7 +504,10 @@
                 "sentinel-deb-build",
                 "sentinel-rpm-build",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
@@ -523,7 +529,10 @@
                 "sentinel-deb-build",
                 "sentinel-rpm-build",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
