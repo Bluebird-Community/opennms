@@ -154,8 +154,12 @@
                 "branches": {
                     "ignore": [
                         "/^merge-foundation.*/"
+                    ],
+                    "only": [
+                        "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "build-rpm": {
@@ -170,8 +174,12 @@
                 "branches": {
                     "ignore": [
                         "/^merge-foundation.*/"
+                    ],
+                    "only": [
+                        "/^master-.*/"
                     ]
-                }
+                },
+                "user_overridable": false
             }
         },
         "docs": {
@@ -348,7 +356,15 @@
                 "smoke-test-core",
                 "smoke-test-minion",
                 "smoke-test-sentinel"
-            ]
+            ],
+            "filters": {
+                "branches": {
+                    "only": [
+                        "/^master-.*/"
+                    ]
+                },
+                "user_overridable": false
+            }
         },
         "horizon-image-single-arch": {
             "context": [
@@ -362,7 +378,15 @@
                 "smoke-test-core",
                 "smoke-test-minion",
                 "smoke-test-sentinel"
-            ]
+            ],
+            "filters": {
+                "branches": {
+                    "only": [
+                        "/^master-.*/"
+                    ]
+                },
+                "user_overridable": false
+            }
         },
         "sentinel-image-single-arch": {
             "context": [
@@ -376,7 +400,15 @@
                 "smoke-test-core",
                 "smoke-test-minion",
                 "smoke-test-sentinel"
-            ]
+            ],
+            "filters": {
+                "branches": {
+                    "only": [
+                        "/^master-.*/"
+                    ]
+                },
+                "user_overridable": false
+            }
         },
         "create-merge-foundation-branch": {
             "context": [
@@ -388,7 +420,10 @@
                 "horizon-image-single-arch",
                 "minion-image-single-arch",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
@@ -444,7 +479,10 @@
                 "horizon-image-single-arch",
                 "minion-image-single-arch",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
@@ -462,7 +500,10 @@
                 "horizon-image-single-arch",
                 "minion-image-single-arch",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
@@ -488,7 +529,10 @@
                 "horizon-image-single-arch",
                 "minion-image-single-arch",
                 "sentinel-image-single-arch",
-                "integration-test"
+                "integration-test",
+                "smoke-test-core",
+                "smoke-test-minion",
+                "smoke-test-sentinel"
             ],
             "filters": {
                 "branches": {
