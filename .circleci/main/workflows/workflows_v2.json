@@ -253,6 +253,17 @@
                 "sentinel-image-single-arch-linux-amd64"
             ]
         },
+        "smoke-test-flaky": {
+            "context": [
+                "CircleCI",
+                "docker-publish-account"
+            ],
+            "requires": [
+                "horizon-image-single-arch-linux-amd64",
+                "minion-image-single-arch-linux-amd64",
+                "sentinel-image-single-arch-linux-amd64"
+            ]
+        },
         "tarball-assembly-only": {
             "context": [
                 "CircleCI"
