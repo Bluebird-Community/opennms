@@ -537,8 +537,7 @@
             "filters": {
                 "branches": {
                     "only": [
-                        "/^master-.*/",
-                        "/^release-.*/"
+                        "/^master-.*/"
                     ]
                 },
                 "user_overridable": false
@@ -558,8 +557,7 @@
                 "branches": {
                     "only": [
                         "develop",
-                        "/^master-.*/",
-                        "/^release-.*/"
+                        "/^master-.*/"
                     ]
                 },
                 "user_overridable": false
