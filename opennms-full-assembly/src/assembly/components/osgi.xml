@@ -19,7 +19,12 @@
         <exclude>**/scala-library/2.11.0/*</exclude>
         <exclude>**/*xstream*/1.4.8_1</exclude>
         <exclude>**/*xstream*/1.4.8_1/*</exclude>
+        <exclude>org/ops4j/pax/logging/pax-logging-log4j2/1.10.2</exclude>
+        <exclude>org/ops4j/pax/logging/pax-logging-log4j2/1.10.2/*</exclude>
+        <exclude>io/netty/netty-codec-http/4.1.22.Final</exclude>
+        <exclude>io/netty/netty-codec-http/4.1.22.Final/*</exclude>
       </excludes>
     </fileSet>
+
   </fileSets>
 </component>
