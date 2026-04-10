@@ -5,7 +5,7 @@
 == System requirements
 
 * *Java 11 and 17*: OpenNMS Horizon 33 runs on JDKs 11 and 17.
-* *PostgreSQL 10 or higher*: Horizon 33 requires any supported version of PostgreSQL from 10 up to (and including) 16.
+* *PostgreSQL 10 or higher*: Horizon 33 requires any supported version of PostgreSQL from 10 up to (and including) 18.
 
 == New features and important changes
 
