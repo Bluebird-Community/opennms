@@ -8,7 +8,6 @@
 * PostgreSQL 13 or higher: This version of Horizon requires a supported version of PostgreSQL.
 * Elasticsearch: Horizon 34 requires Elasticsearch 8 for flow processing.
 
-
 == New features and important changes
 
 === Time To Value Improvements to the Menu Structure
