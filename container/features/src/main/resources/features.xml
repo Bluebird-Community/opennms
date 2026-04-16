@@ -17,6 +17,7 @@
         <bundle start-level="60">mvn:io.netty/netty-handler/${netty4Version}</bundle>
         <bundle start-level="60">mvn:io.netty/netty-codec/${netty4Version}</bundle>
         <bundle start-level="60">mvn:io.netty/netty-codec-http/${netty4Version}</bundle>
+        <bundle start-level="60">mvn:io.netty/netty-transport-classes-epoll/${netty4Version}</bundle>
         <bundle start-level="60">mvn:io.netty/netty-transport-native-epoll/${netty4Version}</bundle>
         <bundle start-level="60">mvn:io.netty/netty-transport-native-kqueue/${netty4Version}</bundle>
         <bundle start-level="75">mvn:org.apache.qpid/proton-j/0.34.0</bundle>
@@ -388,6 +389,8 @@
     <feature name="opennms-core-camel" version="${project.version}" description="OpenNMS :: Core :: Camel">
         <feature>camel-core</feature>
         <feature>camel-http</feature>
+        <!-- netty-transport-classes-epoll must be loaded before camel-netty4 resolves io.netty.channel.epoll -->
+        <bundle dependency="true">mvn:io.netty/netty-transport-classes-epoll/${netty4Version}</bundle>
         <feature>camel-netty4</feature>
         <feature>opennms-core</feature>
         <bundle>mvn:org.opennms.core/org.opennms.core.camel/${project.version}</bundle>
@@ -1652,6 +1655,7 @@
         <bundle>mvn:io.netty/netty-codec/${netty4Version}</bundle>
         <bundle>mvn:io.netty/netty-codec-dns/${netty4Version}</bundle>
         <bundle>mvn:io.netty/netty-resolver-dns/${netty4Version}</bundle>
+        <bundle>mvn:io.netty/netty-transport-classes-epoll/${netty4Version}</bundle>
         <bundle>mvn:io.netty/netty-transport-native-epoll/${netty4Version}</bundle>
         <bundle>mvn:io.netty/netty-transport-native-unix-common/${netty4Version}</bundle>
     </feature>
