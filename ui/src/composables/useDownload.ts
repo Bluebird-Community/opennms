@@ -20,7 +20,7 @@
 /// License.
 ///
 
-import { AxiosResponse } from 'axios'
+import { AxiosResponse, AxiosResponseHeaders } from 'axios'
 
 const useDownload = () => {
   /**
@@ -30,7 +30,7 @@ const useDownload = () => {
    * @param   {boolean}  forceBlob  force blob creation, do not stringify JSON. This is helpful when downloading JSON files that should be saved as-is.
    */
   const downloadFile = (file: AxiosResponse, forceBlob = false): void => {
-    const name = getNameFromHeaders(file.headers)
+    const name = getNameFromHeaders(file.headers as AxiosResponseHeaders)
     const extension = name.split('.').pop() || ''
     const blob = generateBlob(file, extension, forceBlob)
     generateDownload(blob, name)
