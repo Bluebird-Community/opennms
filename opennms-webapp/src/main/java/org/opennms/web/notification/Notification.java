@@ -92,9 +92,9 @@ public class Notification {
      * @param interfaceID a {@link java.lang.String} object.
      * @param svcId a int.
      * @param svcName a {@link java.lang.String} object.
-     * @param eventid a long.
+     * @param eventid a int.
      */
-    public Notification(List<NoticeSentTo> sentToList, int notifyId, String txtMsg, String numMsg, long timeSent, long timeReply, String responder, int nodeid, String interfaceID, int svcId, String svcName, long eventid) {
+    public Notification(List<NoticeSentTo> sentToList, int notifyId, String txtMsg, String numMsg, long timeSent, long timeReply, String responder, int nodeid, String interfaceID, int svcId, String svcName, int eventid) {
         m_sentTo = sentToList;
         m_notifyID = notifyId;
         m_txtMsg = txtMsg;

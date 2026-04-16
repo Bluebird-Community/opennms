@@ -38,11 +38,11 @@ public class DbPollEvent extends PollEvent {
     /**
      * <p>Constructor for DbPollEvent.</p>
      *
-     * @param eventId a long.
+     * @param eventId a int.
      * @param uei a {@link java.lang.String} object.
      * @param date a {@link java.util.Date} object.
      */
-    public DbPollEvent(long eventId, String uei, Date date) {
+    public DbPollEvent(int eventId, String uei, Date date) {
         super(Scope.fromUei(uei));
         m_eventId = eventId;
         m_date = date;
