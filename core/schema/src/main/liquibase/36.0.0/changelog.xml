@@ -29,7 +29,7 @@
                 <sqlCheck expectedResult="1">
                     SELECT COUNT(*) FROM eventconf_events
                     WHERE uei = 'uei.opennms.org/nodes/nodeLostService'
-                    AND xml_content NOT LIKE '%parm[eventReason]%'
+                    AND xml_content NOT LIKE '%update-on-reduction%'
                 </sqlCheck>
             </and>
         </preConditions>
@@ -46,7 +46,7 @@
             ),
             last_modified = NOW()
             WHERE uei = 'uei.opennms.org/nodes/nodeLostService'
-            AND xml_content NOT LIKE '%parm[eventReason]%';
+            AND xml_content NOT LIKE '%update-on-reduction%';
         </sql>
 
         <!-- Add update-field for description on reduction -->
