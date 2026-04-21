@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -193,7 +192,7 @@ public class TimeseriesFetchStrategy implements MeasurementFetchStrategy {
             for (Entry<String, Future<Map<Source, List<DataPoint>>>> entry : measurementsByNewtsResourceId.entrySet()) {
                 Map<Source, List<DataPoint>> sampleList = toSampleList(entry);
                 for (Entry<Source, List<DataPoint>> column : sampleList.entrySet()) {
-                    Map<Long, Double> valuesByTimestamp = new LinkedHashMap<>();
+                    Map<Long, Double> valuesByTimestamp = new HashMap<>();
                     for (DataPoint dp : column.getValue()) {
                         long ts = dp.getTime().toEpochMilli();
                         allTimestamps.add(ts);
@@ -203,11 +202,7 @@ public class TimeseriesFetchStrategy implements MeasurementFetchStrategy {
                 }
             }
 
-            long[] timestamps = new long[allTimestamps.size()];
-            int ti = 0;
-            for (Long ts : allTimestamps) {
-                timestamps[ti++] = ts;
-            }
+            long[] timestamps = allTimestamps.stream().mapToLong(Long::longValue).toArray();
 
             Map<String, double[]> columns = Maps.newHashMap();
             for (Entry<String, Map<Long, Double>> entry : valuesByLabel.entrySet()) {
