@@ -22,7 +22,7 @@ asciidoc:
     compatible-rrdtool: '1.8.x'
     jasperreportsversion: '6.3.0'
     latest-meridian-stable: '2025'
-    postgresql-version: '18'
+    postgresql-version: '15'
     jmx-prom-exporter-version: '1.4.0'
 nav:
 - modules/ROOT/nav.adoc

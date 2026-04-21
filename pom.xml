@@ -1210,7 +1210,7 @@
                  <version>[3.5,)</version>
                </requireMavenVersion>
                <requireJavaVersion>
-                 <version>[17,18)</version>
+                 <version>[21,22)</version>
                </requireJavaVersion>
              </rules>
            </configuration>
@@ -1361,7 +1361,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.plugin.version}</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -1387,6 +1387,7 @@
           <skip>${skipSurefire}</skip>
           <systemPropertyVariables>
             <!-- Turn off queuing in the RRD output -->
+            <java.security.manager>allow</java.security.manager>
             <org.opennms.rrd.usequeue>false</org.opennms.rrd.usequeue>
             <java.awt.headless>true</java.awt.headless>
             <java.locale.providers>CLDR,COMPAT</java.locale.providers>
@@ -1730,6 +1731,7 @@
     <bouncyCastleVersion>1.83</bouncyCastleVersion>
     <bsfVersion>2.4.0</bsfVersion>
     <bsonVersion>3.5.0</bsonVersion>
+    <byteBuddyVersion>1.14.9</byteBuddyVersion>
     <caffeineVersion>2.8.0</caffeineVersion>
     <camelVersion>2.21.5</camelVersion>
     <!-- Match (or beat) Newts version -->
@@ -1900,21 +1902,21 @@
     <liquibaseVersion>3.6.3</liquibaseVersion>
     <lmaxDisruptorVersion>3.4.4</lmaxDisruptorVersion>
     <log4j2Version>2.25.3</log4j2Version>
-    <logbackClassicVersion>1.2.13</logbackClassicVersion>
+    <logbackClassicVersion>1.5.32</logbackClassicVersion>
     <mapstructVersion>1.5.2.Final</mapstructVersion>
     <mavenApiVersion>3.9.6</mavenApiVersion>
     <mavenResolverApiVersion>2.0.1</mavenResolverApiVersion>
     <minaVersion>2.2.4</minaVersion>
     <mockitoVersion>3.12.4</mockitoVersion>
     <netty3Version>3.10.6.Final</netty3Version>
-    <netty4Version>4.1.128.Final</netty4Version>
+    <netty4Version>4.1.132.Final</netty4Version>
     <newtsVersion>3.0.0</newtsVersion>
     <newtsOsgiVersion>3.0.0</newtsOsgiVersion>
     <paxCdiVersion>1.1.4</paxCdiVersion>
     <paxExamVersion>4.13.5</paxExamVersion>
     <pktsVersion>3.0.10</pktsVersion>
     <protobufVersion>3.25.5</protobufVersion>
-    <postgresqlVersion>42.5.5</postgresqlVersion>
+    <postgresqlVersion>42.7.10</postgresqlVersion>
     <powermockVersion>2.0.9</powermockVersion>
     <okhttpVersion>4.9.3</okhttpVersion>
     <okioVersion>3.6.0</okioVersion>
@@ -1930,12 +1932,12 @@
     <osgiServiceJdbcVersion>1.0.1</osgiServiceJdbcVersion>
     <owaspEncoderVersion>1.2.3</owaspEncoderVersion>
     <owaspHtmlSanitizerVersion>20211018.2</owaspHtmlSanitizerVersion>
-    <osgiJaxRsVersion>1.1.0.bbo</osgiJaxRsVersion>
+    <osgiJaxRsVersion>1.1.0.ONMS</osgiJaxRsVersion>
     <osMavenPluginVersion>1.7.1</osMavenPluginVersion>
     <opencsvVersion>2.3</opencsvVersion>
     <opentracingVersion>0.32.0</opentracingVersion>
     <jaegertracingVersion>1.8.1</jaegertracingVersion>
-    <pyroscopeVersion>2.1.2</pyroscopeVersion>
+    <pyroscopeVersion>0.13.1</pyroscopeVersion>
     <lz4JavaVersion>1.10.2</lz4JavaVersion>
     <quartzVersion>2.3.2</quartzVersion>
     <rancidApiVersion>2.0.0</rancidApiVersion>
@@ -1943,6 +1945,7 @@
     <resilience4jVersion>0.17.0</resilience4jVersion>
     <rocksdbjniVersion>8.5.4</rocksdbjniVersion>
     <scalaLibraryVersion>2.13.12</scalaLibraryVersion>
+    <scala11LibraryVersion>2.11.12</scala11LibraryVersion>
     <scalaLoggingVersion>3.9.5</scalaLoggingVersion>
     <scalaVersion>2.13</scalaVersion>
     <servletApiVersion>3.1.0</servletApiVersion>
