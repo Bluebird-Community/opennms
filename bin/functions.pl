@@ -366,7 +366,7 @@ sub get_minimum_java {
 	return $minimum_java;
 }
 
-# for now
+# Set maximum Java version to 22
 sub get_maximum_java {
 	return 22;
 }
