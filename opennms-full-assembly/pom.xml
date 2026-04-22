@@ -697,11 +697,11 @@
               <goal>run</goal>
             </goals>
             <configuration>
-              <tasks>
+              <target>
                 <echo>* profile:    ${build.profile}</echo>
                 <echo>* format:     ${build.assembly.format}</echo>
                 <echo>* descriptor: src/assembly/${build.assembly.type}.xml</echo>
-              </tasks>
+              </target>
             </configuration>
           </execution>
         </executions>
