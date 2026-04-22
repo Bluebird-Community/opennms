@@ -3,10 +3,10 @@ set -e
 
 [ "$(grep -c 'OpenNMS :: Features :: Sentinel' pom.xml)" -eq 1 ] || (echo "This command must be run from the features/sentinel directory" && exit 1)
 
-# Inclue the bundled Maven in the $PATH
+# Put the repo root (which hosts the mvnw wrapper) and the bin/ helpers on PATH.
 MYDIR=$(dirname "$0")
 MYDIR=$(cd "$MYDIR"; pwd)
-PATH="$MYDIR/../..:$MYDIR/../../bin:$MYDIR/../../maven/bin:$PATH"
+PATH="$MYDIR/../..:$MYDIR/../../bin:$PATH"
 CONTAINERDIR="${MYDIR}/../container/sentinel"
 JAVA_OPTS="-Xmx2g -Djdk.util.zip.disableZip64ExtraFieldValidation=true"
 

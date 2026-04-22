@@ -47,12 +47,13 @@ Highly customizable and scalable, BluebirdOps integrates with your business appl
 
 Building from source requires the following components:
 
-* OpenJDK 17 Development Kit
-* Maven
-* Docker if you run tests
-* NodeJS 24
-* PNPM
-* Docker with Docker Compose plugin
+* OpenJDK 21 Development Kit
+* NodeJS 24 and PNPM
+* Docker with the Docker Compose plugin (required for integration and smoke tests)
+
+Maven itself is provided via the bundled Apache Maven Wrapper (`./mvnw`); the
+first build downloads the pinned Maven version into `~/.m2/wrapper/dists/`
+and reuses it from there.
 
 ```console
 git clone https://github.com/Bluebird-Community/opennms.git

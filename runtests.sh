@@ -3,8 +3,9 @@
 MYDIR="$(dirname "$0")"
 TOPDIR="$(cd "$MYDIR"; pwd)"
 
-# Make sure at least one Maven is in the path
-PATH="$PATH:$TOPDIR/maven/bin"
+# Invoke Maven through the Apache Maven Wrapper at the repo root; this downloads
+# the pinned Maven version on first use and caches it in ~/.m2/wrapper.
+MVN="$TOPDIR/mvnw"
 
 set -e
 set -o pipefail
@@ -13,16 +14,16 @@ JUNIT_PLUGIN_VERSION="$(grep '<maven.testing.plugin.version>' "${TOPDIR}/pom.xml
 
 # Ensure the plugin is available
 # We swap to another directory so that we don't need to spend time parsing our current pom
-(cd /tmp && mvn -llr org.apache.maven.plugins:maven-dependency-plugin:3.1.1:get \
+(cd /tmp && "$MVN" -llr org.apache.maven.plugins:maven-dependency-plugin:3.1.1:get \
       -DremoteRepositories=https://maven.opennms.org/content/groups/opennms.org-release/ \
       -Dartifact=org.opennms.maven.plugins:structure-maven-plugin:1.0 \
-      && mvn org.apache.maven.plugins:maven-dependency-plugin::get \
+      && "$MVN" org.apache.maven.plugins:maven-dependency-plugin::get \
         -DartifactId=surefire-junit4 -DgroupId=org.apache.maven.surefire -Dversion="$JUNIT_PLUGIN_VERSION")
 
 # Now execute the plugin if the structure has not been generated yet
 STRUCTURE_GRAPH_JSON="target/structure-graph.json"
 if [ ! -e $STRUCTURE_GRAPH_JSON ]; then
-  mvn org.opennms.maven.plugins:structure-maven-plugin:1.0:structure
+  "$MVN" org.opennms.maven.plugins:structure-maven-plugin:1.0:structure
 else
   echo "Found existing Maven project structure map. Skipping generation."
   echo "(If you have modified the Maven project modules or structure in some way since then delete $STRUCTURE_GRAPH_JSON and run the script again.)"
@@ -48,7 +49,7 @@ fi
 
 
 # Run the tests
-mvn \
+"$MVN" \
            -P'!checkstyle' \
            -DupdatePolicy=never \
            -Dbuild.skip.tarball=true \

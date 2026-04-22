@@ -9,7 +9,7 @@ SITE_FILE             := antora-playbook-local.yml
 ARTIFACTS_DIR         := target/artifacts
 MAVEN_SHARDS          := 1
 MAVEN_SHARD_IDX       := 0
-MAVEN_BIN             := maven/bin/mvn
+MAVEN_BIN             := ./mvnw
 MAVEN_ARGS            := --batch-mode -DupdatePolicy=never -Djava.awt.headless=true -Daether.connector.resumeDownloads=false -Daether.connector.basic.threads=1 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DvaadinJavaMaxMemory=2g -DmaxCpus=8 -Dstyle.color=always -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Dmaven.wagon.http.retryHandler.count=3 -Dfailsafe.rerunFailingTestsCount=2 -Dsurefire.rerunFailingTestsCount=2
 export MAVEN_OPTS     := -XX:+UseG1GC -XX:InitialRAMPercentage=75.0 -XX:MaxRAMPercentage=75.0 -XX:ReservedCodeCacheSize=1g -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -XX:-UseGCOverheadLimit -XX:-MaxFDLimit -XX:MaxGCPauseMillis=200
 
@@ -37,7 +37,7 @@ OK                    := "[ 👍 ]"
 FAILED                := "[ 🤬 ]"
 SKIP                  := "[ ⏭️ ]"
 SKIP_UI_TESTS         := false
-JAVA_MAJOR_VERSION    := 17
+JAVA_MAJOR_VERSION    := 21
 
 # Package requirements
 PKG_CORE_HOME         := /opt/opennms
@@ -70,7 +70,7 @@ TRIVY_ARGS            := --java-db-repository quay.io/bluebird/trivy-java-db:1 -
 
 define setversion
 	@echo -n "💅 Set Maven release version:   "
-	@mvn versions:set -DnewVersion=$(1) >>$(RELEASE_LOG) 2>&1
+	@$(MAVEN_BIN) versions:set -DnewVersion=$(1) >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "💅 Set version Karaf Test case: "
 	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' opennms-full-assembly/src/test/java/org/opennms/assemblies/karaf/OnmsKarafTestCase.java >>$(RELEASE_LOG) 2>&1
@@ -82,13 +82,13 @@ define setversion
 	@sed -i.versionsBackup 's/$(OPENNMS_VERSION)/$(1)/g' docs/antora.yml >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "💅 Set version Maven deploy:    "
-	@cd deploy && mvn versions:set -DnewVersion=$(1) >>../$(RELEASE_LOG) 2>&1
+	@$(MAVEN_BIN) versions:set -DnewVersion=$(1) --file deploy/pom.xml >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "💅 Set version OSGi:            "
 	@sed -i.versionsBackup 's/\<opennms\.osgi\.version\>$(VERSION).SNAPSHOT\<\/opennms\.osgi\.version\>/\<opennms\.osgi\.version\>$(1)\<\/opennms\.osgi\.version\>/g' pom.xml >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "💅 Set version e2e-tests:      "
-	@cd e2e-tests && mvn versions:set -DnewVersion=$(1) >>../$(RELEASE_LOG) 2>&1
+	@$(MAVEN_BIN) versions:set -DnewVersion=$(1) --file e2e-tests/pom.xml >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 endef
 
@@ -98,8 +98,8 @@ help:
 	@echo "Makefile to build artifacts for OpenNMS"
 	@echo ""
 	@echo "Requirements to build:"
-	@echo "  * OpenJDK 17 Development Kit"
-	@echo "  * Maven 3.8.x, WARNING: Don't run with latest Maven, it throws errors. 3.8.8 is shipped with the git repo."
+	@echo "  * OpenJDK 21 Development Kit"
+	@echo "  * Maven (downloaded on demand via the bundled mvnw wrapper — no local install needed)"
 	@echo "  * NodeJS 24 with pnpm"
 	@echo "  * Antora"
 	@echo "We are using the command tool to test for the requirements in your search path."
@@ -816,7 +816,7 @@ release: deps-build
 	@if git rev-parse v$(RELEASE_VERSION) >$(RELEASE_LOG) 2>&1; then echo "Tag v$(RELEASE_VERSION) already exists"; exit 1; fi
 	@echo "$(OK)"
 	@$(call setversion,$(RELEASE_VERSION))
-	@mvn validate >>$(RELEASE_LOG) 2>&1
+	@$(MAVEN_BIN) validate >>$(RELEASE_LOG) 2>&1
 	@echo "$(OK)"
 	@echo -n "🎁 Git commit new release       "
 	@git commit --signoff -am "release: BluebirdOps $(RELEASE_VERSION)" >>$(RELEASE_LOG) 2>&1

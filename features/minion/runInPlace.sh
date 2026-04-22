@@ -8,10 +8,10 @@ cd "${MYDIR}"
 
 test -d repository || (echo "No 'repository' directory in $(pwd) -- are we in the right place (which is container/minion if you are curious)?" && exit 1)
 
-# Inclue the bundled Maven in the $PATH
+# Put the repo root (which hosts the mvnw wrapper) and the bin/ helpers on PATH.
 MYDIR=$(dirname "$0")
 MYDIR=$(cd "$MYDIR"; pwd)
-PATH="$MYDIR/../..:$MYDIR/../../bin:$MYDIR/../../maven/bin:$PATH"
+PATH="$MYDIR/../..:$MYDIR/../../bin:$PATH"
 CONTAINERDIR="${MYDIR}/../container/minion"
 JAVA_OPTS="-Xmx2g -Djdk.util.zip.disableZip64ExtraFieldValidation=true"
 

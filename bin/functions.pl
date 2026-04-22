@@ -76,10 +76,12 @@ if (basename($PREFIX) eq "bin") {
 
 $GIT = find_git();
 
-# path to maven executable
+# path to maven executable — default to the Maven Wrapper at the repo root.
+# The wrapper downloads the configured Maven version on demand, so no system
+# install is required.
 $MVN = $ENV{'MVN'};
 if (not defined $MVN or not -x $MVN) {
-	$MVN = File::Spec->catfile($PREFIX, 'maven', 'bin', 'mvn');
+	$MVN = File::Spec->catfile($PREFIX, 'mvnw');
 	if ($^O =~ /(mswin|msys)/i) {
 		$MVN .= '.cmd';
 	}

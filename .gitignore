@@ -49,9 +49,6 @@ ui/devConfig.ts
 .circleci/main.yml
 built_dependencies
 
-# jansi downloads a native lib on osx sometimes
-/maven/**/*.jnilib
-
 # Ignore Visual Studio Code
 .factorypath
 # Ignore Docker/OCI temporary files

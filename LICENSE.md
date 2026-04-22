@@ -78,7 +78,6 @@ view the header in each file:
 * integrations/opennms-vmware/src/main/java/org/opennms/netmgt/poller/monitors/VmwareCimMonitor.java
 * integrations/opennms-vmware/src/main/java/org/opennms/protocols/vmware/VmwareViJavaAccess.java
 * integrations/opennms-vmware/src/test/java/org/opennms/netmgt/collectd/vmware/VmwareViJavaAccessTest.java
-* maven/conf/logging/simplelogger.properties
 * opennms-services/src/main/java/org/opennms/netmgt/xmlrpcd/TimeoutSecureXmlRpcClient.java
 * opennms-services/src/main/java/org/opennms/netmgt/xmlrpcd/TimeoutSecureXmlRpcTransport.java
 * opennms-services/src/main/java/org/opennms/netmgt/xmlrpcd/TimeoutSecureXmlRpcTransportFactory.java
