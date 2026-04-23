@@ -130,6 +130,10 @@ const drawBackshiftGraph = (el, def, dim) => {
     });
     const graphModel = rrdGraphConverter.model;
 
+    // OpenNMS-specific marker (not real rrdtool syntax) to opt into
+    // backshift's step-line rendering for this graph.
+    const stepMode = /(^|\s)--step-mode(\s|$)/.test(graphDef.command || '');
+
     // Build the data-source
     const ds = new Backshift.DataSource.OpenNMS({
       url: window.onmsGraphContainers.baseHref + 'rest/measurements',
@@ -147,7 +151,8 @@ const drawBackshiftGraph = (el, def, dim) => {
       model: graphModel,
       printStatements: graphModel.printStatements,
       title: graphModel.title,
-      verticalLabel: graphModel.verticalLabel
+      verticalLabel: graphModel.verticalLabel,
+      step: stepMode
     });
     graph.render();
   }).fail((jqXHR, textStatus) => {
