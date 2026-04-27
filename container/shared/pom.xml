@@ -27,6 +27,11 @@
                 <directory>src/main/filtered-resources</directory>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/internal</directory>
+                <targetPath>${project.build.directory}/internal</targetPath>
+            </resource>
         </resources>
 
         <plugins>
@@ -139,7 +144,8 @@
                         <!-- OPENNMS: Add MINA bundles to prevent mina-sshd-core from refreshing (KARAF-5384) -->
                         <library>mvn:org.apache.mina/mina-core/${minaVersion};type:=boot;export:=false</library>
                     </libraries>
-                    <javase>11</javase>
+                    <javase>1.8</javase>
+                    <featuresProcessing>${project.build.directory}/internal/features-processing.xml</featuresProcessing>
                 </configuration>
             </plugin>
             <plugin>
