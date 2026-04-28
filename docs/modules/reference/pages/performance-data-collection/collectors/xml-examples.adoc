@@ -5,7 +5,7 @@
 This page provides working examples of using the xref:performance-data-collection/collectors/xml.adoc[XmlCollector] against common HTTP APIs.
 Each example follows the same shape so you can use one as a template for an integration of your own:
 
-. *Endpoint(s) and response* -- the URLs being polled and the shape of what they return.
+. *Endpoint(s) and response* -- the URLs being polled and the return format.
 . *Metrics* -- the fields extracted, their RRD datasource names, and types.
 . *Configuration* -- the `xml-collection`, the `collectd-configuration.xml` service entry, and any optional graph templates.
 . *Verification* -- a one-shot test from the Karaf shell.
