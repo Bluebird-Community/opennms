@@ -3,7 +3,7 @@
 :description: End-to-end examples of using the XmlCollector to collect time-series metrics from XML and JSON HTTP APIs.
 
 This page provides working examples of using the xref:performance-data-collection/collectors/xml.adoc[XmlCollector] against common HTTP APIs.
-Each example follows the same shape so you can use one as a template for an integration of your own:
+Each example follows the same format so you can use one as a template for an integration of your own:
 
 . *Endpoint(s) and response* -- the URLs being polled and the return format.
 . *Metrics* -- the fields extracted, their RRD datasource names, and types.
