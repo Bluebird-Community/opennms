@@ -411,6 +411,12 @@ describe('validateTrapdXml – snmp-trap-port', () => {
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.field === 'snmp-trap-port')).toBe(true)
   })
+
+  it('returns error for partially-numeric port', () => {
+    const result = validateTrapdXml(buildXml({ port: '162abc' }))
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.field === 'snmp-trap-port')).toBe(true)
+  })
 })
 
 describe('validateTrapdXml – new-suspect-on-trap', () => {
@@ -443,11 +449,11 @@ describe('validateTrapdXml – snmpv3-user: security-name and security-level', (
     expect(result.errors.some((e) => e.field.includes('security-name'))).toBe(true)
   })
 
-  it('allows missing security-level (optional)', () => {
+  it('returns error for missing security-level', () => {
     const user = buildUser({ 'security-name': 'user1' })
     const result = validateTrapdXml(buildXml({ users: user }))
-    expect(result.valid).toBe(true)
-    expect(result.errors.some((e) => e.field.includes('security-level'))).toBe(false)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.field.includes('security-level'))).toBe(true)
   })
 
   it('returns error for security-level 0 (None)', () => {
