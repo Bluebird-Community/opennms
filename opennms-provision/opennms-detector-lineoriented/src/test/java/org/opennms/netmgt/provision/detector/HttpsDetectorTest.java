@@ -32,6 +32,7 @@ import java.util.HashMap;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -156,6 +157,7 @@ public class HttpsDetectorTest {
         assertFalse(doCheck(m_detector.isServiceDetected(InetAddressUtils.getLocalHostAddress())));
     }
 
+    @Ignore("Flaky: SSL/WireMock connection race — see https://github.com/Bluebird-Community/opennms/issues/118")
     @Test(timeout=20000)
     public void testDetectorMaxRetCode600() throws Exception {
         m_detector.setCheckRetCode(true);
