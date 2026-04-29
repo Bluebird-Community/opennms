@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## CRITICAL: Git Remote Rules
 
-**NEVER create pull requests against any `OpenNMS/*` repository.** This is a fork (`bluebird-community/oopennms`). Always use `--repo bluebird-community/opennms` with `gh pr create`. The `gh` CLI defaults to the fork parent (`OpenNMS/opennms`) which is wrong.
+**NEVER create pull requests against any `OpenNMS/*` repository.** This is a fork (`bluebird-community/opennms`). Always use `--repo bluebird-community/opennms` with `gh pr create`. The `gh` CLI defaults to the fork parent (`OpenNMS/opennms`) which is wrong.
+
+Remotes in this clone: `origin` → `bluebird-community/opennms` (our fork), `upstream` → `OpenNMS/opennms` (read-only; merged in via `merge-foundation/*` branches).
 
 ```bash
 # CORRECT
@@ -16,48 +18,60 @@ gh pr create ...  # defaults to OpenNMS/opennms
 
 ## Project Overview
 
-BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 36.0.2-SNAPSHOT, licensed under AGPL v3. Java 17 required (enforced range `[17,18)`).
+BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 36.0.2-SNAPSHOT, licensed under AGPL v3. Java 21 required (enforced range `[21,22)` — bumped from 17 via NMS-19396).
 
 ## Build Commands
 
-The project ships its own Maven in `maven/bin/mvn`. The `Makefile` wraps Maven with sensible defaults.
-Integration tests have a suffix IT and unit tests have a suffix Test.
-The end to end tests (e2e) are in the "e2e-tests" directory.
+The project uses the Apache Maven Wrapper (`./mvnw`, `.mvn/wrapper/maven-wrapper.properties`) — the first invocation downloads the pinned Maven version (3.9.14 at the time of writing) into `~/.m2/wrapper/dists/` and caches it there. No system Maven install needed. The Perl wrappers `compile.pl` / `assemble.pl` / `clean.pl` also resolve to `./mvnw` via `bin/functions.pl`. The `Makefile` wraps all of this with sensible defaults — prefer make targets for whole-tree work, use `./compile.pl` directly for partial builds on a single module.
+
+Prerequisites: Java 21, Docker (+ Compose plugin) for tests, Node 24 + pnpm 10.x for the UI.
+
+Naming: unit tests end in `*Test`, integration tests end in `*IT`, end-to-end tests live in `e2e-tests/`.
 
 ```bash
-# Full compile (skip tests for speed)
-make quick-compile
+make help                     # list every target the Makefile exposes
 
-# Build the Vue UI
-make compile-ui
+# Fast inner loop — "quick-*" means "skip tests"
+make quick-compile            # compile everything, no tests
+make quick-assemble           # assemble tarball into target/ (requires quick-compile)
+make quick-build              # quick-compile + quick-assemble
+make install-core             # shortcut: quick-compile + quick-assemble
+make compile-ui               # build the Vue UI (cd ui && pnpm install && pnpm build)
 
-# Assemble for local running (dir profile = run from target/)
-make quick-assemble
+# Full, tested build
+make compile                  # full compile with tests
+make assemble                 # full assembly
 
-# Run smoke tests
-make smoke
-
-# Run unit tests
-make unit-tests
-
-# Run integration tests
-make integration-tests
-
-# Run end to end tests for Core
-make core-e2e
-
-# Run end to end tests for Minion
-make minion-e2e
-
-# Run end to end tests for Sentinel
-make sentinel-e2e
-
-# Run a single unit test class
+# Tests
+make unit-tests                                           # all unit tests
 make unit-tests U_TESTS="org.opennms.netmgt.vmmgr.ControllerTest"
-
-# Run a single integration test class
+make unit-tests TEST_PROJECTS=":opennms-dao"              # scoped to one module
+make integration-tests                                    # all IT tests (spins up postgres)
 make integration-tests I_TESTS="org.opennms.core.snmp.profile.mapper.SnmpProfileMapperIT"
+make integration-tests TEST_PROJECTS=":opennms-dao"
+make smoke                                                # smoke tests (builds core OCI first)
+make core-e2e / minion-e2e / sentinel-e2e                 # end-to-end per artifact
+
+# Docs (Antora/AsciiDoc — see antora-playbook-local.yml)
+make docs
 ```
+
+### Partial builds with compile.pl
+
+For anything smaller than a whole tree, drive Maven directly. The pattern is `--projects :<artifactId>` with `-am` (build its deps) or `-amd` (build its dependents):
+
+```bash
+# Build opennms-dao and everything it needs
+./compile.pl -DskipTests=true --projects :opennms-dao -am install
+
+# Rebuild everything that depends on opennms-dao (after changing it)
+./compile.pl -t --projects :opennms-dao -amd install
+
+# Find all artifacts whose code matches a grep and build them
+./compile.pl -DskipTests=true --projects `tools/development/grep-pom-artifact.sh -i jdom` install
+```
+
+`tools/development/pom-artifact.sh` and `grep-pom-artifact.sh` are the helpers that turn a `pom.xml` or grep match into `groupId:artifactId` tuples.
 
 ### Local development quick start
 ```bash
@@ -122,8 +136,8 @@ OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *abo
 
 | Layer | Technology |
 |-------|-----------|
-| Language | Java 17 |
-| Build | Maven (bundled), Perl wrapper scripts |
+| Language | Java 21 |
+| Build | Apache Maven Wrapper (`./mvnw`, downloads Maven 3.9.14 on demand), Perl wrapper scripts |
 | OSGi Container | Apache Karaf 4.4.9 |
 | Web Framework | Spring 4.2.x (OpenNMS-patched fork), Spring Security 4.2.x (patched) |
 | ORM | Hibernate 3.6.11 (OpenNMS build) |
@@ -140,13 +154,16 @@ OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *abo
 
 The modern UI is a Vue 3 SPA in `ui/` built with:
 - **Package manager:** pnpm (enforced, version 10.24.0)
-- **Build tool:** Vite
-- **Component library:** Feather Design System
-- **State:** Pinia
+- **Build tool:** Vite — **two separate Vite apps** share `src/` but build independently: `src/main/` (full SPA at `/opennms/ui`) and `src/menu/` (embeds in legacy JSP at `/opennms-menu`)
+- **Component library:** Feather Design System (`@featherds/*`)
+- **State:** Pinia (**setup store pattern**, not Options API)
+- **Components:** `<script setup lang="ts">` Composition API only
+- **Auto-imports:** `ref`/`computed`/`watch`/`useRouter`/VueUse via `unplugin-auto-import` — don't import these manually; custom composables (`useSnackbar`, `useSpinner`, `useRole`) must still be imported
+- **Services:** axios instances from `services/axiosInstances.ts` (`v2`, `rest`, `restFile`), aggregated in `services/index.ts`
 - **Visualization:** D3, Chart.js, Leaflet
 - **Tests:** Vitest + Vue Test Utils + Happy-DOM
 
-The UI also has a `menu/` sub-build that provides embeddable Vue components for legacy JSP pages. Build output goes to `src/main/dist/` and `src/menu/dist-menu/`.
+Build output goes to `src/main/dist/` and `src/menu/dist-menu/`. See `ui/copilot-instructions.md` for the full UI playbook (deploy to running instance, routing/SpaRoutingFilter behavior, role-gated routes, test harness patterns).
 
 ## Testing
 
@@ -181,6 +198,17 @@ make integration-tests TEST_PROJECTS=":opennms-dao"
 - The Maven Enforcer Plugin bans certain dependencies (e.g., `commons-logging` — use `slf4j-api` instead). Fix violations by adding `<exclusions>` and using the approved alternative
 - License validation: `./compile.pl -DskipTests -Denable.license=true -Passemblies -Psmoke install`
 - Commit messages should follow the Conventional Commits specification
+
+## Debugging Karaf / smoke-test failures
+
+Karaf failures almost always surface as a smoke test timing out. The top-level test output is usually unhelpful — pull the `karaf.log` artifact from the failing job and search it for `exception`. OSGi resolution errors ("Unable to resolve root: missing requirement …") read **backwards**: the innermost `[caused by: …]` is the package or bundle that's actually missing, earlier frames tell you which feature pulled it in. Fix by adjusting the offending feature in `container/features/src/main/resources/features*.xml` (or the dependency that brings in the wrong bundle version).
+
+## Further reading
+
+- `DEVELOPMENT-TIPS.md` — deep-dives on Maven partial builds, the Maven Enforcer Plugin, the license plugin, the OpenNMS Spring/Spring Security forks, Karaf design history, and container image rebuild steps.
+- `ui/copilot-instructions.md` — Vue 3 SPA architecture, patterns, test harness, and deploy-to-local-instance workflow.
+- `ui/DEVELOPMENT.md`, `ui/MENU_TEMPLATES.md` — additional frontend notes.
+- `tools/local_development/README.md` — the helper scripts used by the local-dev quick start.
 
 ## CI/CD
 
