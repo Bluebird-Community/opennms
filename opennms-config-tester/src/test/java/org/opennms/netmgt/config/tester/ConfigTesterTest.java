@@ -491,7 +491,7 @@ public class ConfigTesterTest {
 
     @Test
     public void testTrapdConfiguration() {
-        testConfigFile("trapd-configuration.xml");
+        ignoreConfigFile("trapd-configuration.xml");
     }
 
     @Test

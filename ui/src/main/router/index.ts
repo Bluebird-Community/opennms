@@ -346,6 +346,11 @@ const router = createRouter({
       component: () => import('@/containers/EventConfigEventCreate.vue')
     },
     {
+      path: '/trapd-config',
+      name: 'Trapd Configuration',
+      component: () => import('@/containers/TrapdConfiguration.vue')
+    },
+    {
       path: '/primevue-test',
       name: 'PrimeVueTest',
       component: () => import('@/components/PrimeVueTest.vue')
