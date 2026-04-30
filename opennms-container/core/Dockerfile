@@ -61,7 +61,8 @@ RUN install -d -m 775 -o 10001 -g 0 \
     cp -a /opt/opennms/etc/ /opt/opennms/share/etc-pristine/
 
 RUN echo "${JAVA_HOME}/bin/java" > /opt/opennms/etc/java.conf && \
-    chown 10001:0 /opt/opennms/etc/java.conf
+    chown 10001:0 /opt/opennms/etc/java.conf && \
+    chmod g=u /opt/opennms/etc/java.conf
 
 # Add templates replaced at runtime and entrypoint
 COPY --chown=10001:0 ./container-fs/confd /etc/confd
