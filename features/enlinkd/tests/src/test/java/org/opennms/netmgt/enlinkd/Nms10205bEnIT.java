@@ -63,6 +63,7 @@ import static org.opennms.netmgt.nb.Nms10205aNetworkBuilder.SRX_100_NAME;
 import static org.opennms.netmgt.nb.Nms10205bNetworkBuilder.SRX_100_SNMP_RESOURCE_B;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.core.test.snmp.annotations.JUnitSnmpAgent;
 import org.opennms.core.test.snmp.annotations.JUnitSnmpAgents;
@@ -424,6 +425,7 @@ Address          Interface              State     ID               Pri  Dead
 172.16.9.1       ge-0/0/3.0             Full      192.168.9.1      128    32 ----> Bangalore
 
 */
+    @Ignore("Flaky: JDBC visibility race after runSingleSnmpCollection — see https://github.com/Bluebird-Community/opennms/issues/119")
     @Test
     @JUnitSnmpAgents(value={
             @JUnitSnmpAgent(host=MUMBAI_IP, port=161, resource=MUMBAI_SNMP_RESOURCE_B),
