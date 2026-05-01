@@ -11,7 +11,6 @@
 | Alarmd Drools rules | Alarms (and situations) | `$\{OPENNMS_HOME}/etc/alarmd/drools-rules.d/*.drl`
 | Vacuumd | Events, soft-deleted nodes/interfaces/services, statistics reports, key-value store entries, path-outage alarm clearing | `$\{OPENNMS_HOME}/etc/vacuumd-configuration.xml`
 | AlarmPersister `auto-clean` | Reduced events under an existing alarm (opt-in, per event type) | `<alarm-data auto-clean="true"/>` in event definitions (eventconf)
-| PostgreSQL autovacuum | Reclaiming dead tuples and updating statistics at the database level | `postgresql.conf` (This is part of Postgres and not part of {page-component-title})
 |===
 
 NOTE: The PostgreSQL autovacuum is a database-level concern. It reclaims space inside tables and indexes after rows are deleted, but it does not delete application rows itself. {page-component-title}'s mechanisms decide _which_ rows go; PostgreSQL decides when to compact what's left independently.
