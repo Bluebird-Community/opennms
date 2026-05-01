@@ -322,16 +322,6 @@ The default `clearPathOutages` automation uses a trigger pattern (IE: a trigger 
 
 Tokens like `${_ackid}` come from the trigger's columns prefixed with `_`. The action runs once per row returned by the trigger.
 
-[#postgres-vacuum]
-== PostgreSQL autovacuum
-
-The PostgreSQL autovacuum daemon is separate from Vacuumd despite the similar name.
-Autovacuum reclaims space and updates planner statistics after rows have been deleted; it does not delete application rows.
-
-For most {page-component-title} workloads the default autovacuum settings are fine.
-On high-volume systems with many events per second or high alarm volume, you may need to tune autovacuum on the busiest tables (`events`, `alarms`, `outages`) so dead-tuple cleanup keeps up with deletes.
-That is a PostgreSQL operations topic; OpenNMS does not configure autovacuum on your behalf.
-
 == Verifying that cleanup is happening
 
 [options="header"]
