@@ -285,6 +285,12 @@ quick-build: quick-compile quick-assemble
 
 .PHONY: quick-compile
 quick-compile: maven-structure-graph
+	# Pre-warm node/pnpm cache so the parallel reactor (-T 1C) below doesn't race
+	# on the shared ~/.m2/repository/com/github/eirslett/pnpm/<v>/pnpm-<v>.tar.gz
+	# download path. Only :org.opennms.ui and :org.opennms.core.web-assets bind
+	# frontend-maven-plugin:install-node-and-pnpm; running them serially first
+	# populates the cache, after which the parallel pass becomes a no-op for that goal.
+	$(MAVEN_BIN) $(MAVEN_ARGS) -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -pl :org.opennms.ui,:org.opennms.core.web-assets com.github.eirslett:frontend-maven-plugin:install-node-and-pnpm 2>&1 | tee $(ARTIFACTS_DIR)/mvn.prewarm-frontend.log
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dcyclonedx.skip=true 2>&1 | tee $(ARTIFACTS_DIR)/mvn.quick-compile.log
 
 .PHONY: quick-assemble
