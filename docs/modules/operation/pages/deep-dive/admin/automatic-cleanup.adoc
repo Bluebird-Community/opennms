@@ -13,7 +13,6 @@
 | AlarmPersister `auto-clean` | Reduced events under an existing alarm (opt-in, per event type) | `<alarm-data auto-clean="true"/>` in event definitions (eventconf)
 |===
 
-NOTE: The PostgreSQL autovacuum is a database-level concern. It reclaims space inside tables and indexes after rows are deleted, but it does not delete application rows itself. {page-component-title}'s mechanisms decide _which_ rows go; PostgreSQL decides when to compact what's left independently.
 
 [#alarms]
 == Alarms (Alarmd Drools rules)
