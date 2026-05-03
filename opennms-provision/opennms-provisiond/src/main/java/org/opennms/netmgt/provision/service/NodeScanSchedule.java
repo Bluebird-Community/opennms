@@ -125,7 +125,7 @@ public class NodeScanSchedule {
             .append("foreign source", m_foreignSource)
             .append("foreign id", m_foreignId)
             .append("node id", m_nodeId)
-            .append("location", m_location.getLocationName())
+            .append("location", m_location != null ? m_location.getLocationName() : null)
             .append("initial delay", m_initialDelay)
             .append("scan interval", m_scanInterval)
             .append("monitorKey", monitorKey)

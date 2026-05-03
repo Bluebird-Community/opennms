@@ -259,9 +259,22 @@ public class Provisioner implements SpringServiceDaemon {
     @Override
     public void destroy() throws Exception {
         m_importSchedule.stop();
-        m_scheduledExecutor.shutdown();
-        m_newSuspectExecutor.shutdown();
+        shutdownExecutorOrForce(m_scheduledExecutor, "scheduledExecutor");
+        shutdownExecutorOrForce(m_newSuspectExecutor, "newSuspectExecutor");
         monitorHolder.shutdown();
+    }
+
+    private static void shutdownExecutorOrForce(final ExecutorService executor, final String name) {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                LOG.warn("{} did not terminate within 5s after shutdown; forcing shutdownNow()", name);
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
