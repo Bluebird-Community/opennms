@@ -21,6 +21,10 @@
  */
 package org.opennms.smoketest.sentinel;
 
+import java.io.IOException;
+
+import org.junit.Ignore;
+import org.junit.Test;
 import org.opennms.core.utils.SystemInfoUtils;
 import org.opennms.smoketest.stacks.IpcStrategy;
 
@@ -35,5 +39,12 @@ public class FlowStackJmsIT extends AbstractFlowIT {
     @Override
     protected String getSentinelReadyString() {
         return "Route: Sink.Server.Telemetry-Netflow-5 started and consuming from: queuingservice://" + SystemInfoUtils.getInstanceId() + ".Sink.Telemetry-Netflow-5";
+    }
+
+    @Ignore("Flaky on JMS variant only: 10-min Awaitility timeout, then fork-exit timeout. Kafka variant passes. See run 25259381529")
+    @Test
+    @Override
+    public void verifyClassificationEngineReloads() throws IOException {
+        super.verifyClassificationEngineReloads();
     }
 }
