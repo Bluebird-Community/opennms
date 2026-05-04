@@ -141,6 +141,9 @@
             <forkCount>${test.fork.count}</forkCount>
             <!-- We don't reuse forks - any given test should not take longer than the given timeout -->
             <forkedProcessTimeoutInSeconds>${test.fork.timeout}</forkedProcessTimeoutInSeconds>
+            <!-- Per-test JVMs need time to tear down WebDriver/Testcontainers/Ryuk under runner load
+                 (default 30s is too tight; observed in run 25309161610). -->
+            <forkedProcessExitTimeoutInSeconds>120</forkedProcessExitTimeoutInSeconds>
             <!-- Spawn a new JVM for every test so things don't leak over from one to the next -->
             <reuseForks>false</reuseForks>
             <trimStackTrace>false</trimStackTrace>
