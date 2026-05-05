@@ -22,6 +22,7 @@
 package org.opennms.smoketest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
@@ -33,9 +34,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 /**
- * End-to-end check that {@code /opennms/geomap/standalone.jsp} actually
- * mounts the leaflet map AND renders it at non-zero size. Two
- * compounding regressions live in this page:
+ * End-to-end check that {@code /opennms/geomap/standalone.jsp} works
+ * end-to-end. Three regressions live in this page; each test pins one.
  *
  * <ol>
  *   <li>{@code map.jsp}'s inline script used
@@ -52,8 +52,19 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  *       {@code outerHeight()} returned {@code undefined}, the
  *       arithmetic produced {@code NaN}, and the container collapsed
  *       to zero pixels -- leaflet then mounted a zero-size map. The
- *       DOM check alone passes in that state, so caught by the
- *       size assertion in {@link #mapContainerHasNonZeroHeight()}.</li>
+ *       DOM check alone passes in that state, so caught by the size
+ *       assertion in {@link #mapContainerHasNonZeroHeight()}.</li>
+ *   <li>The JSP emitted the literal string {@code "null"} for missing
+ *       {@code strategy}/{@code severity} query parameters, so the
+ *       client-side {@code isUndefinedOrNull} default substitution
+ *       did not fire and {@code /api/v2/geolocation/config?strategy=null}
+ *       broke marker loading. Caught by
+ *       {@link #emitsJsNullLiteralWhenQueryParamsAreMissing()} and
+ *       {@link #emitsQuotedJsStringWhenQueryParamsArePresent()},
+ *       which inspect the rendered page source -- the broken value
+ *       affects the marker POST that fires AFTER initMap, so a
+ *       DOM-presence check passes even when the param contract is
+ *       wrong.</li>
  * </ol>
  */
 public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
@@ -112,22 +123,55 @@ public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
     }
 
     @Test
-    public void rendersWithoutQueryParams() {
-        // Regression: previously, hitting the page without query params
-        // emitted strategy: "null" / severity: "null" into the inline
-        // script. The geomap-js isUndefinedOrNull check treated "null"
-        // as a real value and forwarded it to the REST endpoint, which
-        // rejected it. Confirms the fix sends the JS null literal
-        // (which substitutes the documented defaults) rather than the
-        // string "null".
+    public void emitsJsNullLiteralWhenQueryParamsAreMissing() {
+        // Regression target: previously the JSP rendered
+        //   strategy: "null", severity: "null"
+        // (literal four-character JS strings) when the page was loaded
+        // without query parameters, because <%= null %> writes the
+        // word "null" inside surrounding double quotes. The geomap-js
+        // client only treats the actual JS null value as "absent" via
+        // isUndefinedOrNull(...), so the string "null" was forwarded
+        // to /api/v2/geolocation/config?strategy=null, breaking marker
+        // loading. The fix renders the bare JS null literal (no quotes)
+        // when the parameter is missing.
+        //
+        // We assert this by inspecting the rendered page source rather
+        // than runtime behavior because the broken value first
+        // surfaces in the marker POST that fires AFTER initMap, so a
+        // DOM-presence check passes even when the param contract is
+        // wrong (initMap and .leaflet-control are created during
+        // config load, not marker load).
         getDriver().get(getBaseUrlInternal() + "opennms/geomap/standalone.jsp");
-
-        new WebDriverWait(getDriver(), Duration.ofSeconds(30))
-                .until(d -> !d.findElements(By.cssSelector("#map .leaflet-container")).isEmpty());
+        final String source = getDriver().getPageSource();
 
         assertThat(
-                "Severity legend control should be present after a successful render",
-                getDriver().findElements(By.cssSelector(".leaflet-control")).isEmpty(),
+                "JSP must emit the JS null literal (no quotes) for missing strategy",
+                source,
+                containsString("strategy: null"));
+        assertThat(
+                "JSP must emit the JS null literal (no quotes) for missing severity",
+                source,
+                containsString("severity: null"));
+        assertThat(
+                "Regression: JSP emitted the literal string \"null\" for strategy",
+                source.contains("strategy: \"null\""),
                 is(false));
+        assertThat(
+                "Regression: JSP emitted the literal string \"null\" for severity",
+                source.contains("severity: \"null\""),
+                is(false));
+    }
+
+    @Test
+    public void emitsQuotedJsStringWhenQueryParamsArePresent() {
+        // The complement of the test above: when params ARE supplied,
+        // they must arrive at geomap.render() as quoted JS strings.
+        getDriver().get(getBaseUrlInternal()
+                + "opennms/geomap/standalone.jsp"
+                + "?strategy=Outages&severity=Warning");
+        final String source = getDriver().getPageSource();
+
+        assertThat(source, containsString("strategy: \"Outages\""));
+        assertThat(source, containsString("severity: \"Warning\""));
     }
 }
