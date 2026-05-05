@@ -28,7 +28,6 @@ import static org.hamcrest.Matchers.is;
 
 import java.time.Duration;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -72,18 +71,26 @@ public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
 
     private static final int MIN_VISIBLE_HEIGHT_PX = 200;
 
-    @Before
-    public void setUp() {
-        // OpenNMSSeleniumIT does not auto-authenticate; tests that
-        // navigate directly to a non-public URL must log in first or
-        // the WebDriver lands on /opennms/login.jsp and the
-        // map-container assertions never see the geomap DOM.
-        login();
+    /**
+     * Confirms the rendered page actually contains the post-fix inline
+     * script before we wait on a runtime side-effect (the leaflet DOM).
+     * Without this, a stale opennms image fails with a vague 30-second
+     * timeout instead of a clear "fix not present" message.
+     */
+    private void assertGeomapJspIsPatched() {
+        final String source = getDriver().getPageSource();
+        assertThat(
+                "Rendered page does not contain the post-fix inline-script form '$(function() {'."
+                        + " Either the opennms image under test is older than this PR, or the JSP"
+                        + " was not rebuilt. URL=" + getDriver().getCurrentUrl(),
+                source,
+                containsString("$(function() {"));
     }
 
     @Test
     public void leafletMapMounts() {
         getDriver().get(getBaseUrlInternal() + "opennms/geomap/standalone.jsp");
+        assertGeomapJspIsPatched();
 
         // Leaflet creates .leaflet-container as the first thing inside
         // the target div on L.map(...). If geomap.render() never ran
@@ -102,6 +109,7 @@ public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
     @Test
     public void mapContainerHasNonZeroHeight() {
         getDriver().get(getBaseUrlInternal() + "opennms/geomap/standalone.jsp");
+        assertGeomapJspIsPatched();
 
         // Wait for the leaflet container so we know geomap.render ran
         // before we measure size.
