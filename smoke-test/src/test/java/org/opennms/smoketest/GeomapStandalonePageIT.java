@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.is;
 
 import java.time.Duration;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -70,6 +71,15 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
 
     private static final int MIN_VISIBLE_HEIGHT_PX = 200;
+
+    @Before
+    public void setUp() {
+        // OpenNMSSeleniumIT does not auto-authenticate; tests that
+        // navigate directly to a non-public URL must log in first or
+        // the WebDriver lands on /opennms/login.jsp and the
+        // map-container assertions never see the geomap DOM.
+        login();
+    }
 
     @Test
     public void leafletMapMounts() {
