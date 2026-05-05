@@ -92,15 +92,20 @@ public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
         getDriver().get(getBaseUrlInternal() + "opennms/geomap/standalone.jsp");
         assertGeomapJspIsPatched();
 
-        // Leaflet creates .leaflet-container as the first thing inside
-        // the target div on L.map(...). If geomap.render() never ran
-        // (Bug #1), this element is never created.
+        // Leaflet's _initLayout adds the 'leaflet-container' class to
+        // the existing #map div (it does NOT create a child) -- the
+        // selector is the compound form '#map.leaflet-container' (same
+        // element, no space), not the descendant form. The class is
+        // only added after geomap.render() -> loadConfig() -> initMap
+        // -> L.map(mapId, ...). If render never runs, the class is
+        // never added.
         new WebDriverWait(getDriver(), Duration.ofSeconds(30))
-                .until(d -> !d.findElements(By.cssSelector("#map .leaflet-container")).isEmpty());
+                .until(d -> !d.findElements(By.cssSelector("#map.leaflet-container")).isEmpty());
 
-        // .leaflet-tile-pane is created by L.tileLayer(...).addTo(map),
-        // which only runs after the GET /api/v2/geolocation/config call
-        // succeeds. Its presence proves the full init path ran.
+        // .leaflet-tile-pane IS a descendant -- created by
+        // L.tileLayer(...).addTo(map), which only runs after the GET
+        // /api/v2/geolocation/config call succeeds. Its presence
+        // proves the full init path ran.
         assertThat(
                 getDriver().findElements(By.cssSelector("#map .leaflet-tile-pane")).size(),
                 greaterThan(0));
@@ -111,10 +116,12 @@ public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
         getDriver().get(getBaseUrlInternal() + "opennms/geomap/standalone.jsp");
         assertGeomapJspIsPatched();
 
-        // Wait for the leaflet container so we know geomap.render ran
-        // before we measure size.
+        // Wait for leaflet to add its class to #map so we know
+        // geomap.render ran before we measure size. Compound selector
+        // matches the same element; descendant form (with a space)
+        // would never match because leaflet annotates #map in place.
         new WebDriverWait(getDriver(), Duration.ofSeconds(30))
-                .until(d -> !d.findElements(By.cssSelector("#map .leaflet-container")).isEmpty());
+                .until(d -> !d.findElements(By.cssSelector("#map.leaflet-container")).isEmpty());
 
         final WebElement mapContainer = getDriver().findElement(By.id("map-container"));
         final int containerHeight = mapContainer.getRect().getHeight();
@@ -133,7 +140,7 @@ public class GeomapStandalonePageIT extends OpenNMSSeleniumIT {
         // Also assert leaflet's own container inherited a usable size,
         // so a future regression that decouples #map-container from
         // its descendants gets caught too.
-        final WebElement leafletContainer = getDriver().findElement(By.cssSelector("#map .leaflet-container"));
+        final WebElement leafletContainer = getDriver().findElement(By.cssSelector("#map.leaflet-container"));
         assertThat(
                 "leaflet container collapsed to zero height",
                 leafletContainer.getRect().getHeight(),
