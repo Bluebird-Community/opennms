@@ -7,7 +7,6 @@
     <div class="header">
       <div class="section-left">
         <h3>SNMPv3 User Management</h3>
-        <p>List SNMPv3 users credentials</p>
       </div>
       <div class="section-right">
         <FeatherButton
@@ -18,6 +17,18 @@
           Add User
         </FeatherButton>
       </div>
+    </div>
+    <div class="info-section">
+      <span>Configure SNMPv3 user settings.</span>
+      <FeatherIcon
+        :icon="InfoIcon"
+        class="info-icon"
+        role="button"
+        tabindex="0"
+        @click="isMessageDialogVisible = true"
+        @keydown.enter.space.prevent="isMessageDialogVisible = true"
+        data-test="trap-config-snmpv3-users-info-icon"
+      />
     </div>
     <div class="table-container">
       <table
@@ -48,7 +59,7 @@
             :key="index"
           >
             <td>{{ user.securityName }}</td>
-            <td>{{ user.securityLevel }}</td>
+            <td>{{ displaySecurityLevel(user.securityLevel) }}</td>
             <td>{{ user.authProtocol }}</td>
             <td>{{ user.privacyProtocol }}</td>
             <td>
@@ -82,23 +93,40 @@
       @close="cancelDeleteUser"
       @confirm="confirmDeleteUser"
     />
+    <MessageDialog
+      :visible="isMessageDialogVisible"
+      maxHeight="22em"
+      maxWidth="50em"
+      title="SNMPv3 User Management"
+      @close="isMessageDialogVisible = false"
+    >
+      <template #content>
+        <div>
+          <p>Configure SNMPv3 user settings.</p>
+          <p><strong>Note</strong> that the settings here apply to the OpenNMS core system as well as to any Minions or other distributed components.</p>
+        </div>
+      </template>
+    </MessageDialog>
   </TableCard>
 </template>
 
 <script setup lang="ts">
+import { FeatherButton } from '@featherds/button'
+import { FeatherIcon } from '@featherds/icon'
+import Delete from '@featherds/icon/action/Delete'
+import Edit from '@featherds/icon/action/Edit'
+import InfoIcon from '@featherds/icon/action/Info'
+import { FeatherSortHeader, SORT } from '@featherds/table'
 import useSnackbar from '@/composables/useSnackbar'
 import { updateTrapdConfiguration } from '@/services/trapdConfigurationService'
 import { useTrapdConfigStore } from '@/stores/trapdConfigStore'
 import { CreateEditMode } from '@/types'
 import { SnmpV3User, TrapConfig } from '@/types/trapConfig'
-import { FeatherButton } from '@featherds/button'
-import { FeatherIcon } from '@featherds/icon'
-import Delete from '@featherds/icon/action/Delete'
-import Edit from '@featherds/icon/action/Edit'
-import { FeatherSortHeader, SORT } from '@featherds/table'
 import EmptyList from '../Common/EmptyList.vue'
 import TableCard from '../Common/TableCard.vue'
 import DeleteUserConfirmationDialog from './Dialog/DeleteUserConfirmationDialog.vue'
+import MessageDialog from '../Common/MessageDialog.vue'
+import { SECURITY_LEVEL_OPTIONS } from '@/lib/trapdValidator'
 
 const store = useTrapdConfigStore()
 const { showSnackBar } = useSnackbar()
@@ -106,16 +134,17 @@ const tableRecords = ref<SnmpV3User[]>([])
 const deleteUserIndex = ref<number | null>(null)
 const deleteDialogVisible = ref<boolean>(false)
 const isDeleting = ref(false)
+const isMessageDialogVisible = ref(false)
 
 const columns = computed(() => [
-  { id: 'username', label: 'SnmpV3 Username' },
+  { id: 'securityName', label: 'Security Name' },
   { id: 'securityLevel', label: 'Security Level' },
   { id: 'authenticationProtocol', label: 'Authentication Protocol' },
   { id: 'privacyProtocol', label: 'Privacy Protocol' }
 ])
 
 const sort = reactive({
-  username: SORT.NONE,
+  securityName: SORT.NONE,
   securityLevel: SORT.NONE,
   authenticationProtocol: SORT.NONE,
   privacyProtocol: SORT.NONE
@@ -136,6 +165,16 @@ const openDeleteUserDialog = (index: number) => {
 const cancelDeleteUser = () => {
   deleteUserIndex.value = null
   deleteDialogVisible.value = false
+}
+
+const displaySecurityLevel = (level: number) => {
+  const index = level - 1
+
+  if (index < 0 || index > 2) {
+    return '--'
+  }
+
+  return SECURITY_LEVEL_OPTIONS[index]._text
 }
 
 const confirmDeleteUser = async () => {
@@ -198,6 +237,25 @@ watch(
       p {
         @include typography.body-large;
         color: var(--feather-text-secondary);
+      }
+    }
+  }
+
+  .info-section {
+    margin-bottom: 1em;
+
+    .label {
+      color: var(variables.$primary-text-on-surface);
+    }
+
+    .info-icon {
+      cursor: pointer;
+      font-size: 1.5em;
+      margin-left: 0.5em;
+      color: var(variables.$primary);
+
+      &:hover {
+        opacity: 0.8;
       }
     }
   }

@@ -129,7 +129,6 @@
     <module>opennms-web-dependencies</module>
     <module>opennms-webapp</module>
     <module>opennms-webapp-rest</module>
-    <module>opennms-wmi</module>
     <module>opennms-asterisk</module>
     <module>opennms-config-dao</module>
   </modules>
@@ -1725,7 +1724,7 @@
     <args4jVersion>2.33</args4jVersion>
     <ariesUtilVersion>1.1.3</ariesUtilVersion>
     <asmVersion>9.7</asmVersion>
-    <activemqVersion>5.16.8</activemqVersion>
+    <activemqVersion>5.19.5</activemqVersion>
     <atomikosVersion>3.9.2</atomikosVersion>
     <batikVersion>1.17</batikVersion>
     <bouncyCastleVersion>1.83</bouncyCastleVersion>
@@ -1758,7 +1757,7 @@
     <commonsLangVersion>2.6</commonsLangVersion>
     <commonsLang3Version>3.16.0</commonsLang3Version>
     <commonsMath3Version>3.6.1</commonsMath3Version>
-    <commonsNetVersion>3.10.0</commonsNetVersion>
+    <commonsNetVersion>3.12.0</commonsNetVersion>
     <commonsPoolVersion>1.6</commonsPoolVersion>
     <commonsPool2Version>2.4.3</commonsPool2Version>
     <commonsTextVersion>1.11.0</commonsTextVersion>
@@ -1821,7 +1820,7 @@
     <jackson2Version>2.16.2</jackson2Version>
     <jinjavaVersion>2.8.2</jinjavaVersion>
     <jmsApiVersion>2.0.1</jmsApiVersion>
-    <snakeyamlVersion>2.2</snakeyamlVersion>
+    <snakeyamlVersion>2.3</snakeyamlVersion>
     <spiflyVersion>1.3.6</spiflyVersion>
     <jacocoVersion>0.8.9</jacocoVersion>
     <jasperreportsVersion>6.20.0</jasperreportsVersion>
@@ -3672,11 +3671,6 @@
       <dependency>
         <groupId>org.opennms</groupId>
         <artifactId>opennms-webapp-ng</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms</groupId>
-        <artifactId>opennms-wmi</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
