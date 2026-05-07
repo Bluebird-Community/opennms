@@ -219,7 +219,7 @@ const performUpload = async (isXml: boolean) => {
       }
     }
 
-    const response = await uploadTrapdConfiguration(uploadFile.value, isXml)
+    await uploadTrapdConfiguration(uploadFile.value, isXml)
 
     snackbar.showSnackBar({
       msg: `Successfully uploaded Trap configuration from '${fileName}'.`,

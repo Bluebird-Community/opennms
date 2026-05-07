@@ -2,7 +2,6 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import {
   AUTH_PROTOCOL_OPTIONS,
-  AuthProtocol,
   AuthProtocols,
   MAX_PORT,
   MIN_PORT,
@@ -48,7 +47,7 @@ class FakeElement {
   getElementsByTagName(tagName: string): FakeElement[] {
     const results: FakeElement[] = []
     for (const child of this.children) {
-      if (child.localName === tagName) results.push(child)
+      if (child.localName === tagName) {results.push(child)}
       results.push(...child.getElementsByTagName(tagName))
     }
     return results

@@ -138,9 +138,9 @@ const applyCustomTime = () => {
   const endTime = getUnixTime(add(endDateRef.value, endTimeRef.value.time))
 
   const difference = differenceInHours(startTime, endTime)
-  if (difference < 1) format = 'minutes'
-  if (difference > 24) format = 'days'
-  if (difference > 8766) format = 'years'
+  if (difference < 1) {format = 'minutes'}
+  if (difference > 24) {format = 'days'}
+  if (difference > 8766) {format = 'years'}
 
   emit('updateTime', {
     startTime,

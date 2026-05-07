@@ -293,7 +293,7 @@ export const downloadEventConfXmlBySourceId = async (sourceId: number): Promise<
   const endpoint = `/eventconf/sources/${sourceId}/events/download`
   try {
     const response = await v2.get(endpoint, { responseType: 'blob' })
-    if (response.status !== 200) return false
+    if (response.status !== 200) {return false}
 
     const filename = extractFilenameFromContentDisposition(response.headers, `eventconf-source-${sourceId}.xml`)
     const blob = response.data as Blob
@@ -390,7 +390,7 @@ const extractFilenameFromContentDisposition = (
 ): string => {
   const contentDisposition =
     headers && ((headers['content-disposition'] || headers['Content-Disposition']) as string | undefined)
-  if (!contentDisposition) return defaultName
+  if (!contentDisposition) {return defaultName}
 
   const match = /filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/.exec(contentDisposition)
   if (match && match[1]) {

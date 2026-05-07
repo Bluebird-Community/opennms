@@ -47,12 +47,9 @@
 import { useOutsideClick } from '@featherds/composables/events/OutsideClick'
 import { FeatherAppBar, FeatherAppBarLink } from '@featherds/app-bar'
 import { FeatherButton } from '@featherds/button'
-import { FeatherIcon } from '@featherds/icon'
-import LightDarkMode from '@featherds/icon/action/LightDarkMode'
 
 // see vite.config.ts, resolve.alias for the actual logo file that is imported
 import IconLogo from './src/assets/ProductLogo.vue'
-import { useAppStore } from '@/stores/appStore'
 import { useMenuStore } from '@/stores/menuStore'
 import { DropdownMenuType } from './types'
 import { MainMenu } from '@/types/mainMenu'
@@ -60,7 +57,6 @@ import Search from './Search.vue'
 import UserNotificationsMenuItem from './UserNotificationsMenuItem.vue'
 import UserSelfServiceMenuItem from './UserSelfServiceMenuItem.vue'
 
-const appStore = useAppStore()
 const menuStore = useMenuStore()
 const lastShift = reactive({ lastKey: '', timeSinceLastKey: 0 })
 const outsideClick = ref()

@@ -1,4 +1,3 @@
-import { ShimFeatherMegaMenu } from './index.d'
 import { DefineComponent } from 'vue'
 
 // @featherds/megamenu index.d.ts does not follow same export convention as all other feather

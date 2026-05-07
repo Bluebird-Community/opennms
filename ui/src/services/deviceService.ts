@@ -94,7 +94,7 @@ const getHistoryByIpInterface = async (ipInterfaceId: number, configType: string
 
   try {
     const resp: { data: DeviceConfigBackup[], status: number } = await rest.get(`${endpoint}/interface/${ipInterfaceId}?configType=${configType}`)
-    if (resp.status === 204) return []
+    if (resp.status === 204) {return []}
 
     const devicesWithBackupDate = resp.data.filter((device) => device.lastBackupDate)
     return orderBy(devicesWithBackupDate, 'lastBackupDate', 'desc')

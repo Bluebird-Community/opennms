@@ -1,7 +1,7 @@
 import CreateSnmpV3User from '@/components/TrapdConfiguration/CreateSnmpV3User.vue'
 import {
   DEFAULT_SNMP_V3_AUTH_PROTOCOL,
-  DEFAULT_SNMP_V3_PRIVACY_PROTOCOL,
+  DEFAULT_SNMP_V3_PRIVACY_PROTOCOL
 } from '@/lib/constants'
 import {
   AUTH_PROTOCOL_OPTIONS,

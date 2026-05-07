@@ -82,7 +82,7 @@ const externalComponent = (url: string) => {
 
 const addStylesheet = (url: string) => {
   const exists = document.querySelector(`link[href='${url}']`)
-  if (exists) return
+  if (exists) {return}
 
   const head = document.head
   const link = document.createElement('link')

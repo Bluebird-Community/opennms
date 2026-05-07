@@ -149,10 +149,6 @@ const debouncedSearchTerm = ref('')
 const currentPage = ref(1)
 const pageSize = ref(50)
 
-const deleteDialogLabels = {
-  title: 'Delete SNMP Configuration Profile'
-}
-
 const emptyListContent = {
   msg: 'No profiles found.'
 }

@@ -104,7 +104,7 @@ const labels = ref(defaultLabels)
 const buttonAddDisabled = computed(() => {
   const itemsLength = props.items.length
 
-  if (!itemsLength) return false // enabled
+  if (!itemsLength) {return false} // enabled
 
   const { key, value } = props.items[itemsLength - 1] // last item
   return !(key.name && value) // disabled

@@ -49,7 +49,7 @@ import ipRegex from 'ip-regex'
 import isValidDomain from 'is-valid-domain'
 
 const cronTabLength = (cronTab: string) => {
-  if(!cronTab) return 0
+  if(!cronTab) {return 0}
 
   return cronTab.replace(/\s$/, '').split(' ').length
 }
@@ -129,7 +129,7 @@ const convertCronTabToLocal = (cronFormatted: string) => {
   }
 
   const prefixZero = (num: number) => {
-    if(num >= 10) return num
+    if(num >= 10) {return num}
 
     return `0${num}`
   }
@@ -166,7 +166,7 @@ const convertCronTabToLocal = (cronFormatted: string) => {
       const regexDoW = /([1-7])|(SUN)|(MON)|(TUE)|(WED)|(THU)|(FRI)|(SAT)/g
       const dowMatched = dayOfWeek.match(regexDoW) 
       
-      if(!dowMatched) return false
+      if(!dowMatched) {return false}
   
       if(!Number.isInteger(Number(dayOfWeek))) {
         DoW = (weekNameTypes.find((d) => d.name === dowMatched[0]) || {}).id?.toString() || '?'
@@ -217,7 +217,7 @@ const getQueryStringFromAdvancedOptions = (queryPart = '', advancedOptions: Adva
     }
   })
 
-  if(queryPart?.length === 0 && optionString?.length === 0) return ''
+  if(queryPart?.length === 0 && optionString?.length === 0) {return ''}
 
   const optionsStringSplit = optionString?.split('&')
   const uniqueQuery = [...new Set([...queryPartList, ...optionsStringSplit])].filter((q) => q.length > 0)
@@ -268,7 +268,7 @@ const convertItemToURL = (localItem: LocalConfiguration) => {
   const fullURL = `${protocol}://${host}`
 
   // File type accepts all characters as path value, including separator character (?), which also means it does not have url query part. Hence we just return the path content as is.
-  if(type === RequisitionTypes.File) return fullURL
+  if(type === RequisitionTypes.File) {return fullURL}
 
   const queryString = getQueryStringFromAdvancedOptions(query, localItem.advancedOptions, type)
 
@@ -700,7 +700,7 @@ const getHostHint = (type: string) => {
  */
 const parseAdvancedOptions = (fullURL: string, type: string, subType: string) => {
   // File type does not support url query part (?key=value&...), hence no advanced options parsing is required
-  if(type === RequisitionTypes.File) return []
+  if(type === RequisitionTypes.File) {return []}
 
   return fullURL.includes('?')
     ? fullURL
@@ -1009,7 +1009,11 @@ const copyToClipboard = (text: string) => {
     textArea.focus()
     textArea.select()
     return new Promise<void>((res, rej) => {
-      document.execCommand('copy') ? res() : rej()
+      if (document.execCommand('copy')) {
+        res()
+      } else {
+        rej()
+      }
       textArea.remove()
     })
   }

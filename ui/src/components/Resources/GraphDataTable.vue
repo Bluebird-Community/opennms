@@ -62,7 +62,7 @@ import { PropType } from 'vue'
 const displayRawValues = ref(false)
 const d3format = format('.3s')
 const formatColumnValue = (num: number) => {
-  if (isNaN(num)) return 'N/A'
+  if (isNaN(num)) {return 'N/A'}
   return d3format(num)
 }
 

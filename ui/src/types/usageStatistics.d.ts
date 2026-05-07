@@ -20,7 +20,6 @@
 /// License.
 ///
 
-import { UsageStatisticsMetadata } from '@/types/usageStatistics'
 export interface UsageStatisticsStatus {
   enabled: boolean | null,
   initialNoticeAcknowledged?: boolean | null

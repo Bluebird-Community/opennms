@@ -250,7 +250,7 @@ const formatStatement = (statement: PrintStatement, renderer: Renderer) => {
 
   for (const token of tokens) {
     if (token.type === TOKENS.Text) {
-      if (token.value) renderer.drawText(' ' + token.value)
+      if (token.value) {renderer.drawText(' ' + token.value)}
     } else if (token.type === TOKENS.Newline) {
       renderer.drawNewline()
     } else if (token.type === TOKENS.Unit) {

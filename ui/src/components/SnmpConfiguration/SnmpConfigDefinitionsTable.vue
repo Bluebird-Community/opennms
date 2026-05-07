@@ -167,7 +167,7 @@ import { FeatherSortHeader, SORT } from '@featherds/table'
 
 import useSnackbar from '@/composables/useSnackbar'
 import { DEFAULT_MONITORING_LOCATION } from '@/lib/constants'
-import { ActiveTabs, AdvancedSubtabs, SnmpConfigEditMode, useSnmpConfigStore } from '@/stores/snmpConfigStore'
+import { ActiveTabs, SnmpConfigEditMode, useSnmpConfigStore } from '@/stores/snmpConfigStore'
 import { SnmpDefinition } from '@/types/snmpConfig'
 import ConfirmationDialog from '../Common/ConfirmationDialog.vue'
 import EmptyList from '../Common/EmptyList.vue'

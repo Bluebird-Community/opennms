@@ -10,10 +10,10 @@ const buildJson = (overrides: {
 } = {}): string => {
   const { address = '*', port = 162, suspect = null, users } = overrides
   const obj: Record<string, unknown> = {}
-  if (address !== null) obj['snmpTrapAddress'] = address
-  if (port !== null) obj['snmpTrapPort'] = port
-  if (suspect !== null) obj['newSuspectOnTrap'] = suspect
-  if (users !== undefined) obj['snmpv3User'] = users
+  if (address !== null) {obj['snmpTrapAddress'] = address}
+  if (port !== null) {obj['snmpTrapPort'] = port}
+  if (suspect !== null) {obj['newSuspectOnTrap'] = suspect}
+  if (users !== undefined) {obj['snmpv3User'] = users}
   return JSON.stringify(obj)
 }
 

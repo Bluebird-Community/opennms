@@ -120,7 +120,7 @@ export const validateEventConfigFile = async (file: File) => {
 
 // Helper function to extract inner text from XML element
 const getInnerText = (el: Element, tag: string): string => {
-  if (!el) return ''
+  if (!el) {return ''}
   const node = el.querySelector(tag) || el.getElementsByTagName(tag)[0]
   return node?.textContent?.trim() || ''
 }

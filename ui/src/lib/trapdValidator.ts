@@ -396,7 +396,7 @@ export const validateTrapdJson = (jsonString: string): TrapdValidationResult => 
     ...raw,
     includeRawMessage: raw['includeRawMessage'] ?? false,
     newSuspectOnTrap: raw['newSuspectOnTrap'] ?? false,
-    useAddressFromVarbind: raw['useAddressFromVarbind'] ?? false,
+    useAddressFromVarbind: raw['useAddressFromVarbind'] ?? false
   } as TrapConfig
 
   validateSnmpTrapAddress(config.snmpTrapAddress, false, errors)
