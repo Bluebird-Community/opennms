@@ -1725,6 +1725,7 @@
     <ariesUtilVersion>1.1.3</ariesUtilVersion>
     <asmVersion>9.7</asmVersion>
     <activemqVersion>5.19.5</activemqVersion>
+    <activemqCamelVersion>5.16.8</activemqCamelVersion>
     <atomikosVersion>3.9.2</atomikosVersion>
     <batikVersion>1.17</batikVersion>
     <bouncyCastleVersion>1.83</bouncyCastleVersion>
