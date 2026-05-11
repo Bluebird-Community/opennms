@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:onmsgi="http://xmlns.opennms.org/xsd/spring/onms-osgi"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://xmlns.opennms.org/xsd/spring/onms-osgi http://xmlns.opennms.org/xsd/spring/onms-osgi.xsd">
+
+    <!--
+      Wires the runtime side of collector token authentication.
+
+      CollectorTokenAuthConfigFactory is a static-singleton-style factory;
+      TokenProviderImpl handles its lazy init internally so a clean install
+      without etc/collector-token-auth-configuration.xml degrades to "no
+      token-auth definitions, every ${token:<name>} placeholder falls
+      through" rather than failing at startup.
+    -->
+
+    <bean id="collectorTokenAuthAcquirer"
+          class="org.opennms.netmgt.config.collectortokenauth.TokenAcquirer">
+        <property name="entityScopeProvider" ref="entityScopeProvider"/>
+    </bean>
+
+    <bean id="collectorTokenAuthCache"
+          class="org.opennms.netmgt.config.collectortokenauth.TokenCache">
+        <constructor-arg ref="collectorTokenAuthAcquirer"/>
+    </bean>
+
+    <bean id="collectorTokenAuthProvider"
+          class="org.opennms.netmgt.config.collectortokenauth.TokenProviderImpl">
+        <constructor-arg ref="collectorTokenAuthCache"/>
+    </bean>
+
+    <!--
+      Expose the TokenProvider as an OSGi service so the XML/JSON and HTTP
+      collectors can autowire it without depending on opennms-config
+      directly.
+    -->
+    <onmsgi:service interface="org.opennms.netmgt.config.collectortokenauth.TokenProvider"
+                    ref="collectorTokenAuthProvider"/>
+
+    <!--
+      Reload listener: reacts to a reloadDaemonConfig event with
+      daemonName=CollectorTokenAuth by re-reading
+      collector-token-auth-configuration.xml and flushing the token cache.
+
+      eventIpcManager is constructor-injected from the parent (daemonContext)
+      via standard Spring DI; register() runs as the init-method.
+    -->
+    <bean id="collectorTokenAuthConfigReloadListener"
+          class="org.opennms.netmgt.config.collectortokenauth.CollectorTokenAuthConfigReloadListener"
+          init-method="register">
+        <constructor-arg ref="collectorTokenAuthCache"/>
+        <constructor-arg ref="eventIpcManager"/>
+    </bean>
+
+</beans>
