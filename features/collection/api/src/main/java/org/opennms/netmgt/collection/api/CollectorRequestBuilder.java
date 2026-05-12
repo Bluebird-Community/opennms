@@ -40,6 +40,8 @@ public interface CollectorRequestBuilder {
 
     CollectorRequestBuilder withAttributes(Map<String, Object> attributes);
 
+    CollectorRequestBuilder withAdaptor(CollectorAdaptor adaptor);
+
     CompletableFuture<CollectionSet> execute();
 
 }

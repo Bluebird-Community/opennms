@@ -21,7 +21,9 @@
  */
 package org.opennms.netmgt.collection.client.rpc;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +38,7 @@ import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.core.utils.ParameterMap;
 import org.opennms.netmgt.collection.api.CollectionAgent;
 import org.opennms.netmgt.collection.api.CollectionSet;
+import org.opennms.netmgt.collection.api.CollectorAdaptor;
 import org.opennms.netmgt.collection.api.CollectorRequestBuilder;
 import org.opennms.netmgt.collection.api.ServiceCollector;
 import org.opennms.netmgt.collection.dto.CollectionAgentDTO;
@@ -60,6 +63,8 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
     private Long ttlInMs;
 
     private String className;
+
+    private final List<CollectorAdaptor> adaptors = new ArrayList<>();
 
     public CollectorRequestBuilderImpl(LocationAwareCollectorClientImpl client) {
         this.client = Objects.requireNonNull(client);
@@ -109,6 +114,14 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
     }
 
     @Override
+    public CollectorRequestBuilder withAdaptor(CollectorAdaptor adaptor) {
+        if (adaptor != null) {
+            this.adaptors.add(adaptor);
+        }
+        return this;
+    }
+
+    @Override
     public CompletableFuture<CollectionSet> execute() {
         if (serviceCollector == null) {
             throw new IllegalArgumentException("Collector or collector class name is required.");
@@ -150,26 +163,42 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
         // such as the agent details and other state related attributes
         // which should be included in the request
         final Map<String, Object> runtimeAttributes = Interpolator.interpolateAttributes(serviceCollector.getRuntimeAttributes(agent, interpolatedAttributes), scope);
-        final Map<String, Object> allAttributes = new HashMap<>();
+        Map<String, Object> allAttributes = new HashMap<>();
         allAttributes.putAll(interpolatedAttributes);
         allAttributes.putAll(runtimeAttributes);
+
+        // Give each adaptor a chance to transform the parameter map
+        // before dispatch. Adaptors run only on the controller; they
+        // never run on the Minion.
+        for (final CollectorAdaptor adaptor : adaptors) {
+            allAttributes = adaptor.beforeCollect(agent, allAttributes);
+        }
+        final Map<String, Object> dispatchedAttributes = allAttributes;
 
         // The runtime attributes may include objects which need to be marshaled.
         // Only marshal these if the request is being executed at another location.
         if (MonitoringLocationUtils.isDefaultLocationName(request.getLocation())) {
             // As-is
             request.setAgent(agent);
-            request.addAttributes(allAttributes);
+            request.addAttributes(dispatchedAttributes);
         } else {
             // Marshal
             request.setAgent(new CollectionAgentDTO(agent));
-            final Map<String, String> marshaledParms = serviceCollector.marshalParameters(allAttributes);
+            final Map<String, String> marshaledParms = serviceCollector.marshalParameters(dispatchedAttributes);
             marshaledParms.forEach(request::addAttribute);
             request.setAttributesNeedUnmarshaling(true);
         }
 
-        // Execute the request
-        return client.getDelegate().execute(request).thenApply(CollectorResponseDTO::getCollectionSet);
+        // Execute the request, then let each adaptor post-process the
+        // result. Adaptors run in registration order; each may return a
+        // possibly-modified CollectionSet.
+        return client.getDelegate().execute(request).thenApply(response -> {
+            CollectionSet result = response.getCollectionSet();
+            for (final CollectorAdaptor adaptor : adaptors) {
+                result = adaptor.handleCollectionResult(agent, dispatchedAttributes, result);
+            }
+            return result;
+        });
     }
 
 }
