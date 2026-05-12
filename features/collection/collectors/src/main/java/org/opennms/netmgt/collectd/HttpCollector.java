@@ -260,6 +260,18 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
 
             LOG.info("doCollection: collecting using method: {}", method);
             final CloseableHttpResponse response = clientWrapper.execute(method);
+            final int status = response.getStatusLine().getStatusCode();
+            if (status == 401 || status == 403) {
+                // Auth-related refusal. Drain and close the connection,
+                // then surface as a collection failure so the
+                // controller-side CollectorTokenAuthAdaptor can invalidate
+                // any cached token used in this request.
+                try { EntityUtils.consumeQuietly(response.getEntity()); } catch (Throwable ignored) {}
+                try { response.close(); } catch (Throwable ignored) {}
+                throw new HttpCollectorException("auth failure: "
+                        + collectorAgent.getUriDef().getName()
+                        + " returned HTTP status " + status);
+            }
             //Not really a persist as such; it just stores data in collectionSet for later retrieval
             persistResponse(collectorAgent, collectionSetBuilder, response);
         } catch (URISyntaxException e) {
@@ -451,13 +463,36 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
             method = buildPostMethod(uri, collectorAgent);
         }
 
+        applyConfiguredHeaders(method, url);
+        return method;
+    }
+
+    /**
+     * Applies configured headers from the {@link Url} (virtual-host
+     * plus any explicit {@code <header>} entries) to the outgoing
+     * HTTP request. Package-private so a focused test can drive this
+     * without standing up the full collection pipeline.
+     */
+    static void applyConfiguredHeaders(final HttpRequestBase method, final Url url) {
         if (url.getVirtualHost().isPresent()) {
             final String virtualHost = url.getVirtualHost().get();
             if (!virtualHost.trim().isEmpty()) {
                 method.setHeader(HTTP.TARGET_HOST, virtualHost);
             }
         }
-        return method;
+        for (final org.opennms.netmgt.config.httpdatacollection.Header h : url.getHeaders()) {
+            if (h == null) {
+                continue;
+            }
+            final String name = h.getName();
+            final String value = h.getValue();
+            // XSD declares both name/value required, but defend against
+            // programmatically constructed Header instances with null
+            // members -- setHeader(name, null) would throw.
+            if (name != null && !name.isEmpty() && value != null) {
+                method.setHeader(name, value);
+            }
+        }
     }
 
     private static HttpPost buildPostMethod(final URI uri, final HttpCollectorAgent collectorAgent) {

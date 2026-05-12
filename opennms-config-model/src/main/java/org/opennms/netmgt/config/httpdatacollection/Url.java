@@ -87,7 +87,8 @@ import org.opennms.netmgt.config.utils.ConfigUtils;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-        "m_parameters"
+        "m_parameters",
+        "m_headers"
 })
 @XmlRootElement(name = "url")
 @ValidateUsing("http-datacollection-config.xsd")
@@ -97,6 +98,9 @@ public class Url implements Serializable {
     @XmlElementWrapper(name = "parameters")
     @XmlElement(name = "parameter")
     protected List<Parameter> m_parameters;
+    @XmlElementWrapper(name = "headers")
+    @XmlElement(name = "header")
+    protected List<Header> m_headers;
     @XmlAttribute(name = "method")
     protected String m_method;
     @XmlAttribute(name = "http-version")
@@ -146,6 +150,21 @@ public class Url implements Serializable {
 
     public void setParameters(List<Parameter> value) {
         m_parameters = value;
+    }
+
+    /**
+     * Returns the request headers configured on this URL, or an empty
+     * list if none. Each header's value is interpolated through the
+     * metadata DSL at request build time, which is the entry point for
+     * {@code ${token:...}} dynamic auth tokens and for any per-node
+     * placeholders.
+     */
+    public List<Header> getHeaders() {
+        return m_headers == null ? Collections.emptyList() : m_headers;
+    }
+
+    public void setHeaders(final List<Header> value) {
+        m_headers = value;
     }
 
     public String getMethod() {
