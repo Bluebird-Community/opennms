@@ -59,6 +59,7 @@ commands:
               exit 0
             fi
 
+            sudo apt update
             sudo apt install -y python3-pip
             pip3 install requests --break-system-packages 
 
