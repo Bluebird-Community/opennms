@@ -1,4 +1,4 @@
-[[release-35-changelog]]
+[[release-36-changelog]]
 
 = Changelog
 
