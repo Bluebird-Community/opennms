@@ -167,6 +167,16 @@ public class Collectd extends AbstractServiceDaemon implements
     @Autowired
     private volatile LocationAwareCollectorClient m_locationAwareCollectorClient;
 
+    /**
+     * Optional list of {@link org.opennms.netmgt.collection.api.CollectorAdaptor}
+     * beans visible in this context. Each adaptor is registered on every
+     * collector request so it can transform parameters before dispatch
+     * and inspect the result on the way back. {@code required = false}
+     * keeps this optional for deployments / tests that wire no adaptors.
+     */
+    @Autowired(required = false)
+    private volatile List<org.opennms.netmgt.collection.api.CollectorAdaptor> m_collectorAdaptors = Collections.emptyList();
+
     static class SchedulingCompletedFlag {
         volatile boolean m_schedulingCompleted = false;
 
@@ -556,7 +566,7 @@ public class Collectd extends AbstractServiceDaemon implements
                     entityScopeProvider.getScopeProviderForNode(iface.getNodeId()),
                     entityScopeProvider.getScopeProviderForInterface(iface.getNodeId(), InetAddressUtils.toIpAddrString(iface.getIpAddress()))
                 );
-                matchingPkgs.add(new CollectionSpecification(wpkg, svcName, getServiceCollector(svcName), instrumentation(), m_locationAwareCollectorClient, pollOutagesDao, className, scopeProvider));
+                matchingPkgs.add(new CollectionSpecification(wpkg, svcName, getServiceCollector(svcName), instrumentation(), m_locationAwareCollectorClient, pollOutagesDao, className, scopeProvider, m_collectorAdaptors));
             } else {
                 LOG.warn("The class for collector {} is not available yet.", svcName);
             }

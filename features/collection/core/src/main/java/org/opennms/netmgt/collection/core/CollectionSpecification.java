@@ -81,8 +81,9 @@ public class CollectionSpecification {
     private final ReadablePollOutagesDao m_pollOutagesDao;
     private final String collectorImplClassName;
     private final ScopeProvider scopeProvider;
+    private final java.util.List<org.opennms.netmgt.collection.api.CollectorAdaptor> m_collectorAdaptors;
 
-    public CollectionSpecification(Package wpkg, String svcName, ServiceCollector collector, CollectionInstrumentation instrumentation, LocationAwareCollectorClient locationAwareCollectorClient, ReadablePollOutagesDao pollOutagesDao, String collectorImplClassName, final ScopeProvider scopeProvider) {
+    public CollectionSpecification(Package wpkg, String svcName, ServiceCollector collector, CollectionInstrumentation instrumentation, LocationAwareCollectorClient locationAwareCollectorClient, ReadablePollOutagesDao pollOutagesDao, String collectorImplClassName, final ScopeProvider scopeProvider, final java.util.List<org.opennms.netmgt.collection.api.CollectorAdaptor> collectorAdaptors) {
         m_package = Objects.requireNonNull(wpkg);
         m_svcName = Objects.requireNonNull(svcName);
         m_collector = Objects.requireNonNull(collector);
@@ -91,7 +92,12 @@ public class CollectionSpecification {
         m_pollOutagesDao = Objects.requireNonNull(pollOutagesDao);
         this.collectorImplClassName = collectorImplClassName;
         this.scopeProvider = scopeProvider;
+        this.m_collectorAdaptors = collectorAdaptors != null ? collectorAdaptors : java.util.Collections.emptyList();
         initializeParameters();
+    }
+
+    public CollectionSpecification(Package wpkg, String svcName, ServiceCollector collector, CollectionInstrumentation instrumentation, LocationAwareCollectorClient locationAwareCollectorClient, ReadablePollOutagesDao pollOutagesDao, String collectorImplClassName, final ScopeProvider scopeProvider) {
+        this(wpkg, svcName, collector, instrumentation, locationAwareCollectorClient, pollOutagesDao, collectorImplClassName, scopeProvider, java.util.Collections.emptyList());
     }
 
     public CollectionSpecification(Package wpkg, String svcName, ServiceCollector collector, CollectionInstrumentation instrumentation, LocationAwareCollectorClient locationAwareCollectorClient, ReadablePollOutagesDao pollOutagesDao, String collectorImplClassName) {
@@ -287,6 +293,9 @@ public class CollectionSpecification {
             requestBuilder.withAgent(agent)
                     .withAttributes(getPropertyMap())
                     .withTimeToLive(getService().getInterval());
+            for (final org.opennms.netmgt.collection.api.CollectorAdaptor adaptor : m_collectorAdaptors) {
+                requestBuilder.withAdaptor(adaptor);
+            }
             if(!getCollector().getClass().getCanonicalName().equals(collectorImplClassName)) {
                 requestBuilder.withCollectorClassName(collectorImplClassName);
             } else {

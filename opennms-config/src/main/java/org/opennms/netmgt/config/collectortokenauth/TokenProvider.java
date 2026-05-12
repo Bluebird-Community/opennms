@@ -117,4 +117,15 @@ public interface TokenProvider {
     default Optional<InvalidationResult> invalidateByTokenValue(String headerValue) {
         return Optional.empty();
     }
+
+    /**
+     * Drops any cached token for {@code authName}. Used by the
+     * collector-side adaptor on a failed collection to evict a stale
+     * token, so the next cycle re-acquires.
+     *
+     * <p>Default no-op; providers with a cache override this.</p>
+     */
+    default void invalidate(final String authName) {
+        // no-op
+    }
 }

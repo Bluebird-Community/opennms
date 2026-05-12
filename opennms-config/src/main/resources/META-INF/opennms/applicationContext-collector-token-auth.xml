@@ -39,6 +39,21 @@
                     ref="collectorTokenAuthProvider"/>
 
     <!--
+      Collector adaptor that intercepts collections to resolve
+      ${token:<name>} placeholders on the controller and to invalidate
+      stale tokens passively on failure. Wired into Collectd by
+      applicationContext-collectd.xml.
+    -->
+    <bean id="collectorTokenAuthAdaptor"
+          class="org.opennms.netmgt.config.collectortokenauth.CollectorTokenAuthAdaptor">
+        <constructor-arg ref="collectorTokenAuthProvider"/>
+        <constructor-arg ref="entityScopeProvider"/>
+    </bean>
+
+    <onmsgi:service interface="org.opennms.netmgt.collection.api.CollectorAdaptor"
+                    ref="collectorTokenAuthAdaptor"/>
+
+    <!--
       Reload listener: reacts to a reloadDaemonConfig event with
       daemonName=CollectorTokenAuth by re-reading
       collector-token-auth-configuration.xml and flushing the token cache.
