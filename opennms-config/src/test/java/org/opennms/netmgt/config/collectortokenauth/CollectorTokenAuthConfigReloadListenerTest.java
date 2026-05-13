@@ -150,20 +150,37 @@ public class CollectorTokenAuthConfigReloadListenerTest {
     }
 
     @Test
-    public void registerAddsListenerToEventIpcManager() {
-        final EventIpcManager mgr = mock(EventIpcManager.class);
+    public void selfRegistersOnContextRefreshOnceFactoryIsReady() {
+        // The production constructor takes only the cache. Before
+        // EventIpcManagerFactory has a manager, a ContextRefreshedEvent
+        // is a no-op. Once the factory has a manager, the next refresh
+        // drives a one-shot registration.
+        org.opennms.netmgt.events.api.EventIpcManagerFactory.reset();
         final TokenCache cache = new TokenCache(new TokenAcquirer() {
             @Override
             public CachedToken acquire(final TokenAuth auth) { return new CachedToken("t", null); }
         });
-        final CollectorTokenAuthConfigReloadListener l = new CollectorTokenAuthConfigReloadListener(cache, mgr);
+        final CollectorTokenAuthConfigReloadListener l =
+                new CollectorTokenAuthConfigReloadListener(cache);
+        final org.springframework.context.event.ContextRefreshedEvent stubEvent =
+                new org.springframework.context.event.ContextRefreshedEvent(
+                        mock(org.springframework.context.ApplicationContext.class));
 
-        l.register();
+        // Factory not yet ready -- nothing registers.
+        l.onApplicationEvent(stubEvent);
+
+        final EventIpcManager mgr = mock(EventIpcManager.class);
+        org.opennms.netmgt.events.api.EventIpcManagerFactory.setIpcManager(mgr);
+
+        // Now ready; this refresh drives a single addEventListener.
+        l.onApplicationEvent(stubEvent);
         verify(mgr).addEventListener(l, EventConstants.RELOAD_DAEMON_CONFIG_UEI);
 
-        // Idempotent: a second register() does not double-add.
-        l.register();
+        // A second refresh must not double-register.
+        l.onApplicationEvent(stubEvent);
         verify(mgr).addEventListener(l, EventConstants.RELOAD_DAEMON_CONFIG_UEI);
+
+        org.opennms.netmgt.events.api.EventIpcManagerFactory.reset();
     }
 
     @Test

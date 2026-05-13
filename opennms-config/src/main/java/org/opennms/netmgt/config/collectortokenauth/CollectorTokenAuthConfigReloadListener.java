@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import org.opennms.netmgt.config.CollectorTokenAuthConfigFactory;
 import org.opennms.netmgt.events.api.EventConstants;
 import org.opennms.netmgt.events.api.EventIpcManager;
+import org.opennms.netmgt.events.api.EventIpcManagerFactory;
 import org.opennms.netmgt.events.api.EventListener;
 import org.opennms.netmgt.events.api.model.IEvent;
 import org.opennms.netmgt.events.api.model.IParm;
@@ -34,6 +35,8 @@ import org.opennms.netmgt.model.events.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
  * Reacts to a {@code reloadDaemonConfig} event with
@@ -49,13 +52,16 @@ import org.springframework.beans.factory.DisposableBean;
  *   parm: daemonName=CollectorTokenAuth
  * </pre>
  *
- * <p>{@link EventIpcManager} is constructor-injected from the parent
- * context (daemonContext); {@link #register()} runs as the Spring
- * init-method and adds this listener to the manager. No
- * {@code ContextRefreshedEvent} dance is needed.</p>
+ * <p>Late-binding registration: this bean lives in the daoContext, which
+ * is loaded as a parent of the eventDaemonContext while that context is
+ * still being constructed -- so the {@link EventIpcManager} OSGi service
+ * isn't published yet when this bean is wired. We listen for
+ * {@link ContextRefreshedEvent}s, and on each one we try
+ * {@link EventIpcManagerFactory#getIpcManager()}; once it succeeds we
+ * register as a listener (one-shot, guarded by {@code registered}).</p>
  */
 public class CollectorTokenAuthConfigReloadListener
-        implements EventListener, DisposableBean {
+        implements EventListener, ApplicationListener<ContextRefreshedEvent>, DisposableBean {
 
     /** Name advertised for daemon-reload routing. */
     public static final String NAME = "CollectorTokenAuth";
@@ -63,21 +69,39 @@ public class CollectorTokenAuthConfigReloadListener
     private static final Logger LOG = LoggerFactory.getLogger(CollectorTokenAuthConfigReloadListener.class);
 
     private final TokenCache tokenCache;
-    private final EventIpcManager eventIpcManager;
-    private boolean registered;
+    private volatile EventIpcManager eventIpcManager;
+    private volatile boolean registered;
 
-    public CollectorTokenAuthConfigReloadListener(final TokenCache tokenCache,
-                                                  final EventIpcManager eventIpcManager) {
+    public CollectorTokenAuthConfigReloadListener(final TokenCache tokenCache) {
+        this.tokenCache = Objects.requireNonNull(tokenCache, "tokenCache");
+    }
+
+    /**
+     * Test-only constructor. Lets tests inject a mock manager up front
+     * and skip the lazy registration dance.
+     */
+    CollectorTokenAuthConfigReloadListener(final TokenCache tokenCache,
+                                           final EventIpcManager eventIpcManager) {
         this.tokenCache = Objects.requireNonNull(tokenCache, "tokenCache");
         this.eventIpcManager = Objects.requireNonNull(eventIpcManager, "eventIpcManager");
     }
 
-    /** Spring init-method. */
-    public void register() {
+    @Override
+    public void onApplicationEvent(final ContextRefreshedEvent event) {
         if (registered) {
             return;
         }
-        eventIpcManager.addEventListener(this, EventConstants.RELOAD_DAEMON_CONFIG_UEI);
+        final EventIpcManager mgr;
+        try {
+            mgr = EventIpcManagerFactory.getIpcManager();
+        } catch (final IllegalStateException notReady) {
+            // eventDaemonContext has not yet finished building. We will
+            // try again on the next ContextRefreshedEvent that bubbles
+            // up to us.
+            return;
+        }
+        this.eventIpcManager = mgr;
+        mgr.addEventListener(this, EventConstants.RELOAD_DAEMON_CONFIG_UEI);
         registered = true;
         LOG.info("Registered as listener for {} (daemonName={})",
                 EventConstants.RELOAD_DAEMON_CONFIG_UEI, NAME);
@@ -124,7 +148,7 @@ public class CollectorTokenAuthConfigReloadListener
      */
     @Override
     public void destroy() {
-        if (registered) {
+        if (eventIpcManager != null && registered) {
             try {
                 eventIpcManager.removeEventListener(this);
             } catch (final Exception t) {
@@ -135,6 +159,9 @@ public class CollectorTokenAuthConfigReloadListener
     }
 
     private void sendEventQuietly(final org.opennms.netmgt.xml.event.Event event) {
+        if (eventIpcManager == null) {
+            return;
+        }
         try {
             eventIpcManager.sendNow(event);
         } catch (final Exception t) {

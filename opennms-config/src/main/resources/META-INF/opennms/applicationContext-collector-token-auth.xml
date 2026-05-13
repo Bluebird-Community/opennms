@@ -58,14 +58,16 @@
       daemonName=CollectorTokenAuth by re-reading
       collector-token-auth-configuration.xml and flushing the token cache.
 
-      eventIpcManager is constructor-injected from the parent (daemonContext)
-      via standard Spring DI; register() runs as the init-method.
+      Registration is lazy via ContextRefreshedEvent. This bean lives in
+      daoContext, which is loaded as a parent of eventDaemonContext while
+      that context is still being constructed, so eventIpcManager is not
+      yet available at construction or init time. The listener watches
+      for context-refresh events and registers once
+      EventIpcManagerFactory reports a ready manager.
     -->
     <bean id="collectorTokenAuthConfigReloadListener"
-          class="org.opennms.netmgt.config.collectortokenauth.CollectorTokenAuthConfigReloadListener"
-          init-method="register">
+          class="org.opennms.netmgt.config.collectortokenauth.CollectorTokenAuthConfigReloadListener">
         <constructor-arg ref="collectorTokenAuthCache"/>
-        <constructor-arg ref="eventIpcManager"/>
     </bean>
 
 </beans>
