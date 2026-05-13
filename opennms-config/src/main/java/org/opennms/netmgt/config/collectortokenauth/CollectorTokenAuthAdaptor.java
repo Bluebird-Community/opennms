@@ -22,17 +22,10 @@
 package org.opennms.netmgt.config.collectortokenauth;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.opennms.core.mate.api.EntityScopeProvider;
-import org.opennms.core.mate.api.FallbackScope;
-import org.opennms.core.mate.api.Scope;
-import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.netmgt.collection.api.CollectionAgent;
 import org.opennms.netmgt.collection.api.CollectionSet;
 import org.opennms.netmgt.collection.api.CollectionStatus;
@@ -43,29 +36,21 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link CollectorAdaptor} for token-based authentication.
  *
- * <p>{@link #beforeCollect} resolves {@code ${token:<name>}} placeholders
- * in the collection parameters using {@link TokenProvider}, on the
- * OpenNMS controller, before the request is marshaled across the RPC
- * boundary. Substituted values cross the wire; the Minion sees a
- * normal-looking parameter map with no token-aware code involved.</p>
+ * <p>Token placeholders ({@code ${token:<name>}}) are resolved by
+ * {@link TokenAuthScope} during Mate parameter interpolation, which
+ * runs before the adaptor is invoked. The adaptor's role here is
+ * narrower: drain the per-thread record of which auth names
+ * participated in this collection (left behind by
+ * {@link TokenAuthScope}), carry that record across the dispatch
+ * boundary in a parameter, then -- on the way back -- invalidate the
+ * matching cache entries when the collection fails.</p>
  *
- * <p>{@link #handleCollectionResult} invalidates the token cache for any
- * auth name that participated in this collection when the result comes
- * back failed. The next collection cycle re-acquires automatically.
- * Passive invalidation rather than retry orchestration -- the adaptor
- * does not re-issue the RPC.</p>
- *
- * <p>Placeholder grammar: {@code ${token:<name>}} or
- * {@code ${token:<name>|<fallback>}}. Names matching no definition
- * substitute the fallback (or empty string when absent), matching the
- * legacy DSL-scope semantics.</p>
+ * <p>Invalidation is passive: the adaptor does not re-issue the
+ * request. The next collection cycle picks a fresh token naturally.</p>
  */
 public class CollectorTokenAuthAdaptor implements CollectorAdaptor {
 
     private static final Logger LOG = LoggerFactory.getLogger(CollectorTokenAuthAdaptor.class);
-
-    private static final Pattern TOKEN_PLACEHOLDER =
-            Pattern.compile("\\$\\{token:([^|}]+)(?:\\|([^}]*))?\\}");
 
     /**
      * Key used to stash the set of auth names that participated in a
@@ -76,59 +61,31 @@ public class CollectorTokenAuthAdaptor implements CollectorAdaptor {
     static final String AUTH_NAMES_USED_PARAM = "__opennms.collectortokenauth.names";
 
     private final TokenProvider tokenProvider;
-    private final EntityScopeProvider entityScopeProvider;
 
-    public CollectorTokenAuthAdaptor(final TokenProvider tokenProvider,
-                                     final EntityScopeProvider entityScopeProvider) {
+    public CollectorTokenAuthAdaptor(final TokenProvider tokenProvider) {
         this.tokenProvider = Objects.requireNonNull(tokenProvider, "tokenProvider");
-        this.entityScopeProvider = Objects.requireNonNull(entityScopeProvider, "entityScopeProvider");
     }
 
     @Override
     public Map<String, Object> beforeCollect(final CollectionAgent agent,
                                              final Map<String, Object> parameters) {
-        if (parameters == null || parameters.isEmpty()) {
-            return parameters;
+        if (parameters == null) {
+            return null;
         }
-
-        // Quick scan: avoid allocating a new map when no value contains a
-        // ${token:...} placeholder. Common case for collectors that don't
-        // use this feature.
-        boolean anyMatch = false;
-        for (final Object v : parameters.values()) {
-            if (v instanceof String && ((String) v).contains("${token:")) {
-                anyMatch = true;
-                break;
-            }
+        // CollectionSpecification#getServiceParameters wraps the result of
+        // Interpolator.interpolateObjects in a Guava transformed view, so
+        // values are only interpolated when read. Materialize the map here
+        // so TokenAuthScope (chained into the interpolator's scope) gets a
+        // chance to record any ${token:<name>} placeholders that were
+        // substituted -- regardless of whether the downstream collector
+        // ends up reading those particular keys.
+        final Map<String, Object> materialized = new HashMap<>(parameters);
+        final Set<String> namesUsed = TokenAuthScope.takeNamesUsed();
+        if (namesUsed.isEmpty()) {
+            return materialized;
         }
-        if (!anyMatch) {
-            return parameters;
-        }
-
-        final Scope scope = new FallbackScope(
-                entityScopeProvider.getScopeForNode(agent.getNodeId()),
-                entityScopeProvider.getScopeForInterface(
-                        agent.getNodeId(),
-                        InetAddressUtils.toIpAddrString(agent.getAddress())));
-
-        final Set<String> namesUsed = new HashSet<>();
-        final Map<String, Object> resolved = new HashMap<>(parameters);
-        for (final Map.Entry<String, Object> entry : parameters.entrySet()) {
-            final Object value = entry.getValue();
-            if (!(value instanceof String)) {
-                continue;
-            }
-            final String stringValue = (String) value;
-            if (!stringValue.contains("${token:")) {
-                continue;
-            }
-            resolved.put(entry.getKey(), substitute(stringValue, scope, namesUsed));
-        }
-
-        if (!namesUsed.isEmpty()) {
-            resolved.put(AUTH_NAMES_USED_PARAM, namesUsed);
-        }
-        return resolved;
+        materialized.put(AUTH_NAMES_USED_PARAM, namesUsed);
+        return materialized;
     }
 
     @Override
@@ -138,6 +95,9 @@ public class CollectorTokenAuthAdaptor implements CollectorAdaptor {
         if (result == null
                 || result.getStatus() == null
                 || result.getStatus() != CollectionStatus.FAILED) {
+            return result;
+        }
+        if (parameters == null) {
             return result;
         }
         @SuppressWarnings("unchecked")
@@ -151,23 +111,5 @@ public class CollectorTokenAuthAdaptor implements CollectorAdaptor {
                     name, agent.getNodeId());
         }
         return result;
-    }
-
-    private String substitute(final String value, final Scope scope, final Set<String> namesUsed) {
-        final Matcher m = TOKEN_PLACEHOLDER.matcher(value);
-        final StringBuilder out = new StringBuilder();
-        int last = 0;
-        while (m.find()) {
-            final String authName = m.group(1).trim();
-            final String fallback = m.group(2);
-            out.append(value, last, m.start());
-            final String resolved = tokenProvider.getToken(authName, scope)
-                    .orElse(fallback != null ? fallback : "");
-            out.append(resolved);
-            namesUsed.add(authName);
-            last = m.end();
-        }
-        out.append(value, last, value.length());
-        return out.toString();
     }
 }

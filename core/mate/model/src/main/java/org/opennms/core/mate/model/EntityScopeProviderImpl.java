@@ -61,6 +61,7 @@ import org.opennms.netmgt.model.OnmsMonitoredService;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.netmgt.model.OnmsSnmpInterface;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.google.common.base.Strings;
 
@@ -86,6 +87,21 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
     @Autowired
     private SecureCredentialsVault scv;
 
+    /**
+     * Optional list of additional Mate {@link Scope} beans contributed
+     * by other modules (e.g., token-auth resolution). Spring qualifier
+     * keeps the wiring narrow -- only beans explicitly tagged
+     * {@code @Qualifier("additionalScope")} are picked up.
+     *
+     * <p>These scopes are appended at the end of each composite
+     * {@link FallbackScope} returned by {@code getScopeFor*}, so every
+     * consumer of {@link EntityScopeProvider} (CollectionSpecification,
+     * CollectorRequestBuilderImpl, etc.) automatically sees them.</p>
+     */
+    @Autowired(required = false)
+    @Qualifier("additionalScope")
+    private List<Scope> additionalScopes = new ArrayList<>();
+
     @Override
     public Scope getScopeForScv() {
         return new SecureCredentialsVaultScope(this.scv);
@@ -99,13 +115,13 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
     @Override
     public Scope getScopeForNode(final Integer nodeId) {
         if (nodeId == null) {
-            return EmptyScope.EMPTY;
+            return withAdditional(EmptyScope.EMPTY);
         }
 
         return this.sessionUtils.withReadOnlyTransaction(() -> {
             final OnmsNode node = nodeDao.get(nodeId);
             if (node == null) {
-                return EmptyScope.EMPTY;
+                return withAdditional(EmptyScope.EMPTY);
             }
 
             List<Scope> scopes = new ArrayList<>();
@@ -194,6 +210,7 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
                 scopes.add(new EnvironmentScope());
             }
 
+            scopes.addAll(additionalScopes);
             return new FallbackScope(scopes);
         });
 
@@ -248,24 +265,25 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
     @Override
     public Scope getScopeForInterface(final Integer nodeId, final String ipAddress) {
         if (nodeId == null || Strings.isNullOrEmpty(ipAddress)) {
-            return EmptyScope.EMPTY;
+            return withAdditional(EmptyScope.EMPTY);
         }
 
         return this.sessionUtils.withReadOnlyTransaction(() -> {
             final OnmsIpInterface ipInterface = this.ipInterfaceDao.findByNodeIdAndIpAddress(nodeId, ipAddress);
             if (ipInterface == null) {
-                return EmptyScope.EMPTY;
+                return withAdditional(EmptyScope.EMPTY);
             }
-            return new FallbackScope(
-                transform(Scope.ScopeName.INTERFACE, ipInterface.getMetaData()),
-                mapIpInterfaceKeys(ipInterface)
+            final List<Scope> scopes = new ArrayList<>();
+            scopes.add(transform(Scope.ScopeName.INTERFACE, ipInterface.getMetaData()));
+            scopes.add(mapIpInterfaceKeys(ipInterface)
                     .map(INTERFACE, "if-alias", (i) -> Optional.ofNullable(i.getSnmpInterface()).map(OnmsSnmpInterface::getIfAlias))
                     .map(INTERFACE, "if-description", (i) -> Optional.ofNullable(i.getSnmpInterface()).map(OnmsSnmpInterface::getIfDescr))
                     .map(INTERFACE, "if-name", (i) -> Optional.ofNullable(i.getSnmpInterface()).map(OnmsSnmpInterface::getIfName))
-                    .map(INTERFACE, "phy-addr", (i) -> Optional.ofNullable(i.getSnmpInterface()).map(OnmsSnmpInterface::getPhysAddr)),
-                new SecureCredentialsVaultScope(this.scv),
-                new EnvironmentScope()
-            );
+                    .map(INTERFACE, "phy-addr", (i) -> Optional.ofNullable(i.getSnmpInterface()).map(OnmsSnmpInterface::getPhysAddr)));
+            scopes.add(new SecureCredentialsVaultScope(this.scv));
+            scopes.add(new EnvironmentScope());
+            scopes.addAll(additionalScopes);
+            return new FallbackScope(scopes);
         });
     }
 
@@ -297,7 +315,7 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
         return this.sessionUtils.withReadOnlyTransaction(() -> {
             final OnmsSnmpInterface snmpInterface = snmpInterfaceLookup.get();
             if (snmpInterface == null) {
-                return EmptyScope.EMPTY;
+                return withAdditional(EmptyScope.EMPTY);
             }
 
             ArrayList<Scope> scopes = new ArrayList<>();
@@ -318,6 +336,7 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
 
             scopes.add(new SecureCredentialsVaultScope(this.scv));
             scopes.add(new EnvironmentScope());
+            scopes.addAll(additionalScopes);
 
             return new FallbackScope(scopes);
         });
@@ -326,22 +345,41 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
     @Override
     public Scope getScopeForService(final Integer nodeId, final InetAddress ipAddress, final String serviceName) {
         if (nodeId == null || ipAddress == null || Strings.isNullOrEmpty(serviceName)) {
-            return EmptyScope.EMPTY;
+            return withAdditional(EmptyScope.EMPTY);
         }
 
         return this.sessionUtils.withReadOnlyTransaction(() -> {
             final OnmsMonitoredService monitoredService = this.monitoredServiceDao.get(nodeId, ipAddress, serviceName);
             if (monitoredService == null) {
-                return EmptyScope.EMPTY;
+                return withAdditional(EmptyScope.EMPTY);
             }
 
-            return new FallbackScope(transform(Scope.ScopeName.SERVICE, monitoredService.getMetaData()),
-                    new ObjectScope<>(Scope.ScopeName.SERVICE, monitoredService)
-                            .map(SERVICE, "name", (s) -> Optional.of(s.getServiceName())),
-                    new SecureCredentialsVaultScope(this.scv),
-                    new EnvironmentScope()
-            );
+            final List<Scope> scopes = new ArrayList<>();
+            scopes.add(transform(Scope.ScopeName.SERVICE, monitoredService.getMetaData()));
+            scopes.add(new ObjectScope<>(Scope.ScopeName.SERVICE, monitoredService)
+                    .map(SERVICE, "name", (s) -> Optional.of(s.getServiceName())));
+            scopes.add(new SecureCredentialsVaultScope(this.scv));
+            scopes.add(new EnvironmentScope());
+            scopes.addAll(additionalScopes);
+
+            return new FallbackScope(scopes);
         });
+    }
+
+    /**
+     * Helper that wraps a single fallback scope into a FallbackScope
+     * together with the autowired {@link #additionalScopes}, so that
+     * the empty/short-circuit returns still benefit from extension
+     * scopes (token-auth resolution, etc.).
+     */
+    private Scope withAdditional(final Scope baseScope) {
+        if (additionalScopes == null || additionalScopes.isEmpty()) {
+            return baseScope;
+        }
+        final List<Scope> scopes = new ArrayList<>();
+        scopes.add(baseScope);
+        scopes.addAll(additionalScopes);
+        return new FallbackScope(scopes);
     }
 
     private static MapScope transform(final Scope.ScopeName scopeName, final Collection<OnmsMetaData> metaData) {
@@ -372,5 +410,9 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
 
     public void setScv(SecureCredentialsVault scv) {
         this.scv = scv;
+    }
+
+    public void setAdditionalScopes(final List<Scope> additionalScopes) {
+        this.additionalScopes = additionalScopes != null ? additionalScopes : new ArrayList<>();
     }
 }

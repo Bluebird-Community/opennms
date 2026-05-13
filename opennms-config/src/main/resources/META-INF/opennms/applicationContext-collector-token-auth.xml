@@ -39,15 +39,37 @@
                     ref="collectorTokenAuthProvider"/>
 
     <!--
-      Collector adaptor that intercepts collections to resolve
-      ${token:<name>} placeholders on the controller and to invalidate
-      stale tokens passively on failure. Wired into Collectd by
-      applicationContext-collectd.xml.
+      Mate scope that resolves ${token:<name>} placeholders during
+      parameter interpolation. Chained into Collectd's scope chain via
+      Collectd.m_tokenAuthScope so Interpolator can substitute tokens
+      before the adaptor runs. The ambient scope passed to TokenProvider
+      is SCV + ENV so token-auth definitions can reference credentials.
+    -->
+    <bean id="tokenAuthScopeAmbient" class="org.opennms.core.mate.api.FallbackScope">
+        <constructor-arg>
+            <list>
+                <bean factory-bean="entityScopeProvider" factory-method="getScopeForScv"/>
+                <bean factory-bean="entityScopeProvider" factory-method="getScopeForEnv"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="tokenAuthScope"
+          class="org.opennms.netmgt.config.collectortokenauth.TokenAuthScope">
+        <qualifier value="additionalScope"/>
+        <constructor-arg ref="collectorTokenAuthProvider"/>
+        <constructor-arg ref="tokenAuthScopeAmbient"/>
+    </bean>
+
+    <!--
+      Collector adaptor that records which token-auth names participated
+      in a request so the cache can be invalidated when the collection
+      comes back failed. Substitution itself is done by tokenAuthScope
+      during Mate interpolation, before the adaptor runs.
     -->
     <bean id="collectorTokenAuthAdaptor"
           class="org.opennms.netmgt.config.collectortokenauth.CollectorTokenAuthAdaptor">
         <constructor-arg ref="collectorTokenAuthProvider"/>
-        <constructor-arg ref="entityScopeProvider"/>
     </bean>
 
     <onmsgi:service interface="org.opennms.netmgt.collection.api.CollectorAdaptor"

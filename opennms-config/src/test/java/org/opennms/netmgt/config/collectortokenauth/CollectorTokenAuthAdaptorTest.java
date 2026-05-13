@@ -24,26 +24,22 @@ package org.opennms.netmgt.config.collectortokenauth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opennms.core.mate.api.ContextKey;
 import org.opennms.core.mate.api.EmptyScope;
-import org.opennms.core.mate.api.EntityScopeProvider;
-import org.opennms.core.mate.api.Scope;
 import org.opennms.netmgt.collection.api.CollectionAgent;
 import org.opennms.netmgt.collection.api.CollectionSet;
 import org.opennms.netmgt.collection.api.CollectionStatus;
@@ -51,82 +47,78 @@ import org.opennms.netmgt.collection.api.CollectionStatus;
 public class CollectorTokenAuthAdaptorTest {
 
     private TokenProvider tokenProvider;
-    private EntityScopeProvider scopeProvider;
     private CollectorTokenAuthAdaptor adaptor;
     private CollectionAgent agent;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
+        // Drain anything a prior test (or stray thread state) left behind.
+        TokenAuthScope.takeNamesUsed();
+
         tokenProvider = mock(TokenProvider.class);
-        scopeProvider = mock(EntityScopeProvider.class);
-        when(scopeProvider.getScopeForNode(anyInt())).thenReturn(EmptyScope.EMPTY);
-        when(scopeProvider.getScopeForInterface(anyInt(), anyString())).thenReturn(EmptyScope.EMPTY);
-        adaptor = new CollectorTokenAuthAdaptor(tokenProvider, scopeProvider);
+        adaptor = new CollectorTokenAuthAdaptor(tokenProvider);
 
         agent = mock(CollectionAgent.class);
         when(agent.getNodeId()).thenReturn(42);
-        when(agent.getAddress()).thenReturn(InetAddress.getByName("10.0.0.1"));
+    }
+
+    @After
+    public void tearDown() {
+        TokenAuthScope.takeNamesUsed();
     }
 
     @Test
-    public void beforeCollectReturnsInputUnchangedWhenNoPlaceholder() {
+    public void beforeCollectReturnsMapWithoutAuthNamesWhenScopeDidNotResolveAnything() {
         final Map<String, Object> params = new HashMap<>();
-        params.put("url", "https://example.com/data");
-        params.put("ttl", "30000");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertSame("no allocation when nothing to substitute", params, out);
-        verify(tokenProvider, never()).getToken(anyString(), any(Scope.class));
-    }
-
-    @Test
-    public void beforeCollectSubstitutesPlaceholderAndStashesAuthName() {
-        when(tokenProvider.getToken(eq("vault"), any(Scope.class))).thenReturn(Optional.of("tok-xyz"));
-
-        final Map<String, Object> params = new HashMap<>();
-        params.put("Authorization", "Bearer ${token:vault}");
         params.put("url", "https://example.com/data");
 
         final Map<String, Object> out = adaptor.beforeCollect(agent, params);
 
-        assertEquals("Bearer tok-xyz", out.get("Authorization"));
         assertEquals("https://example.com/data", out.get("url"));
+        assertEquals("no AUTH_NAMES_USED_PARAM when nothing was resolved",
+                null, out.get(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM));
+    }
+
+    @Test
+    public void beforeCollectStashesAuthNamesResolvedByScope() {
+        // Simulate Interpolator having invoked TokenAuthScope.get(token:vault)
+        // earlier in the pipeline. After the substitution succeeds, the
+        // scope leaves "vault" in the per-thread record.
+        final TokenAuthScope scope = new TokenAuthScope(tokenProvider, EmptyScope.EMPTY);
+        when(tokenProvider.getToken(anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(Optional.of("tok-xyz"));
+        scope.get(new ContextKey("token", "vault"));
+
+        final Map<String, Object> params = new HashMap<>();
+        params.put("Authorization", "Bearer tok-xyz");
+        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
 
         @SuppressWarnings("unchecked")
         final Set<String> names = (Set<String>) out.get(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM);
-        assertTrue("auth name should be stashed for post-result invalidation",
+        assertTrue("auth name should be carried in the request map",
                 names != null && names.contains("vault"));
     }
 
     @Test
-    public void beforeCollectUsesInlineFallbackWhenTokenAbsent() {
-        when(tokenProvider.getToken(eq("missing"), any(Scope.class))).thenReturn(Optional.empty());
+    public void beforeCollectDrainsThreadLocalSoLaterCollectionsAreClean() {
+        final TokenAuthScope scope = new TokenAuthScope(tokenProvider, EmptyScope.EMPTY);
+        when(tokenProvider.getToken(anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(Optional.of("tok"));
+        scope.get(new ContextKey("token", "vault"));
+        adaptor.beforeCollect(agent, new HashMap<>());
 
-        final Map<String, Object> params = new HashMap<>();
-        params.put("h", "X: ${token:missing|fallback-value}");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertEquals("X: fallback-value", out.get("h"));
-    }
-
-    @Test
-    public void beforeCollectSubstitutesEmptyWhenTokenAbsentAndNoFallback() {
-        when(tokenProvider.getToken(eq("missing"), any(Scope.class))).thenReturn(Optional.empty());
-
-        final Map<String, Object> params = new HashMap<>();
-        params.put("h", "X: ${token:missing}");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertEquals("X: ", out.get("h"));
+        // Second collection: scope didn't resolve anything for this one.
+        final Map<String, Object> next = new HashMap<>();
+        next.put("k", "v");
+        final Map<String, Object> out = adaptor.beforeCollect(agent, next);
+        assertEquals("must not leak names from the previous collection",
+                null, out.get(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM));
     }
 
     @Test
     public void handleCollectionResultInvalidatesWhenFailedAndAuthsUsed() {
         final Map<String, Object> params = new HashMap<>();
-        params.put(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM, java.util.Set.of("vault", "f5"));
+        params.put(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM, Set.of("vault", "f5"));
         final CollectionSet failed = mock(CollectionSet.class);
         when(failed.getStatus()).thenReturn(CollectionStatus.FAILED);
 
@@ -140,7 +132,7 @@ public class CollectorTokenAuthAdaptorTest {
     @Test
     public void handleCollectionResultDoesNotInvalidateOnSuccess() {
         final Map<String, Object> params = new HashMap<>();
-        params.put(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM, java.util.Set.of("vault"));
+        params.put(CollectorTokenAuthAdaptor.AUTH_NAMES_USED_PARAM, Set.of("vault"));
         final CollectionSet ok = mock(CollectionSet.class);
         when(ok.getStatus()).thenReturn(CollectionStatus.SUCCEEDED);
 
@@ -160,4 +152,14 @@ public class CollectorTokenAuthAdaptorTest {
         verify(tokenProvider, never()).invalidate(anyString());
     }
 
+    @Test
+    public void handleCollectionResultIgnoresNullParameters() {
+        final CollectionSet failed = mock(CollectionSet.class);
+        when(failed.getStatus()).thenReturn(CollectionStatus.FAILED);
+
+        final CollectionSet returned = adaptor.handleCollectionResult(agent, null, failed);
+
+        assertSame(failed, returned);
+        verify(tokenProvider, never()).invalidate(anyString());
+    }
 }
