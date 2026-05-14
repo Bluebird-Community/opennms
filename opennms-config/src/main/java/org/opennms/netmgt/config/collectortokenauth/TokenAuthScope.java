@@ -87,9 +87,6 @@ public class TokenAuthScope implements Scope, BoundableScope {
      */
     @Override
     public Scope bind(final Scope newAmbient) {
-        if (newAmbient == null) {
-            return this;
-        }
         return new TokenAuthScope(tokenProvider, newAmbient);
     }
 

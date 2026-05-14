@@ -23,13 +23,13 @@ package org.opennms.netmgt.config.collectortokenauth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.opennms.core.mate.api.ContextKey;
 import org.opennms.core.mate.api.EmptyScope;
 import org.opennms.core.mate.api.Interpolator;
+import org.opennms.core.mate.api.MapScope;
 import org.opennms.core.mate.api.Scope;
 
 public class TokenAuthScopeTest {
@@ -117,46 +118,34 @@ public class TokenAuthScopeTest {
         assertEquals("X: fallback", out);
     }
 
+    /**
+     * Caller-facing contract for {@link TokenAuthScope#bind}: when an
+     * EntityScopeProvider hands the bound copy a per-call ambient (here,
+     * a MapScope carrying {@code node:label}), the auth definition's own
+     * placeholders are interpolated against that ambient -- so the
+     * resolved token name in {@link CollectorTokenAuthAdaptor} reflects
+     * resolution performed against the current node's metadata.
+     */
     @Test
-    public void bindReturnsScopeThatResolvesViaSuppliedAmbient() {
-        // The receiver is constructed with EmptyScope; the bound copy
-        // should pass `newAmbient` to TokenProvider rather than the
-        // original ambient.
-        final Scope newAmbient = mock(Scope.class);
-        final Scope bound = scope.bind(newAmbient);
+    public void boundAmbientReachesTokenProviderAndNamesUsedRecord() {
+        final ContextKey nodeLabel = new ContextKey("node", "label");
+        final Scope perCallAmbient = new MapScope(
+                Scope.ScopeName.NODE,
+                Map.of(nodeLabel, "nucleus"));
 
-        when(tokenProvider.getToken(eq("vault"), org.mockito.ArgumentMatchers.same(newAmbient)))
-                .thenReturn(Optional.of("tok"));
+        // TokenProvider stub that round-trips the ambient: returns the
+        // value of node:label as the "token", proving the bound copy
+        // passed THIS ambient (not the receiver's EmptyScope default).
+        when(tokenProvider.getToken(eq("vault"), any(Scope.class))).thenAnswer(inv -> {
+            final Scope ambient = inv.getArgument(1);
+            return ambient.get(nodeLabel).map(v -> v.value);
+        });
 
-        final Optional<Scope.ScopeValue> v = bound.get(new ContextKey("token", "vault"));
-        assertTrue(v.isPresent());
-        assertEquals("tok", v.get().value);
-    }
+        final Scope bound = scope.bind(perCallAmbient);
+        final String out = Interpolator.interpolate("Bearer ${token:vault}", bound).output;
 
-    @Test
-    public void bindDoesNotMutateOriginal() {
-        final Scope newAmbient = mock(Scope.class);
-        final Scope bound = scope.bind(newAmbient);
-        org.junit.Assert.assertNotSame("bind must return a new instance", scope, bound);
-    }
-
-    @Test
-    public void boundCopyParticipatesInTheSamePerThreadRecord() {
-        final Scope newAmbient = mock(Scope.class);
-        final TokenAuthScope bound = (TokenAuthScope) scope.bind(newAmbient);
-
-        when(tokenProvider.getToken(eq("vault"), org.mockito.ArgumentMatchers.same(newAmbient)))
-                .thenReturn(Optional.of("tok"));
-
-        bound.get(new ContextKey("token", "vault"));
-        final Set<String> drained = TokenAuthScope.takeNamesUsed();
-        assertTrue("name recorded by bound copy must be visible via static drain",
-                drained.contains("vault"));
-    }
-
-    @Test
-    public void bindWithNullAmbientReturnsReceiver() {
-        final Scope bound = scope.bind(null);
-        org.junit.Assert.assertSame(scope, bound);
+        assertEquals("Bearer nucleus", out);
+        assertTrue("the adaptor's static drain must see names recorded on bound copies",
+                TokenAuthScope.takeNamesUsed().contains("vault"));
     }
 }

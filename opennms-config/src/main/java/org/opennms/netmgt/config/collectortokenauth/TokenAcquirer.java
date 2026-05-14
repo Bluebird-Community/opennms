@@ -37,6 +37,7 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -119,15 +120,14 @@ public class TokenAcquirer {
     }
 
     /**
-     * Setter injection point for {@link EntityScopeProvider}. Used by
-     * Spring instead of the constructor in production wiring because of a
-     * cycle: the production {@code EntityScopeProviderImpl} autowires a
-     * {@link org.opennms.core.mate.api.TokenProvider}, which depends on
-     * {@code TokenCache}, which depends on {@code TokenAcquirer} -- closing
-     * the loop. Setter injection lets Spring break the cycle by constructing
-     * {@code TokenAcquirer} first (no provider) and wiring the provider
-     * after the rest of the chain is built.
+     * Autowire setter for {@link EntityScopeProvider}. {@code required=false}
+     * lets test contexts that import component-dao.xml without defining an
+     * {@code entityScopeProvider} bean still construct this bean cleanly.
+     * When the provider is absent, {@link #buildScope} falls back to
+     * {@link EmptyScope} for SCV/ENV lookups -- enough for the bean wiring
+     * to succeed; full SCV/ENV interpolation requires the real provider.
      */
+    @Autowired(required = false)
     public void setEntityScopeProvider(final EntityScopeProvider entityScopeProvider) {
         this.entityScopeProvider = entityScopeProvider;
     }

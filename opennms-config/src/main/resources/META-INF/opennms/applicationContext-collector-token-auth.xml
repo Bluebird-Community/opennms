@@ -2,7 +2,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:onmsgi="http://xmlns.opennms.org/xsd/spring/onms-osgi"
+       xmlns:util="http://www.springframework.org/schema/util"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.2.xsd
         http://xmlns.opennms.org/xsd/spring/onms-osgi http://xmlns.opennms.org/xsd/spring/onms-osgi.xsd">
 
     <!--
@@ -15,10 +17,14 @@
       through" rather than failing at startup.
     -->
 
+    <!--
+      TokenAcquirer autowires EntityScopeProvider via @Autowired(required=false)
+      on the setter so the bean wires up even in test contexts that don't
+      define entityScopeProvider. The Java side handles a null provider
+      gracefully by falling back to EmptyScope for SCV/ENV interpolation.
+    -->
     <bean id="collectorTokenAuthAcquirer"
-          class="org.opennms.netmgt.config.collectortokenauth.TokenAcquirer">
-        <property name="entityScopeProvider" ref="entityScopeProvider"/>
-    </bean>
+          class="org.opennms.netmgt.config.collectortokenauth.TokenAcquirer"/>
 
     <bean id="collectorTokenAuthCache"
           class="org.opennms.netmgt.config.collectortokenauth.TokenCache">
@@ -40,25 +46,22 @@
 
     <!--
       Mate scope that resolves ${token:<name>} placeholders during
-      parameter interpolation. Chained into Collectd's scope chain via
-      Collectd.m_tokenAuthScope so Interpolator can substitute tokens
-      before the adaptor runs. The ambient scope passed to TokenProvider
-      is SCV + ENV so token-auth definitions can reference credentials.
+      parameter interpolation. EntityScopeProviderImpl binds this scope
+      per-call (via BoundableScope) with the full per-node composite
+      ambient (node attributes + asset + SCV + ENV), so the constructor
+      argument here is just a placeholder. Using EmptyScope keeps the
+      bean wiring self-contained. No hard dependency on
+      entityScopeProvider at context-load time. Matters for
+      tests that import component-dao.xml without defining one.
     -->
-    <bean id="tokenAuthScopeAmbient" class="org.opennms.core.mate.api.FallbackScope">
-        <constructor-arg>
-            <list>
-                <bean factory-bean="entityScopeProvider" factory-method="getScopeForScv"/>
-                <bean factory-bean="entityScopeProvider" factory-method="getScopeForEnv"/>
-            </list>
-        </constructor-arg>
-    </bean>
+    <util:constant id="tokenAuthScopeDefaultAmbient"
+                   static-field="org.opennms.core.mate.api.EmptyScope.EMPTY"/>
 
     <bean id="tokenAuthScope"
           class="org.opennms.netmgt.config.collectortokenauth.TokenAuthScope">
         <qualifier value="additionalScope"/>
         <constructor-arg ref="collectorTokenAuthProvider"/>
-        <constructor-arg ref="tokenAuthScopeAmbient"/>
+        <constructor-arg ref="tokenAuthScopeDefaultAmbient"/>
     </bean>
 
     <!--
