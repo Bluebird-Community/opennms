@@ -116,4 +116,47 @@ public class TokenAuthScopeTest {
 
         assertEquals("X: fallback", out);
     }
+
+    @Test
+    public void bindReturnsScopeThatResolvesViaSuppliedAmbient() {
+        // The receiver is constructed with EmptyScope; the bound copy
+        // should pass `newAmbient` to TokenProvider rather than the
+        // original ambient.
+        final Scope newAmbient = mock(Scope.class);
+        final Scope bound = scope.bind(newAmbient);
+
+        when(tokenProvider.getToken(eq("vault"), org.mockito.ArgumentMatchers.same(newAmbient)))
+                .thenReturn(Optional.of("tok"));
+
+        final Optional<Scope.ScopeValue> v = bound.get(new ContextKey("token", "vault"));
+        assertTrue(v.isPresent());
+        assertEquals("tok", v.get().value);
+    }
+
+    @Test
+    public void bindDoesNotMutateOriginal() {
+        final Scope newAmbient = mock(Scope.class);
+        final Scope bound = scope.bind(newAmbient);
+        org.junit.Assert.assertNotSame("bind must return a new instance", scope, bound);
+    }
+
+    @Test
+    public void boundCopyParticipatesInTheSamePerThreadRecord() {
+        final Scope newAmbient = mock(Scope.class);
+        final TokenAuthScope bound = (TokenAuthScope) scope.bind(newAmbient);
+
+        when(tokenProvider.getToken(eq("vault"), org.mockito.ArgumentMatchers.same(newAmbient)))
+                .thenReturn(Optional.of("tok"));
+
+        bound.get(new ContextKey("token", "vault"));
+        final Set<String> drained = TokenAuthScope.takeNamesUsed();
+        assertTrue("name recorded by bound copy must be visible via static drain",
+                drained.contains("vault"));
+    }
+
+    @Test
+    public void bindWithNullAmbientReturnsReceiver() {
+        final Scope bound = scope.bind(null);
+        org.junit.Assert.assertSame(scope, bound);
+    }
 }

@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.opennms.core.mate.api.BoundableScope;
 import org.opennms.core.mate.api.ContextKey;
 import org.opennms.core.mate.api.Scope;
 
@@ -38,11 +39,10 @@ import org.opennms.core.mate.api.Scope;
  * <p>Lookups go through {@link TokenProvider#getToken}; the inner
  * {@code ambientScope} is what {@link TokenProvider} hands to
  * {@code TokenAcquirer} for resolving placeholders inside the
- * token-auth definition itself (typically {@code ${scv:...}} or
- * {@code ${env:...}} for credentials). Per-node and per-interface
- * placeholders inside a token-auth definition are not currently
- * supported -- token-auth definitions are intended to be shared across
- * collections.</p>
+ * token-auth definition itself ({@code ${scv:...}}, {@code ${env:...}},
+ * and -- when this scope is bound per call by {@code EntityScopeProvider}
+ * via {@link BoundableScope#bind} -- {@code ${node:...}},
+ * {@code ${interface:...}}, {@code ${asset:...}} too).</p>
  *
  * <p>Names that resolve successfully are recorded in a per-thread set
  * so {@link CollectorTokenAuthAdaptor#handleCollectionResult} can
@@ -50,7 +50,7 @@ import org.opennms.core.mate.api.Scope;
  * on the same thread that subsequently invokes the adaptors, so a
  * {@link ThreadLocal} is the natural carrier.</p>
  */
-public class TokenAuthScope implements Scope {
+public class TokenAuthScope implements Scope, BoundableScope {
 
     public static final String CONTEXT = "token";
 
@@ -76,6 +76,21 @@ public class TokenAuthScope implements Scope {
                     NAMES_USED.get().add(authName);
                     return new ScopeValue(ScopeName.NODE, token);
                 });
+    }
+
+    /**
+     * Returns a new {@code TokenAuthScope} that resolves token-auth
+     * definitions against {@code newAmbient} (typically the per-call
+     * composite scope built by {@code EntityScopeProvider}). The
+     * receiver is unchanged; per-thread name tracking stays shared so
+     * the adaptor sees names recorded against any bound instance.
+     */
+    @Override
+    public Scope bind(final Scope newAmbient) {
+        if (newAmbient == null) {
+            return this;
+        }
+        return new TokenAuthScope(tokenProvider, newAmbient);
     }
 
     @Override
