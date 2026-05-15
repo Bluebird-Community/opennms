@@ -160,6 +160,11 @@ public class ConfigTesterTest {
     }
 
     @Test
+    public void testCollectorTokenAuthConfiguration() {
+        testConfigFile("collector-token-auth-configuration.xml");
+    }
+
+    @Test
     public void testDatabaseReports() {
         testConfigFile("database-reports.xml");
     }
