@@ -134,7 +134,20 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
                 this.client.getEntityScopeProvider().getScopeForInterface(agent.getNodeId(), InetAddressUtils.toIpAddrString(agent.getAddress()))
         );
 
-        final Map<String, Object> interpolatedAttributes = Interpolator.interpolateObjects(attributes, scope);
+        // Give each adaptor a chance to transform the raw attribute map
+        // before Mate's Interpolator runs. Adaptors that resolve custom
+        // ${prefix:...} placeholders (e.g. token-auth) need to see them
+        // intact -- Interpolator strips unrecognized prefixes to empty,
+        // so adaptors must run first. Adaptors are controller-only;
+        // their output is what Mate then interpolates and what gets
+        // marshaled across to the Minion.
+        Map<String, Object> preInterpolated = attributes;
+        for (final CollectorAdaptor adaptor : adaptors) {
+            final Map<String, Object> next = adaptor.beforeCollect(agent, preInterpolated);
+            preInterpolated = next != null ? next : preInterpolated;
+        }
+
+        final Map<String, Object> interpolatedAttributes = Interpolator.interpolateObjects(preInterpolated, scope);
 
         final RpcTarget target = client.getRpcTargetHelper().target()
                 .withNodeId(agent.getNodeId())
@@ -163,17 +176,9 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
         // such as the agent details and other state related attributes
         // which should be included in the request
         final Map<String, Object> runtimeAttributes = Interpolator.interpolateAttributes(serviceCollector.getRuntimeAttributes(agent, interpolatedAttributes), scope);
-        Map<String, Object> allAttributes = new HashMap<>();
-        allAttributes.putAll(interpolatedAttributes);
-        allAttributes.putAll(runtimeAttributes);
-
-        // Give each adaptor a chance to transform the parameter map
-        // before dispatch. Adaptors run only on the controller; they
-        // never run on the Minion.
-        for (final CollectorAdaptor adaptor : adaptors) {
-            allAttributes = adaptor.beforeCollect(agent, allAttributes);
-        }
-        final Map<String, Object> dispatchedAttributes = allAttributes;
+        final Map<String, Object> dispatchedAttributes = new HashMap<>();
+        dispatchedAttributes.putAll(interpolatedAttributes);
+        dispatchedAttributes.putAll(runtimeAttributes);
 
         // The runtime attributes may include objects which need to be marshaled.
         // Only marshal these if the request is being executed at another location.

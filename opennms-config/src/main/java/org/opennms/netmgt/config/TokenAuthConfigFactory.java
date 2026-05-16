@@ -37,10 +37,10 @@ import org.opennms.netmgt.config.tokenauth.TokenAuthConfiguration;
 import org.opennms.netmgt.config.tokenauth.TokenFrom;
 
 /**
- * Singleton holding the parsed {@code auth-configuration.xml}.
+ * Singleton holding the parsed {@code token-auth-configuration.xml}.
  * Modeled on {@link VacuumdConfigFactory}.
  *
- * <p>Performs strict load-time validation: each {@code <auth>} block must
+ * <p>Performs strict load-time validation: each {@code <token-auth>} block must
  * have a name, a URL, a {@code <token-from>}, and that {@code <token-from>}
  * must specify exactly one of {@code jsonpath}, {@code header}, or
  * {@code body-as-token=true}. Misconfigurations fail fast at startup
@@ -53,7 +53,8 @@ public final class TokenAuthConfigFactory {
     private final TokenAuthConfiguration m_config;
 
     public TokenAuthConfigFactory(final InputStream stream) {
-        this(JaxbUtils.unmarshal(TokenAuthConfiguration.class, new InputStreamReader(stream)));
+        this(JaxbUtils.unmarshal(TokenAuthConfiguration.class,
+                new InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     /**
@@ -68,7 +69,7 @@ public final class TokenAuthConfigFactory {
     }
 
     /**
-     * Loads {@code etc/auth-configuration.xml} and installs the singleton.
+     * Loads {@code etc/token-auth-configuration.xml} and installs the singleton.
      * Calling this method again is a no-op; use {@link #reload()} to pick
      * up changes on disk.
      */
@@ -87,7 +88,7 @@ public final class TokenAuthConfigFactory {
      * factory instance first, and only swaps {@code m_singleton} on
      * success -- a parse or validation failure leaves the previously
      * loaded configuration in effect, matching the documented behavior
-     * (see auth-configuration.adoc, "Reload without restart"). The
+     * (see token-authentication.adoc, "Reload without restart"). The
      * caller is responsible for invalidating any token cache that
      * depends on the previous configuration.
      */

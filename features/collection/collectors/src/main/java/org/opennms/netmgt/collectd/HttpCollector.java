@@ -259,21 +259,22 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
             }
 
             LOG.info("doCollection: collecting using method: {}", method);
-            final CloseableHttpResponse response = clientWrapper.execute(method);
-            final int status = response.getStatusLine().getStatusCode();
-            if (status == 401 || status == 403) {
-                // Auth-related refusal. Drain and close the connection,
-                // then surface as a collection failure so the
-                // controller-side TokenAuthCollectorAdaptor can invalidate
-                // any cached token used in this request.
-                try { EntityUtils.consumeQuietly(response.getEntity()); } catch (Throwable ignored) {}
-                try { response.close(); } catch (Throwable ignored) {}
-                throw new HttpCollectorException("auth failure: "
-                        + collectorAgent.getUriDef().getName()
-                        + " returned HTTP status " + status);
+            try (final CloseableHttpResponse response = clientWrapper.execute(method)) {
+                final int status = response.getStatusLine().getStatusCode();
+                if (status == 401 || status == 403) {
+                    // Auth-related refusal. Drain the entity (the
+                    // try-with-resources closes the response itself)
+                    // and surface as a collection failure so the
+                    // controller-side TokenAuthCollectorAdaptor can
+                    // invalidate any cached token used in this request.
+                    EntityUtils.consumeQuietly(response.getEntity());
+                    throw new HttpCollectorException("auth failure: "
+                            + collectorAgent.getUriDef().getName()
+                            + " returned HTTP status " + status);
+                }
+                //Not really a persist as such; it just stores data in collectionSet for later retrieval
+                persistResponse(collectorAgent, collectionSetBuilder, response);
             }
-            //Not really a persist as such; it just stores data in collectionSet for later retrieval
-            persistResponse(collectorAgent, collectionSetBuilder, response);
         } catch (URISyntaxException e) {
             throw new HttpCollectorException("Error building HttpClient URI", e);
         } catch (IOException e) {

@@ -2,19 +2,17 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:onmsgi="http://xmlns.opennms.org/xsd/spring/onms-osgi"
-       xmlns:util="http://www.springframework.org/schema/util"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
-        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.2.xsd
         http://xmlns.opennms.org/xsd/spring/onms-osgi http://xmlns.opennms.org/xsd/spring/onms-osgi.xsd">
 
     <!--
-      Wires the runtime side of collector token authentication.
+      Wires the runtime side of token authentication for collectors.
 
       TokenAuthConfigFactory is a static-singleton-style factory;
       TokenProviderImpl handles its lazy init internally so a clean install
-      without etc/token-auth-configuration.xml degrades to "no
-      token-auth definitions, every ${token:<name>} placeholder falls
-      through" rather than failing at startup.
+      without etc/token-auth-configuration.xml degrades to "no token-auth
+      definitions, every ${token:<name>} placeholder resolves to empty"
+      rather than failing at startup.
     -->
 
     <!--
@@ -45,30 +43,11 @@
                     ref="tokenAuthProvider"/>
 
     <!--
-      Mate scope that resolves ${token:<name>} placeholders during
-      parameter interpolation. EntityScopeProviderImpl binds this scope
-      per-call (via BoundableScope) with the full per-node composite
-      ambient (node attributes + asset + SCV + ENV), so the constructor
-      argument here is just a placeholder. Using EmptyScope keeps the
-      bean wiring self-contained. No hard dependency on
-      entityScopeProvider at context-load time. Matters for
-      tests that import component-dao.xml without defining one.
-    -->
-    <util:constant id="tokenAuthScopeDefaultAmbient"
-                   static-field="org.opennms.core.mate.api.EmptyScope.EMPTY"/>
-
-    <bean id="tokenAuthScope"
-          class="org.opennms.netmgt.config.tokenauth.TokenAuthScope">
-        <qualifier value="additionalScope"/>
-        <constructor-arg ref="tokenAuthProvider"/>
-        <constructor-arg ref="tokenAuthScopeDefaultAmbient"/>
-    </bean>
-
-    <!--
-      Collector adaptor that records which token-auth names participated
-      in a request so the cache can be invalidated when the collection
-      comes back failed. Substitution itself is done by tokenAuthScope
-      during Mate interpolation, before the adaptor runs.
+      Collector adaptor that resolves ${token:<name>} placeholders in the
+      collection parameters on the controller before the request is
+      dispatched, and invalidates stale tokens when the result comes back
+      failed. Substitution and invalidation are both contained here so no
+      changes to the Mate metadata pipeline are required.
     -->
     <bean id="tokenAuthCollectorAdaptor"
           class="org.opennms.netmgt.config.tokenauth.TokenAuthCollectorAdaptor">
@@ -80,8 +59,8 @@
 
     <!--
       Reload listener: reacts to a reloadDaemonConfig event with
-      daemonName=TokenAuth by re-reading
-      token-auth-configuration.xml and flushing the token cache.
+      daemonName=TokenAuth by re-reading token-auth-configuration.xml and
+      flushing the token cache.
 
       Registration is lazy via ContextRefreshedEvent. This bean lives in
       daoContext, which is loaded as a parent of eventDaemonContext while

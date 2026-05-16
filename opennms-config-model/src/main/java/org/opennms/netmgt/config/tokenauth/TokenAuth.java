@@ -36,7 +36,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * A single auth definition. Describes how to obtain a token from an
  * authentication endpoint and how to extract that token from the response.
  * Once defined, the resulting token is referenced from elsewhere via the
- * {@code ${auth:<name>}} metadata DSL placeholder.
+ * {@code ${token:<name>}} metadata DSL placeholder.
  *
  * <p><b>Treat as immutable post-load.</b> The auth runtime computes a
  * fingerprint from this object's fields to key the token cache; if a
@@ -52,7 +52,7 @@ public class TokenAuth implements Serializable {
 
     private static final String DEFAULT_METHOD = "POST";
 
-    /** Unique name used as the key in {@code ${auth:<name>}}. */
+    /** Unique name used as the key in {@code ${token:<name>}}. */
     @XmlAttribute(name = "name", required = true)
     private String name;
 

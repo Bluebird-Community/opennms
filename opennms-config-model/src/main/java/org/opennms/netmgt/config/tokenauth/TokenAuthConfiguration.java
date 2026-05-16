@@ -35,13 +35,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.opennms.core.xml.ValidateUsing;
 
 /**
- * Top-level element for the auth-configuration.xml file.
+ * Top-level element for the token-auth-configuration.xml file.
  * Holds named auth definitions that can be referenced from any consumer
- * supporting the metadata DSL (e.g. {@code ${auth:my-name}}).
+ * supporting the metadata DSL (e.g. {@code ${token:my-name}}).
  */
 @XmlRootElement(name = "token-auth-configuration")
 @XmlAccessorType(XmlAccessType.FIELD)
-@ValidateUsing("auth-configuration.xsd")
+@ValidateUsing("token-auth-configuration.xsd")
 public class TokenAuthConfiguration implements Serializable {
     private static final long serialVersionUID = 1L;
 

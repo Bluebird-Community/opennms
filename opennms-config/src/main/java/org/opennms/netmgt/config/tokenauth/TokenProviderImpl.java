@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * (for current values).
  *
  * <p>Returns {@link Optional#empty()} for an unknown auth name --
- * {@link AuthScope} treats that as "not our placeholder, fall through". If
+ * {@link TokenAuthCollectorAdaptor} treats that as "not our placeholder, fall through". If
  * a definition exists but acquisition fails, the underlying
  * {@link IOException} is rethrown wrapped in a {@link RuntimeException}
  * so the failing collection cycle surfaces a clear error rather than
@@ -67,9 +67,9 @@ public class TokenProviderImpl implements TokenProvider {
     /**
      * Default constructor used by the Spring wiring. Calls
      * {@link TokenAuthConfigFactory#init()} lazily on first lookup. If
-     * {@code etc/auth-configuration.xml} is absent, {@link #getToken} returns
+     * {@code etc/token-auth-configuration.xml} is absent, {@link #getToken} returns
      * empty rather than failing -- on a fresh OpenNMS install without
-     * {@code <auth>} blocks defined, every {@code ${token:...}} placeholder
+     * {@code <token-auth>} blocks defined, every {@code ${token:...}} placeholder
      * just falls through unmatched.
      */
     public TokenProviderImpl(final TokenCache tokenCache) {
@@ -81,10 +81,10 @@ public class TokenProviderImpl implements TokenProvider {
             TokenAuthConfigFactory.init();
             return TokenAuthConfigFactory.getInstance();
         } catch (final FileNotFoundException e) {
-            LOG.info("auth-configuration.xml not present; dynamic-auth disabled");
+            LOG.info("token-auth-configuration.xml not present; dynamic-auth disabled");
             return null;
         } catch (final IOException e) {
-            throw new RuntimeException("failed to load auth-configuration.xml", e);
+            throw new RuntimeException("failed to load token-auth-configuration.xml", e);
         } catch (final IllegalStateException e) {
             // Race or test scenario where init() has not yet completed.
             // Tokens silently fail to resolve until next call; surface

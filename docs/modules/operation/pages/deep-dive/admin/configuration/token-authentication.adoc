@@ -9,7 +9,7 @@ Examples may reference vendor APIs that have since changed.
 Check current vendor documentation before adapting any specific block.
 
 The feature is opt-in.
-If `token-auth-configuration.xml` defines no `<auth>` blocks, no runtime behavior changes.
+If `token-auth-configuration.xml` defines no `<token-auth>` blocks, no runtime behavior changes.
 Collector configurations that do not reference `${token:...}` are unaffected.
 
 == File location
@@ -22,7 +22,7 @@ Validation runs through the standard `bin/config-tester` flow.
 
 == Define a token-auth block
 
-Each authentication endpoint is one `<auth>` block.
+Each authentication endpoint is one `<token-auth>` block.
 The `name` attribute is the key used in the `${token:<name>}` placeholder.
 
 [source, xml]
@@ -47,13 +47,13 @@ A collector configuration that supports request headers can then reference the r
 </request>
 ----
 
-At request build time, {page-component-title} resolves the placeholder by performing the auth call described in the `<auth>` block.
+At request build time, {page-component-title} resolves the placeholder by performing the auth call described in the `<token-auth>` block.
 The resulting token is cached and substituted into the header before the data request is sent.
 
 == Element reference
 
 [caption=]
-.`<auth>` element
+.`<token-auth>` element
 [options="autowidth"]
 |===
 | Element / Attribute | Required | Description
@@ -124,7 +124,7 @@ Match the mode to the response shape of the auth API in question.
 [#dynamic-auth-metadata]
 == Metadata DSL inside token-auth blocks
 
-Field values inside an `<auth>` block are resolved through the metadata DSL before the auth call goes out.
+Field values inside an `<token-auth>` block are resolved through the metadata DSL before the auth call goes out.
 Three scopes are available:
 
 * `${scv:<alias>:<key>}`: This scope reads the value from the secure credentials vault. See xref:deep-dive/admin/configuration/scv-configuration.adoc[].
@@ -134,8 +134,8 @@ Three scopes are available:
 The cache key includes a hash of the resolved fields.
 Requests that resolve to the same URL, credentials, and body share one cached token.
 
-NOTE: `${token:...}` placeholders are not resolved inside a token-auth block.
-The block's own URL, credentials, body, and header values are interpolated through the standard metadata DSL only, so a `${token:other}` reference there will pass through to the auth request as literal text.
+NOTE: `${token:...}` placeholders inside a token-auth block aren't resolved here.
+The block's own URL, credentials, body, and header values pass through the standard metadata DSL (so `${scv:...}`, `${node:...}`, etc. work), but a `${token:other}` reference is unknown to the DSL and resolves to an empty string.
 Chain definitions through other mechanisms (e.g., shared SCV entries) rather than through token references.
 
 == Caching and refresh
@@ -147,16 +147,14 @@ A configuration reload flushes it explicitly.
 The cache refreshes a token when one of the following holds:
 
 * No entry exists yet for the resolved auth shape.
-* The configured `<ttl-seconds>` has elapsed.
-* A downstream collector receives a 401 or 403 with the cached token. The affected entry is dropped and re-acquired before the request is retried once.
+* The configured `<ttl-seconds>` has elapsed, or the cache's internal early-refresh window has been reached.
+  The early-refresh window is `max(600 seconds, 5% of TTL)` before the configured TTL expires, so the cache never hands back a token that's within ten minutes of upstream expiry.
+* A downstream collector reports a `FAILED` collection status while a cached token was in use.
+  The adaptor invalidates the affected entry; the next collection cycle re-acquires.
 
-The 401/403 retry is best-effort.
-A single retry runs with the same caller scope.
-If the retry also fails, the original error propagates.
-
-The retry path applies to both core-served and Minion-served collections.
-For a Minion-served collection, the Minion surfaces the auth failure back to the core; the core invalidates the cached token, acquires a fresh one, and re-issues the collection through the same Minion.
-This adds one RPC round-trip on top of the local-retry case but is otherwise transparent.
+Invalidation is passive: the failing request itself isn't retried.
+The next scheduled cycle picks up a fresh token.
+For a Minion-served collection, the FAILED status flows back to the core, where the same adaptor invalidates locally, so the next cycle through the same Minion goes out with a fresh token.
 
 NOTE: A short `<ttl-seconds>` is still useful as defense-in-depth for environments where tokens can be revoked out of band, since it bounds the window during which the cache may hold a token the auth server has already invalidated.
 

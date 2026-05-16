@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.opennms.core.mate.api.BoundableScope;
 import org.opennms.core.mate.api.ContextKey;
 import org.opennms.core.mate.api.EmptyScope;
 import org.opennms.core.mate.api.EntityScopeProvider;
@@ -62,7 +61,6 @@ import org.opennms.netmgt.model.OnmsMonitoredService;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.netmgt.model.OnmsSnmpInterface;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.google.common.base.Strings;
 
@@ -87,22 +85,6 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
 
     @Autowired
     private SecureCredentialsVault scv;
-
-    /**
-     * Optional list of additional Mate {@link Scope} beans contributed
-     * by other modules (e.g., token-auth resolution). Spring qualifier
-     * keeps the wiring narrow -- only beans explicitly tagged
-     * {@code @Qualifier("additionalScope")} are picked up.
-     *
-     * <p>Bound via {@link BoundableScope#bind(Scope)} into the
-     * {@link FallbackScope} returned by {@link #getScopeForNode}, with
-     * the bound ambient being the per-node composite (node attributes
-     * + asset + SCV + ENV). Callers that want token resolution must
-     * include {@code getScopeForNode} in their fallback chain.</p>
-     */
-    @Autowired(required = false)
-    @Qualifier("additionalScope")
-    private List<Scope> additionalScopes = new ArrayList<>();
 
     @Override
     public Scope getScopeForScv() {
@@ -212,8 +194,6 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
                 scopes.add(new EnvironmentScope());
             }
 
-            final Scope baseScope = new FallbackScope(scopes);
-            scopes.addAll(bindAdditional(baseScope));
             return new FallbackScope(scopes);
         });
 
@@ -364,31 +344,6 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
         });
     }
 
-    /**
-     * Returns a copy of {@link #additionalScopes} with each
-     * {@link BoundableScope} entry replaced by its {@code bind(ambient)}
-     * result. {@code ambient} is the per-call base scope (node /
-     * interface / asset / SCV / ENV) so that bound scopes can resolve
-     * placeholders inside their own configuration using the same
-     * context the rest of the collection sees.
-     *
-     * <p>Only invoked from {@link #getScopeForNode(Integer)} -- callers
-     * that need token resolution must include the node scope in their
-     * chain. This keeps the bound copy from being reached via a chain
-     * that only contains interface/service context, where the ambient
-     * passed to the bound scope wouldn't carry node attributes.</p>
-     */
-    private List<Scope> bindAdditional(final Scope ambient) {
-        if (additionalScopes == null || additionalScopes.isEmpty()) {
-            return java.util.Collections.emptyList();
-        }
-        final List<Scope> bound = new ArrayList<>(additionalScopes.size());
-        for (final Scope s : additionalScopes) {
-            bound.add(s instanceof BoundableScope ? ((BoundableScope) s).bind(ambient) : s);
-        }
-        return bound;
-    }
-
     private static MapScope transform(final Scope.ScopeName scopeName, final Collection<OnmsMetaData> metaData) {
         final Map<ContextKey, String> map = metaData.stream()
                 .collect(Collectors.toMap(e -> new ContextKey(e.getContext(), e.getKey()), OnmsMetaData::getValue));
@@ -417,9 +372,5 @@ public class EntityScopeProviderImpl implements EntityScopeProvider {
 
     public void setScv(SecureCredentialsVault scv) {
         this.scv = scv;
-    }
-
-    public void setAdditionalScopes(final List<Scope> additionalScopes) {
-        this.additionalScopes = additionalScopes != null ? additionalScopes : new ArrayList<>();
     }
 }

@@ -138,7 +138,7 @@ public class TokenAcquirer {
      * the per-node scope of the in-flight collection), node-scoped
      * placeholders like {@code ${node:label}} or {@code ${requisition:...}}
      * are also resolved. {@code ${token:...}} self-references inside an
-     * auth definition are guarded against by {@link AuthScope}'s
+     * auth definition are guarded against by {@link TokenAuthCollectorAdaptor}'s
      * re-entrancy check, not by excluding it from the chain.
      *
      * <p>Always runs interpolation, even if no provider and no caller
@@ -416,11 +416,35 @@ public class TokenAcquirer {
         return node.asText();
     }
 
+    /**
+     * Refresh-buffer floor: tokens get cached for {@code ttl-seconds}
+     * minus this many seconds so we never hand back a token that's
+     * within 10 minutes of expiring upstream.
+     */
+    private static final long REFRESH_BUFFER_FLOOR_SECONDS = 600L;
+
+    /**
+     * Refresh-buffer fraction: alternatively, we shorten by 5% of the
+     * configured TTL when that's larger than the 10-minute floor. So
+     * e.g. ttl=1h refreshes 10 min early, ttl=24h refreshes 72 min
+     * early. {@code max(floor, fraction)} -- whichever is larger.
+     */
+    private static final double REFRESH_BUFFER_FRACTION = 0.05;
+
     private Instant computeExpiresAt(final TokenAuth auth) {
         final Long ttl = auth.getTtlSeconds();
         if (ttl == null || ttl <= 0) {
             return null;
         }
-        return clock.instant().plusSeconds(ttl);
+        // Refresh shortly before the upstream-issued expiry so a
+        // collection never picks up a token that's about to be rejected.
+        // Whichever buffer is larger wins: 10 minutes or 5% of TTL.
+        final long fractional = (long) Math.ceil(ttl * REFRESH_BUFFER_FRACTION);
+        final long buffer = Math.max(REFRESH_BUFFER_FLOOR_SECONDS, fractional);
+        // Guard against tiny TTLs where the buffer would put us in the
+        // past: clamp the effective remaining time to 1 second so we
+        // still cache the token for at least one request.
+        final long effective = Math.max(1L, ttl - buffer);
+        return clock.instant().plusSeconds(effective);
     }
 }
