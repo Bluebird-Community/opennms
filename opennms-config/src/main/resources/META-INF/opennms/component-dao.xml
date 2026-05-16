@@ -7,9 +7,9 @@
 		http://xmlns.opennms.org/xsd/spring/onms-osgi http://xmlns.opennms.org/xsd/spring/onms-osgi.xsd
 	">
 
-	<!-- Brings in the collector-token-auth runtime: TokenAcquirer, TokenCache,
+	<!-- Brings in the token-auth runtime: TokenAcquirer, TokenCache,
 	     and the TokenProvider implementation that backs ${token:<name>}. -->
-	<import resource="classpath:/META-INF/opennms/applicationContext-collector-token-auth.xml"/>
+	<import resource="classpath:/META-INF/opennms/applicationContext-token-auth.xml"/>
 
 	<bean name="ackd-configuration.xml" class="org.opennms.core.config.impl.JaxbResourceConfiguration">
 		<constructor-arg value="org.opennms.netmgt.config.ackd.AckdConfiguration" />

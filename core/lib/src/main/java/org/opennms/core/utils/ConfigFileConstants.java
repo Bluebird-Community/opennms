@@ -404,10 +404,10 @@ public abstract class ConfigFileConstants {
     public static final int JDBC_COLLECTION_CONFIG_FILE_NAME;
 
     /**
-     * The collector-token-auth-configuration file: token-based authentication
+     * The token-auth-configuration file: token-based authentication
      * definitions used by the XML/JSON and HTTP collectors.
      */
-    public static final int COLLECTOR_TOKEN_AUTH_CONFIG_FILE_NAME;
+    public static final int TOKEN_AUTH_CONFIG_FILE_NAME;
 
     //
     // Initialize the class data. This section is used to initialize the
@@ -519,7 +519,7 @@ public abstract class ConfigFileConstants {
         ENLINKD_CONFIG_FILE_NAME = 81;
 
         WSMAN_ASSET_ADAPTER_CONFIG_FILE_NAME = 82;
-        COLLECTOR_TOKEN_AUTH_CONFIG_FILE_NAME = 83;
+        TOKEN_AUTH_CONFIG_FILE_NAME = 83;
         // Allocate and build the mapping of identifiers to names
         //
         FILE_ID_TO_NAME = new String[84];
@@ -606,7 +606,7 @@ public abstract class ConfigFileConstants {
         FILE_ID_TO_NAME[SNMP_ASSET_ADAPTER_CONFIG_FILE_NAME] = "snmp-asset-adapter-configuration.xml";
         FILE_ID_TO_NAME[WSMAN_ASSET_ADAPTER_CONFIG_FILE_NAME] = "wsman-asset-adapter-configuration.xml";
         FILE_ID_TO_NAME[JDBC_COLLECTION_CONFIG_FILE_NAME] = "jdbc-datacollection-config.xml";
-        FILE_ID_TO_NAME[COLLECTOR_TOKEN_AUTH_CONFIG_FILE_NAME] = "collector-token-auth-configuration.xml";
+        FILE_ID_TO_NAME[TOKEN_AUTH_CONFIG_FILE_NAME] = "token-auth-configuration.xml";
     }
 
     /**

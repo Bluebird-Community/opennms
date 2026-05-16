@@ -264,7 +264,7 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
             if (status == 401 || status == 403) {
                 // Auth-related refusal. Drain and close the connection,
                 // then surface as a collection failure so the
-                // controller-side CollectorTokenAuthAdaptor can invalidate
+                // controller-side TokenAuthCollectorAdaptor can invalidate
                 // any cached token used in this request.
                 try { EntityUtils.consumeQuietly(response.getEntity()); } catch (Throwable ignored) {}
                 try { response.close(); } catch (Throwable ignored) {}
