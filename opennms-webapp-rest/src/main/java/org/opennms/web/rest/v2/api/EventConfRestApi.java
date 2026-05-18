@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.opennms.netmgt.model.events.EnableDisableConfSourceEventsPayload;
 import org.opennms.netmgt.model.events.EventConfSourceDeletePayload;
 import org.opennms.web.rest.v2.model.AddEventConfSourceRequest;
@@ -59,7 +58,7 @@ public interface EventConfRestApi {
             @ApiResponse(responseCode = "200", description = "Upload successful"),
             @ApiResponse(responseCode = "400", description = "Invalid eventconf.xml or request")
     })
-    Response uploadEventConfFiles(@Multipart("upload") List<Attachment> attachments,
+    Response uploadEventConfFiles(List<Attachment> attachments,
                                   @Context SecurityContext securityContext) throws Exception;
 
     @GET
