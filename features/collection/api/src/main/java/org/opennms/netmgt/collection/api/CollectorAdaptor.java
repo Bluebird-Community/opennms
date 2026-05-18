@@ -51,6 +51,28 @@ public interface CollectorAdaptor {
     }
 
     /**
+     * Invoked on the controller after the collector's runtime
+     * attributes are fetched but BEFORE Mate's {@code Interpolator}
+     * walks them. Mate's standard pass resolves only the prefixes it
+     * knows ({@code node}, {@code interface}, {@code asset}, etc.) and
+     * strips any unknown prefix to an empty string -- so adaptors that
+     * own a custom prefix (e.g. {@code token:}) must do their own
+     * substitution here, before Mate sees the tree.
+     *
+     * <p>The values in {@code runtimeAttributes} may include JAXB
+     * objects (annotated {@code @XmlRootElement}) representing
+     * collection-config snippets such as the {@code <xml-source>} block
+     * of an {@code xml-datacollection-config.xml}. Implementations that
+     * resolve placeholders inside those trees can marshal the object to
+     * XML, substitute, and unmarshal -- the same shape Mate's
+     * {@code Interpolator.interpolate(Object, Scope)} uses internally.</p>
+     */
+    default Map<String, Object> beforeRuntimeInterpolation(final CollectionAgent agent,
+                                                           final Map<String, Object> runtimeAttributes) {
+        return runtimeAttributes;
+    }
+
+    /**
      * Invoked on the controller after the collection future resolves,
      * before the result reaches the original caller. Implementations
      * may inspect or replace the {@link CollectionSet} -- e.g. to

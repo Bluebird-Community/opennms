@@ -174,8 +174,18 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
 
         // Retrieve the runtime attributes, which may include attributes
         // such as the agent details and other state related attributes
-        // which should be included in the request
-        final Map<String, Object> runtimeAttributes = Interpolator.interpolateAttributes(serviceCollector.getRuntimeAttributes(agent, interpolatedAttributes), scope);
+        // which should be included in the request.
+        Map<String, Object> rawRuntimeAttributes = serviceCollector.getRuntimeAttributes(agent, interpolatedAttributes);
+        // Let each adaptor walk the runtime-attribute tree first.
+        // Adaptors that own a custom ${prefix:...} placeholder (e.g.
+        // token-auth) need to substitute before Mate's Interpolator
+        // sees the tree -- the standard pass strips unknown prefixes to
+        // empty. Default impl is a no-op.
+        for (final CollectorAdaptor adaptor : adaptors) {
+            final Map<String, Object> next = adaptor.beforeRuntimeInterpolation(agent, rawRuntimeAttributes);
+            rawRuntimeAttributes = next != null ? next : rawRuntimeAttributes;
+        }
+        final Map<String, Object> runtimeAttributes = Interpolator.interpolateAttributes(rawRuntimeAttributes, scope);
         final Map<String, Object> dispatchedAttributes = new HashMap<>();
         dispatchedAttributes.putAll(interpolatedAttributes);
         dispatchedAttributes.putAll(runtimeAttributes);
