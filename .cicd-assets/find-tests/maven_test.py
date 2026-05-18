@@ -92,6 +92,19 @@ class TestGetChangedFiles(unittest.TestCase):
         with self.assertRaises(BaselineUnresolvableError):
             get_changed_files('/repo', baseline_ref='deadbeef')
 
+    @patch('git.get_parent_branch')
+    @patch('git.subprocess.check_output')
+    def test_nightly_path_unresolvable_parent_raises(self, mock_check_output, mock_parent):
+        # .nightly says `develop` but origin/develop doesn't exist on this fork.
+        # Sequence: get_current_branch (success), _resolve_or_raise (fails).
+        mock_parent.return_value = "develop"
+        mock_check_output.side_effect = [
+            b'main\n',
+            subprocess.CalledProcessError(128, ['git', 'rev-parse']),
+        ]
+        with self.assertRaises(BaselineUnresolvableError):
+            get_changed_files('/repo')
+
 
 class TestEmptyScope(unittest.TestCase):
 

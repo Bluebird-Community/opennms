@@ -46,6 +46,11 @@ def get_changed_files(repo_path, baseline_ref=None):
         current_branch = get_current_branch()
         print("Comparing: %s to: %s" % (current_branch, parent_branch))
         compare_to = 'origin/' + parent_branch
+        # Validate the .nightly-derived ref resolves locally. On forks whose
+        # .nightly points at a branch absent from the remote (e.g. `develop`
+        # on a `main`-only fork), raise BaselineUnresolvableError so the
+        # caller can fall back to the full module set instead of crashing.
+        _resolve_or_raise(compare_to)
 
     try:
         files_changed_in_commits = subprocess.check_output(
