@@ -73,3 +73,10 @@ core/web-assets/.eslintcache
 
 # Make release
 *.versionsBackup
+
+# AI tool working directories
+.agents/
+.claude/
+_bmad/
+_bmad-output/
+openspec/
