@@ -14,8 +14,166 @@ on:
 permissions: write-all
 
 jobs:
+  decide-scope:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      full_build: ${{ steps.decide.outputs.full_build }}
+      baseline_ref: ${{ steps.decide.outputs.baseline_ref }}
+      trigger_reason: ${{ steps.decide.outputs.trigger_reason }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install pathspec
+        run: pip install --quiet pathspec
+      - name: Decide build scope
+        id: decide
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.event.after }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_REF_VAR: ${{ github.ref }}
+        run: |
+          set -e
+
+          # Fail-open trap (design D8): any uncaught error -> full_build=true, exit 0.
+          trap 'echo "decide-scope hit an error - defaulting to full build" >&2; \
+                printf "full_build=true\nbaseline_ref=\ntrigger_reason=decide-scope-internal-failure\n" >> "$GITHUB_OUTPUT"; \
+                echo "::warning title=decide-scope::internal failure - falling back to full build"; \
+                exit 0' ERR
+
+          # ---- Trip-wire list (design D3) ----
+          export TRIP_WIRES='/pom.xml
+          dependencies/**
+          Makefile
+          compile.pl
+          assemble.pl
+          tools/development/**
+          .github/workflows/**
+          .cicd-assets/**
+          .mvn/**
+          container/features/**
+          pnpm-lock.yaml
+          ui/pnpm-lock.yaml'
+
+          FULL_BUILD=false
+          BASELINE_REF=""
+          TRIGGER_REASON=""
+
+          # ---- Event-based baseline derivation (design D2) ----
+          case "$EVENT_NAME" in
+            pull_request)
+              BASELINE_REF="origin/$BASE_REF"
+              ;;
+            push)
+              if [[ "$GITHUB_REF_VAR" == refs/tags/v* ]]; then
+                FULL_BUILD=true
+                TRIGGER_REASON="tag-push"
+              elif [[ "$BEFORE_SHA" == "0000000000000000000000000000000000000000" || -z "$BEFORE_SHA" ]]; then
+                FULL_BUILD=true
+                TRIGGER_REASON="zero-sha-baseline"
+              else
+                BASELINE_REF="$BEFORE_SHA"
+              fi
+              ;;
+            workflow_dispatch)
+              FULL_BUILD=true
+              TRIGGER_REASON="workflow-dispatch"
+              ;;
+            *)
+              FULL_BUILD=true
+              TRIGGER_REASON="unknown-event-$EVENT_NAME"
+              ;;
+          esac
+
+          # ---- Verify baseline resolves to a commit ----
+          if [[ "$FULL_BUILD" != "true" && -n "$BASELINE_REF" ]]; then
+            if ! git rev-parse --verify "${BASELINE_REF}^{commit}" >/dev/null 2>&1; then
+              FULL_BUILD=true
+              TRIGGER_REASON="baseline-unresolvable"
+            fi
+          fi
+
+          # ---- Compute changed files (scoped path only) ----
+          if [[ "$FULL_BUILD" != "true" ]]; then
+            CHANGED_FILES=$(git diff --name-only "${BASELINE_REF}...HEAD" || echo "")
+            if [[ -z "$CHANGED_FILES" ]]; then
+              FULL_BUILD=true
+              TRIGGER_REASON="no-changed-files"
+            fi
+          fi
+
+          # ---- Trip-wire match via pathspec (gitignore semantics; design D3) ----
+          if [[ "$FULL_BUILD" != "true" ]]; then
+            TRIPPED=$(printf '%s\n' "$CHANGED_FILES" | python3 -c '
+          import os, sys, pathspec
+          patterns = os.environ["TRIP_WIRES"].strip().splitlines()
+          spec = pathspec.GitIgnoreSpec.from_lines(patterns)
+          for line in sys.stdin:
+              line = line.strip()
+              if line and spec.match_file(line):
+                  print(line)
+                  break
+          ')
+            if [[ -n "$TRIPPED" ]]; then
+              FULL_BUILD=true
+              TRIGGER_REASON="trip-wire:$TRIPPED"
+            fi
+          fi
+
+          # ---- [full-ci] escape hatch (design D9) ----
+          if [[ "$FULL_BUILD" != "true" ]]; then
+            case "$EVENT_NAME" in
+              pull_request)
+                COMMIT_MSGS=$(git log -1 --format=%B "$PR_HEAD_SHA" 2>/dev/null || true)
+                ;;
+              push)
+                COMMIT_MSGS=$(git log --format=%B "${BEFORE_SHA}..${AFTER_SHA}" 2>/dev/null || true)
+                ;;
+              *)
+                COMMIT_MSGS=$(git log -1 --format=%B HEAD 2>/dev/null || true)
+                ;;
+            esac
+            if printf '%s' "$COMMIT_MSGS" | grep -F -q '[full-ci]'; then
+              FULL_BUILD=true
+              TRIGGER_REASON="full-ci-keyword"
+            fi
+          fi
+
+          if [[ "$FULL_BUILD" != "true" && -z "$TRIGGER_REASON" ]]; then
+            TRIGGER_REASON="scoped:$EVENT_NAME"
+          fi
+
+          # ---- Emit outputs ----
+          {
+            echo "full_build=$FULL_BUILD"
+            echo "baseline_ref=$BASELINE_REF"
+            echo "trigger_reason=$TRIGGER_REASON"
+          } >> "$GITHUB_OUTPUT"
+
+          # ---- Surface decision (task 3.7): step summary + notice + log ----
+          {
+            echo "## decide-scope"
+            echo ""
+            echo "| Output | Value |"
+            echo "|---|---|"
+            echo "| \`full_build\` | \`$FULL_BUILD\` |"
+            echo "| \`baseline_ref\` | \`${BASELINE_REF:-<none>}\` |"
+            echo "| \`trigger_reason\` | \`$TRIGGER_REASON\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::notice title=decide-scope::full_build=$FULL_BUILD baseline_ref=${BASELINE_REF:-<none>} trigger_reason=$TRIGGER_REASON"
+          echo "decide-scope: full_build=$FULL_BUILD baseline_ref=${BASELINE_REF:-<none>} trigger_reason=$TRIGGER_REASON"
+
   build-with-smoke-test:
     if: "!contains(github.event.commits[0].message, '[skip build-with-smoke-test]')"
+    needs:
+      - decide-scope
     runs-on:
       group: Default
       labels:
@@ -344,6 +502,7 @@ jobs:
   unit-tests:
     if: "!contains(github.event.commits[0].message, '[skip unit-tests]')"
     needs:
+      - decide-scope
       - build-with-smoke-test
     strategy:
       fail-fast: false
@@ -368,6 +527,9 @@ jobs:
           make quick-compile
           make quick-assemble
       - name: Run unit test suite (shard ${{ matrix.shard_idx }})
+        env:
+          BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
+          FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
@@ -397,6 +559,7 @@ jobs:
         shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
         shards: [ 8 ]                         # total number of parallel test jobs
     needs:
+      - decide-scope
       - unit-tests
     runs-on:
       group: Default
@@ -419,6 +582,9 @@ jobs:
         run: |
           make install-core
       - name: Run integration unit test suite (shard ${{ matrix.shard_idx }})
+        env:
+          BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
+          FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
           make integration-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Integration Test Report (shard ${{ matrix.shard_idx }})
@@ -441,13 +607,14 @@ jobs:
             target/artifacts/failsafe-reports
 
   e2e-tests-core:
-    if: "!contains(github.event.commits[0].message, '[skip e2e-tests-core]')"
+    if: "needs.decide-scope.outputs.full_build == 'true' && !contains(github.event.commits[0].message, '[skip e2e-tests-core]')"
     strategy:
       fail-fast: false
       matrix:
         shard_idx: [ 0, 1, 2, 3, 4, 5, 6, 7 ] # Test job index for each runner
         shards: [ 8 ]                         # total number of parallel test jobs
     needs:
+      - decide-scope
       - unit-tests
     runs-on:
       group: Default
@@ -467,6 +634,8 @@ jobs:
           make quick-compile
           make quick-assemble
       - name: Run Core End-to-End tests (shard ${{ matrix.shard_idx }})
+        env:
+          FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
           make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Core Test Report (shard ${{ matrix.shard_idx }})
@@ -491,13 +660,14 @@ jobs:
             target/artifacts/smoke-test-*.tar.gz
 
   e2e-tests-minion:
-    if: "!contains(github.event.commits[0].message, '[skip e2e-tests-minion]')"
+    if: "needs.decide-scope.outputs.full_build == 'true' && !contains(github.event.commits[0].message, '[skip e2e-tests-minion]')"
     strategy:
       fail-fast: false
       matrix:
         shard_idx: [ 0 ] # Test job index for each runner
         shards: [ 1 ]    # No parallel test jobs
     needs:
+      - decide-scope
       - unit-tests
     runs-on:
       group: Default
@@ -517,6 +687,8 @@ jobs:
           make quick-compile
           make quick-assemble
       - name: Run Minion End-to-End tests (shard ${{ matrix.shard_idx }})
+        env:
+          FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
           make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Minion Test Report (shard ${{ matrix.shard_idx }})
@@ -541,13 +713,14 @@ jobs:
             target/artifacts/smoke-test-*.tar.gz
 
   e2e-tests-sentinel:
-    if: "!contains(github.event.commits[0].message, '[skip e2e-tests-sentinel]')"
+    if: "needs.decide-scope.outputs.full_build == 'true' && !contains(github.event.commits[0].message, '[skip e2e-tests-sentinel]')"
     strategy:
       fail-fast: false
       matrix:
         shard_idx: [ 0 ] # Test job index for each runner
         shards: [ 1 ]    # No parallel test jobs
     needs:
+      - decide-scope
       - unit-tests
     runs-on:
       group: Default
@@ -567,6 +740,8 @@ jobs:
           make quick-compile
           make quick-assemble
       - name: Run Sentinel End-to-End tests (shard ${{ matrix.shard_idx }})
+        env:
+          FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
           make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Sentinel Test Report (shard ${{ matrix.shard_idx }})
