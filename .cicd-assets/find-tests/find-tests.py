@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-from git import get_current_branch, get_parent_branch, get_changed_files
+from git import BaselineUnresolvableError, get_current_branch, get_parent_branch, get_changed_files
 from maven import MavenProject
 
 
@@ -32,17 +32,28 @@ def find_changes(maven_project_root):
 def is_test(file):
     return bool(re.search("\\bsrc/test/", file))
 
-def generate_test_lists(maven_project_root, changes_only=True, unit_test_output=None, integration_test_output=None):
+def generate_test_lists(maven_project_root, changes_only=True, unit_test_output=None, integration_test_output=None, baseline_ref=None):
     project = load_maven_project(maven_project_root)
     print("Maven project contains %d modules." % len(project.modules))
 
-    current_branch = get_current_branch()
-    print("Current branch: %s" % current_branch)
-    parent_branch = get_parent_branch(maven_project_root)
-    print("Parent branch: %s" % parent_branch)
+    if baseline_ref is not None:
+        # Explicit baseline: skip .nightly + current-branch comparison entirely.
+        scope_to_changes = changes_only
+    else:
+        current_branch = get_current_branch()
+        print("Current branch: %s" % current_branch)
+        parent_branch = get_parent_branch(maven_project_root)
+        print("Parent branch: %s" % parent_branch)
+        scope_to_changes = (current_branch != parent_branch) and changes_only
 
-    if current_branch != parent_branch and changes_only:
-        files_changed = get_changed_files(maven_project_root)
+    if scope_to_changes:
+        try:
+            files_changed = get_changed_files(maven_project_root, baseline_ref=baseline_ref)
+        except BaselineUnresolvableError as e:
+            print("WARNING: %s — falling back to full module set" % e, file=sys.stderr)
+            scope_to_changes = False
+
+    if scope_to_changes:
         other_files_changed = list(files_changed)
 
         test_files_changed = list(filter(is_test, files_changed))
@@ -117,6 +128,8 @@ subparsers = parser.add_subparsers(help='sub-command help', dest='cmd')
 parser_a = subparsers.add_parser('generate-test-lists', help='generate-test-lists help')
 parser_a.add_argument("--changes-only", dest="changes_only", default="true", type=lambda s: s.lower() in ['true', 't', 'yes', '1'],
                     help="only consider changed files")
+parser_a.add_argument("--baseline-ref", type=str, dest="baseline_ref", default=None,
+                    help="explicit baseline ref for the diff (overrides .nightly lookup); falls back to BASELINE_REF env var if unset")
 parser_a.add_argument("--output-unit-test-classes", type=str, dest="unit_test_output",
                     help="target file in which to output the list of unit test classes")
 parser_a.add_argument("--output-integration-test-classes", type=str, dest="integration_test_output",
@@ -136,9 +149,11 @@ parser_c.add_argument("maven_project_root", type=str, help="path to Maven projec
 
 args = parser.parse_args()
 if args.cmd == 'generate-test-lists':
+    baseline_ref = args.baseline_ref or os.environ.get('BASELINE_REF') or None
     generate_test_lists(args.maven_project_root, changes_only=args.changes_only,
                         unit_test_output=args.unit_test_output,
-                        integration_test_output=args.integration_test_output)
+                        integration_test_output=args.integration_test_output,
+                        baseline_ref=baseline_ref)
 elif args.cmd == 'generate-test-modules':
     test_names = args.infile.read()
     with open(args.output, 'w') as target_file:

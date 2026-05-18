@@ -1,8 +1,11 @@
 import json
 import os
+import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from git import BaselineUnresolvableError, ZERO_SHA, get_changed_files
 from maven import MavenProject, JUnitTest
 
 
@@ -59,3 +62,46 @@ class TestMaven(unittest.TestCase):
     def test_classname_from_filename(self):
         class_name = JUnitTest.classname_from_filename("opennms-services/src/test/java/org/opennms/netmgt/poller/PollerIT.java")
         self.assertEqual(class_name, "org.opennms.netmgt.poller.PollerIT")
+
+
+class TestGetChangedFiles(unittest.TestCase):
+
+    @patch('git.subprocess.check_output')
+    def test_explicit_baseline_ref_skips_nightly(self, mock_check_output):
+        mock_check_output.side_effect = [
+            b'abc123commitsha\n',
+            b'core/api/Foo.java\ncore/api/Bar.java\n',
+            b'',
+        ]
+        files = get_changed_files('/repo', baseline_ref='abc123')
+        self.assertEqual(len(files), 2)
+        self.assertEqual(mock_check_output.call_args_list[0][0][0],
+                         ['git', 'rev-parse', '--verify', 'abc123^{commit}'])
+
+    def test_zero_sha_raises(self):
+        with self.assertRaises(BaselineUnresolvableError):
+            get_changed_files('/repo', baseline_ref=ZERO_SHA)
+
+    def test_empty_baseline_raises(self):
+        with self.assertRaises(BaselineUnresolvableError):
+            get_changed_files('/repo', baseline_ref='')
+
+    @patch('git.subprocess.check_output')
+    def test_unresolvable_ref_raises(self, mock_check_output):
+        mock_check_output.side_effect = subprocess.CalledProcessError(128, ['git', 'rev-parse'])
+        with self.assertRaises(BaselineUnresolvableError):
+            get_changed_files('/repo', baseline_ref='deadbeef')
+
+
+class TestEmptyScope(unittest.TestCase):
+
+    def setUp(self):
+        with open(os.path.join(os.path.dirname(__file__), "sample.json")) as graph_json:
+            self.sample_graph = json.load(graph_json)
+
+    def test_empty_changes_yields_no_modules(self):
+        project = MavenProject(self.sample_graph)
+        related = project.get_modules_related_to([])
+        users = project.get_module_users([])
+        modules_to_consider = set(users).union(set(related))
+        self.assertEqual(len(modules_to_consider), 0)
