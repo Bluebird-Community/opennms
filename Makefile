@@ -261,10 +261,19 @@ maven-structure-graph: deps-build show-info
 	$(MAVEN_BIN) org.opennms.maven.plugins:structure-maven-plugin:1.0:structure $(MAVEN_ARGS) -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) --fail-at-end -Prun-expensive-tasks -Pbuild-bamboo
 
 .PHONY: test-lists
-test-lists: maven-structure-graph
+# BASELINE_REF env var (if set) is read by find-tests.py via os.environ to scope test discovery.
+# FULL_BUILD=true short-circuits maven-structure-graph and enumerates all tests/modules via find.
+test-lists: $(if $(filter true,$(FULL_BUILD)),,maven-structure-graph)
 	mkdir -p $(ARTIFACTS_DIR)/tests
-	python3 .cicd-assets/find-tests/find-tests.py generate-test-lists --changes-only="false" --output-unit-test-classes="$(ARTIFACTS_DIR)/tests/unit_tests_classnames" --output-integration-test-classes="$(ARTIFACTS_DIR)/tests/integration_tests_classnames" .
-	cat $(ARTIFACTS_DIR)/tests/*_tests_classnames | python3 .cicd-assets/find-tests/find-tests.py generate-test-modules --output="$(ARTIFACTS_DIR)/tests/test_modules" .
+	@if [ "$(FULL_BUILD)" = "true" ]; then \
+		echo "FULL_BUILD=true: enumerating all tests/modules via find (skipping maven-structure-graph)"; \
+		find . -path ./.git -prune -o -path ./e2e-tests -prune -o -type f -name '*Test.java' -print | sed -e 's,.*/src/test/java/,,' -e 's,\.java$$,,' -e 's,/,.,g' > $(ARTIFACTS_DIR)/tests/unit_tests_classnames; \
+		find . -path ./.git -prune -o -path ./e2e-tests -prune -o -type f -name '*IT.java' -print | sed -e 's,.*/src/test/java/,,' -e 's,\.java$$,,' -e 's,/,.,g' > $(ARTIFACTS_DIR)/tests/integration_tests_classnames; \
+		find . -path ./.git -prune -o -path ./e2e-tests -prune -o -type f -name pom.xml -print | xargs -n 1 tools/development/pom-artifact.sh > $(ARTIFACTS_DIR)/tests/test_modules; \
+	else \
+		python3 .cicd-assets/find-tests/find-tests.py generate-test-lists --changes-only="true" --output-unit-test-classes="$(ARTIFACTS_DIR)/tests/unit_tests_classnames" --output-integration-test-classes="$(ARTIFACTS_DIR)/tests/integration_tests_classnames" .; \
+		cat $(ARTIFACTS_DIR)/tests/*_tests_classnames | python3 .cicd-assets/find-tests/find-tests.py generate-test-modules --output="$(ARTIFACTS_DIR)/tests/test_modules" .; \
+	fi
 	find e2e-tests -type f -regex ".*\/src\/test\/java\/.*IT.*\.java" | sed -e 's#^.*src/test/java/\(.*\)\.java#\1#' | tr "/" "." > $(ARTIFACTS_DIR)/tests/e2e_tests_classnames
 
 .PHONY: compile
