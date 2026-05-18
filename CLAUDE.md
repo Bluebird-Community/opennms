@@ -212,5 +212,20 @@ Karaf failures almost always surface as a smoke test timing out. The top-level t
 
 ## CI/CD
 
-GitHub Actions. Path-based filtering determines which jobs run:
-- Source changes trigger full build
+GitHub Actions (`.github/workflows/main.yml`). A `decide-scope` job runs first on every event and emits `full_build`, `baseline_ref`, `trigger_reason` outputs. Downstream behaviour:
+
+- `unit-tests` / `integration-tests` always run; they receive `BASELINE_REF` and `FULL_BUILD` env vars and the Maven reactor is scoped to the modules transitively affected by the diff via `.cicd-assets/find-tests/`.
+- `e2e-tests-core` / `e2e-tests-minion` / `e2e-tests-sentinel` are `if:`-gated on `full_build == 'true'`. They run on `v*` tag pushes and on `[full-ci]`/trip-wire-triggered runs only; on day-to-day PRs and `main` pushes they show as skipped.
+- `make smoke` continues to run on every commit inside `build-with-smoke-test`.
+
+### Forcing a full build
+
+| Mechanism | When to use |
+|---|---|
+| Tag push `v*` | Release builds — unconditional full suite. |
+| `[full-ci]` token in a commit message | One-off PRs that need full coverage. For PR events the token is scanned on the PR HEAD commit; for `main` pushes it's scanned in `${before}..${after}`. Include it in the PR title/description if you also want the post-merge push to be full. |
+| Trip-wire path change | Edits to any of: root `pom.xml`, `dependencies/**`, `Makefile`, `compile.pl`, `assemble.pl`, `tools/development/**`, `.github/workflows/**`, `.cicd-assets/**`, `.mvn/**`, `container/features/**`, `pnpm-lock.yaml`, `ui/pnpm-lock.yaml` force a full build automatically. When you add a new cross-cutting path (a new lockfile, a new top-level build script), extend the list in `decide-scope`. |
+
+### Local `find-tests.py`
+
+`python3 .cicd-assets/find-tests/find-tests.py generate-test-lists .` still works with no flags — it falls back to reading `parent_branch:` from `.nightly`. Pass `--baseline-ref=<ref>` (or set `BASELINE_REF=<ref>`) to override.

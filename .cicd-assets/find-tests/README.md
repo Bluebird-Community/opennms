@@ -1,76 +1,47 @@
+# find-tests
 
-## Usage
+Determines which Maven modules and JUnit / Failsafe tests are affected by a diff, by walking the reverse-dependency graph emitted by `structure-maven-plugin`.
 
-Start by running the `structure-maven-plugin` to generate the Maven project structure and dependency tree out to a `.json` file:
-```
-mvn org.opennms.maven.plugins:structure-maven-plugin:1.0:structure
-```
+Used by CI (`.github/workflows/main.yml` → `decide-scope` → `make unit-tests` / `make integration-tests`) to scope shards to changed modules. Also runnable locally.
 
-Output will be rendered to:
-```
-$ ls -alh target/structure-graph.json
--rw-rw-r--. 1 jesse jesse 618K Aug 14 21:18 target/structure-graph.json
-```
+## Local usage
 
-Now run:
-```
-$ python3 .circleci/scripts/find-tests/find-tests.py generate-test-lists .
-```
-
-And you should see output like:
-```
-$ python3 .circleci/scripts/find-tests/find-tests.py generate-test-lists .
-Maven project contains 676 modules.
-Comparing to: release-25.0.0
-Files with changes:
-./.nightly
-./.circleci/scripts/find-tests/maven.py
-./.circleci/scripts/find-tests/README.md
-./features/telemetry/daemon/src/main/java/org/opennms/netmgt/telemetry/daemon/Telemetryd.java
-./.circleci/scripts/itest.sh
-./.circleci/scripts/find-tests/maven_test.py
-./.circleci/scripts/find-tests/__init__.py
-./.circleci/config.yml
-./.circleci/scripts/find-tests.py
-./.circleci/scripts/find-tests/find-tests.py
-./.circleci/scripts/find-tests/git.py
-./.gitignore
-./.circleci/scripts/find-tests/sample.json
-No module match for ./.nightly
-No module match for ./.circleci/scripts/find-tests/maven.py
-No module match for ./.circleci/scripts/find-tests/README.md
-No module match for ./.circleci/scripts/itest.sh
-No module match for ./.circleci/scripts/find-tests/maven_test.py
-No module match for ./.circleci/scripts/find-tests/__init__.py
-No module match for ./.circleci/config.yml
-No module match for ./.circleci/scripts/find-tests.py
-No module match for ./.circleci/scripts/find-tests/find-tests.py
-No module match for ./.circleci/scripts/find-tests/git.py
-No module match for ./.gitignore
-No module match for ./.circleci/scripts/find-tests/sample.json
-Modules with changes:
-org.opennms.features.telemetry:org.opennms.features.telemetry.daemon:25.0.0-SNAPSHOT
-Modules to consider:
-org.opennms.features.minion:core-repository:25.0.0-SNAPSHOT
-org.opennms.features.container:minion:25.0.0-SNAPSHOT
-org.opennms.karaf:opennms:25.0.0-SNAPSHOT
-org.opennms.features.telemetry:org.opennms.features.telemetry.daemon:25.0.0-SNAPSHOT
-org.opennms.features.telemetry.distributed:org.opennms.features.telemetry.distributed.sentinel:25.0.0-SNAPSHOT
-org.opennms.container:org.opennms.container.shared:25.0.0-SNAPSHOT
-org.opennms.features.minion:repository:25.0.0-SNAPSHOT
-org.opennms.features.telemetry:org.opennms.features.telemetry.itests:25.0.0-SNAPSHOT
-org.opennms.container:org.opennms.container.karaf:25.0.0-SNAPSHOT
-Modules with tests:
-org.opennms.features.telemetry:org.opennms.features.telemetry.itests:25.0.0-SNAPSHOT
-        /home/jesse/git/opennms/features/telemetry/itests/src/test/java/org/opennms/netmgt/telemetry/itests/ThresholdingIT.java - org.opennms.netmgt.telemetry.itests.ThresholdingIT (Failsafe)
-        /home/jesse/git/opennms/features/telemetry/itests/src/test/java/org/opennms/netmgt/telemetry/itests/ListenerParserThreadingIT.java - org.opennms.netmgt.telemetry.itests.ListenerParserThreadingIT (Failsafe)
-        /home/jesse/git/opennms/features/telemetry/itests/src/test/java/org/opennms/netmgt/telemetry/itests/JtiIT.java - org.opennms.netmgt.telemetry.itests.JtiIT (Failsafe)
-```
-
-## Developing find-tests.py
-
-### Running tests
+Generate the Maven project structure graph (this is the slow ~2-minute step):
 
 ```
+./mvnw org.opennms.maven.plugins:structure-maven-plugin:1.0:structure
+```
+
+Then run the tool against the repo root:
+
+```
+python3 .cicd-assets/find-tests/find-tests.py generate-test-lists .
+```
+
+With no flags, the tool reads `parent_branch:` from `.nightly` and diffs `origin/<parent_branch>...HEAD` to determine the scope.
+
+## CLI flags
+
+- `--changes-only=true|false` — when `false`, consider every module regardless of diff. Default `true`.
+- `--baseline-ref=<ref>` — explicit baseline ref; skips the `.nightly` lookup entirely. Falls back to the `BASELINE_REF` environment variable if the flag is unset. Use this in CI.
+- `--output-unit-test-classes=<path>` — write unit test class names.
+- `--output-integration-test-classes=<path>` — write integration test class names.
+
+## CI usage
+
+The workflow's `decide-scope` job computes a baseline ref per event (PR vs target branch; push vs `${before}` SHA) and exports it as `BASELINE_REF`. `make unit-tests` / `make integration-tests` invoke `find-tests.py` with `--changes-only=true` and rely on the env var for the baseline.
+
+Tag pushes (`v*`) skip the structure-graph step entirely via `FULL_BUILD=true`, which routes `make test-lists` through a `find`-based fallback in the Makefile.
+
+## Trip-wires
+
+Trip-wires (cross-cutting paths that force a full build) live in the workflow, not in `find-tests.py` — see design D3 in `openspec/changes/scope-tests-by-changed-modules/design.md`.
+
+## Development
+
+Run the test suite:
+
+```
+cd .cicd-assets/find-tests
 python3 -m unittest
 ```
