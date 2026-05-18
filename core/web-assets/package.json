@@ -185,6 +185,7 @@
     "packageManager": "pnpm@10.24.0",
     "pnpm": {
         "overrides": {
+            "@babel/plugin-transform-modules-systemjs": "^7.29.4",
             "@isaacs/brace-expansion": "^5.0.1",
             "atob": "^2.1.0",
             "brace-expansion@>=1 <2": "^1.1.13",
