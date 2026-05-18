@@ -135,6 +135,9 @@
         "ui-select-bs4": "https://github.com/bmontgomery/ui-select#300af1b2b5c8aa94faa3c6d3bb1df4e543d097ae",
         "underscore": "^1.13.8"
     },
+    "overrides": {
+        "backshift": "github:OpenNMS/backshift#v1.3.5"
+    },
     "jest": {
         "moduleFileExtensions": [
             "js",
