@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.xml.sax.InputSource;
 
 import javax.persistence.EntityNotFoundException;
 import javax.ws.rs.core.MediaType;
@@ -55,6 +56,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.OutputStreamWriter;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.BufferedWriter;
 import java.io.Serializable;
 import java.io.ByteArrayInputStream;
@@ -716,7 +718,13 @@ public class EventConfRestService implements EventConfRestApi {
     }
 
     private Events parseEventFile(final InputStream inputStream) throws Exception {
-        return JaxbUtils.unmarshal(Events.class, inputStream);
+        // Disable DOCTYPE for user-submitted XML. External entities are already
+        // off by default in JaxbUtils (file/SSRF XXE blocked), but DOCTYPE itself
+        // is still processed unless explicitly disabled — leaving the door open
+        // to internal-entity expansion DoS ("billion laughs"). This endpoint
+        // accepts authenticated-but-untrusted input, so reject DOCTYPE outright.
+        final InputSource source = new InputSource(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        return JaxbUtils.unmarshal(Events.class, source, null, true /* disableDOCTYPE */);
     }
 
     private String getUsername(final SecurityContext context) {
