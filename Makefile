@@ -262,18 +262,14 @@ maven-structure-graph: deps-build show-info
 
 .PHONY: test-lists
 # BASELINE_REF env var (if set) is read by find-tests.py via os.environ to scope test discovery.
-# FULL_BUILD=true short-circuits maven-structure-graph and enumerates all tests/modules via find.
-test-lists: $(if $(filter true,$(FULL_BUILD)),,maven-structure-graph)
+# FULL_BUILD=true makes find-tests.py consider all reactor modules (--changes-only=false);
+# maven-structure-graph runs in both cases so generate-test-modules emits a correctly-scoped
+# test_modules list (only modules that contain tests AND are in the root reactor).
+test-lists: maven-structure-graph
 	mkdir -p $(ARTIFACTS_DIR)/tests
-	@if [ "$(FULL_BUILD)" = "true" ]; then \
-		echo "FULL_BUILD=true: enumerating all tests/modules via find (skipping maven-structure-graph)"; \
-		find . -path ./.git -prune -o -path ./e2e-tests -prune -o -type f -name '*Test.java' -print | sed -e 's,.*/src/test/java/,,' -e 's,\.java$$,,' -e 's,/,.,g' > $(ARTIFACTS_DIR)/tests/unit_tests_classnames; \
-		find . -path ./.git -prune -o -path ./e2e-tests -prune -o -type f -name '*IT.java' -print | sed -e 's,.*/src/test/java/,,' -e 's,\.java$$,,' -e 's,/,.,g' > $(ARTIFACTS_DIR)/tests/integration_tests_classnames; \
-		find . -path ./.git -prune -o -path ./e2e-tests -prune -o -type f -name pom.xml -print | xargs -n 1 tools/development/pom-artifact.sh > $(ARTIFACTS_DIR)/tests/test_modules; \
-	else \
-		python3 .cicd-assets/find-tests/find-tests.py generate-test-lists --changes-only="true" --output-unit-test-classes="$(ARTIFACTS_DIR)/tests/unit_tests_classnames" --output-integration-test-classes="$(ARTIFACTS_DIR)/tests/integration_tests_classnames" .; \
-		cat $(ARTIFACTS_DIR)/tests/*_tests_classnames | python3 .cicd-assets/find-tests/find-tests.py generate-test-modules --output="$(ARTIFACTS_DIR)/tests/test_modules" .; \
-	fi
+	$(eval CHANGES_ONLY := $(if $(filter true,$(FULL_BUILD)),false,true))
+	python3 .cicd-assets/find-tests/find-tests.py generate-test-lists --changes-only="$(CHANGES_ONLY)" --output-unit-test-classes="$(ARTIFACTS_DIR)/tests/unit_tests_classnames" --output-integration-test-classes="$(ARTIFACTS_DIR)/tests/integration_tests_classnames" .
+	cat $(ARTIFACTS_DIR)/tests/*_tests_classnames | python3 .cicd-assets/find-tests/find-tests.py generate-test-modules --output="$(ARTIFACTS_DIR)/tests/test_modules" .
 	find e2e-tests -type f -regex ".*\/src\/test\/java\/.*IT.*\.java" | sed -e 's#^.*src/test/java/\(.*\)\.java#\1#' | tr "/" "." > $(ARTIFACTS_DIR)/tests/e2e_tests_classnames
 
 .PHONY: compile
@@ -418,7 +414,10 @@ sentinel-oci-sec-scan: deps-oci-sec-scan sentinel-oci
 # Run just the a very limited set of integration tests to verify the application comes up and we have something we can
 # at least work with.
 .PHONY: smoke
-smoke: deps-oci core-oci test-lists
+# smoke's recipe runs a hardcoded -Dit.test subset and does not read $(ARTIFACTS_DIR)/tests/*,
+# so it doesn't need test-lists. Skipping the dep avoids paying maven-structure-graph on every
+# commit (build-with-smoke-test runs unconditionally).
+smoke: deps-oci core-oci
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="MenuHeaderIT,SinglePortFlowsIT" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.core --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.smoke-quick.log
 
 .PHONY: core-e2e
@@ -442,23 +441,17 @@ sentinel-e2e: deps-oci test-lists sentinel-oci minion-oci core-oci
 unit-tests: test-lists spinup-postgres
 	$(eval U_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipTests.txt $(ARTIFACTS_DIR)/tests/unit_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(eval TEST_PROJECTS ?= $(shell cat ${ARTIFACTS_DIR}/tests/test_modules | paste -s -d, -))
-	# Under FULL_BUILD: drop --projects so Maven uses the root reactor (find-based test_modules can include non-reactor poms).
-	$(eval PROJECTS_FLAG := $(if $(filter true,$(FULL_BUILD)),,--also-make --projects "$(TEST_PROJECTS)"))
 	# Parallel compiling with -T 1C works, but it doesn't for tests
-	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast $(PROJECTS_FLAG) 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
-	$(eval PROJECTS_FLAG_TEST := $(if $(filter true,$(FULL_BUILD)),,--projects "$(TEST_PROJECTS)"))
-	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=true -DskipSurefire=false -DskipFailsafe=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" $(PROJECTS_FLAG_TEST) 2>&1 | tee $(ARTIFACTS_DIR)/mvn.u_tests.log
+	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast --also-make --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
+	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=true -DskipSurefire=false -DskipFailsafe=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.u_tests.log
 
 .PHONY: integration-tests
 integration-tests: test-lists spinup-postgres
 	$(eval I_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipIntegrationTests.txt $(ARTIFACTS_DIR)/tests/integration_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(eval TEST_PROJECTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/test_modules | paste -s -d, -))
-	# Under FULL_BUILD: drop --projects so Maven uses the root reactor (find-based test_modules can include non-reactor poms).
-	$(eval PROJECTS_FLAG := $(if $(filter true,$(FULL_BUILD)),,--also-make --projects "$(TEST_PROJECTS)"))
 	# Parallel compiling with -T 1C works, but it doesn't for tests
-	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast $(PROJECTS_FLAG) 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
-	$(eval PROJECTS_FLAG_TEST := $(if $(filter true,$(FULL_BUILD)),,--projects "$(TEST_PROJECTS)"))
-	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=false -DskipSurefire=true -DskipFailsafe=false -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" -Dit.test="$(I_TESTS)" $(PROJECTS_FLAG_TEST) 2>&1 | tee $(ARTIFACTS_DIR)/mvn.i_tests.log
+	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast --also-make --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
+	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=false -DskipSurefire=true -DskipFailsafe=false -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" -Dit.test="$(I_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.i_tests.log
 
 .PHONY: code-coverage
 code-coverage: deps-sonar

@@ -197,12 +197,6 @@ jobs:
         run: |
           make
       - name: Run quick smoke test
-        env:
-          # smoke's dependency on test-lists is incidental (the recipe runs a
-          # hardcoded -Dit.test subset, not the generated lists). Force the
-          # FULL_BUILD short-circuit so test-lists skips maven-structure-graph
-          # and the find-tests.py / .nightly path.
-          FULL_BUILD: 'true'
         run: |
           make smoke
       - name: Publish Quick Smoke Test Report
