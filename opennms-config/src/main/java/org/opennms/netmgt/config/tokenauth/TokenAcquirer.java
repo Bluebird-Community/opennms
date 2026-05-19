@@ -200,7 +200,11 @@ public class TokenAcquirer {
     public String fingerprint(final TokenAuth auth, final Scope callerScope) {
         final StringBuilder sb = new StringBuilder();
         sb.append(interpolate(auth.getUrl(), callerScope)).append('\0');
-        sb.append(auth.getMethod() == null ? "" : auth.getMethod()).append('\0');
+        // TokenAuth.getMethod() returns the configured method or its
+        // DEFAULT_METHOD ("POST") when <method> is omitted, so we always
+        // fingerprint the *effective* method. Implicit and explicit POST
+        // configs therefore share a cache key, as they should.
+        sb.append(auth.getMethod()).append('\0');
         if (auth.getBasicAuth() != null) {
             sb.append(interpolate(auth.getBasicAuth().getUsername(), callerScope)).append('\0');
             sb.append(interpolate(auth.getBasicAuth().getPassword(), callerScope)).append('\0');

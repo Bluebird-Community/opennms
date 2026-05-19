@@ -200,7 +200,7 @@ public class TokenAuthConfigReloadListenerTest {
 
     private void writeConfig(final String authBlocks) throws IOException {
         final String xml = "<?xml version=\"1.0\"?>"
-                + "<token-auth-configuration xmlns=\"http://xmlns.opennms.org/xsd/config/auth\">"
+                + "<token-auth-configuration xmlns=\"http://xmlns.opennms.org/xsd/config/token-auth\">"
                 + authBlocks
                 + "</token-auth-configuration>";
         Files.writeString(etcDir.toPath().resolve("token-auth-configuration.xml"),

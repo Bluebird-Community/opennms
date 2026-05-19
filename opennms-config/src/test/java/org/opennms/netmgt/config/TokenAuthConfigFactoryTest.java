@@ -45,7 +45,7 @@ public class TokenAuthConfigFactoryTest {
 
     private static String validXml() {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                + "<token-auth-configuration xmlns=\"http://xmlns.opennms.org/xsd/config/auth\">"
+                + "<token-auth-configuration xmlns=\"http://xmlns.opennms.org/xsd/config/token-auth\">"
                 + "  <token-auth name=\"catalyst-prod\">"
                 + "    <url>https://example.com/auth/token</url>"
                 + "    <method>POST</method>"

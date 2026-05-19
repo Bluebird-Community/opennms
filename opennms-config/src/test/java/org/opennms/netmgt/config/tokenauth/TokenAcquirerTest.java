@@ -194,10 +194,14 @@ public class TokenAcquirerTest {
 
         assertNotNull("ttl was set, expiresAt should be present",
                 token.getExpiresAt().orElse(null));
-        // Roughly: should be a future instant within ~900 seconds.
+        // expiresAt is intentionally shorter than the configured TTL by the
+        // early-refresh buffer (max(600s, 5% of ttl)). For ttl=900 that's a
+        // 600s buffer, leaving an effective ~300s. The upper bound is still
+        // ttl to catch an accidental "no buffer applied" regression.
         final long secondsAhead = token.getExpiresAt().get().getEpochSecond()
                 - java.time.Instant.now().getEpochSecond();
-        assertTrue("expiresAt should be in the future and roughly ttl seconds ahead",
+        assertTrue("expiresAt should be in the future and at most ttl seconds ahead "
+                        + "(early-refresh buffer applies); got " + secondsAhead,
                 secondsAhead > 0 && secondsAhead <= 900);
     }
 
