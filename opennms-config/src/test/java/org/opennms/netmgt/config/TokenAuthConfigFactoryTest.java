@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Test;
@@ -96,7 +97,7 @@ public class TokenAuthConfigFactoryTest {
         final TokenFrom tf = new TokenFrom();
         tf.setJsonpath("Token");
         auth.setTokenFrom(tf);
-        cfg.setAuths(java.util.List.of(auth));
+        cfg.setAuths(List.of(auth));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
@@ -109,7 +110,7 @@ public class TokenAuthConfigFactoryTest {
         final TokenAuth auth = new TokenAuth();
         auth.setName("bad");
         auth.setUrl("https://example.com/x");
-        cfg.setAuths(java.util.List.of(auth));
+        cfg.setAuths(List.of(auth));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
@@ -126,7 +127,7 @@ public class TokenAuthConfigFactoryTest {
         tf.setJsonpath("Token");
         tf.setHeader("X-Token");  // both set -- forbidden
         auth.setTokenFrom(tf);
-        cfg.setAuths(java.util.List.of(auth));
+        cfg.setAuths(List.of(auth));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
@@ -140,7 +141,7 @@ public class TokenAuthConfigFactoryTest {
         auth.setName("bad");
         auth.setUrl("https://example.com/x");
         auth.setTokenFrom(new TokenFrom());  // empty
-        cfg.setAuths(java.util.List.of(auth));
+        cfg.setAuths(List.of(auth));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
@@ -164,7 +165,7 @@ public class TokenAuthConfigFactoryTest {
         tf2.setJsonpath("Token");
         second.setTokenFrom(tf2);
 
-        cfg.setAuths(java.util.List.of(first, second));
+        cfg.setAuths(List.of(first, second));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
@@ -182,7 +183,7 @@ public class TokenAuthConfigFactoryTest {
         tf.setJsonpath("Token");
         auth.setTokenFrom(tf);
         auth.setTtlSeconds(-1L);
-        cfg.setAuths(java.util.List.of(auth));
+        cfg.setAuths(List.of(auth));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
@@ -202,7 +203,7 @@ public class TokenAuthConfigFactoryTest {
         final TokenFrom tf = new TokenFrom();
         tf.setJsonpath("Token");
         auth.setTokenFrom(tf);
-        cfg.setAuths(java.util.List.of(auth));
+        cfg.setAuths(List.of(auth));
 
         final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new TokenAuthConfigFactory(cfg));
