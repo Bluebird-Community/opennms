@@ -32,6 +32,7 @@ import org.opennms.netmgt.events.api.EventListener;
 import org.opennms.netmgt.events.api.model.IEvent;
 import org.opennms.netmgt.events.api.model.IParm;
 import org.opennms.netmgt.model.events.EventBuilder;
+import org.opennms.netmgt.xml.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -158,7 +159,7 @@ public class TokenAuthConfigReloadListener
         }
     }
 
-    private void sendEventQuietly(final org.opennms.netmgt.xml.event.Event event) {
+    private void sendEventQuietly(final Event event) {
         if (eventIpcManager == null) {
             return;
         }

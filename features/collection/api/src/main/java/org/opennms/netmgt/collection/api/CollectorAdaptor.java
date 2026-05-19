@@ -25,59 +25,30 @@ import java.util.Map;
 
 /**
  * Cross-cutting hook for a {@link ServiceCollector} dispatch. Adaptors
- * run on the OpenNMS controller and wrap a collection with pre- and
- * post-RPC behavior without modifying the collector itself.
- *
- * <p>Modeled on {@code ServiceMonitorAdaptor}. Register adaptors on a
- * request via {@code CollectorRequestBuilder.withAdaptor(...)}; they
- * are invoked in registration order.</p>
- *
- * <p>Adaptors never run on the Minion. Any state they need (token
- * providers, DAO lookups, etc.) is resolved on the controller before
- * the request is marshaled across the RPC boundary.</p>
+ * run on the OpenNMS controller (never on the Minion) and wrap a
+ * collection with pre- and post-RPC behavior without modifying the
+ * collector itself. Modeled on {@code ServiceMonitorAdaptor}.
  */
 public interface CollectorAdaptor {
 
-    /**
-     * Invoked on the controller after the collector's runtime
-     * attributes are resolved and merged, but before the request is
-     * dispatched (locally or via RPC to a Minion). Implementations may
-     * return a possibly-modified parameter map; the returned map is
-     * what the collector ultimately sees.
-     */
+    /** Invoked before the request is dispatched; may modify the parameter map. */
     default Map<String, Object> beforeCollect(final CollectionAgent agent,
                                               final Map<String, Object> parameters) {
         return parameters;
     }
 
     /**
-     * Invoked on the controller after the collector's runtime
-     * attributes are fetched but BEFORE Mate's {@code Interpolator}
-     * walks them. Mate's standard pass resolves only the prefixes it
-     * knows ({@code node}, {@code interface}, {@code asset}, etc.) and
-     * strips any unknown prefix to an empty string -- so adaptors that
-     * own a custom prefix (e.g. {@code token:}) must do their own
-     * substitution here, before Mate sees the tree.
-     *
-     * <p>The values in {@code runtimeAttributes} may include JAXB
-     * objects (annotated {@code @XmlRootElement}) representing
-     * collection-config snippets such as the {@code <xml-source>} block
-     * of an {@code xml-datacollection-config.xml}. Implementations that
-     * resolve placeholders inside those trees can marshal the object to
-     * XML, substitute, and unmarshal -- the same shape Mate's
-     * {@code Interpolator.interpolate(Object, Scope)} uses internally.</p>
+     * Invoked after runtime attributes are fetched but before Mate's
+     * {@code Interpolator} walks them. Adaptors that own a custom
+     * {@code ${prefix:...}} placeholder must substitute here, because
+     * Mate's standard pass strips unknown prefixes to empty.
      */
     default Map<String, Object> beforeRuntimeInterpolation(final CollectionAgent agent,
                                                            final Map<String, Object> runtimeAttributes) {
         return runtimeAttributes;
     }
 
-    /**
-     * Invoked on the controller after the collection future resolves,
-     * before the result reaches the original caller. Implementations
-     * may inspect or replace the {@link CollectionSet} -- e.g. to
-     * invalidate a controller-side cache on a failed result.
-     */
+    /** Invoked after the collection future resolves; may inspect or replace the result. */
     default CollectionSet handleCollectionResult(final CollectionAgent agent,
                                                  final Map<String, Object> parameters,
                                                  final CollectionSet result) {

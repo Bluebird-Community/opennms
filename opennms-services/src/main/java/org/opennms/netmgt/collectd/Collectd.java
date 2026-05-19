@@ -53,6 +53,7 @@ import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.core.utils.InsufficientInformationException;
 import org.opennms.netmgt.collection.api.CollectionInitializationException;
 import org.opennms.netmgt.collection.api.CollectionInstrumentation;
+import org.opennms.netmgt.collection.api.CollectorAdaptor;
 import org.opennms.netmgt.collection.api.LocationAwareCollectorClient;
 import org.opennms.netmgt.collection.api.PersisterFactory;
 import org.opennms.netmgt.collection.api.ServiceCollector;
@@ -167,15 +168,8 @@ public class Collectd extends AbstractServiceDaemon implements
     @Autowired
     private volatile LocationAwareCollectorClient m_locationAwareCollectorClient;
 
-    /**
-     * Optional list of {@link org.opennms.netmgt.collection.api.CollectorAdaptor}
-     * beans visible in this context. Each adaptor is registered on every
-     * collector request so it can transform parameters before dispatch
-     * and inspect the result on the way back. {@code required = false}
-     * keeps this optional for deployments / tests that wire no adaptors.
-     */
     @Autowired(required = false)
-    private volatile List<org.opennms.netmgt.collection.api.CollectorAdaptor> m_collectorAdaptors = Collections.emptyList();
+    private volatile List<CollectorAdaptor> m_collectorAdaptors = Collections.emptyList();
 
     static class SchedulingCompletedFlag {
         volatile boolean m_schedulingCompleted = false;

@@ -134,13 +134,9 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
                 this.client.getEntityScopeProvider().getScopeForInterface(agent.getNodeId(), InetAddressUtils.toIpAddrString(agent.getAddress()))
         );
 
-        // Give each adaptor a chance to transform the raw attribute map
-        // before Mate's Interpolator runs. Adaptors that resolve custom
-        // ${prefix:...} placeholders (e.g. token-auth) need to see them
-        // intact -- Interpolator strips unrecognized prefixes to empty,
-        // so adaptors must run first. Adaptors are controller-only;
-        // their output is what Mate then interpolates and what gets
-        // marshaled across to the Minion.
+        // Adaptors run before Mate's Interpolator so they can resolve
+        // their own ${prefix:...} placeholders before unknown prefixes
+        // get stripped.
         Map<String, Object> preInterpolated = attributes;
         for (final CollectorAdaptor adaptor : adaptors) {
             final Map<String, Object> next = adaptor.beforeCollect(agent, preInterpolated);
@@ -176,11 +172,7 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
         // such as the agent details and other state related attributes
         // which should be included in the request.
         Map<String, Object> rawRuntimeAttributes = serviceCollector.getRuntimeAttributes(agent, interpolatedAttributes);
-        // Let each adaptor walk the runtime-attribute tree first.
-        // Adaptors that own a custom ${prefix:...} placeholder (e.g.
-        // token-auth) need to substitute before Mate's Interpolator
-        // sees the tree -- the standard pass strips unknown prefixes to
-        // empty. Default impl is a no-op.
+        // Same as above: adaptors substitute before Mate sees the tree.
         for (final CollectorAdaptor adaptor : adaptors) {
             final Map<String, Object> next = adaptor.beforeRuntimeInterpolation(agent, rawRuntimeAttributes);
             rawRuntimeAttributes = next != null ? next : rawRuntimeAttributes;
@@ -204,9 +196,6 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
             request.setAttributesNeedUnmarshaling(true);
         }
 
-        // Execute the request, then let each adaptor post-process the
-        // result. Adaptors run in registration order; each may return a
-        // possibly-modified CollectionSet.
         return client.getDelegate().execute(request).thenApply(response -> {
             CollectionSet result = response.getCollectionSet();
             for (final CollectorAdaptor adaptor : adaptors) {

@@ -34,7 +34,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -254,7 +253,8 @@ public class TokenAuthCollectorAdaptorTest {
 
         final Object substitutedWrapped = out.get("xmlCollection");
         assertNotSame("wrapper should be a fresh ToBeInterpolated", wrapped, substitutedWrapped);
-        final SampleCollection substitutedInner = (SampleCollection) extractToBeInterpolatedValue(substitutedWrapped);
+        assertTrue("wrapped should be a ToBeInterpolated", Interpolator.isPleaseInterpolate(substitutedWrapped));
+        final SampleCollection substitutedInner = (SampleCollection) Interpolator.unwrap(substitutedWrapped);
         assertEquals("tok-xyz", substitutedInner.getRequest().getHeaderValue());
         assertEquals("vault", out.get(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM));
     }
@@ -272,14 +272,6 @@ public class TokenAuthCollectorAdaptorTest {
         final String names = (String) out.get(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM);
         assertTrue("expected merged names containing both, got " + names,
                 names.contains("f5") && names.contains("vault"));
-    }
-
-    private static Object extractToBeInterpolatedValue(final Object wrapped) throws Exception {
-        final Class<?> klass = Class.forName("org.opennms.core.mate.api.Interpolator$ToBeInterpolated");
-        assertTrue("wrapped should be a ToBeInterpolated", klass.isInstance(wrapped));
-        final Field field = klass.getDeclaredField("value");
-        field.setAccessible(true);
-        return field.get(wrapped);
     }
 
     private static SampleCollection buildSampleCollection(final String headerName, final String headerValue) {

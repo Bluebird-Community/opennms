@@ -27,6 +27,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class TokenProviderImplTest {
 
     private static TokenAuthConfigFactory factoryWith(final TokenAuth... auths) {
         final TokenAuthConfiguration cfg = new TokenAuthConfiguration();
-        cfg.setAuths(java.util.Arrays.asList(auths));
+        cfg.setAuths(Arrays.asList(auths));
         return new TokenAuthConfigFactory(cfg);
     }
 
@@ -62,7 +63,7 @@ public class TokenProviderImplTest {
             }
         };
         final TokenCache cache = new TokenCache(scriptedAcquirer);
-        final TokenProviderImpl provider = new TokenProviderImpl(() -> factory, cache);
+        final TokenProviderImpl provider = new TokenProviderImpl(factory, cache);
 
         final Optional<String> token = provider.getToken("a");
         assertTrue(token.isPresent());
@@ -71,25 +72,17 @@ public class TokenProviderImplTest {
 
     @Test
     public void unknownAuthReturnsEmpty() {
-        final TokenAuthConfigFactory factory = factoryWith();  // empty
-        final TokenProviderImpl provider = new TokenProviderImpl(() -> factory, new TokenCache(new TokenAcquirer()));
+        final TokenAuthConfigFactory factory = factoryWith();
+        final TokenProviderImpl provider = new TokenProviderImpl(factory, new TokenCache(new TokenAcquirer()));
         assertFalse(provider.getToken("missing").isPresent());
     }
 
     @Test
     public void nullOrEmptyNameReturnsEmpty() {
-        final TokenProviderImpl provider = new TokenProviderImpl(() -> factoryWith(),
+        final TokenProviderImpl provider = new TokenProviderImpl(factoryWith(),
                 new TokenCache(new TokenAcquirer()));
         assertFalse(provider.getToken(null).isPresent());
         assertFalse(provider.getToken("").isPresent());
-    }
-
-    @Test
-    public void factorySupplierMayReturnNull() {
-        // Useful when TokenAuthConfigFactory.init() hasn't been called yet.
-        final TokenProviderImpl provider = new TokenProviderImpl(() -> null,
-                new TokenCache(new TokenAcquirer()));
-        assertFalse(provider.getToken("anything").isPresent());
     }
 
     @Test
@@ -104,7 +97,7 @@ public class TokenProviderImplTest {
             }
         };
         final TokenCache cache = new TokenCache(failing);
-        final TokenProviderImpl provider = new TokenProviderImpl(() -> factory, cache);
+        final TokenProviderImpl provider = new TokenProviderImpl(factory, cache);
 
         final RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> provider.getToken("a"));

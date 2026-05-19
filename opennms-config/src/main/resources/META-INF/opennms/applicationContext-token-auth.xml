@@ -5,22 +5,15 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
         http://xmlns.opennms.org/xsd/spring/onms-osgi http://xmlns.opennms.org/xsd/spring/onms-osgi.xsd">
 
-    <!--
-      Wires the runtime side of token authentication for collectors.
+    <bean id="tokenAuthConfigFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod"><value>org.opennms.netmgt.config.TokenAuthConfigFactory.init</value></property>
+    </bean>
 
-      TokenAuthConfigFactory is a static-singleton-style factory;
-      TokenProviderImpl handles its lazy init internally so a clean install
-      without etc/token-auth-configuration.xml degrades to "no token-auth
-      definitions, every ${token:<name>} placeholder resolves to empty"
-      rather than failing at startup.
-    -->
+    <bean id="tokenAuthConfigFactory"
+          class="org.opennms.netmgt.config.TokenAuthConfigFactory"
+          depends-on="tokenAuthConfigFactory-init"
+          factory-method="getInstance"/>
 
-    <!--
-      TokenAcquirer autowires EntityScopeProvider via @Autowired(required=false)
-      on the setter so the bean wires up even in test contexts that don't
-      define entityScopeProvider. The Java side handles a null provider
-      gracefully by falling back to EmptyScope for SCV/ENV interpolation.
-    -->
     <bean id="tokenAuthAcquirer"
           class="org.opennms.netmgt.config.tokenauth.TokenAcquirer"/>
 
@@ -31,24 +24,13 @@
 
     <bean id="tokenAuthProvider"
           class="org.opennms.netmgt.config.tokenauth.TokenProviderImpl">
+        <constructor-arg ref="tokenAuthConfigFactory"/>
         <constructor-arg ref="tokenAuthCache"/>
     </bean>
 
-    <!--
-      Expose the TokenProvider as an OSGi service so the XML/JSON and HTTP
-      collectors can autowire it without depending on opennms-config
-      directly.
-    -->
     <onmsgi:service interface="org.opennms.netmgt.config.tokenauth.TokenProvider"
                     ref="tokenAuthProvider"/>
 
-    <!--
-      Collector adaptor that resolves ${token:<name>} placeholders in the
-      collection parameters on the controller before the request is
-      dispatched, and invalidates stale tokens when the result comes back
-      failed. Substitution and invalidation are both contained here so no
-      changes to the Mate metadata pipeline are required.
-    -->
     <bean id="tokenAuthCollectorAdaptor"
           class="org.opennms.netmgt.config.tokenauth.TokenAuthCollectorAdaptor">
         <constructor-arg ref="tokenAuthProvider"/>
@@ -57,18 +39,6 @@
     <onmsgi:service interface="org.opennms.netmgt.collection.api.CollectorAdaptor"
                     ref="tokenAuthCollectorAdaptor"/>
 
-    <!--
-      Reload listener: reacts to a reloadDaemonConfig event with
-      daemonName=TokenAuth by re-reading token-auth-configuration.xml and
-      flushing the token cache.
-
-      Registration is lazy via ContextRefreshedEvent. This bean lives in
-      daoContext, which is loaded as a parent of eventDaemonContext while
-      that context is still being constructed, so eventIpcManager is not
-      yet available at construction or init time. The listener watches
-      for context-refresh events and registers once
-      EventIpcManagerFactory reports a ready manager.
-    -->
     <bean id="tokenAuthConfigReloadListener"
           class="org.opennms.netmgt.config.tokenauth.TokenAuthConfigReloadListener">
         <constructor-arg ref="tokenAuthCache"/>

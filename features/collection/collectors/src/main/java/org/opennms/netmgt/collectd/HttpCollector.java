@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
+import org.opennms.netmgt.config.httpdatacollection.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
@@ -412,7 +412,7 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
         if (responseString != null && !"".equals(responseString)) {
             // Get response's locale from the Content-Language header if available
             Locale responseLocale = null;
-            final Header[] headers = response.getHeaders("Content-Language");
+            final org.apache.http.Header[] headers = response.getHeaders("Content-Language");
             if (headers != null) {
                 LOG.debug("doCollection: Trying to devise response's locale from Content-Language header.");
                 if (headers.length == 1) {
@@ -481,7 +481,7 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
                 method.setHeader(HTTP.TARGET_HOST, virtualHost);
             }
         }
-        for (final org.opennms.netmgt.config.httpdatacollection.Header h : url.getHeaders()) {
+        for (final Header h : url.getHeaders()) {
             if (h == null) {
                 continue;
             }

@@ -40,14 +40,6 @@ public interface CollectorRequestBuilder {
 
     CollectorRequestBuilder withAttributes(Map<String, Object> attributes);
 
-    /**
-     * Registers a {@link CollectorAdaptor} to be invoked on the
-     * controller before this request is dispatched (and after the
-     * response returns). Default is a no-op so downstream
-     * implementations don't have to opt in -- there is no point
-     * forcing a binary-compatibility break on every existing
-     * {@code CollectorRequestBuilder} for a feature most don't use.
-     */
     default CollectorRequestBuilder withAdaptor(CollectorAdaptor adaptor) {
         return this;
     }

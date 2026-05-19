@@ -40,7 +40,7 @@ public class TokenAuthConfigFactoryTest {
 
     @After
     public void tearDown() {
-        TokenAuthConfigFactory.clearForTest();
+        TokenAuthConfigFactory.resetForTesting();
     }
 
     private static String validXml() {
