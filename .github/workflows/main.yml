@@ -526,6 +526,9 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
+      - name: Clean stale test reports (self-hosted runner defensive)
+        run: |
+          find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
       - name: Run unit test suite (shard ${{ matrix.shard_idx }})
         env:
           BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
@@ -581,6 +584,9 @@ jobs:
       - name: Prepare the build for tests and installing it
         run: |
           make install-core
+      - name: Clean stale test reports (self-hosted runner defensive)
+        run: |
+          find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
       - name: Run integration unit test suite (shard ${{ matrix.shard_idx }})
         env:
           BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
@@ -633,6 +639,9 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
+      - name: Clean stale test reports (self-hosted runner defensive)
+        run: |
+          find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
       - name: Run Core End-to-End tests (shard ${{ matrix.shard_idx }})
         env:
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
@@ -686,6 +695,9 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
+      - name: Clean stale test reports (self-hosted runner defensive)
+        run: |
+          find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
       - name: Run Minion End-to-End tests (shard ${{ matrix.shard_idx }})
         env:
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
@@ -739,6 +751,9 @@ jobs:
         run: |
           make quick-compile
           make quick-assemble
+      - name: Clean stale test reports (self-hosted runner defensive)
+        run: |
+          find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
       - name: Run Sentinel End-to-End tests (shard ${{ matrix.shard_idx }})
         env:
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
