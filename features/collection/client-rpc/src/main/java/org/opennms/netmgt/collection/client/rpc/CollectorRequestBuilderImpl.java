@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import org.opennms.core.mate.api.FallbackScope;
 import org.opennms.core.mate.api.Interpolator;
@@ -38,10 +39,12 @@ import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.core.utils.ParameterMap;
 import org.opennms.netmgt.collection.api.CollectionAgent;
 import org.opennms.netmgt.collection.api.CollectionSet;
+import org.opennms.netmgt.collection.api.CollectionStatus;
 import org.opennms.netmgt.collection.api.CollectorAdaptor;
 import org.opennms.netmgt.collection.api.CollectorRequestBuilder;
 import org.opennms.netmgt.collection.api.ServiceCollector;
 import org.opennms.netmgt.collection.dto.CollectionAgentDTO;
+import org.opennms.netmgt.collection.support.builder.CollectionSetBuilder;
 import org.opennms.netmgt.dao.api.MonitoringLocationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,13 +199,39 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
             request.setAttributesNeedUnmarshaling(true);
         }
 
-        return client.getDelegate().execute(request).thenApply(response -> {
-            CollectionSet result = response.getCollectionSet();
-            for (final CollectorAdaptor adaptor : adaptors) {
-                result = adaptor.handleCollectionResult(agent, dispatchedAttributes, result);
+        return client.getDelegate().execute(request).handle((response, ex) ->
+                applyAdaptorsAndPropagate(agent, dispatchedAttributes, adaptors,
+                        ex == null ? response.getCollectionSet() : null, ex));
+    }
+
+    /**
+     * Runs each adaptor's {@link CollectorAdaptor#handleCollectionResult} on
+     * success and failure paths. On exceptional completion a synthetic
+     * FAILED {@link CollectionSet} is supplied so adaptors that key on
+     * {@code result.getStatus() == FAILED} (e.g. token-auth invalidation)
+     * still get notified, and the original exception is re-thrown so
+     * callers see it.
+     */
+    public static CollectionSet applyAdaptorsAndPropagate(
+            CollectionAgent agent,
+            Map<String, Object> dispatchedAttributes,
+            List<CollectorAdaptor> adaptors,
+            CollectionSet successResult,
+            Throwable ex) {
+        CollectionSet result = (ex != null)
+                ? new CollectionSetBuilder(agent).withStatus(CollectionStatus.FAILED).build()
+                : successResult;
+        for (final CollectorAdaptor adaptor : adaptors) {
+            result = adaptor.handleCollectionResult(agent, dispatchedAttributes, result);
+        }
+        if (ex != null) {
+            Throwable cause = (ex instanceof CompletionException && ex.getCause() != null) ? ex.getCause() : ex;
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
             }
-            return result;
-        });
+            throw new CompletionException(cause);
+        }
+        return result;
     }
 
 }
