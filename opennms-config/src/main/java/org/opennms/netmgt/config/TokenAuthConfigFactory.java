@@ -21,7 +21,9 @@
  */
 package org.opennms.netmgt.config;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,6 +39,8 @@ import org.opennms.netmgt.config.tokenauth.BasicAuth;
 import org.opennms.netmgt.config.tokenauth.TokenAuth;
 import org.opennms.netmgt.config.tokenauth.TokenAuthConfiguration;
 import org.opennms.netmgt.config.tokenauth.TokenFrom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -49,6 +53,8 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public final class TokenAuthConfigFactory {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TokenAuthConfigFactory.class);
+
     private static TokenAuthConfigFactory m_singleton;
 
     private final TokenAuthConfiguration m_config;
@@ -58,12 +64,23 @@ public final class TokenAuthConfigFactory {
                 new InputStreamReader(stream, StandardCharsets.UTF_8)));
     }
 
+    /**
+     * Loads {@code etc/token-auth-configuration.xml} into the singleton.
+     * If {@code opennms.home} or the file itself is missing (typical in
+     * test contexts that don't stage a real OpenNMS install), the
+     * singleton is initialised with an empty configuration so
+     * Spring context startup does not fail.
+     */
     public static synchronized void init() throws IOException {
         if (m_singleton != null) {
             return;
         }
-        try (InputStream is = new FileInputStream(
-                ConfigFileConstants.getFile(ConfigFileConstants.TOKEN_AUTH_CONFIG_FILE_NAME))) {
+        final File file = locateConfigFile();
+        if (file == null) {
+            setInstance(new TokenAuthConfigFactory(new TokenAuthConfiguration()));
+            return;
+        }
+        try (InputStream is = new FileInputStream(file)) {
             setInstance(new TokenAuthConfigFactory(is));
         }
     }
@@ -74,9 +91,22 @@ public final class TokenAuthConfigFactory {
      * failed reload leaves the previous configuration in effect.
      */
     public static synchronized void reload() throws IOException {
-        try (InputStream is = new FileInputStream(
-                ConfigFileConstants.getFile(ConfigFileConstants.TOKEN_AUTH_CONFIG_FILE_NAME))) {
+        final File file = locateConfigFile();
+        if (file == null) {
+            setInstance(new TokenAuthConfigFactory(new TokenAuthConfiguration()));
+            return;
+        }
+        try (InputStream is = new FileInputStream(file)) {
             setInstance(new TokenAuthConfigFactory(is));
+        }
+    }
+
+    private static File locateConfigFile() throws IOException {
+        try {
+            return ConfigFileConstants.getFile(ConfigFileConstants.TOKEN_AUTH_CONFIG_FILE_NAME);
+        } catch (final FileNotFoundException e) {
+            LOG.info("token-auth-configuration.xml not available ({}); starting with empty token-auth config", e.getMessage());
+            return null;
         }
     }
 
