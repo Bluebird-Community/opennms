@@ -1901,7 +1901,11 @@
     <kotlinVersion>1.9.10</kotlinVersion>
     <liquibaseVersion>3.6.3</liquibaseVersion>
     <lmaxDisruptorVersion>3.4.4</lmaxDisruptorVersion>
-    <log4j2Version>2.25.3</log4j2Version>
+    <!-- log4j 2.24+ removed ServiceLoaderUtil.loadServices(Class, Lookup, boolean), which
+         Elasticsearch 7.17.x and its log4j-core consumers call at LoggerContext init.
+         Pin to 2.23.1 - last release with that method - until the Elasticsearch 9.x
+         migration lands (see openspec/changes/migrate-elasticsearch-9x/). -->
+    <log4j2Version>2.23.1</log4j2Version>
     <logbackClassicVersion>1.5.32</logbackClassicVersion>
     <mapstructVersion>1.5.2.Final</mapstructVersion>
     <mavenApiVersion>3.9.6</mavenApiVersion>
