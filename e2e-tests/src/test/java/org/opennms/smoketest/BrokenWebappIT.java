@@ -74,9 +74,19 @@ public class BrokenWebappIT {
             waitStrategy.waitUntilReady(BROKEN_WEBAPP.opennms());
         } catch (Exception e) {
             assertThat("Exception message", e.getMessage(), containsString("container is no longer running"));
+            // We previously asserted on OpenNMS's Invoker error line
+            //   "An error occurred invoking operation start on MBean OpenNMS:Name=JettyServer"
+            // but with log4j-api 2.23.1 + JDK 21 that line is swallowed by an appender failure:
+            // log4j's ThrowableProxyHelper does Class.forName("sun.reflect.misc.Trampoline")
+            // while formatting the exception, and JDK 21 refuses (Trampoline must not be
+            // defined by the bootstrap classloader). Fixed in log4j 2.24+, but we are
+            // pinned below 2.24 for Elasticsearch 7.17 binary compat - see
+            // openspec/changes/migrate-elasticsearch-9x/. Assert on Spring's lower-level
+            // exception instead; it survives the appender failure and is what we actually
+            // care about (the broken XML was detected).
             assertThat("Container logs after container exits",
                     BROKEN_WEBAPP.opennms().getLogs(),
-                    containsString("An error occurred invoking operation start on MBean OpenNMS:Name=JettyServer"));
+                    containsString("spring-security.d/ldap.xml] is invalid"));
             return;
         }
 
