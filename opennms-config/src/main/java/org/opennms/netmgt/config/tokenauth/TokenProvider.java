@@ -46,4 +46,9 @@ public interface TokenProvider {
     default void invalidate(final String authName) {
         // no-op
     }
+
+    /** True when at least one token-auth definition is loaded. */
+    default boolean hasAnyAuths() {
+        return true;
+    }
 }

@@ -67,4 +67,9 @@ public class TokenProviderImpl implements TokenProvider {
     public void invalidate(final String authName) {
         tokenCache.invalidate(authName);
     }
+
+    @Override
+    public boolean hasAnyAuths() {
+        return !configFactory.getAuths().isEmpty();
+    }
 }

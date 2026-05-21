@@ -61,6 +61,7 @@ public class TokenAuthCollectorAdaptorTest {
     @Before
     public void setUp() throws Exception {
         tokenProvider = mock(TokenProvider.class);
+        when(tokenProvider.hasAnyAuths()).thenReturn(true);
         adaptor = new TokenAuthCollectorAdaptor(tokenProvider);
 
         agent = mock(CollectionAgent.class);
@@ -133,6 +134,18 @@ public class TokenAuthCollectorAdaptorTest {
     // ------------------------------------------------------------------
     // beforeRuntimeInterpolation
     // ------------------------------------------------------------------
+
+    @Test
+    public void beforeRuntimeInterpolationShortCircuitsWhenNoAuthsConfigured() {
+        when(tokenProvider.hasAnyAuths()).thenReturn(false);
+        final Map<String, Object> attrs = new HashMap<>();
+        attrs.put("Authorization", "Bearer ${token:vault}");
+
+        final Map<String, Object> out = adaptor.beforeRuntimeInterpolation(agent, attrs);
+
+        assertSame(attrs, out);
+        verify(tokenProvider, never()).getToken(anyString(), any(Scope.class));
+    }
 
     @Test
     public void beforeRuntimeInterpolationReturnsInputUnchangedWhenEmpty() {

@@ -84,6 +84,10 @@ public class TokenAuthCollectorAdaptor implements CollectorAdaptor {
         if (runtimeAttributes == null || runtimeAttributes.isEmpty()) {
             return runtimeAttributes;
         }
+        // Skip the JAXB-marshal placeholder scan when no auths exist.
+        if (!tokenProvider.hasAnyAuths()) {
+            return runtimeAttributes;
+        }
         if (!containsTokenPlaceholder(runtimeAttributes.values())) {
             return runtimeAttributes;
         }
