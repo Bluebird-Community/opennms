@@ -169,6 +169,7 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
         }
 
         public void collect() {
+            HttpCollectorException pendingAuthFailure = null;
             List<Uri> uriDefs = m_httpCollection.getUris();
             for (Uri uriDef : uriDefs) {
                 m_uriDef = uriDef;
@@ -177,7 +178,15 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
                 } catch (HttpCollectorException e) {
                     LOG.warn("collect: http collection failed", e);
                     m_collectionSetBuilder.withStatus(CollectionStatus.FAILED);
+                    if (pendingAuthFailure == null && e.getMessage() != null
+                            && e.getMessage().contains("auth failure:")) {
+                        pendingAuthFailure = e;
+                    }
                 }
+            }
+            // Propagate auth failures so the adaptor's cause-chain check fires.
+            if (pendingAuthFailure != null) {
+                throw pendingAuthFailure;
             }
         }
 
@@ -275,6 +284,10 @@ public class HttpCollector extends AbstractRemoteServiceCollector {
                 //Not really a persist as such; it just stores data in collectionSet for later retrieval
                 persistResponse(collectorAgent, collectionSetBuilder, response);
             }
+        } catch (HttpCollectorException e) {
+            // Don't re-wrap our own type; the message (e.g. "auth failure:")
+            // is what the controller-side adaptor matches on.
+            throw e;
         } catch (URISyntaxException e) {
             throw new HttpCollectorException("Error building HttpClient URI", e);
         } catch (IOException e) {
