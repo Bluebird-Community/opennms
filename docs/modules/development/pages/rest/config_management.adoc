@@ -135,7 +135,6 @@ Example expressions:
 ----
 
 See the link:https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html[Quartz `CronTrigger` tutorial] for the full grammar, including the `L`, `W`, and `#` modifiers.
-The same schedule field is also editable from the web UI under menu:Info[External Requisitions], which exposes preset Daily, Weekly, and Monthly options plus an advanced field for raw expressions.
 
 Example cURL command that PUTs a single weekly-scheduled requisition definition:
 
