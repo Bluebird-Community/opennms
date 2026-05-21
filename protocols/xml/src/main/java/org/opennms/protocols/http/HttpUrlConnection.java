@@ -189,7 +189,9 @@ public class HttpUrlConnection extends URLConnection {
             final int status = response.getStatusLine().getStatusCode();
             if (status >= 400) {
                 EntityUtils.consumeQuietly(response.getEntity());
-                throw new IOException("HTTP " + status + " from " + m_url);
+                // "auth failure:" prefix on 401/403 lets the adaptor gate cache invalidation.
+                final String prefix = (status == 401 || status == 403) ? "auth failure: " : "";
+                throw new IOException(prefix + "HTTP " + status + " from " + m_url);
             }
             return response.getEntity().getContent();
         } catch (Exception e) {

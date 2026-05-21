@@ -94,31 +94,44 @@ public class HttpUrlConnectionAuthFailureTest {
     }
 
     @Test
-    public void unauthorized_throwsIOException() throws Exception {
+    public void unauthorized_throwsIOException_withAuthFailurePrefix() throws Exception {
         final URL url = UrlFactory.getUrl("http://127.0.0.1:" + port + "/unauth", null);
         final URLConnection c = url.openConnection();
         try {
             c.getInputStream();
             fail("expected IOException on HTTP 401");
         } catch (IOException expected) {
-            assertTrue("message should reference the URL, got: " + expected.getMessage(),
-                    expected.getMessage().contains("/unauth"));
+            final String chain = chainMessages(expected);
+            assertTrue("expected 'auth failure:' prefix in cause chain, got: " + chain,
+                    chain.contains("auth failure:"));
+            assertTrue("message should reference the URL, got: " + chain,
+                    chain.contains("/unauth"));
         } finally {
             UrlFactory.disconnect(c);
         }
     }
 
     @Test
-    public void serverError_throwsIOException() throws Exception {
+    public void serverError_throwsIOException_withoutAuthFailurePrefix() throws Exception {
         final URL url = UrlFactory.getUrl("http://127.0.0.1:" + port + "/server-error", null);
         final URLConnection c = url.openConnection();
         try {
             c.getInputStream();
             fail("expected IOException on HTTP 500");
         } catch (IOException expected) {
-            // ok
+            assertTrue("non-auth statuses must not get the auth prefix; got: " + chainMessages(expected),
+                    !chainMessages(expected).contains("auth failure:"));
         } finally {
             UrlFactory.disconnect(c);
         }
+    }
+
+    private static String chainMessages(final Throwable t) {
+        final StringBuilder sb = new StringBuilder();
+        for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+            if (sb.length() > 0) sb.append(" / ");
+            sb.append(cur.getMessage());
+        }
+        return sb.toString();
     }
 }

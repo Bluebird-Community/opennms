@@ -79,45 +79,6 @@ public class TokenAuthCollectorAdaptor implements CollectorAdaptor {
     }
 
     @Override
-    public Map<String, Object> beforeCollect(final CollectionAgent agent,
-                                             final Map<String, Object> parameters) {
-        if (parameters == null || parameters.isEmpty()) {
-            return parameters;
-        }
-
-        boolean anyMatch = false;
-        for (final Object v : parameters.values()) {
-            if (v instanceof String && ((String) v).contains("${token:")) {
-                anyMatch = true;
-                break;
-            }
-        }
-        if (!anyMatch) {
-            return parameters;
-        }
-
-        final Scope scope = buildScope(agent);
-        final Set<String> namesUsed = new LinkedHashSet<>();
-        final Map<String, Object> resolved = new HashMap<>(parameters);
-        for (final Map.Entry<String, Object> entry : parameters.entrySet()) {
-            final Object value = entry.getValue();
-            if (!(value instanceof String)) {
-                continue;
-            }
-            final String stringValue = (String) value;
-            if (!stringValue.contains("${token:")) {
-                continue;
-            }
-            resolved.put(entry.getKey(), substitute(stringValue, scope, namesUsed));
-        }
-
-        if (!namesUsed.isEmpty()) {
-            resolved.put(AUTH_NAMES_USED_PARAM, String.join(",", namesUsed));
-        }
-        return resolved;
-    }
-
-    @Override
     public Map<String, Object> beforeRuntimeInterpolation(final CollectionAgent agent,
                                                           final Map<String, Object> runtimeAttributes) {
         if (runtimeAttributes == null || runtimeAttributes.isEmpty()) {
@@ -139,18 +100,7 @@ public class TokenAuthCollectorAdaptor implements CollectorAdaptor {
         }
 
         if (!namesUsed.isEmpty()) {
-            final Object existing = resolved.get(AUTH_NAMES_USED_PARAM);
-            final LinkedHashSet<String> combined = new LinkedHashSet<>();
-            if (existing instanceof String && !((String) existing).isEmpty()) {
-                for (final String name : ((String) existing).split(",")) {
-                    final String trimmed = name.trim();
-                    if (!trimmed.isEmpty()) {
-                        combined.add(trimmed);
-                    }
-                }
-            }
-            combined.addAll(namesUsed);
-            resolved.put(AUTH_NAMES_USED_PARAM, String.join(",", combined));
+            resolved.put(AUTH_NAMES_USED_PARAM, String.join(",", namesUsed));
         }
         return resolved;
     }
@@ -167,6 +117,10 @@ public class TokenAuthCollectorAdaptor implements CollectorAdaptor {
         if (parameters == null) {
             return result;
         }
+        // Only invalidate on flagged auth failures; let transport/5xx FAILEDs pass.
+        if (!Boolean.TRUE.equals(parameters.get(AUTH_FAILURE_PARAM))) {
+            return result;
+        }
         final Object raw = parameters.get(AUTH_NAMES_USED_PARAM);
         if (!(raw instanceof String) || ((String) raw).isEmpty()) {
             return result;
@@ -177,7 +131,7 @@ public class TokenAuthCollectorAdaptor implements CollectorAdaptor {
                 continue;
             }
             tokenProvider.invalidate(trimmed);
-            LOG.debug("Invalidated token cache for auth '{}' after failed collection (node {})",
+            LOG.debug("Invalidated token cache for auth '{}' after auth failure (node {})",
                     trimmed, agent != null ? agent.getNodeId() : null);
         }
         return result;

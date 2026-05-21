@@ -25,14 +25,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.opennms.core.mate.api.Scope;
-import org.opennms.netmgt.config.tokenauth.TokenProvider;
 
 /**
  * In-memory cache of auth tokens, keyed by ({@code authName},
@@ -41,8 +38,6 @@ import org.opennms.netmgt.config.tokenauth.TokenProvider;
  * per distinct resolved shape (N endpoints, not N&times;nodes).
  */
 public class TokenCache {
-
-    private static final int MIN_TOKEN_MATCH_LEN = 16;
 
     private final TokenAcquirer acquirer;
     private final Clock clock;
@@ -93,31 +88,6 @@ public class TokenCache {
         if (authName != null) {
             cache.keySet().removeIf(k -> authName.equals(k.authName));
         }
-    }
-
-    /**
-     * Reverse-lookup invalidation: drops the cache entry whose token
-     * value appears as a substring of {@code headerValue}, and returns
-     * the auth name and matched token text.
-     *
-     * <p>Substring (not equals) so prefixed headers like
-     * {@code Authorization: Bearer abc123} match the cached {@code abc123}.
-     * The min-length guard prevents a short token coincidentally matching
-     * an unrelated header value (User-Agent, Cookie) and getting rewritten
-     * on retry.</p>
-     */
-    public Optional<TokenProvider.InvalidationResult> invalidateByTokenValue(final String headerValue) {
-        if (headerValue == null || headerValue.isEmpty()) {
-            return Optional.empty();
-        }
-        for (final Map.Entry<CacheKey, CachedToken> entry : cache.entrySet()) {
-            final String token = entry.getValue().getValue();
-            if (token != null && token.length() >= MIN_TOKEN_MATCH_LEN && headerValue.contains(token)) {
-                cache.remove(entry.getKey(), entry.getValue());
-                return Optional.of(new TokenProvider.InvalidationResult(entry.getKey().authName, token));
-            }
-        }
-        return Optional.empty();
     }
 
     public void invalidateAll() {

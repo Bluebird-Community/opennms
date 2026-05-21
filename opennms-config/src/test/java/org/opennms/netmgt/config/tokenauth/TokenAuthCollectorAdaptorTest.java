@@ -69,76 +69,10 @@ public class TokenAuthCollectorAdaptorTest {
     }
 
     @Test
-    public void beforeCollectReturnsInputUnchangedWhenNoPlaceholder() {
-        final Map<String, Object> params = new HashMap<>();
-        params.put("url", "https://example.com/data");
-        params.put("ttl", "30000");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertSame("no allocation when nothing to substitute", params, out);
-        verify(tokenProvider, never()).getToken(anyString(), any(Scope.class));
-    }
-
-    @Test
-    public void beforeCollectSubstitutesPlaceholderAndStashesAuthName() {
-        when(tokenProvider.getToken(eq("vault"), any(Scope.class))).thenReturn(Optional.of("tok-xyz"));
-
-        final Map<String, Object> params = new HashMap<>();
-        params.put("Authorization", "Bearer ${token:vault}");
-        params.put("url", "https://example.com/data");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertEquals("Bearer tok-xyz", out.get("Authorization"));
-        assertEquals("https://example.com/data", out.get("url"));
-        assertEquals("vault", out.get(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM));
-    }
-
-    @Test
-    public void beforeCollectStashesMultipleNamesCommaSeparated() {
-        when(tokenProvider.getToken(eq("vault"), any(Scope.class))).thenReturn(Optional.of("tok-v"));
-        when(tokenProvider.getToken(eq("f5"), any(Scope.class))).thenReturn(Optional.of("tok-f"));
-
-        final Map<String, Object> params = new HashMap<>();
-        params.put("A", "Bearer ${token:vault}");
-        params.put("B", "${token:f5}");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        final String names = (String) out.get(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM);
-        assertTrue("expected comma-separated names, got " + names,
-                names.equals("vault,f5") || names.equals("f5,vault"));
-    }
-
-    @Test
-    public void beforeCollectUsesInlineFallbackWhenTokenAbsent() {
-        when(tokenProvider.getToken(eq("missing"), any(Scope.class))).thenReturn(Optional.empty());
-
-        final Map<String, Object> params = new HashMap<>();
-        params.put("h", "X: ${token:missing|fallback-value}");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertEquals("X: fallback-value", out.get("h"));
-    }
-
-    @Test
-    public void beforeCollectSubstitutesEmptyWhenTokenAbsentAndNoFallback() {
-        when(tokenProvider.getToken(eq("missing"), any(Scope.class))).thenReturn(Optional.empty());
-
-        final Map<String, Object> params = new HashMap<>();
-        params.put("h", "X: ${token:missing}");
-
-        final Map<String, Object> out = adaptor.beforeCollect(agent, params);
-
-        assertEquals("X: ", out.get("h"));
-    }
-
-    @Test
     public void handleCollectionResultInvalidatesEachCommaSeparatedName() {
         final Map<String, Object> params = new HashMap<>();
         params.put(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM, "vault,f5");
+        params.put(TokenAuthCollectorAdaptor.AUTH_FAILURE_PARAM, Boolean.TRUE);
         final CollectionSet failed = mock(CollectionSet.class);
         when(failed.getStatus()).thenReturn(CollectionStatus.FAILED);
 
@@ -147,6 +81,19 @@ public class TokenAuthCollectorAdaptorTest {
         assertSame(failed, returned);
         verify(tokenProvider).invalidate("vault");
         verify(tokenProvider).invalidate("f5");
+    }
+
+    @Test
+    public void handleCollectionResultDoesNotInvalidateWhenFailedWithoutAuthMarker() {
+        final Map<String, Object> params = new HashMap<>();
+        params.put(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM, "vault");
+        // No AUTH_FAILURE_PARAM: e.g. transport error, 5xx, broker outage.
+        final CollectionSet failed = mock(CollectionSet.class);
+        when(failed.getStatus()).thenReturn(CollectionStatus.FAILED);
+
+        adaptor.handleCollectionResult(agent, params, failed);
+
+        verify(tokenProvider, never()).invalidate(anyString());
     }
 
     @Test
@@ -260,18 +207,27 @@ public class TokenAuthCollectorAdaptorTest {
     }
 
     @Test
-    public void beforeRuntimeInterpolationMergesNamesWithExisting() {
-        when(tokenProvider.getToken(eq("vault"), any(Scope.class))).thenReturn(Optional.of("tok-v"));
+    public void beforeRuntimeInterpolationUsesInlineFallbackWhenTokenAbsent() {
+        when(tokenProvider.getToken(eq("missing"), any(Scope.class))).thenReturn(Optional.empty());
 
         final Map<String, Object> attrs = new HashMap<>();
-        attrs.put(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM, "f5");
-        attrs.put("Authorization", "Bearer ${token:vault}");
+        attrs.put("h", "X: ${token:missing|fallback-value}");
 
         final Map<String, Object> out = adaptor.beforeRuntimeInterpolation(agent, attrs);
 
-        final String names = (String) out.get(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM);
-        assertTrue("expected merged names containing both, got " + names,
-                names.contains("f5") && names.contains("vault"));
+        assertEquals("X: fallback-value", out.get("h"));
+    }
+
+    @Test
+    public void beforeRuntimeInterpolationSubstitutesEmptyWhenTokenAbsentAndNoFallback() {
+        when(tokenProvider.getToken(eq("missing"), any(Scope.class))).thenReturn(Optional.empty());
+
+        final Map<String, Object> attrs = new HashMap<>();
+        attrs.put("h", "X: ${token:missing}");
+
+        final Map<String, Object> out = adaptor.beforeRuntimeInterpolation(agent, attrs);
+
+        assertEquals("X: ", out.get("h"));
     }
 
     private static SampleCollection buildSampleCollection(final String headerName, final String headerValue) {
@@ -317,6 +273,7 @@ public class TokenAuthCollectorAdaptorTest {
     public void handleCollectionResultIgnoresEmptyNameList() {
         final Map<String, Object> params = new HashMap<>();
         params.put(TokenAuthCollectorAdaptor.AUTH_NAMES_USED_PARAM, "");
+        params.put(TokenAuthCollectorAdaptor.AUTH_FAILURE_PARAM, Boolean.TRUE);
         final CollectionSet failed = mock(CollectionSet.class);
         when(failed.getStatus()).thenReturn(CollectionStatus.FAILED);
 

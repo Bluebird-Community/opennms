@@ -137,16 +137,7 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
                 this.client.getEntityScopeProvider().getScopeForInterface(agent.getNodeId(), InetAddressUtils.toIpAddrString(agent.getAddress()))
         );
 
-        // Adaptors run before Mate's Interpolator so they can resolve
-        // their own ${prefix:...} placeholders before unknown prefixes
-        // get stripped.
-        Map<String, Object> preInterpolated = attributes;
-        for (final CollectorAdaptor adaptor : adaptors) {
-            final Map<String, Object> next = adaptor.beforeCollect(agent, preInterpolated);
-            preInterpolated = next != null ? next : preInterpolated;
-        }
-
-        final Map<String, Object> interpolatedAttributes = Interpolator.interpolateObjects(preInterpolated, scope);
+        final Map<String, Object> interpolatedAttributes = Interpolator.interpolateObjects(attributes, scope);
 
         final RpcTarget target = client.getRpcTargetHelper().target()
                 .withNodeId(agent.getNodeId())
@@ -221,6 +212,9 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
         CollectionSet result = (ex != null)
                 ? new CollectionSetBuilder(agent).withStatus(CollectionStatus.FAILED).build()
                 : successResult;
+        if (ex != null && hasAuthFailureMarker(ex)) {
+            dispatchedAttributes.put(CollectorAdaptor.AUTH_FAILURE_PARAM, Boolean.TRUE);
+        }
         for (final CollectorAdaptor adaptor : adaptors) {
             result = adaptor.handleCollectionResult(agent, dispatchedAttributes, result);
         }
@@ -232,6 +226,21 @@ public class CollectorRequestBuilderImpl implements CollectorRequestBuilder {
             throw new CompletionException(cause);
         }
         return result;
+    }
+
+    // Substring (not startsWith) so wrapped messages like
+    // "Can't retrieve ... because auth failure: HTTP 401 ..." still match.
+    private static boolean hasAuthFailureMarker(final Throwable ex) {
+        Throwable t = ex;
+        int depth = 0;
+        while (t != null && depth++ < 16) {
+            final String msg = t.getMessage();
+            if (msg != null && msg.contains("auth failure:")) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
     }
 
 }

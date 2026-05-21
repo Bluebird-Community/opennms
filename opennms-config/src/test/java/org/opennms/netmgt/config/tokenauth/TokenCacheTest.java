@@ -137,66 +137,6 @@ public class TokenCacheTest {
     }
 
     @Test
-    public void invalidateByTokenValueRemovesAndReturnsName() throws IOException {
-        final CountingAcquirer acquirer = new CountingAcquirer("tok", null);
-        final TokenCache cache = new TokenCache(acquirer);
-
-        final String value = cache.getToken(namedAuth("a"));
-        assertTrue(cache.isCached("a"));
-
-        final java.util.Optional<org.opennms.netmgt.config.tokenauth.TokenProvider.InvalidationResult> evicted =
-                cache.invalidateByTokenValue(value);
-        assertTrue(evicted.isPresent());
-        assertEquals("a", evicted.get().getAuthName());
-        assertEquals(value, evicted.get().getMatchedTokenValue());
-        assertFalse(cache.isCached("a"));
-    }
-
-    @Test
-    public void invalidateByTokenValueMatchesSubstringOfHeaderValue() throws IOException {
-        // The reverse-lookup is substring-based so it works with prefixed
-        // headers like "Authorization: Bearer <token>".
-        final CountingAcquirer acquirer = new CountingAcquirer("tok", null);
-        final TokenCache cache = new TokenCache(acquirer);
-
-        final String value = cache.getToken(namedAuth("a"));
-
-        final java.util.Optional<org.opennms.netmgt.config.tokenauth.TokenProvider.InvalidationResult> evicted =
-                cache.invalidateByTokenValue("Bearer " + value);
-        assertTrue(evicted.isPresent());
-        assertEquals("a", evicted.get().getAuthName());
-        assertEquals(value, evicted.get().getMatchedTokenValue());
-        assertFalse(cache.isCached("a"));
-    }
-
-    @Test
-    public void invalidateByTokenValueWithUnknownValueReturnsEmpty() throws IOException {
-        final CountingAcquirer acquirer = new CountingAcquirer("tok", null);
-        final TokenCache cache = new TokenCache(acquirer);
-
-        cache.getToken(namedAuth("a"));
-        assertFalse(cache.invalidateByTokenValue("a-different-token").isPresent());
-        assertTrue(cache.isCached("a"));
-    }
-
-    @Test
-    public void invalidateByTokenValueOnlyHitsTheMatchingEntry() throws IOException {
-        // Two distinct auth names cached; only the matching one is removed.
-        final CountingAcquirer acquirer = new CountingAcquirer("tok", null);
-        final TokenCache cache = new TokenCache(acquirer);
-
-        final String aValue = cache.getToken(namedAuth("a"));
-        cache.getToken(namedAuth("b"));
-
-        final java.util.Optional<org.opennms.netmgt.config.tokenauth.TokenProvider.InvalidationResult> evicted =
-                cache.invalidateByTokenValue(aValue);
-        assertTrue(evicted.isPresent());
-        assertEquals("a", evicted.get().getAuthName());
-        assertFalse(cache.isCached("a"));
-        assertTrue(cache.isCached("b"));
-    }
-
-    @Test
     public void differentResolvedScopesProduceDistinctCacheEntries() throws IOException {
         // Same auth definition, but two callers pass different scopes that
         // resolve a placeholder in the URL to different values. The cache
@@ -265,16 +205,6 @@ public class TokenCacheTest {
                 return java.util.Set.of();
             }
         };
-    }
-
-    @Test
-    public void invalidateByTokenValueWithNullOrEmptyReturnsEmpty() throws IOException {
-        final CountingAcquirer acquirer = new CountingAcquirer("tok", null);
-        final TokenCache cache = new TokenCache(acquirer);
-        cache.getToken(namedAuth("a"));
-        assertFalse(cache.invalidateByTokenValue(null).isPresent());
-        assertFalse(cache.invalidateByTokenValue("").isPresent());
-        assertTrue(cache.isCached("a"));
     }
 
     @Test

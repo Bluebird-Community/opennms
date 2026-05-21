@@ -43,40 +43,6 @@ public interface TokenProvider {
         return getToken(authName);
     }
 
-    /**
-     * Result of a successful {@link #invalidateByTokenValue} call. Carries
-     * the auth name plus the token text that matched, so callers can
-     * rewrite just the token portion of a header (preserving any
-     * surrounding "Bearer " prefix).
-     */
-    final class InvalidationResult {
-        private final String authName;
-        private final String matchedTokenValue;
-
-        public InvalidationResult(final String authName, final String matchedTokenValue) {
-            this.authName = authName;
-            this.matchedTokenValue = matchedTokenValue;
-        }
-
-        public String getAuthName() {
-            return authName;
-        }
-
-        public String getMatchedTokenValue() {
-            return matchedTokenValue;
-        }
-    }
-
-    /**
-     * Reverse-lookup invalidation: drops the cached token whose value
-     * appears as a substring of {@code headerValue}, and returns the auth
-     * name plus matched text. Default returns empty for providers without
-     * a cache.
-     */
-    default Optional<InvalidationResult> invalidateByTokenValue(String headerValue) {
-        return Optional.empty();
-    }
-
     default void invalidate(final String authName) {
         // no-op
     }

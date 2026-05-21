@@ -67,9 +67,4 @@ public class TokenProviderImpl implements TokenProvider {
     public void invalidate(final String authName) {
         tokenCache.invalidate(authName);
     }
-
-    @Override
-    public Optional<TokenProvider.InvalidationResult> invalidateByTokenValue(final String headerValue) {
-        return tokenCache.invalidateByTokenValue(headerValue);
-    }
 }

@@ -149,16 +149,15 @@ The cache refreshes a token when one of the following holds:
 * No entry exists yet for the resolved auth shape.
 * The configured `<ttl-seconds>` has elapsed, or the cache's internal early-refresh window has been reached.
   The early-refresh window is `max(600 seconds, 5% of TTL)` before the configured TTL expires, so the cache never hands back a token that's within ten minutes of upstream expiry.
-* A downstream collector reports a `FAILED` collection status while a cached token was in use.
+* A downstream collector reports a `FAILED` collection status _and_ the underlying cause is an HTTP 401 or 403 from the data endpoint.
   The adaptor invalidates the affected entry; the next collection cycle re-acquires.
 
 Invalidation is passive: the failing request itself isn't retried.
 The next scheduled cycle picks up a fresh token.
 For a Minion-served collection, the FAILED status flows back to the core, where the same adaptor invalidates locally, so the next cycle through the same Minion goes out with a fresh token.
 
-NOTE: A FAILED status that surfaces for non-auth reasons -- RPC timeout, broker outage, generic transport error -- also invalidates the cached token, since the adaptor sees only the result status and not the underlying cause.
-The effect is benign: the next cycle re-acquires and proceeds.
-A run of transient failures may add one extra token-acquisition round-trip per cycle until the transport recovers.
+NOTE: A FAILED status that surfaces for non-auth reasons -- RPC timeout, broker outage, generic 5xx, transport error -- does _not_ invalidate the cached token.
+The adaptor only acts when the exception cause chain carries an `auth failure:` marker emitted by the collector on a 401/403 from the data endpoint.
 
 NOTE: A short `<ttl-seconds>` is still useful as defense-in-depth for environments where tokens can be revoked out of band, since it bounds the window during which the cache may hold a token the auth server has already invalidated.
 

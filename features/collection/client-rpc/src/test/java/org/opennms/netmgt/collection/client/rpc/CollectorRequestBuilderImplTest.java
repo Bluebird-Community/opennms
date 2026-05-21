@@ -136,6 +136,58 @@ public class CollectorRequestBuilderImplTest {
     }
 
     @Test
+    public void failurePath_setsAuthFailureMarker_whenCauseMessageContainsPrefix() {
+        final IOException auth = new IOException("Can't retrieve /foo because auth failure: HTTP 401");
+        final CollectorAdaptor adaptor = mock(CollectorAdaptor.class);
+        when(adaptor.handleCollectionResult(eq(agent), any(), any())).thenAnswer(inv -> inv.getArgument(2));
+
+        try {
+            CollectorRequestBuilderImpl.applyAdaptorsAndPropagate(
+                    agent, attrs, Arrays.asList(adaptor), null, auth);
+            fail();
+        } catch (CompletionException expected) {
+            // checked exception gets wrapped on rethrow
+        }
+
+        assertEquals(Boolean.TRUE, attrs.get(CollectorAdaptor.AUTH_FAILURE_PARAM));
+    }
+
+    @Test
+    public void failurePath_setsAuthFailureMarker_whenNestedCauseMatches() {
+        final IOException inner = new IOException("auth failure: HTTP 403 from https://example/data");
+        final RuntimeException outer = new RuntimeException("wrapper", inner);
+        final CollectorAdaptor adaptor = mock(CollectorAdaptor.class);
+        when(adaptor.handleCollectionResult(eq(agent), any(), any())).thenAnswer(inv -> inv.getArgument(2));
+
+        try {
+            CollectorRequestBuilderImpl.applyAdaptorsAndPropagate(
+                    agent, attrs, Arrays.asList(adaptor), null, outer);
+            fail();
+        } catch (RuntimeException expected) {
+            // rethrown
+        }
+
+        assertEquals(Boolean.TRUE, attrs.get(CollectorAdaptor.AUTH_FAILURE_PARAM));
+    }
+
+    @Test
+    public void failurePath_doesNotSetAuthFailureMarker_forNonAuthError() {
+        final IOException nonAuth = new IOException("HTTP 500 from https://example/data");
+        final CollectorAdaptor adaptor = mock(CollectorAdaptor.class);
+        when(adaptor.handleCollectionResult(eq(agent), any(), any())).thenAnswer(inv -> inv.getArgument(2));
+
+        try {
+            CollectorRequestBuilderImpl.applyAdaptorsAndPropagate(
+                    agent, attrs, Arrays.asList(adaptor), null, nonAuth);
+            fail();
+        } catch (CompletionException expected) {
+            // rethrown
+        }
+
+        assertEquals(null, attrs.get(CollectorAdaptor.AUTH_FAILURE_PARAM));
+    }
+
+    @Test
     public void successPath_lastAdaptorReturnValueWins() {
         final CollectionSet first = mock(CollectionSet.class);
         final CollectionSet rewritten = mock(CollectionSet.class);

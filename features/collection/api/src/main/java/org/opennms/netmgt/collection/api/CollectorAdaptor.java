@@ -31,11 +31,8 @@ import java.util.Map;
  */
 public interface CollectorAdaptor {
 
-    /** Invoked before the request is dispatched; may modify the parameter map. */
-    default Map<String, Object> beforeCollect(final CollectionAgent agent,
-                                              final Map<String, Object> parameters) {
-        return parameters;
-    }
+    /** Set on the parameter map when the cause chain carried an "auth failure:" marker. */
+    String AUTH_FAILURE_PARAM = "_collectorAdaptor.authFailure";
 
     /**
      * Invoked after runtime attributes are fetched but before Mate's
