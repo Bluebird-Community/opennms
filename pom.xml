@@ -1780,7 +1780,7 @@
     <eddsaVersion>0.3.0</eddsaVersion>
     <elasticsearchNettyVersion>4.1.133.Final</elasticsearchNettyVersion>
     <elasticsearchDriftPluginVersion>2.0.5</elasticsearchDriftPluginVersion>
-    <elasticsearchTargetVersion>7.17.9</elasticsearchTargetVersion>
+    <elasticsearchTargetVersion>8.19.8</elasticsearchTargetVersion>
     <elasticsearchClientVersion>8.18.1</elasticsearchClientVersion>
     <errorProneAnnotationsVersion>2.25.0</errorProneAnnotationsVersion>
     <esapiVersion>2.5.2.0</esapiVersion>
