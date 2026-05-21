@@ -221,8 +221,15 @@ public class CollectCommand implements Action {
         }
         for (final ServiceReference<CollectorAdaptor> ref : refs) {
             final CollectorAdaptor adaptor = bundleContext.getService(ref);
-            if (adaptor != null) {
+            if (adaptor == null) {
+                continue;
+            }
+            try {
                 builder = builder.withAdaptor(adaptor);
+            } finally {
+                // Balance the getService() — the service object stays valid
+                // while it remains registered; we just stop holding a use ref.
+                bundleContext.ungetService(ref);
             }
         }
         return builder;
