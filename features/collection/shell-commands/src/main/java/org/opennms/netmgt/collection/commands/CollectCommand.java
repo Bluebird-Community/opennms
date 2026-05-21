@@ -23,7 +23,6 @@ package org.opennms.netmgt.collection.commands;
 
 import java.net.InetAddress;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -63,9 +62,6 @@ import org.opennms.netmgt.collection.support.AbstractCollectionSetVisitor;
 import org.opennms.netmgt.model.ResourcePath;
 import org.opennms.netmgt.rrd.RrdRepository;
 import org.opennms.netmgt.snmp.InetAddrUtils;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
 
 import com.google.common.collect.Lists;
 
@@ -124,7 +120,7 @@ public class CollectCommand implements Action {
     private PersisterFactory persisterFactory;
 
     @Reference
-    public BundleContext bundleContext;
+    public List<CollectorAdaptor> adaptors;
 
 
     @Override
@@ -207,30 +203,11 @@ public class CollectCommand implements Action {
     }
 
     CollectorRequestBuilder registerAdaptors(CollectorRequestBuilder builder) {
-        if (bundleContext == null) {
+        if (adaptors == null) {
             return builder;
         }
-        final Collection<ServiceReference<CollectorAdaptor>> refs;
-        try {
-            refs = bundleContext.getServiceReferences(CollectorAdaptor.class, null);
-        } catch (InvalidSyntaxException e) {
-            return builder;
-        }
-        if (refs == null) {
-            return builder;
-        }
-        for (final ServiceReference<CollectorAdaptor> ref : refs) {
-            final CollectorAdaptor adaptor = bundleContext.getService(ref);
-            if (adaptor == null) {
-                continue;
-            }
-            try {
-                builder = builder.withAdaptor(adaptor);
-            } finally {
-                // Balance the getService() — the service object stays valid
-                // while it remains registered; we just stop holding a use ref.
-                bundleContext.ungetService(ref);
-            }
+        for (final CollectorAdaptor adaptor : adaptors) {
+            builder = builder.withAdaptor(adaptor);
         }
         return builder;
     }
