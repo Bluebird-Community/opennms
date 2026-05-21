@@ -28,7 +28,7 @@ PACK_DIR="${TEMPDIR}/support-pack-$DATETIME"
 PSQL=$(/usr/bin/env which psql 2>/dev/null || echo "false")
 TAR=$(/usr/bin/env which tar 2>/dev/null || echo "false")
 JAVA_MIN_VERSION="17.0"
-JAVA_MAX_VERSION="17.999"
+JAVA_MAX_VERSION="21.999"
 
 usage(){ echo -e >&2 "
 Usage: $(basename $0) [-j -o -p -e -t -c -l -x -u -s]
