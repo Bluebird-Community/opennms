@@ -19,31 +19,14 @@
  * language governing permissions and limitations under the
  * License.
  */
-package org.opennms.netmgt.collection.api;
+@XmlSchema(
+        namespace = "http://xmlns.opennms.org/xsd/config/token-auth",
+        elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED,
+        xmlns = {
+                @XmlNs(prefix = "", namespaceURI = "http://xmlns.opennms.org/xsd/config/token-auth")
+        }
+)
+package org.opennms.netmgt.config.tokenauth;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-public interface CollectorRequestBuilder {
-
-    CollectorRequestBuilder withAgent(CollectionAgent agent);
-
-    CollectorRequestBuilder withSystemId(String systemId);
-
-    CollectorRequestBuilder withCollector(ServiceCollector collector);
-
-    CollectorRequestBuilder withCollectorClassName(String className);
-
-    CollectorRequestBuilder withTimeToLive(Long ttlInMs);
-
-    CollectorRequestBuilder withAttribute(String key, Object value);
-
-    CollectorRequestBuilder withAttributes(Map<String, Object> attributes);
-
-    default CollectorRequestBuilder withAdaptor(CollectorAdaptor adaptor) {
-        return this;
-    }
-
-    CompletableFuture<CollectionSet> execute();
-
-}
+import javax.xml.bind.annotation.XmlNs;
+import javax.xml.bind.annotation.XmlSchema;
