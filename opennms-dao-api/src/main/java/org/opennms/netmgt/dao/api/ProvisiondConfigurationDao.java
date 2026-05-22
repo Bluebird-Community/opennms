@@ -87,13 +87,6 @@ public interface ProvisiondConfigurationDao {
     public Integer getWriteThreads() throws IOException;
     
     /**
-     * <p>getRequisitionDir</p>
-     *
-     * @return a {@link java.lang.String} object.
-     */
-    public String getRequisitionDir() throws IOException;
-    
-    /**
      * <p>getForeignSourceDir</p>
      *
      * @return a {@link java.lang.String} object.

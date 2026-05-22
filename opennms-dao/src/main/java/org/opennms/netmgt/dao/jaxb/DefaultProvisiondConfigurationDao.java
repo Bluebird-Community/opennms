@@ -116,16 +116,6 @@ public class DefaultProvisiondConfigurationDao extends AbstractCmJaxbConfigDao<P
     }
 
     /**
-     * <p>getRequisitionDir</p>
-     *
-     * @return a {@link java.lang.String} object.
-     */
-    @Override
-    public String getRequisitionDir() throws IOException {
-        return getConfig().getRequistionDir();
-    }
-
-    /**
      * <p>getImportThreads</p>
      *
      * @return a {@link java.lang.Integer} object.
