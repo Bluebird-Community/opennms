@@ -372,9 +372,9 @@ public class VmwareCollector extends AbstractRemoteServiceCollector {
         try {
             datastores = hostSystem.getDatastores();
         } catch (final Exception e) {
-            logger.warn("VmwareCollector: error enumerating datastores for host '{}': {}",
-                    hostSystem.getName(), e.getMessage());
+            logger.warn("VmwareCollector: error enumerating datastores for host '{}'.", hostSystem.getName(), e);
             return;
+        }
         }
         if (datastores == null || datastores.length == 0) {
             logger.debug("VmwareCollector: host '{}' has no mounted datastores; skipping group '{}'.",
