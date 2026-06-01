@@ -389,9 +389,9 @@ public class VmwareCollector extends AbstractRemoteServiceCollector {
             try {
                 summary = ds.getSummary();
             } catch (final Exception e) {
-                logger.warn("VmwareCollector: error reading summary for datastore '{}' ({}): {}",
-                        ds.getName(), moid, e.getMessage());
+                logger.warn("VmwareCollector: error reading summary for datastore '{}' ({}).", ds.getName(), moid, e);
                 continue;
+            }
             }
             if (summary == null) {
                 logger.debug("VmwareCollector: null summary for datastore '{}' ({}); skipping.",
