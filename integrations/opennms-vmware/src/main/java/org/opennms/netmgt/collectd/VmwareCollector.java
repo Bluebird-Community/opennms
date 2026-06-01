@@ -375,7 +375,6 @@ public class VmwareCollector extends AbstractRemoteServiceCollector {
             logger.warn("VmwareCollector: error enumerating datastores for host '{}'.", hostSystem.getName(), e);
             return;
         }
-        }
         if (datastores == null || datastores.length == 0) {
             logger.debug("VmwareCollector: host '{}' has no mounted datastores; skipping group '{}'.",
                     hostSystem.getName(), vmwareGroup.getName());
@@ -391,7 +390,6 @@ public class VmwareCollector extends AbstractRemoteServiceCollector {
             } catch (final Exception e) {
                 logger.warn("VmwareCollector: error reading summary for datastore '{}' ({}).", ds.getName(), moid, e);
                 continue;
-            }
             }
             if (summary == null) {
                 logger.debug("VmwareCollector: null summary for datastore '{}' ({}); skipping.",
