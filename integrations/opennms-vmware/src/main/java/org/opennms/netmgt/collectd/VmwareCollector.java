@@ -350,10 +350,10 @@ public class VmwareCollector extends AbstractRemoteServiceCollector {
      *
      * String:  {@code name}, {@code type}, {@code url}.
      *
-     * Looks the HostSystem up explicitly by moid because {@link
-     * VmwareViJavaAccess#getManagedEntityByManagedObjectId(String)} returns the
-     * abstract base class. If the moid does not refer to a HostSystem on the
-     * server, getDatastores() will fail and the per-datastore loop is skipped.
+     * Looks the HostSystem up explicitly by moid because
+     * VmwareViJavaAccess.getManagedEntityByManagedObjectId returns the abstract
+     * base class. If the moid does not refer to a HostSystem on the server,
+     * getDatastores() will fail and the per-datastore loop is skipped.
      */
     private void collectDatastoreCapacity(final CollectionAgent agent,
                                           final CollectionSetBuilder builder,
