@@ -2,21 +2,15 @@
 = VMware datastore capacity
 :description: Reference for the datastore capacity attributes that VmwareCollector emits for each VMware HostSystem in OpenNMS {page-component-title}.
 
-The xref:performance-data-collection/collectors/vmware.adoc[VmwareCollector] emits a multi-instance resource for each datastore a HostSystem mounts, alongside the performance counters it already collects.
-The values come from `Datastore.summary`, a property on the managed object, rather than from vCenter's PerformanceManager — so capacity numbers reflect what vCenter reports at collection time, not a 5-minute averaged sample.
+The xref:performance-data-collection/collectors/vmware.adoc[VmwareCollector] emits a multi-instance resource for each datastore a HostSystem mounts, alongside the performance counters it already collects. The values come from `Datastore.summary`, a property on the managed object, rather than from vCenter's PerformanceManager — so capacity numbers reflect what vCenter reports at collection time, not a 5-minute averaged sample.
 
-Datastore data is collected automatically for every host imported by the VMware requisition handler, scoped to the datastores that host mounts.
-A datastore mounted by multiple hosts is collected once per host, under each host's resource tree.
-No additional operator setup is required.
+Datastore data is collected automatically for every host imported by the VMware requisition handler, scoped to the datastores that host mounts. A datastore mounted by multiple hosts is collected once per host, under each host's resource tree.
 
 == When this group runs
 
-The shipped `default-HostSystem6` and `default-HostSystem7` collections include a `<vmware-group>` with `resourceType="vmwareDatastoreCapacity"`.
-When VmwareCollector iterates a host's configured groups, that resource type triggers the datastore dispatch instead of a PerformanceManager query.
-Removing the group from a custom collection disables datastore collection for hosts using that collection.
+The shipped `default-HostSystem6` and `default-HostSystem7` collections include a `<vmware-group>` with `resourceType="vmwareDatastoreCapacity"`. When VmwareCollector iterates a host's configured groups, that resource type triggers the datastore dispatch instead of a PerformanceManager query. Removing the group from a custom collection disables datastore collection for hosts using that collection.
 
-The group is only valid inside HostSystem collections.
-If it appears in a VirtualMachine collection (or any non-HostSystem managed entity), the collector logs a warning and skips it.
+The group is only valid inside HostSystem collections. If it appears in a VirtualMachine collection (or any non-HostSystem managed entity), the collector logs a warning and skips it.
 
 == Resource layout
 
@@ -88,11 +82,3 @@ Graphs are defined in `$\{OPENNMS_HOME}/etc/snmp-graph.properties.d/vmware-datas
 | Datastore URL (for example, `ds:///vmfs/volumes/<uuid>/`).
 |===
 
-== Notes on behavior
-
-A datastore mounted by multiple hosts is collected once per host that mounts it.
-The data lands under each host's resource tree, so the same datastore appears as multiple resources across the UI.
-This is intentional — datastore data follows the same node-centric layout as every other VMware metric in OpenNMS — but it can produce noticeable duplication on large clusters with heavily shared SAN or NFS storage.
-
-A non-numeric `type` on any of the numeric attributes (for example, configuring `<attrib name="capacity" alias="DsCapacity" type="string"/>`) results in a warning and the value is not persisted.
-Configure the numeric attributes as `Gauge` or `Counter`.
