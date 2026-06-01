@@ -72,9 +72,8 @@ Graphs are defined in `$\{OPENNMS_HOME}/etc/snmp-graph.properties.d/vmware-datas
 | Attribute
 | Description
 
-| name
-| Display name of the datastore (also used as the resource label).
-
+| vmwareDatastoreCapacityName
+| Display name of the datastore (used as the resource label).
 | type
 | Datastore type: `VMFS`, `NFS`, `NFS41`, `vsan`, `VVOL`, etc.
 
