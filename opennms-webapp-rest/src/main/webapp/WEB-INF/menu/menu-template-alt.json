@@ -205,13 +205,6 @@
           "roles": null
         },
         {
-          "id": "opsBoard",
-          "name": "Wallboard",
-          "url": "vaadin-wallboard",
-          "locationMatch": "vaadin-wallboard",
-          "roles": null
-        },
-        {
           "id": "heatmap",
           "name": "Heatmap",
           "url": "heatmap/index.jsp",
@@ -480,13 +473,6 @@
           "id": "scheduledOutages",
           "name": "Scheduled Outages",
           "url": "admin/sched-outages/index.jsp",
-          "locationMatch": null,
-          "roles": null
-        },
-        {
-          "id": "wallboardConfiguration",
-          "name": "Wallboard Configuration",
-          "url": "admin/wallboardConfig.jsp",
           "locationMatch": null,
           "roles": null
         },
