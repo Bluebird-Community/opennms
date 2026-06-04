@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.cxf.jaxrs.ext.search.ConditionType;
 import org.opennms.core.criteria.restrictions.SqlRestriction.Type;
 
 import javax.ws.rs.DELETE;
@@ -174,6 +173,34 @@ public class NodeRestService extends AbstractDaoRestService<OnmsNode,SearchBean,
         // Root alias
         map.putAll(CriteriaBehaviors.NODE_BEHAVIORS);
 
+        // node.label: use ilike for case-insensitive wildcard matching (default like() is case-sensitive)
+        CriteriaBehavior<?> labelBehavior = new CriteriaBehavior<>((String)null, String::new, (b, v, c, w) -> {
+            switch (c) {
+            case EQUALS:
+                if (v == null) {
+                    b.isNull("label");
+                } else if (w) {
+                    b.ilike("label", v);
+                } else {
+                    b.eq("label", v);
+                }
+                break;
+            case NOT_EQUALS:
+                if (v == null) {
+                    b.isNotNull("label");
+                } else if (w) {
+                    b.not().ilike("label", v);
+                } else {
+                    b.or(Restrictions.ne("label", v), Restrictions.isNull("label"));
+                }
+                break;
+            default:
+                break;
+            }
+        });
+        labelBehavior.setSkipPropertyByDefault(true);
+        map.put("label", labelBehavior);
+
         // 1st level JOINs
         map.putAll(CriteriaBehaviors.withAliasPrefix(Aliases.assetRecord, CriteriaBehaviors.ASSET_RECORD_BEHAVIORS));
         map.putAll(CriteriaBehaviors.withAliasPrefix(Aliases.category, CriteriaBehaviors.NODE_CATEGORY_BEHAVIORS));
@@ -219,10 +246,10 @@ public class NodeRestService extends AbstractDaoRestService<OnmsNode,SearchBean,
                 CriteriaBehavior<?> snmpStringBehavior = new CriteriaBehavior(entry.getValue().getPropertyName(), entry.getValue().getConverter(), (b,v,c,w)-> {
                     switch (c) {
                     case EQUALS:
-                        b.sql(String.format("{alias}.nodeid in (select snmpinterface.nodeid from snmpinterface where snmpinterface.%s ilike ?)", dbCol), v, Type.STRING);
+                        b.sql(String.format("{alias}.nodeid in (select snmpinterface.nodeid from snmpinterface where snmpinterface.snmpcollect != 'D' and snmpinterface.%s ilike ?)", dbCol), v, Type.STRING);
                         break;
                     case NOT_EQUALS:
-                        b.sql(String.format("{alias}.nodeid not in (select snmpinterface.nodeid from snmpinterface where snmpinterface.%s ilike ?)", dbCol), v, Type.STRING);
+                        b.sql(String.format("{alias}.nodeid not in (select snmpinterface.nodeid from snmpinterface where snmpinterface.snmpcollect != 'D' and snmpinterface.%s ilike ?)", dbCol), v, Type.STRING);
                         break;
                     default:
                         throw new IllegalArgumentException("Illegal condition type when filtering snmpInterface." + key + ": " + c);
@@ -243,6 +270,20 @@ public class NodeRestService extends AbstractDaoRestService<OnmsNode,SearchBean,
             }
         }
         // There are no extra String properties on node.snmpInterfaces
+
+        // Topology (CDP/LLDP) search: virtual property backed by a SQL subquery across topology tables.
+        // Mirrors DefaultNodeListService.addTopoSearch. skipProperty=true: no Hibernate alias is joined,
+        // so the default property restriction must not be added.
+        final String topologySql = "{alias}.nodeId in (" +
+            "select nodeId from cdplink where cdpinterfacename ilike ? " +
+            "union select nodeId from cdpelement where cdpglobaldeviceid ilike ? " +
+            "union select nodeId from lldplink where lldpportid ilike ? or lldpportdescr ilike ? " +
+            "union select nodeId from lldpelement where lldpsysname ilike ?)";
+        CriteriaBehavior<?> topologyBehavior = new CriteriaBehavior<>((String)null, String::new, (b,v,c,w) ->
+            b.sql(topologySql, new Object[]{v, v, v, v, v}, new Type[]{Type.STRING, Type.STRING, Type.STRING, Type.STRING, Type.STRING})
+        );
+        topologyBehavior.setSkipPropertyByDefault(true);
+        map.put("topology", topologyBehavior);
 
         // TODO: Figure out if it makes sense to search/orderBy on 2nd-level and greater JOINed properties
 
