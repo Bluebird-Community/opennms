@@ -71,6 +71,16 @@ After upgrade, manage event configurations through the *Administration -> Manage
 
 See xref:operation:deep-dive/events/event-configuration.adoc#migrating-event-files-after-upgrade[Migrating event files after upgrade] for the steps to re-upload your customized event files from `etc_archive/events/`.
 
+=== Prometheus RemoteWrite plugin (formerly Cortex TSS plugin)
+
+The OpenNMS Cortex TSS plugin has been renamed to the Prometheus RemoteWrite plugin to reflect that it works with any Prometheus `remote_write`-compatible time series store, not just Cortex.
+As part of the rename, the OSGi configuration PID changed from `org.opennms.plugins.tss.cortex` to `org.opennms.plugins.tss.prometheus`.
+
+IMPORTANT: If you previously configured the plugin via `$\{OPENNMS_HOME}/etc/org.opennms.plugins.tss.cortex.cfg`, rename the file to `$\{OPENNMS_HOME}/etc/org.opennms.plugins.tss.prometheus.cfg` after upgrading. If you do not, the plugin falls back to default values and writes will not reach your configured time series store.
+
+The Karaf feature is now `opennms-plugins-prometheus-remotewrite` (previously `opennms-plugins-cortex-tss`), and the KAR file is `opennms-prometheus-remotewrite-plugin` (previously `opennms-cortex-tss-plugin`).
+See xref:deployment:time-series-storage/timeseries/prometheus-remotewrite.adoc[the Prometheus RemoteWrite plugin documentation] for details.
+
 == Breaking changes
 
 === WMI integration removed
