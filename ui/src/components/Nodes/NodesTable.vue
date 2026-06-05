@@ -64,6 +64,20 @@
               </FeatherChip>
 
               <FeatherChip
+                v-for="(cat, index) in nodeStructureStore.selectedCategories2"
+                :key="`cat2-${index}`"
+              >
+                <template #icon>
+                  <FeatherIcon
+                    :icon="cancelIcon"
+                    class="icon"
+                    @click="removeItem(cat, FilterTypeEnum.Category2)"
+                  />
+                </template>
+                {{ `Category (2): ${cat._text}` }}
+              </FeatherChip>
+
+              <FeatherChip
                 v-for="(flow, index) in nodeStructureStore.selectedFlows"
                 :key="`flow-${index}`"
               >
@@ -89,6 +103,17 @@
                   />
                 </template>
                 {{ `Location: ${loc.name}` }}
+              </FeatherChip>
+
+              <FeatherChip
+                v-for="(svc, index) in nodeStructureStore.selectedServices"
+                :key="`svc-${index}`"
+              >
+                <template #icon>
+                  <FeatherIcon :icon="cancelIcon" class="icon"
+                    @click="removeItem(svc, FilterTypeEnum.MonitoredService)" />
+                </template>
+                {{ `Service: ${svc._text}` }}
               </FeatherChip>
 
               <FeatherChip
@@ -502,11 +527,17 @@ const removeItem = (item: IAutocompleteItemType, type: FilterTypeEnum) => {
     case FilterTypeEnum.Category:
       nodeStructureStore.removeCategory(item)
       break
+    case FilterTypeEnum.Category2:
+      nodeStructureStore.removeCategory2(item)
+      break
     case FilterTypeEnum.Flow:
       nodeStructureStore.removeFlow(item)
       break
     case FilterTypeEnum.MonitoringLocation:
       nodeStructureStore.removeMonitoringLocation(item)
+      break
+    case FilterTypeEnum.MonitoredService:
+      nodeStructureStore.removeService(item)
       break
     default:
       console.warn(`Unknown filter type: ${type}`)

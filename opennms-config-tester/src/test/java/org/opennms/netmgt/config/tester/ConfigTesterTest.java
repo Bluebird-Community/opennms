@@ -155,6 +155,11 @@ public class ConfigTesterTest {
     }
 
     @Test
+    public void testTokenAuthConfiguration() {
+        testConfigFile("token-auth-configuration.xml");
+    }
+
+    @Test
     public void testDatabaseReports() {
         testConfigFile("database-reports.xml");
     }
