@@ -115,8 +115,14 @@ public class UpgradeConfigService implements InitializingBean {
         try {
             connection = dataSource.getConnection();
             connection.setAutoCommit(false);
-            new SnmpDataCollectionDefaultsUpdate().execute(connection);
+            final SnmpDataCollectionDefaultsUpdate defaultsUpdate = new SnmpDataCollectionDefaultsUpdate();
+            final boolean applied = defaultsUpdate.execute(connection);
             connection.commit();
+            // Mirror applied fragments into etc_archive only after commit,
+            // matching the migration's archive-after-commit pattern.
+            if (applied) {
+                defaultsUpdate.archiveAppliedFragments();
+            }
         } catch (final Exception e) {
             if (connection != null) {
                 try { connection.rollback(); } catch (SQLException ignored) { }

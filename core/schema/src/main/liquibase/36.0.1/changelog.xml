@@ -23,6 +23,7 @@
             <column name="applied_at" type="timestamp with time zone" defaultValueComputed="NOW()">
                 <constraints nullable="false"/>
             </column>
+            <column name="description" type="text"/>
         </createTable>
 
         <rollback>

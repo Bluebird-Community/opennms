@@ -24,9 +24,10 @@ package org.opennms.config.upgrade.datacollection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,8 +48,8 @@ import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * DB-level tests for {@link SnmpDataCollectionDefaultsUpdate}: ledger
- * semantics, delta application to a migrated database, and the
- * no-resurrection guarantee after an administrator deletes shipped content.
+ * semantics, fragment application to a migrated database, the
+ * no-resurrection guarantees, and fragment archival.
  */
 @RunWith(OpenNMSJUnit4ClassRunner.class)
 @TestExecutionListeners({TemporaryDatabaseExecutionListener.class})
@@ -60,6 +61,8 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
 
     private TemporaryDatabase database;
     private Connection connection;
+    private File tempHome;
+    private String previousHome;
 
     @Override
     public void setTemporaryDatabase(final TemporaryDatabase database) {
@@ -67,13 +70,21 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
     }
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws Exception {
         connection = database.getConnection();
         connection.setAutoCommit(false);
+        tempHome = Files.createTempDirectory(getClass().getSimpleName()).toFile();
+        previousHome = System.getProperty("opennms.home");
+        System.setProperty("opennms.home", tempHome.getAbsolutePath());
     }
 
     @After
     public void tearDown() throws SQLException {
+        if (previousHome == null) {
+            System.clearProperty("opennms.home");
+        } else {
+            System.setProperty("opennms.home", previousHome);
+        }
         if (connection != null) {
             connection.rollback();
             connection.close();
@@ -86,8 +97,7 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
 
         new SnmpDataCollectionDefaultsUpdate().execute(connection);
 
-        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(
-                connection, SnmpDataCollectionDefaultsUpdate.NET_SNMP_SOURCE_NAME);
+        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(connection, "Net-SNMP");
         assertEquals(1, countMibGroups(sourceId, "ucd-memory-X"));
 
         final String mibObjects = selectMibGroupObjects(sourceId, "ucd-memory-X");
@@ -99,9 +109,12 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
                 selectSystemDefGroupNames(sourceId, "Net-SNMP"));
         final int memIdx = groupNames.indexOf("ucd-memory");
         assertTrue(memIdx >= 0);
-        assertEquals("ucd-memory-X inserted directly after ucd-memory", memIdx + 1, groupNames.indexOf("ucd-memory-X"));
+        assertEquals("ucd-memory-X inserted directly after the ucd-memory anchor",
+                memIdx + 1, groupNames.indexOf("ucd-memory-X"));
 
-        assertTrue(isLedgerRecorded(SnmpDataCollectionDefaultsUpdate.UPDATE_ID_UCD_MEMORY_X));
+        assertTrue(isLedgerRecorded("NMS-18291-ucd-memory-X"));
+        assertEquals("Add 64-bit UCD-SNMP memory gauges (ucd-memory-X) to the Net-SNMP source and systemDef",
+                selectLedgerDescription("NMS-18291-ucd-memory-X"));
 
         // Second run must not duplicate anything.
         new SnmpDataCollectionDefaultsUpdate().execute(connection);
@@ -116,8 +129,7 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
         seedMigratedDatabaseWithoutUcdMemoryX();
 
         new SnmpDataCollectionDefaultsUpdate().execute(connection);
-        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(
-                connection, SnmpDataCollectionDefaultsUpdate.NET_SNMP_SOURCE_NAME);
+        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(connection, "Net-SNMP");
         assertEquals(1, countMibGroups(sourceId, "ucd-memory-X"));
 
         // Admin deletes the group and the systemDef reference.
@@ -127,13 +139,7 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
             ps.setString(2, "ucd-memory-X");
             ps.executeUpdate();
         }
-        try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE snmp_collection_systemdefs SET mib_group_names = ? WHERE collection_source_id = ? AND name = ?")) {
-            ps.setString(1, "[\"ucd-memory\"]");
-            ps.setInt(2, sourceId);
-            ps.setString(3, "Net-SNMP");
-            ps.executeUpdate();
-        }
+        updateSystemDefGroupNames(sourceId, "Net-SNMP", "[\"ucd-memory\"]");
 
         // The ledger must prevent re-application.
         new SnmpDataCollectionDefaultsUpdate().execute(connection);
@@ -142,36 +148,50 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
                 selectSystemDefGroupNames(sourceId, "Net-SNMP")).contains("ucd-memory-X"));
     }
 
+    /**
+     * Anchor entries in the fragment stub (ucd-memory) must never be
+     * (re-)added: if the admin removed the anchor itself, the new reference is
+     * simply appended at the end.
+     */
+    @Test
+    public void anchorEntriesAreNeverReAdded() throws SQLException {
+        seedMigratedDatabaseWithoutUcdMemoryX();
+        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(connection, "Net-SNMP");
+        // Admin removed ucd-memory before this upgrade.
+        updateSystemDefGroupNames(sourceId, "Net-SNMP", "[\"mib2-interfaces\",\"ucd-sysstat\"]");
+
+        new SnmpDataCollectionDefaultsUpdate().execute(connection);
+
+        final List<String> groupNames = SnmpDataCollectionDefaultsUpdate.parseStringArray(
+                selectSystemDefGroupNames(sourceId, "Net-SNMP"));
+        assertFalse("removed anchor must not be resurrected", groupNames.contains("ucd-memory"));
+        assertEquals("new reference appended at the end when no anchor is present",
+                List.of("mib2-interfaces", "ucd-sysstat", "ucd-memory-X"), groupNames);
+    }
+
     @Test
     public void recordsNoopWhenContentAlreadyPresent() throws SQLException {
         // Fresh-install shape: migration already imported the new XML.
         seedMigratedDatabaseWithoutUcdMemoryX();
-        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(
-                connection, SnmpDataCollectionDefaultsUpdate.NET_SNMP_SOURCE_NAME);
+        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(connection, "Net-SNMP");
         final SnmpDataCollectionDefaultsUpdate update = new SnmpDataCollectionDefaultsUpdate();
         SnmpDataCollectionSqlHelper.batchInsertMibGroups(connection, sourceId, List.of(
-                update.loadBundledGroup(SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_RESOURCE, "ucd-memory-X")));
-        try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE snmp_collection_systemdefs SET mib_group_names = ? WHERE collection_source_id = ? AND name = ?")) {
-            ps.setString(1, "[\"ucd-memory\",\"ucd-memory-X\",\"ucd-sysstat\"]");
-            ps.setInt(2, sourceId);
-            ps.setString(3, "Net-SNMP");
-            ps.executeUpdate();
-        }
+                update.loadFragment(SnmpDataCollectionDefaultsUpdate.UPDATES.get(0).resourcePath).getGroups().get(0)));
+        updateSystemDefGroupNames(sourceId, "Net-SNMP", "[\"ucd-memory\",\"ucd-memory-X\",\"ucd-sysstat\"]");
 
         update.execute(connection);
 
         assertEquals(1, countMibGroups(sourceId, "ucd-memory-X"));
         assertEquals(List.of("ucd-memory", "ucd-memory-X", "ucd-sysstat"),
                 SnmpDataCollectionDefaultsUpdate.parseStringArray(selectSystemDefGroupNames(sourceId, "Net-SNMP")));
-        assertTrue(isLedgerRecorded(SnmpDataCollectionDefaultsUpdate.UPDATE_ID_UCD_MEMORY_X));
+        assertTrue(isLedgerRecorded("NMS-18291-ucd-memory-X"));
     }
 
     @Test
     public void defersUntilMigrationHasPopulatedTables() throws SQLException {
         // No profiles seeded: the XML->DB migration hasn't produced data yet.
-        new SnmpDataCollectionDefaultsUpdate().execute(connection);
-        assertFalse(isLedgerRecorded(SnmpDataCollectionDefaultsUpdate.UPDATE_ID_UCD_MEMORY_X));
+        assertFalse(new SnmpDataCollectionDefaultsUpdate().execute(connection));
+        assertFalse(isLedgerRecorded("NMS-18291-ucd-memory-X"));
     }
 
     @Test
@@ -179,10 +199,35 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
         insertProfile();
         // No Net-SNMP source at all — admin removed it. Update must be a no-op
         // but still be recorded so it never runs again.
-        new SnmpDataCollectionDefaultsUpdate().execute(connection);
-        assertTrue(isLedgerRecorded(SnmpDataCollectionDefaultsUpdate.UPDATE_ID_UCD_MEMORY_X));
-        assertEquals(-1, SnmpDataCollectionSqlHelper.findSourceIdByName(
-                connection, SnmpDataCollectionDefaultsUpdate.NET_SNMP_SOURCE_NAME));
+        assertTrue(new SnmpDataCollectionDefaultsUpdate().execute(connection));
+        assertTrue(isLedgerRecorded("NMS-18291-ucd-memory-X"));
+        assertEquals(-1, SnmpDataCollectionSqlHelper.findSourceIdByName(connection, "Net-SNMP"));
+    }
+
+    /**
+     * Applied fragments are mirrored to etc_archive/datacollection/updates/
+     * for git-based etc tracking.
+     */
+    @Test
+    public void archivesAppliedFragments() throws SQLException {
+        seedMigratedDatabaseWithoutUcdMemoryX();
+
+        final SnmpDataCollectionDefaultsUpdate update = new SnmpDataCollectionDefaultsUpdate();
+        assertTrue(update.execute(connection));
+        update.archiveAppliedFragments();
+
+        final File archived = new File(tempHome,
+                "etc_archive/" + SnmpDataCollectionDefaultsUpdate.ARCHIVE_UPDATES_DIR + "/nms-18291-ucd-memory-x.xml");
+        assertTrue("fragment should be archived at " + archived, archived.exists());
+
+        // Already-applied updates are not re-archived on the next run.
+        final File marker = new File(archived.getParentFile(), "marker");
+        assertTrue(archived.delete());
+        final SnmpDataCollectionDefaultsUpdate secondRun = new SnmpDataCollectionDefaultsUpdate();
+        assertFalse(secondRun.execute(connection));
+        secondRun.archiveAppliedFragments();
+        assertFalse("nothing applied -> nothing archived", archived.exists());
+        assertFalse(marker.exists());
     }
 
     // --- seeding helpers ---
@@ -212,6 +257,16 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
     private void insertProfile() throws SQLException {
         SnmpDataCollectionSqlHelper.insertProfile(connection, "default", 300, null, "select",
                 "[\"Net-SNMP\"]", null);
+    }
+
+    private void updateSystemDefGroupNames(final int sourceId, final String name, final String json) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE snmp_collection_systemdefs SET mib_group_names = ? WHERE collection_source_id = ? AND name = ?")) {
+            ps.setString(1, json);
+            ps.setInt(2, sourceId);
+            ps.setString(3, name);
+            ps.executeUpdate();
+        }
     }
 
     // --- assertion helpers ---
@@ -256,6 +311,16 @@ public class SnmpDataCollectionDefaultsUpdateIT implements TemporaryDatabaseAwar
             ps.setString(1, updateId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
+            }
+        }
+    }
+
+    private String selectLedgerDescription(final String updateId) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT description FROM snmp_collection_defaults_log WHERE update_id = ?")) {
+            ps.setString(1, updateId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
             }
         }
     }

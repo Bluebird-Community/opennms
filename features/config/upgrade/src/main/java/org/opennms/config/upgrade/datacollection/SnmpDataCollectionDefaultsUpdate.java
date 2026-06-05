@@ -23,18 +23,25 @@ package org.opennms.config.upgrade.datacollection;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.opennms.netmgt.config.datacollection.DatacollectionGroup;
 import org.opennms.netmgt.config.datacollection.Group;
+import org.opennms.netmgt.config.datacollection.SystemDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +49,11 @@ import org.slf4j.LoggerFactory;
  * Applies shipped-default changes to the DB-resident SNMP data collection
  * config for installations that migrated from XML before those defaults
  * changed (see NMS-18291 review on the original XML-only change).
+ *
+ * <p>One update == one bundled datacollection-group fragment under
+ * {@code datacollection-defaults/} plus an entry in {@link #UPDATES}. The
+ * fragment is declarative (see {@link #applyFragment}); all surrounding
+ * machinery — ledger, source lookup, archival — is common.
  *
  * <p>Runs at every startup, after {@link SnmpDataCollectionMigration}, so the
  * ordering works out for every install type in a single boot:
@@ -59,128 +71,234 @@ import org.slf4j.LoggerFactory;
  * deliberately deleted afterwards is never resurrected. Updates only ever add
  * missing rows or append missing references; they never overwrite existing
  * rows, which remain owned by the administrator.
+ *
+ * <p>To keep a git-trackable record of what was changed underneath the
+ * archived etc tree, each applied fragment is also copied to
+ * {@code etc_archive/datacollection/updates/} (see
+ * {@link #archiveAppliedFragments()}, invoked by UpgradeConfigService after
+ * the transaction commits).
  */
 public class SnmpDataCollectionDefaultsUpdate {
 
     private static final Logger LOG = LoggerFactory.getLogger(SnmpDataCollectionDefaultsUpdate.class);
 
-    static final String UPDATE_ID_UCD_MEMORY_X = "NMS-18291-ucd-memory-X";
+    /**
+     * A single shipped-default update: ledger id, bundled fragment resource,
+     * and a human-readable description stored in the ledger.
+     */
+    static final class DefaultConfigUpdate {
+        final String id;
+        final String resourcePath;
+        final String description;
 
-    static final String NET_SNMP_SOURCE_NAME = "Net-SNMP";
-    static final String NET_SNMP_SYSTEMDEF_NAME = "Net-SNMP";
-    static final String UCD_MEMORY_GROUP_NAME = "ucd-memory";
-    static final String UCD_MEMORY_X_GROUP_NAME = "ucd-memory-X";
-    static final String UCD_MEMORY_X_RESOURCE = "/datacollection-defaults/nms-18291-ucd-memory-x.xml";
+        DefaultConfigUpdate(final String id, final String resourcePath, final String description) {
+            this.id = id;
+            this.resourcePath = resourcePath;
+            this.description = description;
+        }
+    }
+
+    /**
+     * Registry of shipped-default updates, in application order.
+     * Add new entries here together with their fragment resource.
+     */
+    static final List<DefaultConfigUpdate> UPDATES = List.of(
+            new DefaultConfigUpdate(
+                    "NMS-18291-ucd-memory-X",
+                    "/datacollection-defaults/nms-18291-ucd-memory-x.xml",
+                    "Add 64-bit UCD-SNMP memory gauges (ucd-memory-X) to the Net-SNMP source and systemDef")
+    );
+
+    static final String ARCHIVE_UPDATES_DIR = "datacollection/updates";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private final List<DefaultConfigUpdate> appliedUpdates = new ArrayList<>();
 
     /**
      * Apply all pending default updates. The caller owns the transaction
      * (commit/rollback), matching {@link SnmpDataCollectionMigration#execute}.
+     *
+     * @return true if at least one update was applied (and should be archived
+     *         via {@link #archiveAppliedFragments()} after commit)
      */
-    public void execute(final Connection conn) throws SQLException {
+    public boolean execute(final Connection conn) throws SQLException {
         if (!isLedgerAvailable(conn)) {
             LOG.warn("snmp_collection_defaults_log table not found — datacollection default updates skipped. "
                     + "Run the installer (bin/install) to bring the database schema up to date.");
-            return;
+            return false;
         }
         if (!isMigrated(conn)) {
             // XML→DB migration hasn't produced any profiles yet (e.g. empty etc).
             // Don't record anything; retry on a later startup once data exists.
             LOG.info("SNMP data collection tables not populated yet — deferring default updates.");
-            return;
+            return false;
         }
 
-        if (!isApplied(conn, UPDATE_ID_UCD_MEMORY_X)) {
-            applyUcdMemoryX(conn);
-            recordApplied(conn, UPDATE_ID_UCD_MEMORY_X);
+        for (final DefaultConfigUpdate update : UPDATES) {
+            if (isApplied(conn, update.id)) {
+                continue;
+            }
+            applyFragment(conn, update);
+            recordApplied(conn, update);
+            appliedUpdates.add(update);
         }
+        return !appliedUpdates.isEmpty();
     }
 
     /**
-     * NMS-18291: add the ucd-memory-X MIB group (64-bit UCD-SNMP memory gauges)
-     * to the "Net-SNMP" source and reference it from the "Net-SNMP" systemDef.
+     * Apply one bundled datacollection-group fragment. The fragment is
+     * declarative:
+     * <ul>
+     *   <li>the {@code datacollection-group} name selects the target
+     *       collection source; if no source of that name exists (removed by an
+     *       administrator), the update is a recorded no-op;</li>
+     *   <li>each {@code <group>} is inserted iff no MIB group of that name
+     *       exists under the source;</li>
+     *   <li>each {@code <systemDef>} is a <em>reference stub</em> for an
+     *       existing systemDef of the same name: of its includeGroup entries,
+     *       only those naming a group defined in this fragment are added to
+     *       the systemDef's group list. Entries naming other groups act as
+     *       position anchors only — a new reference is inserted directly after
+     *       the nearest preceding anchor present in the database list, so
+     *       fragment ordering is preserved without ever re-adding entries an
+     *       administrator removed.</li>
+     * </ul>
      */
-    private void applyUcdMemoryX(final Connection conn) throws SQLException {
-        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(conn, NET_SNMP_SOURCE_NAME);
+    void applyFragment(final Connection conn, final DefaultConfigUpdate update) throws SQLException {
+        final DatacollectionGroup fragment = loadFragment(update.resourcePath);
+
+        final String sourceName = fragment.getName();
+        final int sourceId = SnmpDataCollectionSqlHelper.findSourceIdByName(conn, sourceName);
         if (sourceId < 0) {
             LOG.info("{}: source '{}' not present (removed by an administrator?) — nothing to update.",
-                    UPDATE_ID_UCD_MEMORY_X, NET_SNMP_SOURCE_NAME);
+                    update.id, sourceName);
             return;
         }
 
-        if (mibGroupExists(conn, sourceId, UCD_MEMORY_X_GROUP_NAME)) {
-            LOG.debug("{}: MIB group '{}' already present under source '{}'.",
-                    UPDATE_ID_UCD_MEMORY_X, UCD_MEMORY_X_GROUP_NAME, NET_SNMP_SOURCE_NAME);
-        } else {
-            final Group group = loadBundledGroup(UCD_MEMORY_X_RESOURCE, UCD_MEMORY_X_GROUP_NAME);
-            SnmpDataCollectionSqlHelper.batchInsertMibGroups(conn, sourceId, List.of(group));
-            LOG.info("{}: added MIB group '{}' to source '{}'.",
-                    UPDATE_ID_UCD_MEMORY_X, UCD_MEMORY_X_GROUP_NAME, NET_SNMP_SOURCE_NAME);
+        // Names of groups this fragment defines: only these may be added to systemDefs.
+        final Set<String> fragmentGroupNames = new LinkedHashSet<>();
+
+        for (final Group group : fragment.getGroups()) {
+            fragmentGroupNames.add(group.getName());
+            if (mibGroupExists(conn, sourceId, group.getName())) {
+                LOG.debug("{}: MIB group '{}' already present under source '{}'.",
+                        update.id, group.getName(), sourceName);
+            } else {
+                SnmpDataCollectionSqlHelper.batchInsertMibGroups(conn, sourceId, List.of(group));
+                LOG.info("{}: added MIB group '{}' to source '{}'.", update.id, group.getName(), sourceName);
+            }
         }
 
-        appendGroupToSystemDef(conn, sourceId, NET_SNMP_SYSTEMDEF_NAME,
-                UCD_MEMORY_X_GROUP_NAME, UCD_MEMORY_GROUP_NAME);
+        for (final SystemDef stub : fragment.getSystemDefs()) {
+            mergeSystemDefReferences(conn, update, sourceId, stub, fragmentGroupNames);
+        }
     }
 
     /**
-     * Append {@code groupName} to the systemDef's {@code mib_group_names} JSON
-     * array if it isn't referenced yet. The new entry is placed directly after
-     * {@code afterGroup} when present (mirroring the shipped XML ordering),
-     * otherwise at the end.
+     * Merge a fragment systemDef stub into the existing systemDef row of the
+     * same name: add references to fragment-defined groups that are missing,
+     * positioned after the nearest preceding anchor (see {@link #applyFragment}).
      */
-    private void appendGroupToSystemDef(final Connection conn,
-                                        final int sourceId,
-                                        final String systemDefName,
-                                        final String groupName,
-                                        final String afterGroup) throws SQLException {
-        final SystemDefRow row = findSystemDef(conn, sourceId, systemDefName);
+    private void mergeSystemDefReferences(final Connection conn,
+                                          final DefaultConfigUpdate update,
+                                          final int sourceId,
+                                          final SystemDef stub,
+                                          final Set<String> fragmentGroupNames) throws SQLException {
+        if (stub.getCollect() == null || stub.getCollect().getIncludeGroups() == null
+                || stub.getCollect().getIncludeGroups().isEmpty()) {
+            return;
+        }
+
+        final SystemDefRow row = findSystemDef(conn, sourceId, stub.getName());
         if (row == null) {
-            LOG.info("{}: systemDef '{}' not present under source '{}' (removed by an administrator?) — "
-                    + "MIB group '{}' is not referenced anywhere.",
-                    UPDATE_ID_UCD_MEMORY_X, systemDefName, NET_SNMP_SOURCE_NAME, groupName);
+            LOG.info("{}: systemDef '{}' not present (removed by an administrator?) — references not added.",
+                    update.id, stub.getName());
             return;
         }
 
-        final List<String> groupNames = parseStringArray(row.mibGroupNamesJson);
-        if (groupNames.contains(groupName)) {
-            LOG.debug("{}: systemDef '{}' already references '{}'.",
-                    UPDATE_ID_UCD_MEMORY_X, systemDefName, groupName);
-            return;
+        final List<String> dbGroupNames = parseStringArray(row.mibGroupNamesJson);
+        final List<String> stubEntries = stub.getCollect().getIncludeGroups();
+        boolean changed = false;
+
+        for (int i = 0; i < stubEntries.size(); i++) {
+            final String entry = stubEntries.get(i);
+            if (!fragmentGroupNames.contains(entry)) {
+                continue; // anchor only — never (re-)added
+            }
+            if (dbGroupNames.contains(entry)) {
+                LOG.debug("{}: systemDef '{}' already references '{}'.", update.id, stub.getName(), entry);
+                continue;
+            }
+            // Insert after the nearest preceding stub entry present in the DB list.
+            int insertAt = dbGroupNames.size();
+            for (int j = i - 1; j >= 0; j--) {
+                final int anchorIdx = dbGroupNames.indexOf(stubEntries.get(j));
+                if (anchorIdx >= 0) {
+                    insertAt = anchorIdx + 1;
+                    break;
+                }
+            }
+            dbGroupNames.add(insertAt, entry);
+            changed = true;
+            LOG.info("{}: referenced MIB group '{}' from systemDef '{}'.", update.id, entry, stub.getName());
         }
 
-        final int anchor = groupNames.indexOf(afterGroup);
-        if (anchor >= 0) {
-            groupNames.add(anchor + 1, groupName);
-        } else {
-            groupNames.add(groupName);
+        if (changed) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE snmp_collection_systemdefs SET mib_group_names = ? WHERE id = ?")) {
+                ps.setString(1, DataCollectionGroupMapper.toJson(dbGroupNames));
+                ps.setInt(2, row.id);
+                ps.executeUpdate();
+            }
         }
-
-        try (PreparedStatement ps = conn.prepareStatement(
-                "UPDATE snmp_collection_systemdefs SET mib_group_names = ? WHERE id = ?")) {
-            ps.setString(1, DataCollectionGroupMapper.toJson(groupNames));
-            ps.setInt(2, row.id);
-            ps.executeUpdate();
-        }
-        LOG.info("{}: referenced MIB group '{}' from systemDef '{}'.",
-                UPDATE_ID_UCD_MEMORY_X, groupName, systemDefName);
     }
 
     /**
-     * Load a named group from a bundled datacollection-group XML resource.
+     * Copy the fragments of all updates applied by {@link #execute} into
+     * {@code etc_archive/datacollection/updates/}, so the archived etc tree
+     * carries a record of what changed in the database (git-based etc).
+     * Call after the DB transaction has committed, mirroring
+     * {@link SnmpDataCollectionMigration#archiveFiles()}.
      */
-    Group loadBundledGroup(final String resourcePath, final String groupName) throws SQLException {
+    public void archiveAppliedFragments() {
+        if (appliedUpdates.isEmpty()) {
+            return;
+        }
+        final String opennmsHome = System.getProperty("opennms.home", "/opt/opennms");
+        final Path archiveDir = Paths.get(opennmsHome, "etc_archive").resolve(ARCHIVE_UPDATES_DIR);
+        try {
+            Files.createDirectories(archiveDir);
+        } catch (IOException e) {
+            LOG.error("Failed to create archive directory {} — applied default updates are recorded in "
+                    + "snmp_collection_defaults_log but not mirrored to the archive: {}",
+                    archiveDir, e.getMessage(), e);
+            return;
+        }
+        for (final DefaultConfigUpdate update : appliedUpdates) {
+            final String fileName = Paths.get(update.resourcePath).getFileName().toString();
+            final Path target = archiveDir.resolve(fileName);
+            try (InputStream stream = SnmpDataCollectionDefaultsUpdate.class.getResourceAsStream(update.resourcePath)) {
+                if (stream == null) {
+                    LOG.warn("{}: bundled fragment {} disappeared from classpath — cannot archive.",
+                            update.id, update.resourcePath);
+                    continue;
+                }
+                Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
+                LOG.info("{}: archived applied default update fragment to {}", update.id, target);
+            } catch (IOException e) {
+                LOG.error("{}: failed to archive fragment to {}: {}", update.id, target, e.getMessage(), e);
+            }
+        }
+    }
+
+    /** Load and parse a bundled datacollection-group fragment. */
+    DatacollectionGroup loadFragment(final String resourcePath) throws SQLException {
         try (InputStream stream = SnmpDataCollectionDefaultsUpdate.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
                 throw new SQLException("Bundled datacollection resource not found on classpath: " + resourcePath);
             }
-            final DatacollectionGroup dcGroup = SnmpDataCollectionMigration.unmarshal(
-                    DatacollectionGroup.class, stream, resourcePath);
-            return dcGroup.getGroups().stream()
-                    .filter(g -> groupName.equals(g.getName()))
-                    .findFirst()
-                    .orElseThrow(() -> new SQLException(
-                            "Group '" + groupName + "' not found in bundled resource " + resourcePath));
+            return SnmpDataCollectionMigration.unmarshal(DatacollectionGroup.class, stream, resourcePath);
         } catch (IOException e) {
             throw new SQLException("Failed to read bundled resource " + resourcePath, e);
         }
@@ -215,13 +333,14 @@ public class SnmpDataCollectionDefaultsUpdate {
         }
     }
 
-    private void recordApplied(final Connection conn, final String updateId) throws SQLException {
+    private void recordApplied(final Connection conn, final DefaultConfigUpdate update) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO snmp_collection_defaults_log (update_id) VALUES (?)")) {
-            ps.setString(1, updateId);
+                "INSERT INTO snmp_collection_defaults_log (update_id, description) VALUES (?, ?)")) {
+            ps.setString(1, update.id);
+            ps.setString(2, update.description);
             ps.executeUpdate();
         }
-        LOG.info("Recorded datacollection default update '{}' as applied.", updateId);
+        LOG.info("Recorded datacollection default update '{}' as applied.", update.id);
     }
 
     private boolean mibGroupExists(final Connection conn, final int sourceId, final String name) throws SQLException {

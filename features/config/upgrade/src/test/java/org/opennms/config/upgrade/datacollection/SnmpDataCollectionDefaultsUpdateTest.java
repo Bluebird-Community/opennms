@@ -22,22 +22,26 @@
 package org.opennms.config.upgrade.datacollection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.opennms.netmgt.config.datacollection.DatacollectionGroup;
 import org.opennms.netmgt.config.datacollection.Group;
 import org.opennms.netmgt.config.datacollection.MibObj;
+import org.opennms.netmgt.config.datacollection.SystemDef;
 
 /**
  * Tests for {@link SnmpDataCollectionDefaultsUpdate} that don't need a database.
- * DB behavior (ledger, insert/append, no-resurrection) is covered by
+ * DB behavior (ledger, insert/merge, no-resurrection, archival) is covered by
  * SnmpDataCollectionDefaultsUpdateIT.
  */
 public class SnmpDataCollectionDefaultsUpdateTest {
@@ -45,12 +49,31 @@ public class SnmpDataCollectionDefaultsUpdateTest {
     private static final String NETSNMP_XML =
             "../../../opennms-base-assembly/src/main/filtered/etc/datacollection/netsnmp.xml";
 
-    @Test
-    public void bundledGroupParses() throws SQLException {
-        final Group group = new SnmpDataCollectionDefaultsUpdate().loadBundledGroup(
-                SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_RESOURCE,
-                SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_GROUP_NAME);
+    private static final SnmpDataCollectionDefaultsUpdate.DefaultConfigUpdate UCD_MEMORY_X_UPDATE =
+            SnmpDataCollectionDefaultsUpdate.UPDATES.get(0);
 
+    @Test
+    public void registryEntriesAreWellFormed() throws SQLException {
+        final Set<String> ids = new HashSet<>();
+        for (final SnmpDataCollectionDefaultsUpdate.DefaultConfigUpdate update : SnmpDataCollectionDefaultsUpdate.UPDATES) {
+            assertNotNull(update.id);
+            assertNotNull(update.description);
+            assertTrue("duplicate update id: " + update.id, ids.add(update.id));
+            // every registered fragment must load and parse
+            final DatacollectionGroup fragment = new SnmpDataCollectionDefaultsUpdate().loadFragment(update.resourcePath);
+            assertNotNull(fragment.getName());
+        }
+    }
+
+    @Test
+    public void ucdMemoryXFragmentParses() throws SQLException {
+        final DatacollectionGroup fragment =
+                new SnmpDataCollectionDefaultsUpdate().loadFragment(UCD_MEMORY_X_UPDATE.resourcePath);
+
+        assertEquals("Net-SNMP", fragment.getName());
+        assertEquals(1, fragment.getGroups().size());
+
+        final Group group = fragment.getGroups().get(0);
         assertEquals("ucd-memory-X", group.getName());
         assertEquals("ignore", group.getIfType());
         assertEquals(9, group.getMibObjs().size());
@@ -60,6 +83,12 @@ public class SnmpDataCollectionDefaultsUpdateTest {
                 .collect(Collectors.toList());
         assertEquals(List.of("memTotalSwapX", "memAvailSwapX", "memTotalRealX", "memAvailRealX",
                 "memTotalFreeX", "memSharedX", "memBufferX", "memCachedX", "memSysAvail"), aliases);
+
+        // The systemDef stub: ucd-memory anchors, ucd-memory-X is the reference to add.
+        assertEquals(1, fragment.getSystemDefs().size());
+        final SystemDef stub = fragment.getSystemDefs().get(0);
+        assertEquals("Net-SNMP", stub.getName());
+        assertEquals(List.of("ucd-memory", "ucd-memory-X"), stub.getCollect().getIncludeGroups());
     }
 
     /**
@@ -75,13 +104,13 @@ public class SnmpDataCollectionDefaultsUpdateTest {
         final DatacollectionGroup shippedDcGroup =
                 new SnmpDataCollectionMigration().unmarshal(DatacollectionGroup.class, netsnmpXml);
         final Group shipped = shippedDcGroup.getGroups().stream()
-                .filter(g -> SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_GROUP_NAME.equals(g.getName()))
+                .filter(g -> "ucd-memory-X".equals(g.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("ucd-memory-X group missing from shipped netsnmp.xml"));
 
-        final Group bundled = new SnmpDataCollectionDefaultsUpdate().loadBundledGroup(
-                SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_RESOURCE,
-                SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_GROUP_NAME);
+        final DatacollectionGroup fragment =
+                new SnmpDataCollectionDefaultsUpdate().loadFragment(UCD_MEMORY_X_UPDATE.resourcePath);
+        final Group bundled = fragment.getGroups().get(0);
 
         // Compare via the same mapping the SQL inserts use.
         assertEquals(DataCollectionGroupMapper.mapMibObjects(shipped),
@@ -94,21 +123,22 @@ public class SnmpDataCollectionDefaultsUpdateTest {
     }
 
     /**
-     * The shipped systemDef must reference the new group, so the XML-migration
-     * path matches what appendGroupToSystemDef produces on the DB path.
+     * The shipped systemDef must reference the new group in the same relative
+     * position the fragment stub declares, so the XML-migration path matches
+     * what the DB merge produces.
      */
     @Test
     public void shippedSystemDefReferencesNewGroup() throws SQLException {
         final DatacollectionGroup shippedDcGroup =
                 new SnmpDataCollectionMigration().unmarshal(DatacollectionGroup.class, new File(NETSNMP_XML));
-        final var systemDef = shippedDcGroup.getSystemDefs().stream()
-                .filter(sd -> SnmpDataCollectionDefaultsUpdate.NET_SNMP_SYSTEMDEF_NAME.equals(sd.getName()))
+        final SystemDef systemDef = shippedDcGroup.getSystemDefs().stream()
+                .filter(sd -> "Net-SNMP".equals(sd.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Net-SNMP systemDef missing from shipped netsnmp.xml"));
 
         final List<String> includeGroups = systemDef.getCollect().getIncludeGroups();
-        final int memIdx = includeGroups.indexOf(SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_GROUP_NAME);
-        final int memXIdx = includeGroups.indexOf(SnmpDataCollectionDefaultsUpdate.UCD_MEMORY_X_GROUP_NAME);
+        final int memIdx = includeGroups.indexOf("ucd-memory");
+        final int memXIdx = includeGroups.indexOf("ucd-memory-X");
         assertTrue("ucd-memory should be referenced", memIdx >= 0);
         assertEquals("ucd-memory-X should directly follow ucd-memory", memIdx + 1, memXIdx);
     }
@@ -122,8 +152,28 @@ public class SnmpDataCollectionDefaultsUpdateTest {
         final List<String> parsed = SnmpDataCollectionDefaultsUpdate.parseStringArray("[\"a\",\"b\"]");
         assertNotNull(parsed);
         assertEquals(List.of("a", "b"), parsed);
-        // returned list must be mutable — appendGroupToSystemDef inserts into it
+        // returned list must be mutable — the systemDef merge inserts into it
         parsed.add("c");
         assertEquals(3, parsed.size());
+    }
+
+    @Test
+    public void archiveIsNoopWhenNothingApplied() throws Exception {
+        // Must not create directories or fail when no update was applied.
+        final String previousHome = System.getProperty("opennms.home");
+        final File tempHome = java.nio.file.Files.createTempDirectory("defaults-update-test").toFile();
+        System.setProperty("opennms.home", tempHome.getAbsolutePath());
+        try {
+            final SnmpDataCollectionDefaultsUpdate update = new SnmpDataCollectionDefaultsUpdate();
+            update.archiveAppliedFragments();
+            assertFalse(new File(tempHome,
+                    "etc_archive/" + SnmpDataCollectionDefaultsUpdate.ARCHIVE_UPDATES_DIR).exists());
+        } finally {
+            if (previousHome == null) {
+                System.clearProperty("opennms.home");
+            } else {
+                System.setProperty("opennms.home", previousHome);
+            }
+        }
     }
 }
