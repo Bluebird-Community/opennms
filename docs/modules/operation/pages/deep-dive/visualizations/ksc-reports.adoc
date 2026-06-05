@@ -1,25 +1,10 @@
 
-[[ksc]]
+[[ksc-reports]]
 = KSC Reports
-:description: Learn about the KSC Reports dashlet, which displays an existing Kapersky Security Center (KSC) report in the {page-component-title} operator board.
+:description: Learn about KSC reports in {page-component-title}, which display prefabricated graphical views of collected data.
 
-The KSC Reports dashlet displays an existing https://opennms.discourse.group/t/ksc-report-configuration/2209[KSC report] in the xref:deep-dive/visualizations/opsboard/introduction.adoc[operator board].
 KSC reports provide a way to generate prefabricated graphical views of collected data.
-
-The dashlet displays the report's data in the report's defined order (columns, rows, and so on).
-
-[caption=]
-.KSC dashlet configuration options
-[options="autowidth"]
-|===
-| Field       | Description
-
-| Boost support
-| _Not available_
-
-| KSC-Report
-| Name of the KSC report to display.
-|===
+A report displays its data in its defined order (columns, rows, and so on).
 
 == Configuration
 
