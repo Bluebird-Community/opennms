@@ -1199,6 +1199,12 @@
       <artifactId>org.opennms.features.enlinkd.service.impl</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- Topology Views (custom user-composed topology views) -->
+    <dependency>
+      <groupId>org.opennms</groupId>
+      <artifactId>org.opennms.features.topology-views</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.opennms.features.enlinkd</groupId>
       <artifactId>org.opennms.features.enlinkd.daemon</artifactId>
