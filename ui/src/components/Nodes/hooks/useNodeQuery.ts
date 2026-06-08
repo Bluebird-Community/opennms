@@ -23,6 +23,7 @@
 import { isConvertibleToInteger } from '@/lib/utils'
 import {
   Category,
+  ExtendedSearchValue,
   MatchType,
   MonitoringLocation,
   NodeQueryExtendedSearchParams,
@@ -81,7 +82,6 @@ export const useNodeQuery = () => {
 
   const getDefaultNodeQueryExtendedSearchParams = () => {
     return {
-      ipAddress: '',
       foreignSourceParams: getDefaultNodeQueryForeignSourceParams(),
       snmpParams: getDefaultNodeQuerySnmpParams(),
       sysParams: getDefaultNodeQuerySysParams()
@@ -97,71 +97,69 @@ export const useNodeQuery = () => {
       selectedServices: [] as string[],
       selectedFlows: [] as string[],
       selectedMonitoringLocations: [] as MonitoringLocation[],
+      ipAddress: '',
+      topology: '',
       extendedSearch: getDefaultNodeQueryExtendedSearchParams()
     } as NodeQueryFilter
   }
 
-  const getObjectValues = (obj?: any): string[] => {
-    if (obj) {
-      const names = Object.getOwnPropertyNames(obj)
-      const values = names.map(name => String((obj as any)[name] || ''))
-
-      return values
-    }
-
-    return []
+  const EXTENDED_SEARCH_DISPLAY_NAMES: Record<string, string> = {
+    foreignId: 'Foreign ID',
+    foreignSource: 'Foreign Source',
+    foreignSourceId: 'Foreign Source:Foreign ID',
+    snmpIfAlias: 'SNMP Alias',
+    snmpIfDescription: 'SNMP Description',
+    snmpIfIndex: 'SNMP Index',
+    snmpIfName: 'SNMP Name',
+    snmpIfType: 'SNMP Type',
+    physAddr: 'MAC Address',
+    sysContact: 'Sys Contact',
+    sysDescription: 'Sys Description',
+    sysLocation: 'Sys Location',
+    sysName: 'Sys Name',
+    sysObjectId: 'Sys Object ID'
   }
 
-  const hasAnyExtendedSearchValues = (extendedSearch?: NodeQueryExtendedSearchParams) => {
-    if (extendedSearch) {
-      if (!!extendedSearch.ipAddress && extendedSearch.ipAddress.length > 0) {
-        return true
-      }
+  // match-type qualifier fields — not search terms, excluded from chips
+  const EXTENDED_SEARCH_SKIP_FIELDS = new Set(['snmpMatchType', 'sysMatchType'])
 
-      if (extendedSearch.foreignSourceParams) {
-        const values = getObjectValues(extendedSearch.foreignSourceParams)
-
-        if (values.some(s => s && s.length > 0)) {
-          return true
-        }
-      }
-
-      if (extendedSearch.snmpParams) {
-        const values = getObjectValues(extendedSearch.snmpParams)
-
-        if (values.some(s => s && s.length > 0)) {
-          return true
-        }
-      }
-
-      if (extendedSearch.sysParams) {
-        const values = getObjectValues(extendedSearch.sysParams)
-
-        if (values.some(s => s && s.length > 0)) {
-          return true
-        }
-      }
-
+  const getExtendedSearchValues = (extendedSearch?: NodeQueryExtendedSearchParams): ExtendedSearchValue[] => {
+    if (!extendedSearch) {
+      return []
     }
 
-    return false
+    const values: ExtendedSearchValue[] = []
+
+    const addGroupValues = (group: keyof NodeQueryExtendedSearchParams, obj: Record<string, unknown> | undefined) => {
+      if (!obj) {
+        return
+      }
+      for (const key of Object.keys(obj)) {
+        if (EXTENDED_SEARCH_SKIP_FIELDS.has(key)) {
+          continue
+        }
+        const val = String(obj[key] || '')
+        if (val) {
+          values.push({ name: EXTENDED_SEARCH_DISPLAY_NAMES[key] ?? key, value: val, group, key })
+        }
+      }
+    }
+
+    addGroupValues('foreignSourceParams', extendedSearch.foreignSourceParams as unknown as Record<string, unknown>)
+    addGroupValues('snmpParams', extendedSearch.snmpParams as unknown as Record<string, unknown>)
+    addGroupValues('sysParams', extendedSearch.sysParams as unknown as Record<string, unknown>)
+
+    return values
   }
 
   const addIpAddressToQueryFilter = (filter: NodeQueryFilter, ipAddress: string) => {
     const ip = parseIplike(ipAddress)
 
     if (ip) {
-      const extended = {
-        ...filter.extendedSearch,
+      return {
+        ...filter,
         ipAddress: ip
       }
-
-      const filterWithIp = {
-        ...filter,
-        extendedSearch: extended
-      }
-
-      return filterWithIp
     }
 
     return filter
@@ -223,7 +221,8 @@ export const useNodeQuery = () => {
     'sysDescription',
     'sysLocation',
     'sysName',
-    'sysObjectId'
+    'sysObjectId',
+    'topology'
   ])
 
   /**
@@ -262,7 +261,7 @@ export const useNodeQuery = () => {
 
     const ip = parseIplike(queryObject)
     if (ip) {
-      filter.extendedSearch.ipAddress = ip
+      filter.ipAddress = ip
     }
 
     // Individual SNMP params take priority over legacy snmpParm/snmpParmValue
@@ -306,10 +305,13 @@ export const useNodeQuery = () => {
       filter.selectedServices = serviceNames
     }
 
+    if (queryObject.topology) {
+      filter.topology = queryObject.topology
+    }
+
     // listInterfaces: intentionally not handled — the Vue node list page has no interface-listing mode,
     // and already displays the primary interface in the node table.
     // service=<id>: numeric service ID is not resolved here; PR 3 pages will send monitoredService=<name>.
-    // TODO topology: not supported in the v2 API, out of scope.
     // NOTE nodeId: not handled here. Once Vue Node Details (/node/:id) has parity with element/node.jsp,
     //   update quicksearch-box.jsp to link to the Vue route instead of element/node.jsp?node={id}.
 
@@ -325,7 +327,7 @@ export const useNodeQuery = () => {
     getDefaultNodeQueryForeignSourceParams,
     getDefaultNodeQuerySnmpParams,
     getDefaultNodeQuerySysParams,
-    hasAnyExtendedSearchValues,
+    getExtendedSearchValues,
     queryStringHasTrackedValues
   }
 }
@@ -335,7 +337,7 @@ export const useNodeQuery = () => {
  */
 const buildNodeStructureQuery = (filter: NodeQueryFilter) => {
   const searchTerm = sanitizeSearchTerm(filter.searchTerm)
-  const ipAddress = sanitizeSearchTerm(filter.extendedSearch.ipAddress)
+  const ipAddress = sanitizeSearchTerm(filter.ipAddress)
 
   const searchQuery = buildSearchQuery(searchTerm)
   const ipAddressQuery = buildIpAddressQuery(ipAddress)
@@ -346,10 +348,11 @@ const buildNodeStructureQuery = (filter: NodeQueryFilter) => {
   const snmpQuery = buildSnmpQuery(filter.extendedSearch.snmpParams)
   const sysQuery = buildSysQuery(filter.extendedSearch.sysParams)
   const serviceQuery = buildServiceQuery(filter.selectedServices ?? [])
+  const topologyQuery = buildTopologyQuery(filter.topology)
 
   // TODO: May need more search term sanitizing and/or restrict characters in the FeatherInput above
   const querySeparator = getFiqlSetOperator(SetOperator.Intersection)
-  const query = [searchQuery, ipAddressQuery, foreignSourceQuery, snmpQuery, sysQuery, categoryQuery, flowsQuery, locationQuery, serviceQuery].filter(s => s.length > 0).join(querySeparator)
+  const query = [searchQuery, ipAddressQuery, foreignSourceQuery, snmpQuery, sysQuery, categoryQuery, flowsQuery, locationQuery, serviceQuery, topologyQuery].filter(s => s.length > 0).join(querySeparator)
 
   // additional fields to search on for main searchTerm
   // these will be added as SetOperator.Union (i.e. 'or')
@@ -368,7 +371,7 @@ const buildSearchQuery = (searchTerm: string) => {
   if (searchTerm?.length > 0) {
     const startStar = searchTerm.startsWith('*') ? '' : '*'
     const endStar = searchTerm.endsWith('*') ? '' : '*'
-    return `node.label==${startStar}${searchTerm}${endStar}`
+    return `label==${startStar}${searchTerm}${endStar}`
   }
 
   return ''
@@ -409,6 +412,10 @@ const buildCategoryQuery = (selectedCategories: Category[], categoryMode: SetOpe
 }
 
 const buildFlowsQuery = (selectedFlows: string[]) => {
+  if (selectedFlows.some(f => f === 'No Flows')) {
+    return 'lastIngressFlow==null;lastEgressFlow==null'
+  }
+
   const hasIngress = selectedFlows.some(f => f === 'Ingress')
   const hasEgress = selectedFlows.some(f => f === 'Egress')
 
@@ -556,6 +563,16 @@ const buildSysQuery = (sysParams?: NodeQuerySysParams) => {
     }
   }
 
+  return ''
+}
+
+const buildTopologyQuery = (topology?: string) => {
+  const term = sanitizeSearchTerm(topology)
+  if (term.length > 0) {
+    const startStar = term.startsWith('*') ? '' : '*'
+    const endStar = term.endsWith('*') ? '' : '*'
+    return `topology==${startStar}${term}${endStar}`
+  }
   return ''
 }
 
