@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:onmsgi="http://xmlns.opennms.org/xsd/spring/onms-osgi"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+           http://xmlns.opennms.org/xsd/spring/onms-osgi
+           http://xmlns.opennms.org/xsd/spring/onms-osgi.xsd">
+
+    <!-- Custom topology views are persisted in the generic JSON key-value
+         store. Reuse the existing 'jsonStore' bean (the shared PostgresJsonStore
+         wired into the DAO context) rather than declaring our own: declaring a
+         second JsonStore bean makes type-based @Autowired ambiguous (e.g. in
+         ResourceRestService), and overriding the 'jsonStore' id with an
+         onmsgi:reference breaks other consumers (snmpConfigDao). Views are a
+         core-webapp feature, always backed by the OpenNMS database. -->
+    <bean id="topologyViewDao" class="org.opennms.netmgt.topology.views.impl.TopologyViewJsonStore" init-method="init">
+        <constructor-arg ref="jsonStore" />
+    </bean>
+    <onmsgi:service interface="org.opennms.netmgt.topology.views.TopologyViewDao" ref="topologyViewDao" />
+
+</beans>
