@@ -92,7 +92,7 @@ describe('Nodes useNodeQuery test', () => {
       [ 'true', { flows: 'true' }, SetOperator.Union, ['Ingress', 'Egress']],
       [ 'ingress', { flows: 'ingress' }, SetOperator.Union, ['Ingress']],
       [ 'egress', { flows: 'egress' }, SetOperator.Union, ['Egress']],
-      [ 'false', { flows: 'false' }, SetOperator.Union, []],
+      [ 'false', { flows: 'false' }, SetOperator.Union, ['No Flows']],
       [ 'invalid', { flows: 'whatever' }, SetOperator.Union, []],
       [ 'empty', { flows: '' }, SetOperator.Union, []]
     ]) (
@@ -121,7 +121,7 @@ describe('Nodes useNodeQuery test', () => {
         const filter = buildNodeQueryFilterFromQueryString(queryObject, categories, monitoringLocations)
 
         const expected = getDefaultNodeQueryFilter()
-        expected.extendedSearch.ipAddress = expectedIp
+        expected.ipAddress = expectedIp
         expect(filter).toEqual(expected)
       }
     )
@@ -414,7 +414,7 @@ describe('Nodes useNodeQuery test', () => {
         }
       ],
       [
-        'search term, overrides _s with correct node.label FIQL query',
+        'search term, overrides _s with correct label FIQL query',
         {
           limit: 10,
           offset: 20,
@@ -427,7 +427,7 @@ describe('Nodes useNodeQuery test', () => {
         {
           limit: 10,
           offset: 20,
-          _s: 'node.label==*Node1*'
+          _s: 'label==*Node1*'
         }
       ]
     ]) (
