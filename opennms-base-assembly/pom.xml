@@ -1199,6 +1199,19 @@
       <artifactId>org.opennms.features.enlinkd.service.impl</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- Topology Assets (view background images, custom node icons) + the
+         Postgres BlobStore impl it stores bytes in (only the no-op blob store
+         ships in lib otherwise). -->
+    <dependency>
+      <groupId>org.opennms</groupId>
+      <artifactId>org.opennms.features.topology-assets</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.opennms.features.distributed</groupId>
+      <artifactId>org.opennms.features.distributed.kv-store.blob.postgres</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.opennms.features.enlinkd</groupId>
       <artifactId>org.opennms.features.enlinkd.daemon</artifactId>
