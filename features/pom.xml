@@ -20,6 +20,9 @@
     <!-- Topologies -->
     <module>topologies</module>
 
+    <!-- Topology view image assets (backgrounds, custom node icons) -->
+    <module>topology-assets</module>
+
     <!-- ActiveMQ broker -->
     <module>activemq</module>
 
