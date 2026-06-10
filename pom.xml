@@ -1779,7 +1779,7 @@
     <eclipseGeminiVersion>2.1.0.RELEASE</eclipseGeminiVersion>
     <eclipselinkVersion>2.5.1</eclipselinkVersion>
     <eddsaVersion>0.3.0</eddsaVersion>
-    <elasticsearchNettyVersion>4.1.133.Final</elasticsearchNettyVersion>
+    <elasticsearchNettyVersion>4.1.135.Final</elasticsearchNettyVersion>
     <elasticsearchDriftPluginVersion>2.0.5</elasticsearchDriftPluginVersion>
     <elasticsearchTargetVersion>7.17.9</elasticsearchTargetVersion>
     <elasticsearchClientVersion>8.18.1</elasticsearchClientVersion>
@@ -1914,7 +1914,7 @@
     <minaVersion>2.2.7</minaVersion>
     <mockitoVersion>3.12.4</mockitoVersion>
     <netty3Version>3.10.6.Final</netty3Version>
-    <netty4Version>4.2.13.Final</netty4Version>
+    <netty4Version>4.1.135.Final</netty4Version>
     <newtsVersion>3.0.0</newtsVersion>
     <newtsOsgiVersion>3.0.0</newtsOsgiVersion>
     <paxCdiVersion>1.1.4</paxCdiVersion>
