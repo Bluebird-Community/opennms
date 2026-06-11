@@ -31,7 +31,6 @@ import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opennms.netmgt.integrations.R.RScriptException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -40,7 +39,7 @@ public class LoadDataHWForecastTest extends LoadData {
 
 
     @Test
-    public void testFirst() throws RScriptException, IOException {
+    public void testFirst() throws IOException {
         Entry[] entries = getFirst();
         Assert.assertEquals(74,entries.length);
         RowSortedTable<Long, String, Double> table = TreeBasedTable.create();
@@ -85,7 +84,7 @@ public class LoadDataHWForecastTest extends LoadData {
     }
 
     @Test
-    public void testSecond() throws RScriptException, IOException {
+    public void testSecond() throws IOException {
         Entry[] entries = getSecond();
         Assert.assertEquals(74,entries.length);
         RowSortedTable<Long, String, Double> table = TreeBasedTable.create();
@@ -122,7 +121,7 @@ public class LoadDataHWForecastTest extends LoadData {
     }
 
     @Test
-    public void testThird() throws RScriptException, IOException {
+    public void testThird() throws IOException {
         Entry[] entries = getThird();
         RowSortedTable<Long, String, Double> table = TreeBasedTable.create();
         long i = 0L;

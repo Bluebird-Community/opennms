@@ -32,9 +32,6 @@
           <!-- not included in base assembly tar -->
           <!-- <include>lib/*wsman-asset-provisioning-adapter*</include> -->
 
-          <!-- ticketing plugins -->
-          <include>etc/rt.properties</include>
-          <include>lib/*integration-rt*</include>
         </includes>
       </unpackOptions>
     </dependencySet>

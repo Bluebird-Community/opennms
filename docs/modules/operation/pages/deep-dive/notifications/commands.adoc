@@ -14,18 +14,6 @@ You can also create custom commands to send notifications to a platform of your 
 |===
 | Command       | Description
 
-| callHomePhone
-| Calls the home phone number configured in the user's contact information. +
-Uses the in-process Asterisk notification strategy.
-
-| callMobilePhone
-| Calls the mobile phone number configured in the user's contact information. +
-Uses the in-process Asterisk notification strategy.
-
-| callWorkPhone
-| Calls the work phone number configured in the user's contact information. +
-Uses the in-process Asterisk notification strategy.
-
 | ircCat
 | Conveys a notice to an instance of the IRCcat Internet Relay Chat bot. +
 Uses the in-process IRCcat notification strategy.

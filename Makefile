@@ -145,7 +145,7 @@ help:
 	@echo "  minion-e2e:            Run end to end test suite against the Minion components. Specific tests can be set with: MINION_E2E_TESTS=MyTestIT-1,MyTestIT-2, ..."
 	@echo "  sentinel-e2e:          Run end to end test suite against the Sentinel components. Specific tests can be set with: SENTINEL_E2E_TESTS=MyTestIT-1,MyTestIT-2, ..."
 	@echo "  unit-tests:            Run full unit test suite, you can run specific tests in a projects with:"
-	@echo "                           U_TESTS=org.opennms.netmgt.provision.detector.dhcp.DhcpDetectorTest TEST_PROJECTS=org.opennms:opennms-detector-dhcp"
+	@echo "                           U_TESTS=org.opennms.netmgt.provision.detector.BgpSessionDetectorTest TEST_PROJECTS=org.opennms:opennms-detector-simple"
 	@echo "  integration-tests:     Run full integration test suit, you can run specific integration tests in a project with:"
 	@echo "                           I_TESTS=org.opennms.netmgt.snmpinterfacepoller.SnmpPollerIT TEST_PROJECTS=org.opennms:opennms-services"
 	@echo "  javadocs:              Generate Java docs"

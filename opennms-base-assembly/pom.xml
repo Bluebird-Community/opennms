@@ -382,10 +382,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
-      <artifactId>opennms-detector-dhcp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms</groupId>
       <artifactId>opennms-detector-generic</artifactId>
     </dependency>
     <dependency>
@@ -481,11 +477,6 @@
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-vmware</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms</groupId>
-      <artifactId>opennms-asterisk</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -696,10 +687,6 @@
       <groupId>org.opennms.dependencies</groupId>
       <artifactId>spring-web-dependencies</artifactId>
       <type>pom</type>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features</groupId>
-      <artifactId>org.opennms.features.charts</artifactId>
     </dependency>
     <dependency>
       <groupId>org.opennms.features.status</groupId>
@@ -1007,10 +994,6 @@
       <groupId>io.pyroscope</groupId>
       <artifactId>agent</artifactId>
       <version>${pyroscopeVersion}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features</groupId>
-      <artifactId>org.opennms.features.request-tracker</artifactId>
     </dependency>
     <dependency>
       <groupId>org.opennms</groupId>

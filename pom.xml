@@ -129,7 +129,6 @@
     <module>opennms-web-dependencies</module>
     <module>opennms-webapp</module>
     <module>opennms-webapp-rest</module>
-    <module>opennms-asterisk</module>
     <module>opennms-config-dao</module>
   </modules>
   <build>
@@ -2725,16 +2724,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms.features</groupId>
-        <artifactId>org.opennms.features.charts</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.features</groupId>
-        <artifactId>org.opennms.features.dhcpd</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.features</groupId>
         <artifactId>org.opennms.features.discovery</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -2771,11 +2760,6 @@
       <dependency>
         <groupId>org.opennms.features</groupId>
         <artifactId>org.opennms.features.mib-compiler</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.features</groupId>
-        <artifactId>org.opennms.features.request-tracker</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -3347,11 +3331,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms</groupId>
-        <artifactId>opennms-detector-dhcp</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms</groupId>
         <artifactId>opennms-detector-generic</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -3708,17 +3687,6 @@
       <dependency>
         <groupId>org.opennms.dependencies</groupId>
         <artifactId>smack-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms</groupId>
-        <artifactId>opennms-asterisk</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
-        <artifactId>asterisk-dependencies</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
       </dependency>

@@ -29,9 +29,6 @@
           <!-- not included in base assembly tar -->
           <!-- <exclude>lib/*wsman-asset-provisioning-adapter*</exclude> -->
 
-          <!-- ticketing plugins -->
-          <exclude>etc/rt.properties</exclude>
-          <exclude>lib/*integration-rt*</exclude>
         </excludes>
       </unpackOptions>
     </dependencySet>

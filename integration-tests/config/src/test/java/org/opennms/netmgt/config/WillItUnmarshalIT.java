@@ -61,7 +61,6 @@ import org.opennms.netmgt.alarmd.northbounder.syslog.SyslogNorthbounderConfig;
 import org.opennms.netmgt.config.actiond.ActiondConfiguration;
 import org.opennms.netmgt.config.ami.AmiConfig;
 import org.opennms.netmgt.config.categories.Catinfo;
-import org.opennms.netmgt.config.charts.ChartConfiguration;
 import org.opennms.netmgt.config.collectd.CollectdConfiguration;
 import org.opennms.netmgt.config.tokenauth.TokenAuthConfiguration;
 import org.opennms.netmgt.config.collectd.jmx.JmxDatacollectionConfig;
@@ -206,7 +205,6 @@ public class WillItUnmarshalIT {
         addFile(Source.CONFIG, "availability-reports.xml", OpennmsReports.class, false, null);
         addFile(Source.CONFIG, "bsf-northbounder-configuration.xml", BSFNorthbounderConfig.class, true, null);
         addFile(Source.CONFIG, "categories.xml", Catinfo.class, false, null);
-        addFile(Source.CONFIG, "chart-configuration.xml", ChartConfiguration.class, true, null);
         addFile(Source.CONFIG, "collectd-configuration.xml", CollectdConfiguration.class, true, null);
         addFile(Source.CONFIG, "token-auth-configuration.xml", TokenAuthConfiguration.class, true, null);
         addFile(Source.CONFIG, "database-reports.xml", LegacyLocalReportsDefinition.class, false, null);

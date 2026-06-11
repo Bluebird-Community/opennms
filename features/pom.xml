@@ -28,9 +28,6 @@
     <!-- Alarms -->
     <module>alarms</module>
 
-    <!-- DHCP integration -->
-    <module>dhcpd</module>
-
     <!-- OpenNMS Provisioning API and implementations -->
     <module>provisioning</module>
 
@@ -66,7 +63,6 @@
 
     <!-- OpenNMS Ticketing API and implementations -->
     <module>ticketing</module>
-    <module>request-tracker</module>
 
     <!-- OpenNMS REST -->
     <module>rest</module>
@@ -162,9 +158,6 @@
 
     <!-- Event Integration Facility Adapter -->
     <module>eif-adapter</module>
-
-    <!-- JFreeChart charts -->
-    <module>charts</module>
 
     <module>jest</module>
     <module>dnsresolver</module>
