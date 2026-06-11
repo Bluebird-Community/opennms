@@ -40,9 +40,6 @@ Also, for a user with `ROLE_FILESYSTEM_EDITOR` to use the UI, they need `ROLE_US
 | ROLE_DELEGATE
 | Permissions to perform actions (such as acknowledging an alarm) on behalf of another user.
 
-| ROLE_DEVICE_CONFIG_BACKUP
-| Permissions to view and trigger device configuration backups.
-
 | ROLE_FLOW_MANAGER
 | Permissions to edit flow classifications.
 
