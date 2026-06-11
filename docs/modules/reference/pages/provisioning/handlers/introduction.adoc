@@ -68,7 +68,7 @@ NOTE: You can also configure thread pool sizes via the xref:development:rest/con
 [[create-req-def]]
 == Create an external requisition
 
-An external requisition defines the URL, schedule, and rescan behaviour to retrieve provisioning information from external sources such as HTTP(S), VMWare, and DNS protocol, for up-to-date inventory data.
+An external requisition defines the URL, schedule, and rescan behaviour to retrieve provisioning information from external sources such as HTTP(S) and DNS protocol, for up-to-date inventory data.
 
 OpenNMS constructs the URL from the parameters (host, zone, foreign source) associated with the type of external source the user defines.
 

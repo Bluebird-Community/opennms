@@ -475,11 +475,6 @@
       <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>org.opennms</groupId>
-      <artifactId>opennms-vmware</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.opennms.features.events</groupId>
       <artifactId>org.opennms.features.events.daemon</artifactId>
     </dependency>

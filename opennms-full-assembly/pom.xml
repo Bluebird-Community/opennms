@@ -404,7 +404,6 @@
                 <feature>opennms-kafka-producer</feature>
                 <feature>opennms-kafka-consumer</feature>
                 <feature>opennms-grpc-exporter</feature>
-                <feature>opennms-zenith-connect</feature>
                 <feature>opennms-model</feature>
                 <feature>opennms-measurements-shell</feature>
                 <feature>opennms-notifications-shell</feature>
@@ -438,7 +437,6 @@
                 <feature>opennms-topology-runtime-base</feature>
                 <feature>opennms-topology-runtime-browsers</feature>
                 <feature>opennms-topology-runtime-linkd</feature>
-                <feature>opennms-topology-runtime-vmware</feature>
                 <feature>opennms-topology-runtime-application</feature>
                 <feature>opennms-topology-runtime-bsm</feature>
                 <feature>opennms-topology-runtime-graphml</feature>

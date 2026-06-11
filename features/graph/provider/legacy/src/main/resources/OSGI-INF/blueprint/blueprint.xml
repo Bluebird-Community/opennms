@@ -11,23 +11,11 @@
 
     <cm:property-placeholder id="legacyConfiguration" persistent-id="org.opennms.features.graph.provider.legacy" update-strategy="reload">
         <cm:default-properties>
-            <cm:property name="vmware.cacheInvalidateInterval" value="300" /> <!-- Seconds -->
             <cm:property name="linkd.cacheInvalidateInterval" value="300" /> <!-- Seconds -->
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <reference id="vmwareMetaTopologyProvider" interface="org.opennms.features.topology.api.topo.MetaTopologyProvider" availability="mandatory" filter="(label=VMware)"/>
     <reference id="enlinkdMetaTopologyProvider" interface="org.opennms.features.topology.api.topo.MetaTopologyProvider" availability="mandatory" filter="(label=Enhanced Linkd)"/>
-
-    <!-- Vmware Adapter -->
-    <bean id="vmwareGraphProvider" class="org.opennms.netmgt.graph.provider.legacy.LegacyGraphProvider">
-        <argument ref="vmwareMetaTopologyProvider"/>
-    </bean>
-    <service interface="org.opennms.netmgt.graph.api.service.GraphProvider" ref="vmwareGraphProvider">
-        <service-properties>
-            <entry key="cacheInvalidateInterval" value="${vmware.cacheInvalidateInterval}" />
-        </service-properties>
-    </service>
 
     <!-- Enhanced Linkd Adapter -->
     <bean id="enlinkdGraphContainer" class="org.opennms.netmgt.graph.provider.legacy.LegacyGraphContainer">

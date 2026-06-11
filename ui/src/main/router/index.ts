@@ -26,10 +26,6 @@ import Home from '@/containers/Home.vue'
 import FileEditor from '@/containers/FileEditor.vue'
 import Graphs from '@/components/Resources/Graphs.vue'
 import Resources from '@/components/Resources/Resources.vue'
-import ZenithConnect from '@/containers/ZenithConnect.vue'
-import ZenithConnectView from '@/components/ZenithConnect/ZenithConnectView.vue'
-import ZenithConnectRegister from '@/components/ZenithConnect/ZenithConnectRegister.vue'
-import ZenithConnectRegisterResult from '@/components/ZenithConnect/ZenithConnectRegisterResult.vue'
 import useRole from '@/composables/useRole'
 import useSnackbar from '@/composables/useSnackbar'
 import useSpinner from '@/composables/useSpinner'
@@ -65,8 +61,6 @@ const isLegacyPlugin = (plugin: Plugin) => {
 
   return false
 }
-
-const zenithConnectEnabled = computed<boolean>(() => menuStore.value?.mainMenu?.zenithConnectEnabled ?? false)
 
 const checkSnmpRole = (from: RouteLocationNormalized, isLookup?: boolean) => {
   if (!snmpRole.value) {
@@ -272,45 +266,6 @@ const router = createRouter({
           whenever(rolesAreLoaded, () => checkRoles())
         }
       }
-    },
-    {
-      path: '/zenith-connect',
-      name: 'ZenithConnect',
-      component: ZenithConnect,
-      beforeEnter: (to, from) => {
-        const checkZenith = () => {
-          if (!zenithConnectEnabled.value) {
-            showSnackBar({ msg: 'Zenith Connect must be enabled.' })
-            router.push(from.path)
-          }
-        }
-
-        if (rolesAreLoaded.value && !!menuStore.value?.mainMenu?.baseHref) {
-          checkZenith()
-        } else {
-          whenever(
-            () => rolesAreLoaded && !!menuStore.value?.mainMenu?.baseHref,
-            () => checkZenith()
-          )
-        }
-      },
-      children: [
-        {
-          path: '',
-          name: 'View',
-          component: ZenithConnectView
-        },
-        {
-          path: 'register',
-          name: 'Register',
-          component: ZenithConnectRegister
-        },
-        {
-          path: 'register-result',
-          name: 'Register Result',
-          component: ZenithConnectRegisterResult
-        }
-      ]
     },
     {
       path: '/event-config',

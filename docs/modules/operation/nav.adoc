@@ -202,7 +202,6 @@
 ** xref:reference:karaf-shell/karaf-shell.adoc[]
 
 ** xref:deep-dive/grpc-exporter/grpc-exporter.adoc[]
-** xref:deep-dive/zenith-connect/introduction.adoc[]
 
 ** xref:deep-dive/meta-data.adoc[]
 ** xref:deep-dive/search.adoc[]

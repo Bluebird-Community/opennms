@@ -164,7 +164,6 @@
     <module>karaf-health</module>
     <module>perspectivepoller</module>
     <module>openconfig</module>
-    <module>zenith-connect</module>
     <module>ui-extension</module>
     <!-- Configuration Manager -->
     <module>config</module>
