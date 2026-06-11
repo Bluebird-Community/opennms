@@ -100,17 +100,20 @@ public class TopologyViewRestService {
         if (dto == null || dto.getName() == null || dto.getName().trim().isEmpty()) {
             throw webException(Response.Status.BAD_REQUEST, "A view name is required");
         }
+        // Normalize once; validation, collision check, persistence and error
+        // messages all use the trimmed name so "Core" and "Core " can't coexist.
+        final String name = dto.getName().trim();
         if (dto.getDefinition() == null) {
             throw webException(Response.Status.BAD_REQUEST, "A view definition is required");
         }
-        if (getDao().findByName(dto.getName()) != null) {
-            throw webException(Response.Status.CONFLICT, "A view named '" + dto.getName() + "' already exists");
+        if (getDao().findByName(name) != null) {
+            throw webException(Response.Status.CONFLICT, "A view named '" + name + "' already exists");
         }
 
         final TopologyView view = new TopologyView();
-        view.setName(dto.getName());
+        view.setName(name);
         view.setDefinition(writeDefinition(dto.getDefinition()));
-        view.setOwner(ownerOf(securityContext, dto));
+        view.setOwner(ownerOf(securityContext));
         view.setCreated(new Date());
 
         final String id = getDao().save(view);
@@ -125,12 +128,15 @@ public class TopologyViewRestService {
             throw webException(Response.Status.BAD_REQUEST, "A view body is required");
         }
 
-        if (dto.getName() != null && !dto.getName().trim().isEmpty() && !dto.getName().equals(view.getName())) {
-            final TopologyView collision = getDao().findByName(dto.getName());
-            if (collision != null && !collision.getId().equals(id)) {
-                throw webException(Response.Status.CONFLICT, "A view named '" + dto.getName() + "' already exists");
+        if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
+            final String name = dto.getName().trim(); // same normalization as create
+            if (!name.equals(view.getName())) {
+                final TopologyView collision = getDao().findByName(name);
+                if (collision != null && !collision.getId().equals(id)) {
+                    throw webException(Response.Status.CONFLICT, "A view named '" + name + "' already exists");
+                }
+                view.setName(name);
             }
-            view.setName(dto.getName());
         }
         if (dto.getDefinition() != null) {
             view.setDefinition(writeDefinition(dto.getDefinition()));
@@ -188,11 +194,16 @@ public class TopologyViewRestService {
         }
     }
 
-    private static String ownerOf(final SecurityContext securityContext, final TopologyViewDTO dto) {
-        if (securityContext != null && securityContext.getUserPrincipal() != null) {
-            return securityContext.getUserPrincipal().getName();
+    /**
+     * The owner is always the authenticated principal -- the request body's
+     * owner field is never trusted. A missing principal means the security
+     * layer didn't run; reject rather than persist an unattributed view.
+     */
+    private static String ownerOf(final SecurityContext securityContext) {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            throw webException(Response.Status.UNAUTHORIZED, "An authenticated user is required");
         }
-        return dto.getOwner();
+        return securityContext.getUserPrincipal().getName();
     }
 
     private TopologyViewDao getDao() {

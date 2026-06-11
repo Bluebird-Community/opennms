@@ -13,7 +13,8 @@
     Persistence and REST support for custom (user-composed) topology views.
     A view is a named document describing a free-form canvas of OpenNMS
     nodes, free-standing labels, and user-drawn edges; this module owns
-    the entity, DAO, and Liquibase schema. The JAX-RS resource that
+    the document model and JsonStore-backed DAO (kvstore_jsonb,
+    context "topology-views" -- no dedicated tables). The JAX-RS resource that
     exposes /api/v2/topology/views lives in opennms-webapp-rest.
   </description>
   <build>

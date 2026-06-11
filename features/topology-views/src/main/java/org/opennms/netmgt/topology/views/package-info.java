@@ -25,7 +25,8 @@
  *
  * <p>A topology view is a named document describing a free-form canvas
  * of nodes, edges, and free-standing text labels assembled by an
- * operator. Views are stored in a small dedicated table; the canvas
+ * operator. Views are stored in the shared JSON key-value store
+ * ({@code kvstore_jsonb}, context {@code topology-views}); the canvas
  * model itself lives as a JSON document column so the schema evolves
  * with the front-end without database migrations.
  */

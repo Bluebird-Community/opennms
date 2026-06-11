@@ -79,7 +79,8 @@ public class TopologyViewRestServiceIT extends AbstractSpringJerseyRestTestCase 
     @Override
     protected void afterServletStart() throws Exception {
         MockLogAppender.setupLogging(true, "WARN");
-        // Stamp a principal so the resource can record an owner (a NOT NULL column).
+        // Stamp a principal: the resource records the authenticated user as the
+        // view's owner (and rejects requests without one).
         setUser("admin", new String[] { "ROLE_ADMIN" });
     }
 
@@ -155,5 +156,32 @@ public class TopologyViewRestServiceIT extends AbstractSpringJerseyRestTestCase 
         }
         final String s = location.toString();
         return s.substring(s.lastIndexOf('/') + 1);
+    }
+
+    @Test
+    @JUnitTemporaryDatabase
+    public void normalizesNamesAndEnforcesUniquenessOnTrimmedValue() throws Exception {
+        // Stored name is trimmed, and a differently-padded duplicate conflicts.
+        final MockHttpServletResponse post =
+                sendData(POST, MediaType.APPLICATION_JSON, BASE, "{\"name\":\" Core \",\"definition\":{}}", 201);
+        final String id = lastPathSegment(post.getHeader("Location"));
+        final JsonNode view = m_mapper.readTree(sendRequest(GET, BASE + "/" + id, 200));
+        assertEquals("Core", view.get("name").asText());
+        sendData(POST, MediaType.APPLICATION_JSON, BASE, "{\"name\":\"Core\",\"definition\":{}}", 409);
+    }
+
+    @Test
+    @JUnitTemporaryDatabase
+    public void ownerComesFromThePrincipalNotTheBody() throws Exception {
+        // Role enforcement for /api/v2/** lives in the servlet security filter
+        // chain, which this harness does not run -- but the resource's own
+        // guarantee is testable: a client-supplied owner is never trusted.
+        setUser("alice", new String[] { "ROLE_ADMIN" });
+        final MockHttpServletResponse post = sendData(POST, MediaType.APPLICATION_JSON, BASE,
+                "{\"name\":\"owned\",\"definition\":{},\"owner\":\"mallory\"}", 201);
+        final String id = lastPathSegment(post.getHeader("Location"));
+        final JsonNode view = m_mapper.readTree(sendRequest(GET, BASE + "/" + id, 200));
+        assertEquals("alice", view.get("owner").asText());
+        setUser("admin", new String[] { "ROLE_ADMIN" }); // restore for other tests
     }
 }
