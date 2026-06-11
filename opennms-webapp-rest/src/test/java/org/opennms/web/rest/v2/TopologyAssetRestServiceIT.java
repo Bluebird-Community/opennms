@@ -98,7 +98,10 @@ public class TopologyAssetRestServiceIT extends AbstractSpringJerseyRestTestCase
         for (final String pair : query.split("&")) {
             final int eq = pair.indexOf('=');
             if (eq > 0) {
-                request.addParameter(pair.substring(0, eq), pair.substring(eq + 1));
+                // The query string carries encoded values; parameters carry decoded
+                // ones (as a real servlet container would present them).
+                request.addParameter(pair.substring(0, eq),
+                        java.net.URLDecoder.decode(pair.substring(eq + 1), java.nio.charset.StandardCharsets.UTF_8));
             }
         }
         request.setContentType(contentType);
@@ -128,7 +131,7 @@ public class TopologyAssetRestServiceIT extends AbstractSpringJerseyRestTestCase
     @JUnitTemporaryDatabase
     public void uploadServeAndDeleteLifecycle() throws Exception {
         // Empty catalog to start.
-        assertEquals("[]", sendRequest(GET, BASE, 200));
+        assertEquals(0, m_mapper.readTree(sendRequest(GET, BASE, 200)).size());
 
         // Upload a background.
         final MockHttpServletResponse post = postAsset("name=DC+floor+plan&kind=background", "image/png", IMAGE, 201);

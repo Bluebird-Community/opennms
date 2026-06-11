@@ -118,7 +118,13 @@ public class TopologyAssetRestService {
                     "A " + kind + " asset may be at most " + maxSize + " bytes");
         }
         // @Consumes already gates the type; record it without any parameters.
+        // A request with no Content-Type at all can still reach here, though --
+        // answer 415 rather than NPE into a 500.
         final MediaType contentType = headers.getMediaType();
+        if (contentType == null) {
+            throw webException(Response.Status.UNSUPPORTED_MEDIA_TYPE,
+                    "A Content-Type header with the image type is required");
+        }
         final String mimeType = contentType.getType() + "/" + contentType.getSubtype();
 
         final TopologyAsset asset = new TopologyAsset();

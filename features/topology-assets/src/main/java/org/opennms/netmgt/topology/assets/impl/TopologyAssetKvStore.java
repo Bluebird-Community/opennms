@@ -98,7 +98,9 @@ public class TopologyAssetKvStore implements TopologyAssetDao {
         if (id == null) {
             return Optional.empty();
         }
-        return jsonStore.get(id, CONTEXT).map(json -> deserialize(id, json));
+        // flatMap + ofNullable: a malformed stored document (deserialize -> null)
+        // reads as absent rather than surfacing a half-built asset.
+        return jsonStore.get(id, CONTEXT).flatMap(json -> Optional.ofNullable(deserialize(id, json)));
     }
 
     @Override
