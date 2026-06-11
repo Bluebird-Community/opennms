@@ -91,4 +91,28 @@ public class TopologyInfopanelRestServiceIT extends AbstractSpringJerseyRestTest
         final String body = sendRequest(GET, "/topology/infopanel", parseParamData("nodeId=1"), 200);
         assertEquals(0, new JSONArray(body).length());
     }
+
+    @Test
+    @JUnitTemporaryDatabase
+    public void edgeEndpointValidatesAndRenders() throws Exception {
+        // Both node ids are required.
+        sendRequest(GET, "/topology/infopanel/edge", 400);
+        sendRequest(GET, "/topology/infopanel/edge", parseParamData("sourceNodeId=1"), 400);
+
+        // Unknown nodes are a 404.
+        sendRequest(GET, "/topology/infopanel/edge", parseParamData("sourceNodeId=1&targetNodeId=999999"), 404);
+
+        // Happy path: create a node, then the endpoint renders for a link with
+        // that node on both ends. With no etc/infopanel templates in the test
+        // environment the rendered array is empty.
+        final String node = "<node type=\"A\" label=\"TestMachine1\" foreignSource=\"JUnit\" foreignId=\"TestMachine1\">"
+                + "<labelSource>H</labelSource>"
+                + "<sysName>TestMachine1</sysName>"
+                + "<sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId>"
+                + "</node>";
+        sendPost("/nodes", node, 201);
+        final String body = sendRequest(GET, "/topology/infopanel/edge",
+                parseParamData("sourceNodeId=1&targetNodeId=1&sourcePort=eth0&targetPort=eth1&protocol=lldp"), 200);
+        assertEquals(0, new JSONArray(body).length());
+    }
 }

@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.opennms.netmgt.measurements.api.MeasurementsService;
 import org.opennms.netmgt.measurements.api.exceptions.MeasurementException;
-import org.opennms.netmgt.measurements.model.Expression;
 import org.opennms.netmgt.measurements.model.QueryRequest;
 import org.opennms.netmgt.measurements.model.QueryResponse;
 import org.opennms.netmgt.measurements.model.Source;
@@ -105,7 +104,13 @@ public class MeasurementsWrapper {
         return Arrays.asList(Double.NaN, Double.NaN);
     }
 
-    /** Compute the in/out percentage utilization of an interface resource over a window. */
+    /**
+     * Compute the in/out percentage utilization of an interface resource over a
+     * window. The rates are queried as plain columns and the percentages are
+     * computed here from the interface's {@code ifHighSpeed} constant (exposed
+     * in the query response, prefixed by the source label) -- the legacy JEXL
+     * expressions referenced misspelled variables and relied on engine quirks.
+     */
     public List<Double> computeUtilization(final String resource, final long start, final long end, final long step, final String aggregation) throws MeasurementException {
         final QueryRequest request = new QueryRequest();
         request.setRelaxed(true);
@@ -115,7 +120,7 @@ public class MeasurementsWrapper {
 
         final Source sourceIn = new Source();
         sourceIn.setAggregation(aggregation);
-        sourceIn.setTransient(true);
+        sourceIn.setTransient(false);
         sourceIn.setAttribute("ifHCInOctets");
         sourceIn.setFallbackAttribute("ifInOctets");
         sourceIn.setResourceId(resource);
@@ -123,27 +128,66 @@ public class MeasurementsWrapper {
 
         final Source sourceOut = new Source();
         sourceOut.setAggregation(aggregation);
-        sourceOut.setTransient(true);
+        sourceOut.setTransient(false);
         sourceOut.setAttribute("ifHCOutOctets");
         sourceOut.setFallbackAttribute("ifOutOctets");
         sourceOut.setResourceId(resource);
         sourceOut.setLabel("ifOutOctets");
 
-        request.setExpressions(Arrays.asList(
-                new Expression("ifInPercent", "(8 * ifInOctects / 1000000) / ifInOctets.ifHighSpeed * 100", false),
-                new Expression("ifOutPercent", "(8 * ifOutOctects / 1000000) / ifOutOctets.ifHighSpeed * 100", false)));
         request.setSources(Arrays.asList(sourceIn, sourceOut));
 
-        final QueryResponse.WrappedPrimitive[] columns = measurementsService.query(request).getColumns();
-        final double[] valuesIn = columns[0].getList();
-        final double[] valuesOut = columns[1].getList();
+        final QueryResponse response = measurementsService.query(request);
+        final double speedMbps = constantAsDouble(response, "ifInOctets.ifHighSpeed", "ifOutOctets.ifHighSpeed");
+        if (Double.isNaN(speedMbps) || speedMbps <= 0) {
+            return Arrays.asList(Double.NaN, Double.NaN);
+        }
 
-        for (int i = valuesIn.length - 1; i >= 0; i--) {
+        final int inIndex = indexOfLabel(response, "ifInOctets");
+        final int outIndex = indexOfLabel(response, "ifOutOctets");
+        if (inIndex < 0 || outIndex < 0) {
+            return Arrays.asList(Double.NaN, Double.NaN);
+        }
+        final double[] valuesIn = response.getColumns()[inIndex].getList();
+        final double[] valuesOut = response.getColumns()[outIndex].getList();
+
+        for (int i = Math.min(valuesIn.length, valuesOut.length) - 1; i >= 0; i--) {
             if (!Double.isNaN(valuesIn[i]) && !Double.isNaN(valuesOut[i])) {
-                return Arrays.asList(valuesIn[i], valuesOut[i]);
+                // octets/s -> Mbit/s, as a percentage of the interface speed (Mbit/s)
+                return Arrays.asList(
+                        (8 * valuesIn[i] / 1_000_000d) / speedMbps * 100d,
+                        (8 * valuesOut[i] / 1_000_000d) / speedMbps * 100d);
             }
         }
         return Arrays.asList(Double.NaN, Double.NaN);
+    }
+
+    /** First parseable value among the named response constants, else NaN. */
+    private static double constantAsDouble(final QueryResponse response, final String... keys) {
+        if (response.getConstants() == null) {
+            return Double.NaN;
+        }
+        for (final String key : keys) {
+            for (final QueryResponse.QueryConstant constant : response.getConstants()) {
+                if (key.equals(constant.getKey()) && constant.getValue() != null) {
+                    try {
+                        return Double.parseDouble(constant.getValue());
+                    } catch (final NumberFormatException ignored) {
+                        // fall through to the next candidate
+                    }
+                }
+            }
+        }
+        return Double.NaN;
+    }
+
+    private static int indexOfLabel(final QueryResponse response, final String label) {
+        final String[] labels = response.getLabels();
+        for (int i = 0; labels != null && i < labels.length; i++) {
+            if (label.equals(labels[i])) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /** Direct pass-through to the measurements query API. */

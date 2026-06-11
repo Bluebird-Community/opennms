@@ -133,11 +133,14 @@ public class InfoPanelRenderer {
                     }
                     if (Boolean.TRUE.equals(result.getContext().getOrDefault("visible", false))) {
                         final String title = String.valueOf(result.getContext().getOrDefault("title", "No title defined"));
-                        final int order = ((Number) result.getContext().getOrDefault("order", 0L)).intValue();
+                        // Templates control this value; tolerate non-numeric junk.
+                        final Object rawOrder = result.getContext().getOrDefault("order", 0L);
+                        final int order = rawOrder instanceof Number ? ((Number) rawOrder).intValue() : 0;
                         items.add(new InfoPanelItem(title, order, result.getOutput()));
                     }
-                } catch (final IOException e) {
-                    LOG.warn("Failed to read info-panel template {}: {}", path, e.getMessage());
+                } catch (final IOException | RuntimeException e) {
+                    // A broken template skips itself, never the whole request.
+                    LOG.warn("Failed to render info-panel template {}: {}", path, e.getMessage());
                 }
             }
         } catch (final IOException e) {
