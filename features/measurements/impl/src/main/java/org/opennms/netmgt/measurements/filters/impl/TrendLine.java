@@ -26,7 +26,6 @@ import com.google.common.collect.RowSortedTable;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.opennms.netmgt.integrations.R.RScriptException;
 import org.opennms.netmgt.measurements.api.Filter;
 import org.opennms.netmgt.measurements.api.FilterInfo;
 import org.opennms.netmgt.measurements.api.FilterParam;
@@ -67,7 +66,7 @@ public class TrendLine implements Filter {
     }
 
     @Override
-    public void filter(RowSortedTable<Long, String, Double> table) throws RScriptException {
+    public void filter(RowSortedTable<Long, String, Double> table) {
         LOG.debug("filter: values\n{}", table.rowMap().values());
         Preconditions.checkArgument(table.containsColumn(TIMESTAMP_COLUMN_NAME), String.format("Data source must have a '%s' column.", Filter.TIMESTAMP_COLUMN_NAME));
 

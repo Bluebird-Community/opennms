@@ -23,13 +23,6 @@
       <artifactId>org.opennms.features.measurements.api</artifactId>
     </dependency>
 
-    <!-- R -->
-    <dependency>
-      <groupId>org.opennms</groupId>
-      <artifactId>opennms-R</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-math3</artifactId>

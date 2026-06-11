@@ -132,7 +132,6 @@
       <bundle>mvn:org.opennms.features/org.opennms.features.system-report/${project.version}</bundle>
 
       <feature>opennms-core-web</feature>
-      <bundle>mvn:org.opennms.features/org.opennms.features.request-tracker/${project.version}</bundle>
 
       <bundle>mvn:org.opennms/opennms-web-api/${project.version}</bundle>
 

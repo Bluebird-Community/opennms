@@ -81,12 +81,6 @@
       <artifactId>org.opennms.core.test-api.xml</artifactId>
     </dependency>
 
-    <!-- Contains beans for ServiceConfigurationPublicConstructorTest -->
-    <dependency>
-      <groupId>org.opennms</groupId>
-      <artifactId>opennms-asterisk</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-jetty</artifactId>
