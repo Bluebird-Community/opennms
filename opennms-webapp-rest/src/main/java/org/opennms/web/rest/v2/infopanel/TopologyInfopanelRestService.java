@@ -35,6 +35,7 @@ import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.api.ResourceDao;
 import org.opennms.netmgt.measurements.api.MeasurementsService;
 import org.opennms.netmgt.model.OnmsNode;
+import org.opennms.netmgt.model.OnmsSnmpInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,50 @@ public class TopologyInfopanelRestService {
             throw webException(Response.Status.NOT_FOUND, "No node with id " + nodeId);
         }
         return renderer().renderForNode(node);
+    }
+
+    /**
+     * Edge-scoped panels for a link between two nodes: templates render with
+     * an {@code edge} context (see {@link EdgeInfo}). Port names and protocol
+     * are optional -- they come from a link's discovery binding when present.
+     */
+    @GET
+    @javax.ws.rs.Path("edge")
+    @Transactional(readOnly = true)
+    public List<InfoPanelItem> getForEdge(@QueryParam("sourceNodeId") final Integer sourceNodeId,
+                                          @QueryParam("targetNodeId") final Integer targetNodeId,
+                                          @QueryParam("sourcePort") final String sourcePort,
+                                          @QueryParam("targetPort") final String targetPort,
+                                          @QueryParam("protocol") final String protocol) {
+        if (sourceNodeId == null || targetNodeId == null) {
+            throw webException(Response.Status.BAD_REQUEST, "sourceNodeId and targetNodeId query parameters are required");
+        }
+        final OnmsNode source = m_nodeDao.get(sourceNodeId);
+        final OnmsNode target = m_nodeDao.get(targetNodeId);
+        if (source == null || target == null) {
+            throw webException(Response.Status.NOT_FOUND,
+                    "No node with id " + (source == null ? sourceNodeId : targetNodeId));
+        }
+        final EdgeInfo edge = new EdgeInfo(protocol,
+                new EdgeInfo.Port(source, sourcePort, resolveSnmpInterface(source, sourcePort)),
+                new EdgeInfo.Port(target, targetPort, resolveSnmpInterface(target, targetPort)));
+        return renderer().renderForEdge(edge);
+    }
+
+    /**
+     * Match a persisted port label against the node's SNMP interfaces by
+     * ifName, then ifDescr (the two labels discovery writes). Null when the
+     * port is unknown or nothing matches -- templates handle a null
+     * {@code snmpInterface}/{@code ifIndex} themselves.
+     */
+    private static OnmsSnmpInterface resolveSnmpInterface(final OnmsNode node, final String port) {
+        if (port == null || port.isBlank()) {
+            return null;
+        }
+        return node.getSnmpInterfaces().stream()
+                .filter(s -> port.equals(s.getIfName()) || port.equals(s.getIfDescr()))
+                .findFirst()
+                .orElse(null);
     }
 
     private InfoPanelRenderer renderer() {

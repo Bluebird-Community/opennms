@@ -58,10 +58,11 @@ import com.hubspot.jinjava.lib.fn.ELFunctionDefinition;
  * (so existing templates render unchanged) but returns HTML rather than Vaadin
  * components, for the REST layer.
  *
- * <p>Scope is node-backed elements (a placed node carries a real OnmsNode id).
- * The {@code vertex}/{@code edge} context variables of the legacy provider are
- * not populated here; templates guard their use with {@code vertex != null}, so
- * vertex-only templates are simply not shown.
+ * <p>Node selections render with the {@code node}/{@code nodeResource}
+ * context; edge selections render with the {@code edge} context (see
+ * {@link EdgeInfo} for how the legacy {@code LinkdEdge} surface maps). The
+ * legacy {@code vertex} variable is not populated; templates guard their use
+ * with {@code vertex != null}, so vertex-only templates are simply not shown.
  */
 public class InfoPanelRenderer {
 
@@ -100,6 +101,22 @@ public class InfoPanelRenderer {
      */
     public List<InfoPanelItem> renderForNode(final OnmsNode node) {
         Objects.requireNonNull(node);
+        return renderAll(createContext(node));
+    }
+
+    /**
+     * Render every applicable template for the given edge ({@code edge} in the
+     * template context, alongside the shared DAO/measurements helpers), same
+     * visible/title/order contract as {@link #renderForNode}.
+     */
+    public List<InfoPanelItem> renderForEdge(final EdgeInfo edge) {
+        Objects.requireNonNull(edge);
+        final Map<String, Object> context = sharedContext();
+        context.put("edge", edge);
+        return renderAll(context);
+    }
+
+    private List<InfoPanelItem> renderAll(final Map<String, Object> context) {
         if (!Files.isDirectory(templateDir)) {
             return Collections.emptyList();
         }
@@ -107,7 +124,7 @@ public class InfoPanelRenderer {
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(templateDir, "*.html")) {
             for (final Path path : stream) {
                 try {
-                    final RenderResult result = render(path, node);
+                    final RenderResult result = render(path, context);
                     final boolean fatal = result.getErrors().stream()
                             .anyMatch(e -> e.getSeverity() == TemplateError.ErrorType.FATAL);
                     if (fatal) {
@@ -131,22 +148,28 @@ public class InfoPanelRenderer {
         return items;
     }
 
-    private RenderResult render(final Path path, final OnmsNode node) throws IOException {
-        final Map<String, Object> context = createContext(node);
+    private RenderResult render(final Path path, final Map<String, Object> context) throws IOException {
+        // Fresh map per template: templates write visible/title/order into it.
+        final Map<String, Object> templateContext = new HashMap<>(context);
         try (final Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8)) {
             final String template = lines.collect(Collectors.joining("\n"));
-            return withClassLoaderFix(() -> jinjava.renderForResult(template, context));
+            return withClassLoaderFix(() -> jinjava.renderForResult(template, templateContext));
         }
     }
 
-    /** Build a fresh context per template; templates write visible/title/order into it. */
     private Map<String, Object> createContext(final OnmsNode node) {
-        final Map<String, Object> context = new HashMap<>();
+        final Map<String, Object> context = sharedContext();
         context.put("node", node);
         final OnmsResource resource = resourceDao.getResourceForNode(node);
         if (resource != null) {
             context.put("nodeResource", resource);
         }
+        return context;
+    }
+
+    /** Context entries common to node- and edge-scoped renders. */
+    private Map<String, Object> sharedContext() {
+        final Map<String, Object> context = new HashMap<>();
         context.put("nodeDao", nodeDaoWrapper);
         context.put("resourceDao", resourceDaoWrapper);
         if (measurementsService != null) {

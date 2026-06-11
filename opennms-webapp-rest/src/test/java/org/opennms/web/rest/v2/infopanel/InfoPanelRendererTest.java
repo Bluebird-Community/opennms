@@ -43,6 +43,7 @@ import org.junit.rules.TemporaryFolder;
 import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.api.ResourceDao;
 import org.opennms.netmgt.model.OnmsNode;
+import org.opennms.netmgt.model.OnmsSnmpInterface;
 
 /**
  * Unit-tests the Jinjava info-panel rendering against a temporary template
@@ -108,5 +109,37 @@ public class InfoPanelRendererTest {
         final Path absent = tmp.getRoot().toPath().resolve("does-not-exist");
         final InfoPanelRenderer r = new InfoPanelRenderer(nodeDao, resourceDao, null, absent);
         assertThat(r.renderForNode(node), is(empty()));
+    }
+
+    @Test
+    public void rendersEdgeScopedTemplatesWithEdgeContext() throws Exception {
+        writeTemplate("edge-panel.html",
+                "{% if edge %}{% set visible = true %}{% set title = \"Link\" %}"
+                        + "{{ edge.discoveredBy }}: {{ edge.sourcePort.node.label }}/{{ edge.sourcePort.ifName }}"
+                        + " -> {{ edge.targetPort.node.label }}/{{ edge.targetPort.ifIndex }}{% endif %}");
+        writeTemplate("node-panel.html",
+                "{% if node %}{% set visible = true %}{% set title = \"Node\" %}{{ node.label }}{% endif %}");
+
+        final OnmsNode target = new OnmsNode();
+        target.setId(43);
+        target.setLabel("far-node");
+        final OnmsSnmpInterface snmp = new OnmsSnmpInterface();
+        snmp.setIfIndex(7);
+        final EdgeInfo edge = new EdgeInfo("lldp",
+                new EdgeInfo.Port(node, "eth0", null),
+                new EdgeInfo.Port(target, "eth7", snmp));
+
+        final List<InfoPanelItem> items = renderer().renderForEdge(edge);
+        // the node-scoped template guards on `node` and must not render
+        assertThat(items, hasSize(1));
+        assertThat(items.get(0).getTitle(), is("Link"));
+        assertThat(items.get(0).getHtml(), is("lldp: test-node/eth0 -> far-node/7"));
+    }
+
+    @Test
+    public void nodeScopedRenderDoesNotExposeEdge() throws Exception {
+        writeTemplate("edge-panel.html",
+                "{% if edge %}{% set visible = true %}{% set title = \"Link\" %}x{% endif %}");
+        assertThat(renderer().renderForNode(node), is(empty()));
     }
 }
