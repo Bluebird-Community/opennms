@@ -77,7 +77,7 @@ describe('Menu utils', () => {
       expect(inventory.icon).toBeDefined()
 
       const inventoryItems = childItems(inventory)
-      expect(inventoryItems).toHaveLength(3)
+      expect(inventoryItems).toHaveLength(2)
       expect(inventoryItems[0]).toMatchObject({
         id: 'nodeList',
         type: 'item',
@@ -91,13 +91,6 @@ describe('Menu utils', () => {
         type: 'item',
         title: 'Nodes (Legacy)',
         href: `${baseHref}element/nodeList.htm`,
-        target: '_self'
-      })
-      expect(inventoryItems[2]).toMatchObject({
-        id: 'deviceConfigs',
-        type: 'item',
-        title: 'Device Configs',
-        href: `${baseHref}ui/index.html#/device-config-backup`,
         target: '_self'
       })
 

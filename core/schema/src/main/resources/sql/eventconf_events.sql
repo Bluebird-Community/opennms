@@ -2344,43 +2344,6 @@ INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabl
         </logmsg>
    <severity>Normal</severity>
 </event>', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system-migration');
-INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabled, xml_content, created_time, last_modified, modified_by) VALUES (130, 15, 'uei.opennms.org/deviceconfig/configBackupStarted', 'OpenNMS-defined node event: configBackupStarted', '<p>Config backup started on %service%
-            during the last poll on interface %interface%.</p>', true, '<event xmlns="http://xmlns.opennms.org/xsd/eventconf">
-   <uei>uei.opennms.org/deviceconfig/configBackupStarted</uei>
-   <event-label>OpenNMS-defined node event: configBackupStarted</event-label>
-   <descr>&lt;p>Config backup started on %service%
-            during the last poll on interface %interface%.&lt;/p></descr>
-   <logmsg dest="logndisplay">
-            %service% config backup started on interface %interface%.
-        </logmsg>
-   <severity>Normal</severity>
-</event>', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system-migration');
-INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabled, xml_content, created_time, last_modified, modified_by) VALUES (131, 15, 'uei.opennms.org/deviceconfig/configBackupFailed', 'OpenNMS-defined node event: configBackupFailed', '<p>Failed to backup config associated with %service%
-            during the last poll on interface %interface% because of
-            the following condition: %parm[eventReason]%.</p>', true, '<event xmlns="http://xmlns.opennms.org/xsd/eventconf">
-   <uei>uei.opennms.org/deviceconfig/configBackupFailed</uei>
-   <event-label>OpenNMS-defined node event: configBackupFailed</event-label>
-   <descr>&lt;p>Failed to backup config associated with %service%
-            during the last poll on interface %interface% because of
-            the following condition: %parm[eventReason]%.&lt;/p></descr>
-   <logmsg dest="logndisplay">
-            %service% config backup failed on interface %interface%.
-        </logmsg>
-   <severity>Minor</severity>
-   <alarm-data reduction-key="%uei%:%dpname%:%nodeid%:%interface%:%service%" alarm-type="1" auto-clean="false"/>
-</event>', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system-migration');
-INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabled, xml_content, created_time, last_modified, modified_by) VALUES (132, 15, 'uei.opennms.org/deviceconfig/configBackupSucceeded', 'OpenNMS-defined node event: configBackupSucceeded', '<p>Config backup succeeded on %service%
-            during the last poll on interface %interface%.</p>', true, '<event xmlns="http://xmlns.opennms.org/xsd/eventconf">
-   <uei>uei.opennms.org/deviceconfig/configBackupSucceeded</uei>
-   <event-label>OpenNMS-defined node event: configBackupSucceeded</event-label>
-   <descr>&lt;p>Config backup succeeded on %service%
-            during the last poll on interface %interface%.&lt;/p></descr>
-   <logmsg dest="logndisplay">
-            %service% config backup succeeded on interface %interface%.
-        </logmsg>
-   <severity>Normal</severity>
-   <alarm-data reduction-key="%uei%:%dpname%:%nodeid%:%interface%:%service%" alarm-type="2" clear-key="uei.opennms.org/deviceconfig/configBackupFailed:%dpname%:%nodeid%:%interface%:%service%" auto-clean="false"/>
-</event>', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system-migration');
 INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabled, xml_content, created_time, last_modified, modified_by) VALUES (133, 16, 'uei.opennms.org/provisioner/provisioningAdapterFailed', 'OpenNMS-defined Provisioning Adapter Failed message', 'A provisioning adapter failed for host %host% with the following condition: %parm[reason]%.<p>', true, '<event xmlns="http://xmlns.opennms.org/xsd/eventconf">
    <uei>uei.opennms.org/provisioner/provisioningAdapterFailed</uei>
    <event-label>OpenNMS-defined Provisioning Adapter Failed message</event-label>
@@ -2629,28 +2592,6 @@ INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabl
             A communication error occurred between OpenNMS and the Trouble Ticket system.
         </logmsg>
    <severity>Warning</severity>
-</event>', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system-migration');
-INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabled, xml_content, created_time, last_modified, modified_by) VALUES (153, 22, 'uei.opennms.org/api/tl1d/message/autonomous', 'OpenNMS-defined Autonomous TL1 message', 'This is a TL1 autonomous message delivered for host: %host%.<p>
-
-            <p>Message: %parm[raw-message]% </p>
-            <p>Alarm Code: %parm[alarm-code]% </p>
-            <p>ATAG: %parm[atag]% </p>
-            <p>Verb: %parm[verb]% </p>
-            <p>Auto Block: %parm[autoblock]% </p>', true, '<event xmlns="http://xmlns.opennms.org/xsd/eventconf">
-   <uei>uei.opennms.org/api/tl1d/message/autonomous</uei>
-   <event-label>OpenNMS-defined Autonomous TL1 message</event-label>
-   <descr>This is a TL1 autonomous message delivered for host: %host%.&lt;p>
-
-            &lt;p>Message: %parm[raw-message]% &lt;/p>
-            &lt;p>Alarm Code: %parm[alarm-code]% &lt;/p>
-            &lt;p>ATAG: %parm[atag]% &lt;/p>
-            &lt;p>Verb: %parm[verb]% &lt;/p>
-            &lt;p>Auto Block: %parm[autoblock]% &lt;/p></descr>
-   <logmsg dest="logndisplay">
-            &lt;p> %host%:%parm[verb]%:%parm[autoblock]% &lt;/p>
-        </logmsg>
-   <severity>Warning</severity>
-   <alarm-data reduction-key="%uei%:%host%:%parm[aid]%" alarm-type="3" auto-clean="false"/>
 </event>', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system-migration');
 INSERT INTO eventconf_events(id, source_id, uei, event_label, description, enabled, xml_content, created_time, last_modified, modified_by) VALUES (154, 23, 'MATCH-ANY-UEI', 'OpenNMS-defined event: MATCH-ANY-UEI', '<p>This UEI will never be generated, but exists
             so that notifications can match any UEI for a

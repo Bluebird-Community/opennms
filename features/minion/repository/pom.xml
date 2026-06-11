@@ -69,8 +69,6 @@
                                 <feature>minion-health-check</feature>
                                 <feature>minion-api-layer</feature>
                                 <feature>minion-plugin-sample</feature>
-                                <feature>opennms-deviceconfig-monitor</feature>
-                                <feature>opennms-deviceconfig-sink</feature>
                                 <feature>minion-telemetry-openconfig-client</feature>
                             </features>
                             <repository>${project.build.directory}/maven-repo</repository>
@@ -469,46 +467,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.opennms.features.device-config</groupId>
-            <artifactId>org.opennms.features.device-config.shell</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.device-config</groupId>
-            <artifactId>org.opennms.features.device-config.tftp</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.device-config</groupId>
-            <artifactId>org.opennms.features.device-config.retrieval</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.device-config.sink</groupId>
-            <artifactId>org.opennms.features.device-config.sink.module</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.device-config.sink</groupId>
-            <artifactId>org.opennms.features.device-config.sink.dispatcher</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.device-config</groupId>
-            <artifactId>org.opennms.features.device-config.ssh-scripting</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.device-config</groupId>
-            <artifactId>org.opennms.features.device-config.monitor</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.opennms</groupId>
             <artifactId>opennms-util</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.opennms.features.telemetry.protocols.openconfig</groupId>
             <artifactId>org.opennms.features.telemetry.protocols.openconfig.connector</artifactId>
