@@ -102,13 +102,6 @@
                   <destFileName>opennms_jmx_config_generator.jar</destFileName>
                   <outputDirectory>${project.build.directory}/jmx</outputDirectory>
                 </artifactItem>
-                <artifactItem>
-                  <groupId>org.opennms</groupId>
-                  <artifactId>opennms-jasperstudio-extension</artifactId>
-                  <type>jar</type>
-                  <classifier>jar-with-dependencies</classifier>
-                  <outputDirectory>${project.build.directory}/jasperstudio-extension</outputDirectory>
-                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>
@@ -1023,37 +1016,6 @@
       <groupId>org.opennms</groupId>
       <artifactId>jasper-extensions</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms</groupId>
-      <artifactId>opennms-jasperstudio-extension</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-expression</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-asm</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-aop</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-context</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-beans</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-core</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.opennms.dependencies</groupId>
