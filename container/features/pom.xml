@@ -518,11 +518,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.opennms.features.topology.plugins.topo</groupId>
-      <artifactId>org.opennms.features.topology.plugins.topo.vmware</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.opennms.features.topology</groupId>
       <artifactId>org.opennms.features.topology.shell</artifactId>
       <version>${project.version}</version>
@@ -873,18 +868,6 @@
     <dependency>
       <groupId>org.opennms.features.topologies</groupId>
       <artifactId>org.opennms.features.topologies.service.api</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.zenith-connect</groupId>
-      <artifactId>org.opennms.features.zenith-connect.persistence</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.zenith-connect</groupId>
-      <artifactId>org.opennms.features.zenith-connect.rest</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>

@@ -50,10 +50,6 @@ public class MenuProvider {
 
     private final String ADMIN_ROLE_ICON = "fa-cogs";
 
-    public static final String ZENITH_CONNECT_ENABLED_KEY = "opennms.zenithConnect.enabled";
-    public static final String ZENITH_CONNECT_BASE_URL_KEY = "opennms.zenithConnect.zenithBaseUrl";
-    public static final String ZENITH_CONNECT_RELATIVE_URL_KEY = "opennms.zenithConnect.zenithRelativeUrl";
-
     private static final ImmutableSet<String> ADMIN_ROLES = ImmutableSet.of(
         Authentication.ROLE_ADMIN,
         Authentication.ROLE_FILESYSTEM_EDITOR
@@ -113,11 +109,6 @@ public class MenuProvider {
         mainMenu.username = menuRequestContext.getRemoteUser();
         // for navigating to a specific node id
         mainMenu.baseNodeUrl = "element/node.jsp?node=";
-
-        mainMenu.zenithConnectEnabled =
-                Strings.nullToEmpty(menuRequestContext.getSystemProperty(ZENITH_CONNECT_ENABLED_KEY, "false")).equals("true");
-        mainMenu.zenithConnectBaseUrl = menuRequestContext.getSystemProperty(ZENITH_CONNECT_BASE_URL_KEY, "");
-        mainMenu.zenithConnectRelativeUrl = menuRequestContext.getSystemProperty(ZENITH_CONNECT_RELATIVE_URL_KEY, "");
 
         mainMenu.noticeStatus = menuRequestContext.getNoticeStatus();
 

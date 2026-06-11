@@ -70,7 +70,6 @@ Understanding xref:operation:deep-dive/performance-data-collection/resource-type
         <include-collection dataCollectionGroup="MIB2"/><5>
         <include-collection dataCollectionGroup="3Com"/>
         ...
-        <include-collection dataCollectionGroup="VMware-Cim"/>
     </snmp-collection>
 </datacollection-config>
 ----

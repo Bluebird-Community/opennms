@@ -181,5 +181,4 @@ The following limitations are known for the Graph Service API:
 * Status of vertices is not exposed
 * Custom images/icons cannot be set
 * Custom edge/vertex status providers are not implemented
-* VMWare Topology Provider not fully migrated
 * EnhancedLinkd Topology Provider not fully migrated

@@ -51,7 +51,7 @@ public class MenuProviderTest {
 
     @Test
     public void testParseMainMenu() {
-        MainMenu mainMenu = parseMainMenu(true, ADMIN_ROLES);
+        MainMenu mainMenu = parseMainMenu(ADMIN_ROLES);
         assertNotNull(mainMenu);
 
         assertEquals("/opennms/", mainMenu.baseHref);
@@ -62,9 +62,6 @@ public class MenuProviderTest {
         assertEquals("On", mainMenu.noticeStatus);
         assertEquals("admin1", mainMenu.username);
         assertEquals("element/node.jsp?node=", mainMenu.baseNodeUrl);
-        assertTrue(mainMenu.zenithConnectEnabled);
-        assertEquals("https://zenith.opennms.com", mainMenu.zenithConnectBaseUrl);
-        assertEquals("/zenith-connect", mainMenu.zenithConnectRelativeUrl);
         // version should be "2002-CURRENT_DATE_YEAR"
         assertThat(mainMenu.copyrightDates, startsWith("2002-2"));
         // not testing mainMenu.version, it's probably null in test environment
@@ -91,26 +88,8 @@ public class MenuProviderTest {
 
         final String[] expectedNames = new String[] {
                 "Node List", "Nodes (Legacy)", "Assets", "Path Outages", "External Requisitions",
-                "Logs", "Secure Credentials Vault", "Connect to Zenith"
-        };
-        List<String> actualNames = getMenuNames(infoMenu);
-        assertEquals(expectedNames.length, actualNames.size());
-        assertThat(actualNames, containsInAnyOrder(expectedNames));
-    }
-
-    @Test
-    public void testParseMainMenuZenithConnectDisabled() {
-        MainMenu mainMenu = parseMainMenu(false, ADMIN_ROLES);
-        assertNotNull(mainMenu);
-
-        // Check names in sub-menus under the Info menu
-        MenuEntry infoMenu = getMenuEntry(mainMenu.menus, "Info");
-
-        final String[] expectedNames = new String[] {
-                "Node List", "Nodes (Legacy)", "Assets", "Path Outages", "External Requisitions",
                 "Logs", "Secure Credentials Vault"
         };
-
         List<String> actualNames = getMenuNames(infoMenu);
         assertEquals(expectedNames.length, actualNames.size());
         assertThat(actualNames, containsInAnyOrder(expectedNames));
@@ -118,7 +97,7 @@ public class MenuProviderTest {
 
     @Test
     public void testParseMainMenuWithUserRole() {
-        MainMenu mainMenu = parseMainMenu(false, USER_ROLES);
+        MainMenu mainMenu = parseMainMenu(USER_ROLES);
         assertNotNull(mainMenu);
 
         // Check names in sub-menus under the Info menu
@@ -136,7 +115,7 @@ public class MenuProviderTest {
 
     @Test
     public void testParseMainMenuWithFileSystemEditorRole() {
-        MainMenu mainMenu = parseMainMenu(false, FILESYSTEM_EDITOR_ROLES);
+        MainMenu mainMenu = parseMainMenu(FILESYSTEM_EDITOR_ROLES);
         assertNotNull(mainMenu);
 
         // Check names in sub-menus under the Info menu
@@ -152,7 +131,7 @@ public class MenuProviderTest {
         assertThat(actualNames, containsInAnyOrder(expectedNames));
     }
 
-    private MainMenu parseMainMenu(boolean isZenithConnectEnabled, String[] roles) {
+    private MainMenu parseMainMenu(String[] roles) {
         MainMenu mainMenu = null;
         List<String> roleList = Arrays.stream(roles).toList();
 
@@ -160,7 +139,7 @@ public class MenuProviderTest {
             MenuProvider provider = new MenuProvider(MENU_TEMPLATE_PATH);
 
             provider.setMenuRequestContext(
-                    new MenuProviderTest.TestMenuRequestContext(isZenithConnectEnabled, roleList));
+                    new MenuProviderTest.TestMenuRequestContext(roleList));
             mainMenu = provider.getMainMenu();
         } catch (Exception e) {
             Assert.fail("Error in MenuProvider.getMainMenu: " + e.getMessage());
@@ -184,15 +163,11 @@ public class MenuProviderTest {
     }
 
     public static class TestMenuRequestContext implements MenuRequestContext {
-        public TestMenuRequestContext(boolean isZenithConnectEnabled, List<String> roles) {
-            this.isZenithConnectEnabled = isZenithConnectEnabled;
-
+        public TestMenuRequestContext(List<String> roles) {
             if (roles != null && !roles.isEmpty()) {
                 this.userRoles.addAll(roles);
             }
         }
-
-        final private boolean isZenithConnectEnabled;
 
         final private List<String> userRoles = new ArrayList<>();
 
@@ -233,18 +208,6 @@ public class MenuProviderTest {
         }
 
         public String getSystemProperty(String name, String def) {
-            switch (name) {
-                case MenuProvider.ZENITH_CONNECT_ENABLED_KEY -> {
-                    return this.isZenithConnectEnabled ? "true": "false";
-                }
-                case MenuProvider.ZENITH_CONNECT_BASE_URL_KEY -> {
-                    return "https://zenith.opennms.com";
-                }
-                case MenuProvider.ZENITH_CONNECT_RELATIVE_URL_KEY -> {
-                    return "/zenith-connect";
-                }
-            }
-
             return Strings.nullToEmpty(System.getProperty(name, def));
         }
     }

@@ -114,9 +114,10 @@
       <artifactId>org.opennms.features.jdbc-collector</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Provides the ForeignSource model class for the WillItUnmarshal test -->
     <dependency>
       <groupId>org.opennms</groupId>
-      <artifactId>opennms-vmware</artifactId>
+      <artifactId>opennms-provision-persistence</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

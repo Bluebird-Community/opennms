@@ -142,7 +142,7 @@ describe('Menu utils', () => {
       expect(integrations.icon).toBeDefined()
 
       const integrationItems = childItems(integrations)
-      expect(integrationItems).toHaveLength(4)
+      expect(integrationItems).toHaveLength(3)
       expect(integrationItems[0]).toMatchObject({
         id: 'snmpAgentConfiguration',
         type: 'item',
@@ -162,13 +162,6 @@ describe('Menu utils', () => {
         type: 'item',
         title: 'Geocoding Services',
         href: `${baseHref}admin/geoservice/index.jsp`,
-        target: '_self'
-      })
-      expect(integrationItems[3]).toMatchObject({
-        id: 'zenithConnect',
-        type: 'item',
-        title: 'Connect to Zenith',
-        href: `${baseHref}ui/index.html#/zenith-connect`,
         target: '_self'
       })
 

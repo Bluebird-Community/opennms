@@ -8,9 +8,6 @@
   "noticeStatus": "Off",
   "username": "admin-user",
   "baseNodeUrl": "element/node.jsp?node=",
-  "zenithConnectEnabled": false,
-  "zenithConnectBaseUrl": "",
-  "zenithConnectRelativeUrl": "",
   "displayAddNodeButton": false,
   "sideMenuInitialExpand": false,
   "copyrightDates": "2002-2026",
@@ -111,19 +108,6 @@
           "url": "admin/geoservice/index.jsp",
           "locationMatch": "",
           "roles": null
-        },
-        {
-          "id": "zenithConnect",
-          "name": "Connect to Zenith",
-          "url": "ui/index.html#/zenith-connect",
-          "locationMatch": "zenithConnect",
-          "roles": ["ROLE_ADMIN", "ROLE_USER"],
-          "requiredSystemProperties": [
-            {
-              "name": "opennms.zenithConnect.enabled",
-              "value": "true"
-            }
-          ]
         }
       ]
     },

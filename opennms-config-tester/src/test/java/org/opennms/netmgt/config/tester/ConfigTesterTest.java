@@ -497,21 +497,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testVMwareCimDatacollectionConfig() {
-        testConfigFile("vmware-cim-datacollection-config.xml");
-    }
-
-    @Test
-    public void testVMwareConfigConfig() {
-        testConfigFile("vmware-config.xml");
-    }
-
-    @Test
-    public void testVMwareDatacollectionConfig() {
-        testConfigFile("vmware-datacollection-config.xml");
-    }
-
-    @Test
     public void testWSManConfigFiles() {
         testConfigFile("wsman-config.xml");
         testConfigFile("wsman-datacollection-config.xml");

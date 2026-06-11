@@ -111,18 +111,6 @@ curl -X GET -u admin:admin http://localhost:8980/opennms/api/v2/graphs
         ],
         "id": "nodes",
         "label": "Enhanced Linkd Topology Provider"
-    },
-    {
-        "description": "The VMware Topology Provider displays the infrastructure information gathered by the VMware Provisioning process.",
-        "graphs": [
-            {
-                "description": "The VMware Topology Provider displays the infrastructure information gathered by the VMware Provisioning process.",
-                "label": "VMware Topology Provider",
-                "namespace": "vmware"
-            }
-        ],
-        "id": "vmware",
-        "label": "VMware Topology Provider"
     }
 ]
 ----

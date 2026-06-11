@@ -112,9 +112,6 @@ import org.opennms.netmgt.config.trend.TrendConfiguration;
 import org.opennms.netmgt.config.users.Userinfo;
 import org.opennms.netmgt.config.vacuumd.VacuumdConfiguration;
 import org.opennms.netmgt.config.viewsdisplay.Viewinfo;
-import org.opennms.netmgt.config.vmware.VmwareConfig;
-import org.opennms.netmgt.config.vmware.cim.VmwareCimDatacollectionConfig;
-import org.opennms.netmgt.config.vmware.vijava.VmwareDatacollectionConfig;
 import org.opennms.netmgt.config.wsman.credentials.WsmanConfig;
 import org.opennms.netmgt.config.wsman.WsmanDatacollectionConfig;
 import org.opennms.netmgt.provision.persist.foreignsource.ForeignSource;
@@ -263,9 +260,6 @@ public class WillItUnmarshalIT {
         addFile(Source.CONFIG, "users.xml", Userinfo.class, true, null);
         addFile(Source.CONFIG, "vacuumd-configuration.xml", VacuumdConfiguration.class, false, null);
         addFile(Source.CONFIG, "viewsdisplay.xml", Viewinfo.class, false, null);
-        addFile(Source.CONFIG, "vmware-cim-datacollection-config.xml", VmwareCimDatacollectionConfig.class, true, null);
-        addFile(Source.CONFIG, "vmware-config.xml", VmwareConfig.class, false, null);
-        addFile(Source.CONFIG, "vmware-datacollection-config.xml", VmwareDatacollectionConfig.class, false, null);
         addFile(Source.CONFIG, "wsman-asset-adapter-configuration.xml", WsManAssetAdapterConfiguration.class, true, null);
         addFile(Source.CONFIG, "wsman-config.xml", WsmanConfig.class, true, null);
 

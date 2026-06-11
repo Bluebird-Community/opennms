@@ -27,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -54,7 +53,6 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         // OpenNMS System
         new String[] { "System Configuration", "//span[text()='OpenNMS Configuration']" },
         new String[] { "Configure Users, Groups and On-Call Roles", "//span[text()='Users and Groups']" },
-        new String[] { "Connect to Zenith", "//span[text()='Zenith Connect']" },
 
         // Provisioning
         new String[] { "Manage Provisioning Requisitions", "//h4[contains(text(), 'Requisitions (')]" },
@@ -105,14 +103,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
     private void initAdminPageEntries() {
         // Determine actual links displayed on the Admin page based on some configuration properties
         if (m_adminPageEntries.isEmpty()) {
-            boolean displayZenithConnect = Strings.nullToEmpty(System.getProperty("opennms.zenithConnect.enabled")).equals("true");
-
             for (final String[] entry : m_adminPageEntriesAll) {
-                // omit this link if Zenith Connect is disabled
-                if (!displayZenithConnect && entry[0] != null && entry[0].equals("Connect to Zenith")) {
-                    continue;
-                }
-
                 m_adminPageEntries.add(entry);
             }
         }
