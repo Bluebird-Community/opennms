@@ -9,6 +9,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import { useMenuStore } from '@/stores/menuStore'
 import { MainMenu } from '@/types/mainMenu'
 

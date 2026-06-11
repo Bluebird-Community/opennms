@@ -172,7 +172,7 @@ describe('CreateSnmpV3User.vue', () => {
     store.openCredentialDrawer = vi.fn()
     store.closeCredentialDrawer = vi.fn()
 
-    mapUserToServerMock.mockImplementation((payload) => payload as SnmpV3User)
+    mapUserToServerMock.mockImplementation(payload => payload as SnmpV3User)
     updateTrapdConfigurationMock.mockResolvedValue(undefined)
   })
 

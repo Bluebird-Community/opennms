@@ -97,12 +97,12 @@ export const isValidPort = (port: number | undefined): boolean => {
   return port !== undefined && !isNaN(port) && port >= MIN_PORT && port <= MAX_PORT
 }
 
-export const AUTH_PROTOCOL_OPTIONS: ISelectItemType[] = AuthProtocols.map((protocol) => ({
+export const AUTH_PROTOCOL_OPTIONS: ISelectItemType[] = AuthProtocols.map(protocol => ({
   _text: protocol,
   _value: protocol
 }))
 
-export const PRIVACY_PROTOCOL_OPTIONS: ISelectItemType[] = PrivacyProtocols.map((protocol) => ({
+export const PRIVACY_PROTOCOL_OPTIONS: ISelectItemType[] = PrivacyProtocols.map(protocol => ({
   _text: protocol,
   _value: protocol
 }))

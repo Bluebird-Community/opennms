@@ -105,7 +105,7 @@
     :visible="displayDeleteDialog"
     title="Delete SNMP Configuration Profile"
     action-button-text="Delete"
-    @cancel="onCancelProfileDelete"                                                                                                              
+    @cancel="onCancelProfileDelete"
     @ok="onProfileDelete"
   >
     <template v-slot:content>
@@ -118,6 +118,8 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, reactive, ref } from 'vue'
+
 import { debounce } from 'lodash'
 import { FeatherButton } from '@featherds/button'
 import { FeatherIcon } from '@featherds/icon'
@@ -202,7 +204,7 @@ const filteredProfiles = computed<SnmpProfile[]>(() => {
 const pageTotal = computed(() => filteredProfiles.value.length)
 
 const profiles = computed(() => {
-  const items = filteredProfiles.value.map(profile => {
+  const items = filteredProfiles.value.map((profile) => {
     return {
       label: profile.label ?? '--',
       filter: createFilterExpressionLabel(profile)

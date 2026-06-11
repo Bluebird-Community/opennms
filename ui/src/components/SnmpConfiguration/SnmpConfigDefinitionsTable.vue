@@ -153,6 +153,8 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, reactive, ref } from 'vue'
+
 import { cloneDeep, debounce } from 'lodash'
 import { FeatherTextBadge, BadgeTypes } from '@featherds/badge'
 import { FeatherButton } from '@featherds/button'
@@ -229,8 +231,8 @@ const matchesSearchTerm = (def: SnmpDefinition, search: string) => {
   }
 
   // Check range (begin and end)
-  if (def.range?.some(r => 
-    r.begin.toLowerCase().includes(lowerSearch) || 
+  if (def.range?.some(r =>
+    r.begin.toLowerCase().includes(lowerSearch) ||
     r.end.toLowerCase().includes(lowerSearch)
   )) {
     return true
