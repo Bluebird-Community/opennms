@@ -36,10 +36,6 @@
       <outputDirectory>logs</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>${project.build.directory}/jasperstudio-extension</directory>
-      <outputDirectory>bin</outputDirectory>
-    </fileSet>
-    <fileSet>
       <directory>${project.build.outputDirectory}/share</directory>
       <outputDirectory>share</outputDirectory>
     </fileSet>
@@ -96,7 +92,6 @@
       <excludes>
         <exclude>org.opennms:opennms-bootstrap</exclude>
         <exclude>org.opennms:opennms-install</exclude>
-        <exclude>org.opennms:opennms-jasperstudio-extension</exclude>
         <exclude>org.opennms.core:org.opennms.core.password</exclude>
         <exclude>org.opennms.features:org.opennms.features.system-report</exclude>
         <exclude>org.slf4j:slf4j-jdk14</exclude>

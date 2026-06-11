@@ -56,7 +56,6 @@
 ** xref:service-assurance/monitors/IcmpMonitor.adoc[]
 ** xref:service-assurance/monitors/ImapMonitor.adoc[]
 ** xref:service-assurance/monitors/ImapsMonitor.adoc[]
-** xref:service-assurance/monitors/JCifsMonitor.adoc[]
 ** xref:service-assurance/monitors/JDBCMonitor.adoc[]
 ** xref:service-assurance/monitors/JDBCQueryMonitor.adoc[]
 ** xref:service-assurance/monitors/JDBCStoredProcedureMonitor.adoc[]

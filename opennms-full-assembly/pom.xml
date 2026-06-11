@@ -796,11 +796,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms.protocols</groupId>
-      <artifactId>org.opennms.protocols.cifs</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.protocols</groupId>
       <artifactId>org.opennms.protocols.nsclient</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -836,31 +831,6 @@
       <groupId>org.opennms</groupId>
       <artifactId>opennms-vtdxml-collector-handler</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.protocols</groupId>
-      <artifactId>selenium-monitor</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.protocols</groupId>
-      <artifactId>selenium-monitor</artifactId>
-      <version>${project.version}</version>
-      <type>tar.gz</type>
-      <classifier>etc</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.protocols</groupId>
-      <artifactId>selenium-monitor</artifactId>
-      <version>${project.version}</version>
-      <type>tar.gz</type>
-      <classifier>lib</classifier>
     </dependency>
     <dependency>
       <groupId>org.opennms.features</groupId>
