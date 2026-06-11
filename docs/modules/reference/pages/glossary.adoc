@@ -94,9 +94,6 @@ The free, community-driven project includes the latest technology and features a
 
 == I
 
-https://ifttt.com/[If This Then That (IFTTT)]:: An automation and workflow service that integrates apps, devices, and services.
-{page-component-title} can integrate with IFTTT to trigger actions on other services based on customized alarms (see xref:operation:deep-dive/alarms/ifttt-integration.adoc[]).
-
 instance:: (1) A single, unique occurrence of an element, document, or running program.
 (2) A data structure that is used in data collection to store tabular data as individual data points.
 (3) A single implementation of {page-component-title}.

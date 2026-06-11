@@ -286,7 +286,6 @@
                           <!-- base API features -->
                           <feature>opennms-activemq-pool</feature>
                           <feature>opennms-alarm-history-elastic</feature>
-                          <feature>opennms-camel-amqp</feature>
                           <feature>opennms-core-camel</feature>
                           <feature>opennms-core-daemon</feature>
                           <feature>opennms-core-ipc-jms</feature>
@@ -534,13 +533,6 @@
       <groupId>org.opennms.features.enlinkd</groupId>
       <artifactId>org.opennms.features.enlinkd.shell</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features</groupId>
-      <artifactId>org.opennms.features.ifttt</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
       <scope>provided</scope>
     </dependency>
       <dependency>

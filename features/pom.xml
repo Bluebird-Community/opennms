@@ -28,9 +28,6 @@
     <!-- Alarms -->
     <module>alarms</module>
 
-    <!-- AMQP Event Gateway and Alarm Northbounder -->
-    <module>amqp</module>
-
     <!-- DHCP integration -->
     <module>dhcpd</module>
 
@@ -57,7 +54,6 @@
     <!-- OpenNMS Collection API and implementations -->
     <module>collection</module>
     <module>jdbc-collector</module>
-    <module>juniper-tca-collector</module>
     <module>prometheus-collector</module>
     <module>telemetry</module>
     <module>wsman</module>
@@ -166,9 +162,6 @@
 
     <!-- Event Integration Facility Adapter -->
     <module>eif-adapter</module>
-
-    <!-- IfTtt integration -->
-    <module>ifttt</module>
 
     <!-- JFreeChart charts -->
     <module>charts</module>

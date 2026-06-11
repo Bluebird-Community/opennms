@@ -42,8 +42,6 @@ The available handlers include:
 
 * org.opennms.protocols.xml.collector.DefaultXmlCollectionHandler
 * org.opennms.protocols.xml.collector.Sftp3gppXmlCollectionHandler
-* org.opennms.protocols.xml.vtdxml.DefaultVTDXmlCollectionHandler
-* org.opennms.protocols.xml.vtdxml.Sftp3gppVTDXmlCollectionHandler
 * org.opennms.protocols.json.collector.DefaultJsonCollectionHandler
 * org.opennms.protocols.http.collector.HttpCollectionHandler
 
