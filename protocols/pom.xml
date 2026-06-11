@@ -10,7 +10,6 @@
   <packaging>pom</packaging>
   <name>OpenNMS :: Protocols</name>
   <modules>
-    <module>nsclient</module>
     <module>radius</module>
     <module>xml</module>
   </modules>
