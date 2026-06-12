@@ -584,6 +584,12 @@ export interface ExtendedSearchValue {
   key: string
 }
 
+/** A single asset-record field filter (column + exact-match value). */
+export interface AssetFilter {
+  column: string
+  value: string
+}
+
 /** All components of a node structure query */
 export interface NodeQueryFilter {
   searchTerm: string
@@ -594,7 +600,11 @@ export interface NodeQueryFilter {
   selectedFlows: string[]
   selectedMonitoringLocations: MonitoringLocation[]
   ipAddress?: string
+  macAddress?: string
   topology?: string
+  nodesWithDownAggregateStatus?: boolean
+  nodesWithAssets?: boolean
+  assetFilters?: AssetFilter[]
   extendedSearch: NodeQueryExtendedSearchParams
 }
 
