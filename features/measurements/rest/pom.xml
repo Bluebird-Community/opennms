@@ -131,12 +131,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.opennms.features.enlinkd</groupId>
-      <artifactId>org.opennms.features.enlinkd.service.api</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <!--  Expose the test context for thresholding DAOs  -->
       <groupId>org.opennms.features.collection</groupId>
       <artifactId>org.opennms.features.collection.thresholding.impl</artifactId>
@@ -147,18 +141,6 @@
       <!--  Expose the test context for poller DAOs  -->
       <groupId>org.opennms</groupId>
       <artifactId>opennms-services</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.enlinkd</groupId>
-      <artifactId>org.opennms.features.enlinkd.persistence.impl</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.enlinkd</groupId>
-      <artifactId>org.opennms.features.enlinkd.service.impl</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

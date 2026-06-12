@@ -5,7 +5,7 @@
 
 In {page-component-title} the Kafka Producer uses topologies updates to send topology messages to Kafka.
 
-Enhanced Linkd has six `OnmsTopologyUpdaters` each sending its own NODES, BRIDGE, CDP, ISIS, LLDP, and OSPF protocol `OnmsTopologyMessage`.
+Each `OnmsTopologyUpdater` sends its own protocol-specific `OnmsTopologyMessage`.
 
 Kafka Producer implements an `OnmsTopologyConsumer` that reads the `OnmsTopologyMessage` to be shared over Kafka.
 

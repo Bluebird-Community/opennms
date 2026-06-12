@@ -65,7 +65,6 @@ import org.opennms.features.datachoices.internal.StateManager;
 import org.opennms.features.datachoices.internal.StateManager.StateChangeHandler;
 import org.opennms.features.usageanalytics.api.UsageAnalyticDao;
 import org.opennms.features.usageanalytics.api.UsageAnalyticMetricName;
-import org.opennms.netmgt.bsm.persistence.api.BusinessServiceEdgeDao;
 import org.opennms.netmgt.config.DestinationPathFactory;
 import org.opennms.netmgt.config.GroupFactory;
 import org.opennms.netmgt.config.GroupManager;
@@ -149,8 +148,6 @@ public class UsageStatisticsReporter implements StateChangeHandler {
     private MonitoringLocationDao m_monitoringLocationDao;
 
     private MonitoringSystemDao m_monitoringSystemDao;
-
-    private BusinessServiceEdgeDao m_businessServiceEdgeDao;
 
     private FeaturesService m_featuresService;
 
@@ -308,7 +305,6 @@ public class UsageStatisticsReporter implements StateChangeHandler {
         usageStatisticsReport.setOnCallRoleCount(m_groupFactory.getRoles().size());
         usageStatisticsReport.setRequisitionCount(getDeployedRequisitionCount());
         usageStatisticsReport.setRequisitionWithChangedFSCount(getDeployedRequisitionWithModifiedFSCount());
-        usageStatisticsReport.setBusinessEdgeCount(m_businessServiceEdgeDao.countAll());
         usageStatisticsReport.setSinkStrategy(SinkStrategy.getSinkStrategy().getName());
         usageStatisticsReport.setRpcStrategy(RpcStrategy.getRpcStrategy().getName());
         usageStatisticsReport.setTssStrategies(TimeSeries.getTimeseriesStrategy().getName());
@@ -617,10 +613,6 @@ public class UsageStatisticsReporter implements StateChangeHandler {
 
     public void setMonitoringSystemDao(MonitoringSystemDao monitoringSystemDao) {
         m_monitoringSystemDao = monitoringSystemDao;
-    }
-
-    public void setBusinessServiceEdgeDao(BusinessServiceEdgeDao businessServiceDao) {
-        m_businessServiceEdgeDao = businessServiceDao;
     }
 
     public void setOutageDao(OutageDao outageDao){

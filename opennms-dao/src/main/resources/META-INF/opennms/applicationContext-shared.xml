@@ -35,12 +35,10 @@
         <property name="packagesToScan">
             <list>
                 <!-- TODO: Move into org.opennms.netmgt.model -->
-                <value>org.opennms.netmgt.bsm</value>
                 <value>org.opennms.netmgt.dao.hibernate</value>
                 <value>org.opennms.netmgt.model</value>
                 <value>org.opennms.netmgt.topology</value>
                 <value>org.opennms.netmgt.flows</value>
-                <value>org.opennms.netmgt.enlinkd</value>
                 <value>org.opennms.netmgt.endpoints</value>
                 <value>org.opennms.netmgt.graph</value>
                 <value>org.opennms.netmgt.telemetry.protocols.bmp.persistence.api</value>

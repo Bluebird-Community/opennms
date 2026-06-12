@@ -80,7 +80,6 @@ public class UsageStatisticsReportDTO {
     private String m_sinkStrategy;
     private String m_rpcStrategy;
     private String m_tssStrategies;
-    private int m_businessEdgeCount;
     private long m_pollsCompleted;
     private long m_eventLogsProcessed;
     private long m_coreFlowsPersisted;
@@ -403,14 +402,6 @@ public class UsageStatisticsReportDTO {
         return m_requisitionWithChangedFSCount;
     }
     
-    public void setBusinessEdgeCount(int edges) {
-        this.m_businessEdgeCount = edges;
-    }
-
-    public int getBusinessEdgeCount() {
-        return m_businessEdgeCount;
-    }
-
     public String getDatabaseProductName() {
         return m_databaseProductName;
     }

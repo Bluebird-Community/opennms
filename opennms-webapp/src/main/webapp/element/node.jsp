@@ -21,12 +21,6 @@
     License.
 
 --%>
-<%@page import="org.opennms.web.enlinkd.LldpElementNode"%>
-<%@page import="org.opennms.web.enlinkd.CdpElementNode"%>
-<%@page import="org.opennms.web.enlinkd.OspfElementNode"%>
-<%@page import="org.opennms.web.enlinkd.IsisElementNode"%>
-<%@page import="org.opennms.web.enlinkd.BridgeElementNode"%>
-<%@page import="org.opennms.web.enlinkd.EnLinkdElementFactory"%>
 <%@page language="java"
 	contentType="text/html"
 	session="true"
@@ -175,12 +169,6 @@
     if (asset != null && asset.getBuilding() != null && asset.getBuilding().length() > 0) {
         nodeModel.put("statusSite", WebSecurityUtils.sanitizeString(asset.getBuilding(),true));
     }
-    
-    nodeModel.put("lldp",    EnLinkdElementFactory.getInstance(getServletContext()).getLldpElement(nodeId));
-    nodeModel.put("cdp",    EnLinkdElementFactory.getInstance(getServletContext()).getCdpElement(nodeId));
-    nodeModel.put("ospf",    EnLinkdElementFactory.getInstance(getServletContext()).getOspfElement(nodeId));
-    nodeModel.put("isis",    EnLinkdElementFactory.getInstance(getServletContext()).getIsisElement(nodeId));
-    nodeModel.put("bridges", EnLinkdElementFactory.getInstance(getServletContext()).getBridgeElements(nodeId));
 
     nodeModel.put("criticalPath", PathOutageManagerDaoImpl.getInstance().getPrettyCriticalPath(nodeId));
     nodeModel.put("noCriticalPath", PathOutageManagerDaoImpl.NO_CRITICAL_PATH);
@@ -541,110 +529,11 @@ function confirmAssetEdit() {
     <onms-interfaces node="${model.id}"/>
   </div>
 
-  <!-- LLDP box, if info available --> 
-  <c:if test="${! empty model.lldp }">
-    <div class="card">
-    <div class="card-header">
-      <span>LLDP Information</span>
-    </div>
-    <table class="table table-sm">
-      <tr><th width="50%">chassis id</th><td width="50%">${model.lldp.lldpChassisId}</td></tr>
-      <tr><th width="50%">sysname</th><td width="50%">${model.lldp.lldpSysName}</td></tr>
-      <tr><th width="50%">last poll time</th><td width="50%">${model.lldp.lldpLastPollTime}</td></tr>
-    </table>
-    </div>
-    </c:if>
-
-  <!-- CDP box, if info available --> 
-  <c:if test="${! empty model.cdp }">
-    <div class="card">
-    <div class="card-header">
-      <span>CDP Information</span>
-    </div>
-    <table class="table table-sm">
-      <tr><th width="50%">global device id</th><td width="50%">${model.cdp.cdpGlobalDeviceId}</td></tr>
-      <tr><th width="50%">global run</th><td width="50%">${model.cdp.cdpGlobalRun}</td></tr>
-      <tr><th width="50%">last poll time</th><td width="50%">${model.cdp.cdpLastPollTime}</td></tr>
-    </table>
-  </div>
-  </c:if>
-  <!--End CDP box, if info available --> 
-
-  <!-- OSPF box, if info available -->
-  <c:if test="${! empty model.ospf }">
-    <div class="card">
-    <div class="card-header">
-      <span>OSPF Information</span>
-    </div>
-    <table class="table table-sm">
-      <tr><th width="50%">Router Id</th><td width="50%">${model.ospf.ospfRouterId}</td></tr>
-      <tr><th width="50%">Status</th><td width="50%">${model.ospf.ospfAdminStat} version:${model.ospf.ospfVersionNumber}</td></tr>
-      <tr><th>last poll time</th><td>${model.ospf.ospfLastPollTime}</td></tr>
-    </table>
-  </div>
-  </c:if>
-
-  <!-- IS-IS box, if info available -->
-  <c:if test="${! empty model.isis }">
-    <div class="card">
-    <div class="card-header">
-      <span>IS-IS Information</span>
-    </div>
-    <table class="table table-sm">
-      <tr><th width="50%">Sys ID</th><td width="50%">${model.isis.isisSysID}</td></tr>
-      <tr><th width="50%">Admin State</th><td width="50%">${model.isis.isisSysAdminState}</td></tr>
-      <tr><th width="50%">last poll time</th><td width="50%">${model.isis.isisLastPollTime}</td></tr>
-    </table>
-    </div>
-  </c:if>
-
-  <!-- Bridge box if available -->
-  <c:if test="${! empty model.bridges}">
-    <div class="card">
-   	<div class="card-header">
-   	  <span>Bridge Information</span>
-   	</div>
-	<table class="table table-sm">
-	<c:forEach items="${model.bridges}" var="bridge">
-   	<tr>
-   	<th width="50%"><c:if test="${! empty bridge.vlanname}">Vlan ${bridge.vlanname}</c:if>
-   	    <c:if test="${! empty bridge.vlan}">(vlanid ${bridge.vlan})</c:if>
-   	    <c:if test="${empty bridge.vlan}">Default</c:if>
-   	    (${bridge.baseNumPorts} port assigned)
-   	</th>
-    <td width="50%"> baseAddress:${bridge.baseBridgeAddress} type:${bridge.baseType} 
-    	<c:if test="${! empty bridge.stpProtocolSpecification}">stpProtocolSpec:${bridge.stpProtocolSpecification}</c:if>
- 	    <c:if test="${! empty bridge.stpPriority && bridge.stpPriority > 0}">Priority:${bridge.stpPriority}</c:if>
- 	    <c:if test="${! empty bridge.stpDesignatedRoot}">DesignatedRoot:${bridge.stpDesignatedRoot}</c:if>
- 	    <c:if test="${! empty bridge.stpRootPort && bridge.stpRootPort > 0}">RootPort:${bridge.stpRootPort}</c:if>
- 	    <c:if test="${! empty bridge.stpRootCost && bridge.stpRootCost > 0}">RootCost:${bridge.stpRootCost}</c:if>
-	</tr>
-	</c:forEach>
-    </table>
-    </div>
-  </c:if>
 
 </div> <!-- end of tag col-md-6 -->
 
 <div class="col-md-6">
-  
-  <!-- general info box -->
-  <div class="card">
-    <div class="card-header">
-  	<span>General (Status: ${model.status})</span>
-    </div>
-  <div class="card-body">
-    <ul class="list-unstyled mb-0">
-      <c:url var="detailLink" value="element/linkednode.jsp">
-        <c:param name="node" value="${model.id}"/>
-      </c:url>
-      <li class="list-inline-item">
-        <a href="<c:out value="${detailLink}"/>">View Node Link Detailed Info</a>
-      </li>
-    </ul>
-    </div>	     
-  </div>
-  
+
   <!-- Category box -->
   <jsp:include page="/includes/nodeCategory-box.htm" flush="false" >
     <jsp:param name="node" value="${model.id}" />

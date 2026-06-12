@@ -36,7 +36,6 @@ import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.netmgt.dao.api.AlarmEntityNotifier;
 import org.opennms.netmgt.dao.api.AlarmRepository;
-import org.opennms.netmgt.enlinkd.service.api.BridgeTopologyService;
 import org.opennms.netmgt.dao.api.GenericPersistenceAccessor;
 import org.opennms.netmgt.dao.api.IfLabel;
 import org.opennms.netmgt.dao.api.InterfaceToNodeCache;
@@ -46,8 +45,6 @@ import org.opennms.netmgt.dao.api.SessionFactoryWrapper;
 import org.opennms.netmgt.dao.api.SessionUtils;
 import org.opennms.netmgt.dao.api.StatisticsService;
 import org.opennms.netmgt.dao.api.NodeDao;
-import org.opennms.netmgt.enlinkd.persistence.api.TopologyEntityCache;
-import org.opennms.netmgt.enlinkd.persistence.api.TopologyEntityDao;
 import org.opennms.netmgt.filter.api.FilterDao;
 import org.opennms.netmgt.model.OnmsNode;
 import org.osgi.framework.Bundle;
@@ -83,15 +80,9 @@ public class DaoServiceTester {
                     SessionFactoryWrapper.class,
                     TransactionOperations.class,
                     PlatformTransactionManager.class,
-                    AlarmEntityNotifier.class, // we skip testing this for now
-                    TopologyEntityDao.class, // Hibernate cannot find the classes CdpLinkTopologyEntity and NodeTopologyEntity
-                                             // Probably due to class loader issues. See NMS-10493 for more details
-                    TopologyEntityCache.class // We don't need to test this, if the TopologyEntityDao is tested
+                    AlarmEntityNotifier.class // we skip testing this for now
             )
             .withTest(OnmsDao.class, dao -> dao.countAll())
-            .withTest(BridgeTopologyService .class, bean -> {
-                bean.load();
-            })
             .withTest(AlarmRepository.class, bean -> {
                 bean.unacknowledgeAll("ulf");
             })

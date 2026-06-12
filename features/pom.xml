@@ -11,9 +11,6 @@
   <name>OpenNMS :: Features</name>
   <modules>
 
-    <!-- Enlinkd -->
-    <module>enlinkd</module>
-
     <!-- Graphs -->
     <module>graph</module>
 
@@ -113,9 +110,6 @@
     <module>system-report</module>
     <module>timeformat</module>
     <module>timeseries-evaluate</module>
-
-    <!-- Business Service Monitor -->
-    <module>bsm</module>
 
     <!-- Standalone Karaf Containers -->
     <module>container</module>

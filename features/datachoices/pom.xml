@@ -114,11 +114,6 @@
             <version>${karafVersion}</version>
         </dependency>
         <dependency>
-            <groupId>org.opennms.features.bsm</groupId>
-            <artifactId>org.opennms.features.bsm.persistence.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.opennms.core.ipc.sink</groupId>
             <artifactId>org.opennms.core.ipc.sink.common</artifactId>
             <version>${project.version}</version>

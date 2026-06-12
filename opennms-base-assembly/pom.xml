@@ -663,21 +663,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.opennms.features.bsm</groupId>
-      <artifactId>org.opennms.features.bsm.persistence.impl</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.bsm</groupId>
-      <artifactId>org.opennms.features.bsm.service.impl</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.bsm</groupId>
-      <artifactId>org.opennms.features.bsm.daemon</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.opennms.features.flows.classification.persistence</groupId>
       <artifactId>org.opennms.features.flows.classification.persistence.impl</artifactId>
       <version>${project.version}</version>
@@ -1010,22 +995,6 @@
     <dependency>
       <groupId>org.opennms.features.topologies</groupId>
       <artifactId>org.opennms.features.topologies.service.impl</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <!-- Enlinkd -->
-    <dependency>
-      <groupId>org.opennms.features.enlinkd</groupId>
-      <artifactId>org.opennms.features.enlinkd.persistence.impl</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.enlinkd</groupId>
-      <artifactId>org.opennms.features.enlinkd.service.impl</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.enlinkd</groupId>
-      <artifactId>org.opennms.features.enlinkd.daemon</artifactId>
       <version>${project.version}</version>
     </dependency>
     <!-- HTTP Rest-Bridge -->
