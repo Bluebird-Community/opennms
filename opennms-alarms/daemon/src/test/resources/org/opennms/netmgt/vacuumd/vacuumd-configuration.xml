@@ -85,11 +85,7 @@
                 trigger-name="selectSuspectAlarms" 
                 action-name="escalateAlarm" 
                 action-event="eventEscalated" />
-                
-    <automation name="purgeStatisticsReports" active="true"
-                interval="3600000" 
-                action-name="deletePurgeableStatisticsReports" />
-    
+
     <!-- Enable these automation for automatic Trouble Ticketing -->
     <automation name="createTickets" interval="30000" active="false" 
                 trigger-name="selectNullTicketStateAlarms" 
@@ -382,13 +378,6 @@
            SET severity=2, firstautomationtime = COALESCE(firstautomationtime, ${_ts}), lastautomationtime = ${_ts}
          WHERE alarmid = ${_alarmid}
       </statement> 
-    </action>
-    
-    <action name="deletePurgeableStatisticsReports" >
-      <statement>
-        DELETE from statisticsReport
-         WHERE purgeDate &lt; now()
-      </statement>
     </action>
 
     <!-- Does nothing while still meeting the requirements of all actions -->

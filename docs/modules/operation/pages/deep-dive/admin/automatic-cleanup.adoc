@@ -9,7 +9,7 @@
 |===
 | Mechanism | Controls | Configured in
 | Alarmd Drools rules | Alarms (and situations) | `$\{OPENNMS_HOME}/etc/alarmd/drools-rules.d/*.drl`
-| Vacuumd | Events, soft-deleted nodes/interfaces/services, statistics reports, key-value store entries, path-outage alarm clearing | `$\{OPENNMS_HOME}/etc/vacuumd-configuration.xml`
+| Vacuumd | Events, soft-deleted nodes/interfaces/services, key-value store entries, path-outage alarm clearing | `$\{OPENNMS_HOME}/etc/vacuumd-configuration.xml`
 | AlarmPersister `auto-clean` | Reduced events under an existing alarm (opt-in, per event type) | `<alarm-data auto-clean="true"/>` in event definitions (eventconf)
 |===
 
@@ -127,10 +127,6 @@ All run every 24 hours by default.
 [cols="2,1,3"]
 |===
 | Automation | Interval | What it does
-
-| `purgeStatisticsReports`
-| 1 hour
-| `DELETE FROM statisticsReport WHERE purgeDate < now()`. The `purgeDate` is set by the statistics reporting subsystem when each report is generated.
 
 | `clearPathOutages`
 | 30 seconds

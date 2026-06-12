@@ -26,7 +26,6 @@
   <bean id="configTester" class="org.opennms.netmgt.config.tester.ConfigTester">
     <property name="configs">
       <map>
-        <entry key="actiond-configuration.xml" value="actiondConfigFactory"/>
         <entry key="ami-config.xml" value="amiPeerFactory"/>
         <entry key="bsf-northbounder-configuration.xml" value="bsfNorthbounderConfigDao"/>
         <entry key="categories.xml" value="categoryFactory"/>
@@ -67,7 +66,6 @@
         <entry key="response-graph.properties" value="responsePrefabGraph"/>
         <entry key="rrd-configuration.properties" value="rrdConfigurationProperties"/>
         <entry key="rtc-configuration.xml" value="rtcConfigFactory"/>
-        <entry key="scriptd-configuration.xml" value="scriptdConfigFactory"/>
         <entry key="service-configuration.xml" value="serviceConfigFactory"/>
         <entry key="site-status-views.xml" value="siteStatusViewConfigDao"/>
         <entry key="snmp-adhoc-graph.properties" value="snmpAdhocGraph"/>
@@ -77,7 +75,6 @@
         <!-- <entry key="snmp-interface-poller-configuration.xml" value="snmpInterfacePollerConfigFactory"/> --><!-- database access -->
         <entry key="snmp-metadata-adapter-configuration.xml" value="snmpMetadataConfigDao"/>
         <entry key="snmptrap-northbounder-configuration.xml" value="snmpTrapNorthbounderConfigDao"/>
-        <entry key="statsd-configuration.xml" value="statisticsDaemonConfigDao"/>
         <entry key="surveillance-views.xml" value="surveillanceViewConfigDao"/>
         <entry key="syslogd-configuration.xml" value="syslogdConfigFactory"/>
         <entry key="syslog-northbounder-configuration.xml" value="syslogNorthbounderConfigDao"/>
@@ -100,12 +97,6 @@
     </property>
   </bean>
 
-  <bean id="actiondConfigFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"><value>org.opennms.netmgt.config.ActiondConfigFactory.init</value></property>
-  </bean>
-
-  <bean id="actiondConfigFactory" class="org.opennms.netmgt.config.ActiondConfigFactory" depends-on="actiondConfigFactory-init" factory-method="getInstance"/>
-  
   <bean id="amiPeerFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"><value>org.opennms.netmgt.config.AmiPeerFactory.init</value></property>
   </bean>
@@ -335,12 +326,6 @@
 
   <bean id="rtcConfigFactory" class="org.opennms.netmgt.config.RTCConfigFactory"/>
 
-  <bean id="scriptdConfigFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"><value>org.opennms.netmgt.config.ScriptdConfigFactory.init</value></property>
-  </bean>
-
-  <bean id="scriptdConfigFactory" class="org.opennms.netmgt.config.ScriptdConfigFactory" depends-on="scriptdConfigFactory-init" factory-method="getInstance"/>
-
   <bean id="serviceConfigFactory" class="org.opennms.netmgt.config.ServiceConfigFactory" />
 
   <bean id="siteStatusViewConfigDao" class="org.opennms.netmgt.dao.jaxb.DefaultSiteStatusViewConfigDao"/>
@@ -387,10 +372,6 @@
 
   <bean name="snmpTrapNorthbounderConfigDao" class="org.opennms.netmgt.alarmd.northbounder.snmptrap.SnmpTrapNorthbounderConfigDao">
     <property name="configResource" value="file:${opennms.home}/etc/snmptrap-northbounder-configuration.xml" />
-  </bean>
-
-  <bean id="statisticsDaemonConfigDao" class="org.opennms.netmgt.dao.jaxb.DefaultStatisticsDaemonConfigDao">
-    <property name="configResource" value="file:${opennms.home}/etc/statsd-configuration.xml"/>
   </bean>
 
   <bean id="surveillanceViewConfigDao" class="org.opennms.netmgt.dao.jaxb.DefaultSurveillanceViewConfigDao">

@@ -43,10 +43,6 @@
   </statement>
     
   <automations>
-    <automation name="purgeStatisticsReports" active="true"
-                interval="3600000" 
-                action-name="deletePurgeableStatisticsReports" />
-
     <automation name="clearPathOutages" interval="30000" active="true"
                 trigger-name="selectPathOutagesNodes"
                 action-name="clearPathOutages" />
@@ -105,13 +101,6 @@
   </triggers>
     
   <actions>
-    <action name="deletePurgeableStatisticsReports" >
-      <statement>
-        DELETE from statisticsReport
-         WHERE purgeDate &lt; now()
-      </statement>
-    </action>
-
     <!-- Does nothing while still meeting the requirements of all actions -->
     <action name="doNothingAction" >
       <statement>

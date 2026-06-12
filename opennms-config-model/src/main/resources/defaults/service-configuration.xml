@@ -77,24 +77,8 @@ can override these defaults and support environment variable interpolation using
     <invoke at="stop" pass="0" method="stop"/>
   </service>
   <service enabled="true">
-    <name>OpenNMS:Name=Actiond</name>
-    <class-name>org.opennms.netmgt.actiond.jmx.Actiond</class-name>
-    <invoke at="start" pass="0" method="init"/>
-    <invoke at="start" pass="1" method="start"/>
-    <invoke at="status" pass="0" method="status"/>
-    <invoke at="stop" pass="0" method="stop"/>
-  </service>
-  <service enabled="true">
     <name>OpenNMS:Name=Notifd</name>
     <class-name>org.opennms.netmgt.notifd.jmx.Notifd</class-name>
-    <invoke at="start" pass="0" method="init"/>
-    <invoke at="start" pass="1" method="start"/>
-    <invoke at="status" pass="0" method="status"/>
-    <invoke at="stop" pass="0" method="stop"/>
-  </service>
-  <service enabled="true">
-    <name>OpenNMS:Name=Scriptd</name>
-    <class-name>org.opennms.netmgt.scriptd.jmx.Scriptd</class-name>
     <invoke at="start" pass="0" method="init"/>
     <invoke at="start" pass="1" method="start"/>
     <invoke at="status" pass="0" method="status"/>
@@ -167,14 +151,6 @@ can override these defaults and support environment variable interpolation using
   <service enabled="true">
     <name>OpenNMS:Name=PassiveStatusd</name>
     <class-name>org.opennms.netmgt.passive.jmx.PassiveStatusd</class-name>
-    <invoke at="start" pass="0" method="init"/>
-    <invoke at="start" pass="1" method="start"/>
-    <invoke at="status" pass="0" method="status"/>
-    <invoke at="stop" pass="0" method="stop"/>
-  </service>
-  <service enabled="true">
-    <name>OpenNMS:Name=Statsd</name>
-    <class-name>org.opennms.netmgt.statsd.jmx.Statsd</class-name>
     <invoke at="start" pass="0" method="init"/>
     <invoke at="start" pass="1" method="start"/>
     <invoke at="status" pass="0" method="status"/>

@@ -103,8 +103,6 @@
                             org.opennms.netmgt.config.microblog,
                             org.opennms.netmgt.config.provisiond,
                             org.opennms.netmgt.config.siteStatusViews,
-                            org.opennms.netmgt.config.statsd,
-                            org.opennms.netmgt.config.statsd.model,
                             org.opennms.netmgt.config.surveillanceViews,
 
                             org.opennms.netmgt.dao.api,
