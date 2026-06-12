@@ -12,8 +12,6 @@
 ** xref:minion/testing.adoc[]
 
 * xref:topology/introduction.adoc[]
-** xref:topology/infopanel.adoc[]
-** xref:topology/graphml.adoc[]
 ** xref:topology/update.adoc[]
 
 * xref:graph/graph.adoc[]

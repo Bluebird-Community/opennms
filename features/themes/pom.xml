@@ -16,7 +16,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>jmxconfiggenerator-theme</module>
     <module>onms-default-theme</module>
 	<module>dashboard-theme</module>
   </modules>

@@ -104,7 +104,7 @@ interface availability:: The percentage of time that a node interface is detecte
 == J
 
 Java Management Extensions (JMX):: A set of tools for managing and monitoring services, resources, and service-oriented networks.
-{page-component-title} uses it to collect long-term performance data for Java applications (see xref:operation:deep-dive/admin/jmx-config-generator/introduction.adoc[]).
+{page-component-title} uses it to collect long-term performance data for Java applications.
 
 https://www.atlassian.com/software/jira[Jira]:: A project management platform that The OpenNMS Group uses to track software issues, feature requests, and IT requests for its projects, including {page-component-title} (see https://issues.opennms.com[OpenNMS Jira]).
 

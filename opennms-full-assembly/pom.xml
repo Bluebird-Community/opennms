@@ -434,20 +434,7 @@
                 <feature>opennms-graphml</feature>
                 <feature>opennms-graphs</feature>
                 <feature>opennms-graph-provider-persistence-test</feature>
-                <feature>opennms-topology-runtime-base</feature>
-                <feature>opennms-topology-runtime-browsers</feature>
-                <feature>opennms-topology-runtime-linkd</feature>
-                <feature>opennms-topology-runtime-application</feature>
-                <feature>opennms-topology-runtime-bsm</feature>
-                <feature>opennms-topology-runtime-graphml</feature>
-                <feature>opennms-topology-runtime-pathoutage</feature>
-                <feature>opennms-topology-runtime-asset</feature>
-                <feature>org.opennms.features.topology.shell</feature>
                 <feature>opennms-enlinkd-shell</feature>
-                <feature>vaadin</feature>
-                <feature>vaadin-jmxconfiggenerator</feature>
-                <feature>vaadin-snmp-events-and-metrics</feature>
-                <feature>vaadin-surveillance-views</feature>
                 <feature>jira-troubleticketer</feature>
                 <feature>tsrm-troubleticketer</feature>
                 <feature>datachoices</feature>
@@ -463,7 +450,6 @@
                 <feature>org.opennms.features.enlinkd.service.api</feature>
                 <feature>org.opennms.features.bsm.service.api</feature>
                 <feature>org.opennms.features.bsm.shell-commands</feature>
-                <feature>vaadin-adminpage</feature>
                 <feature>opennms-jest</feature>
                 <feature>opennms-es-rest</feature>
                 <feature>opennms-flows</feature>
@@ -1043,10 +1029,6 @@
     <repository>
       <id>atlassian-public</id>
       <url>https://maven.artifacts.atlassian.com/</url>
-    </repository>
-    <repository>
-      <id>vaadin-addons</id>
-      <url>https://maven.vaadin.com/vaadin-addons/</url>
     </repository>
   </repositories>
 </project>

@@ -98,13 +98,6 @@
           "roles": null
         },
         {
-          "id": "topology",
-          "name": "Topology",
-          "url": "topology",
-          "locationMatch": "topology",
-          "roles": null
-        },
-        {
           "id": "assets",
           "name": "Assets",
           "url": "asset/index.jsp",
@@ -346,13 +339,6 @@
           "id": "snmpMibCompiler",
           "name": "SNMP MIB Compiler",
           "url": "admin/mibCompiler.jsp",
-          "locationMatch": "",
-          "roles": null
-        },
-        {
-          "id": "jmxMetricConfigurationGenerator",
-          "name": "JMX Metric Configuration Generator",
-          "url": "admin/jmxConfigGenerator.jsp",
           "locationMatch": "",
           "roles": null
         },

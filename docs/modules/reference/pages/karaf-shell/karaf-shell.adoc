@@ -445,9 +445,6 @@ This list is not exhaustive and only covers the most commonly used commands.
 |opennms:list-monitors
 |Lists all of the available monitors
 |Enabled By Default
-|opennms:list-namespaces
-|Lists the available blueprint namespaces and their providers
-|org.opennms.features.topology.shell
 |opennms:metadata-test
 |Test Meta-Data replacement
 |Enabled By Default
@@ -583,15 +580,6 @@ This list is not exhaustive and only covers the most commonly used commands.
 |opennms:threshold-enumerate
 |Enumerates threshold states
 |Enabled By Default
-|opennms:topo-delete-history
-|Deletes history of all users
-|org.opennms.features.topology.shell
-|opennms:topo-list-operations
-|Lists the available OpenNMS topology operations
-|org.opennms.features.topology.shell
-|opennms:topo-show-history
-|Shows the history of a certain user
-|org.opennms.features.topology.shell
 |opennms:track-service
 |Track services that match a given filter
 |Enabled By Default

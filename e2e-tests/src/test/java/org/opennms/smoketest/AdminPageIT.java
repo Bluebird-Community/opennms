@@ -78,7 +78,6 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         // Service Monitoring
         new String[] { "Configure Scheduled Outages", "//form//input[@value='New Name']" },
         new String[] { "Manage and Unmanage Interfaces and Services", "//span[text()='Manage and Unmanage Interfaces and Services']" },
-        new String[] { "Manage Business Services", "//div[@id='content']/iframe[@name='bsm-admin-page']" },
 
         // Performance Measurement
         new String[] { "Manage SNMP Data Collection Config", "//div[@id='app']//h1[text()='Manage SNMP Data Collection Sources']" },
