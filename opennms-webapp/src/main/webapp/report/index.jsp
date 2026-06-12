@@ -79,7 +79,6 @@
                     <ul class="list-unstyled">
                         <li><a href="graph/index.jsp">Resource Graphs</a></li>
                         <li><a href="KSC/index.jsp">KSC Performance, Nodes, Domains</a></li>
-                        <li><a href="report/database/index.jsp">Database Reports</a></li>
                         <li><a href="statisticsReports/index.htm">Statistics Reports</a></li>
                     </ul>
                 </div>
@@ -116,11 +115,6 @@
             <p>You may narrow your selection of resources by entering a search string
                 in the "Name contains" field. This will invoke a case-insensitive substring
                 match on resource names.
-            </p>
-
-            <p><b>Database Reports</b> provide graphical or numeric
-                view of your service level metrics for the current
-                month-to-date, previous month, and last twelve months by categories.
             </p>
 
             <p><b>Statistics Reports</b> provide regularly scheduled statistical

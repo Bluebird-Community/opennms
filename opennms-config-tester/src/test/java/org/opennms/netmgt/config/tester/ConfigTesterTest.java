@@ -122,11 +122,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testAvailabilityReports() {
-        testConfigFile("availability-reports.xml");
-    }
-
-    @Test
     public void testBSFNorthbounderConfiguration() {
         testConfigFile("bsf-northbounder-configuration.xml");
     }
@@ -144,11 +139,6 @@ public class ConfigTesterTest {
     @Test
     public void testTokenAuthConfiguration() {
         testConfigFile("token-auth-configuration.xml");
-    }
-
-    @Test
-    public void testDatabaseReports() {
-        testConfigFile("database-reports.xml");
     }
 
     @Test
@@ -209,11 +199,6 @@ public class ConfigTesterTest {
     @Test
     public void testIfTttConfig() {
         ignoreConfigFile("ifttt-config.xml");
-    }
-
-    @Test
-    public void testJasperReports() {
-        testConfigFile("jasper-reports.xml");
     }
 
     @Test
@@ -335,11 +320,6 @@ public class ConfigTesterTest {
     @Test
     public void testProvisiondConfiguration() {
         testConfigFile("provisiond-configuration.xml");
-    }
-
-    @Test
-    public void testReportdConfiguration() {
-        testConfigFile("reportd-configuration.xml");
     }
 
     @Test
