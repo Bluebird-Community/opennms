@@ -69,9 +69,6 @@
   <div id="single-popup" class="node-marker-single" style="display:none">
     <h4>Node <a class="node" href="<%= baseHref %>element/node.jsp?node={NODE_ID}">{NODE_LABEL}</a></h4>
     <p>
-      <a href="<%= baseHref %>topology?provider=Enhanced+Linkd&focus-vertices={NODE_ID}" target="_blank">View in Topology Map</a>
-    </p>
-    <p>
       Severity: <span class="severity {SEVERITY_LABEL}"><a href="<%= baseHref %>alarm/list.htm?sortby=id&acktype=unack&limit=20&filter=node%3D{NODE_ID}" target="_blank">{SEVERITY_LABEL}</a></span> <br/>
       Description: {DESCRIPTION} <br/>
       Maint.&nbsp;Contract: {MAINT_CONTRACT} <br/>
@@ -83,9 +80,6 @@
   <!-- Template to build the popup for each group cluster -->
   <div id="multi-popup" class="node-marker-multiple" style="display:none">
     <h4># of nodes: {NUMBER_NODES} ({NUMBER_UNACKED} Unacknowledged Alarms)</h4>
-    <p>
-      <a href="<%= baseHref %>topology?provider=Enhanced+Linkd&focus-vertices={NODE_IDS}" target="_blank">View in Topology Map</a>
-    </p>
     <p>
       {TABLE_CONTENT}
     </p>

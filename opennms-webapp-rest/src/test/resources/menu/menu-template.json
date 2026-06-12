@@ -252,13 +252,6 @@
           "roles": null
         },
         {
-          "id": "topology",
-          "name": "Topology",
-          "url": "topology",
-          "locationMatch": "topology",
-          "roles": null
-        },
-        {
           "id": "geographicalMap",
           "name": "Geographical",
           "url": "ui/index.html#/map",

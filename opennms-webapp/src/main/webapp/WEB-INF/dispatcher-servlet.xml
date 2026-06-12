@@ -288,11 +288,6 @@
         <property name="entries">
             <list>
                 <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
-                    <property name="name" value="Topology"/>
-                    <property name="url" value="topology"/>
-                    <property name="locationMatch" value="topology"/>
-                </bean>
-                <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
                     <property name="name" value="Geographical"/>
                     <property name="url" value="ui/index.html#/map"/>
                     <property name="locationMatch" value="ui/index.html#/map"/>

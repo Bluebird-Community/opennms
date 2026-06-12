@@ -176,16 +176,6 @@
       "items": null
     },
     {
-      "id": "topologiesMenu",
-      "name": "Topology Map",
-      "url": "topology",
-      "action": "link",
-      "locationMatch": "topology",
-      "icon": "network/Instances",
-      "roles": null,
-      "items": null
-    },
-    {
       "id": "metricsMenu",
       "name": "Metrics (Resource Graphs)",
       "url": "#",
@@ -373,13 +363,6 @@
           "url": "admin/deleteNodes",
           "locationMatch": "",
           "roles": ["ROLE_ADMIN", "ROLE_PROVISION"]
-        },
-        {
-          "id": "manageBusinessServices",
-          "name": "Manage Business Services",
-          "url": "admin/bsm/adminpage.jsp",
-          "locationMatch": "",
-          "roles": null
         }
       ]
     },
@@ -475,13 +458,6 @@
           "id": "snmpMibCompiler",
           "name": "SNMP MIB Compiler",
           "url": "admin/mibCompiler.jsp",
-          "locationMatch": "",
-          "roles": null
-        },
-        {
-          "id": "jmxMetricConfigurationGenerator",
-          "name": "JMX Metric Configuration Generator",
-          "url": "admin/jmxConfigGenerator.jsp",
           "locationMatch": "",
           "roles": null
         },

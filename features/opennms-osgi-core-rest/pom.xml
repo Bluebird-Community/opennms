@@ -2,9 +2,8 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
-        <relativePath>../topology-map/poms/compiled/</relativePath>
-        <groupId>org.opennms.features.topology.build</groupId>
-        <artifactId>compiled-bundle-settings</artifactId>
+        <groupId>org.opennms</groupId>
+        <artifactId>org.opennms.features</artifactId>
         <version>37.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -20,6 +19,25 @@
         <bundle.namespace>org.opennms.osgi.core.rest</bundle.namespace>
         <bundle.symbolicName>${bundle.namespace}</bundle.symbolicName>
     </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*;version="${project.version}"</Export-Package>
+                        <Private-Package>${bundle.namespace}.internal.*</Private-Package>
+                        <_include>-osgi.bnd</_include>
+                        <_removeheaders>Export-Service</_removeheaders>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>

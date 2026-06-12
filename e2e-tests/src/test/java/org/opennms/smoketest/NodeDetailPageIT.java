@@ -24,27 +24,15 @@ package org.opennms.smoketest;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
-import java.io.StringReader;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.apache.http.client.methods.HttpGet;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opennms.netmgt.events.api.EventConstants;
-import org.opennms.netmgt.model.events.EventBuilder;
-import org.opennms.smoketest.selenium.ResponseData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
@@ -61,62 +49,6 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
         public NodeDetailPage open() {
             testCase.getDriver().get(url);
             return this;
-        }
-
-        public TopologyIT.TopologyUIPage viewInTopology() {
-            testCase.getDriver().findElement(By.linkText("View in Topology")).click();
-            final TopologyIT.TopologyUIPage topologyUIPage = new TopologyIT.TopologyUIPage(testCase, testCase.getBaseUrlInternal());
-            topologyUIPage.open();
-            return topologyUIPage;
-        }
-    }
-
-    // See NMS-8872
-    @Test
-    public void canUseViewInTopology() throws Exception {
-        try {
-            // Create a node, we can actually reference
-            deleteTestRequisition();
-            final String node = "<node type=\"A\" label=\"TestMachine\" foreignSource=\"" + REQUISITION_NAME + "\" foreignId=\"1\">" +
-                    "<labelSource>H</labelSource>" +
-                    "<sysContact>The Owner</sysContact>" +
-                    "<sysDescription>" +
-                    "Darwin TestMachine 9.4.0 Darwin Kernel Version 9.4.0: Mon Jun  9 19:30:53 PDT 2008; root:xnu-1228.5.20~1/RELEASE_I386 i386" +
-                    "</sysDescription>" +
-                    "<sysLocation>DevJam</sysLocation>" +
-                    "<sysName>TestMachine</sysName>" +
-                    "<sysObjectId>.1.3.6.1.4.1.8072.3.2.255</sysObjectId>" +
-                    "</node>";
-            sendPost("/rest/nodes", node, 201);
-
-            // Get the node Id
-            final HttpGet httpGet = new HttpGet(getBaseUrlExternal() + "opennms/rest/nodes?label=TestMachine&foreignSource=SeleniumTestGroup");
-            final ResponseData responseData = getRequest(httpGet);
-            Assert.assertNotNull(responseData.getResponseText());
-            final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            final DocumentBuilder builder = factory.newDocumentBuilder();
-            final Document document = builder.parse(new InputSource(new StringReader(responseData.getResponseText())));
-            final Element rootElement = document.getDocumentElement();
-            final NodeList children = rootElement.getChildNodes();
-            Assert.assertEquals(1, children.getLength());
-            final int nodeId = Integer.valueOf(children.item(0).getAttributes().getNamedItem("id").getNodeValue());
-
-            //force loading topology
-            final EventBuilder eventBuilder = new EventBuilder(EventConstants.RELOAD_TOPOLOGY_UEI, getClass().getSimpleName());
-            eventBuilder.setParam(EventConstants.PARAM_TOPOLOGY_NAMESPACE, "all");
-            stack.opennms().getRestClient().sendEvent(eventBuilder.getEvent());
-            Thread.sleep(5000); // Wait to allow the event to be processed
-
-            // Navigate to the node details page
-            NodeDetailPage nodeDetailPage = new NodeDetailPage(this, nodeId);
-            nodeDetailPage.open();
-
-            // View in Topology and verify it works
-            TopologyIT.TopologyUIPage topologyUIPage = nodeDetailPage.viewInTopology();
-            Assert.assertEquals(1, topologyUIPage.getFocusedVertices().size());
-            Assert.assertEquals("TestMachine", topologyUIPage.getFocusedVertices().get(0).getLabel());
-        } finally {
-            deleteTestRequisition();
         }
     }
 

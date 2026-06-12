@@ -8,9 +8,6 @@
           <span class="larger-icon"><FeatherIcon :icon="Location" /></span>
           <span>{{ latitude }}, {{ longitude }}</span>
         </div>
-        <div class="col">
-          <span><a :href="getTopologyLink()">View in Topology Map</a></span>
-        </div>
       </div>
       <br />
       <div id="wrap">
@@ -84,16 +81,6 @@ const ipAddressesForNode = (node: Node | null) => {
 const nodeFromMarker = (marker: Marker<any>) => {
   const name = (marker as any).options.name
   return nodes.value.find(n => n.label === name) || null
-}
-
-const getTopologyLink = () => {
-  const children = props.cluster.getAllChildMarkers()
-  const vertices = children
-    .map(m => nodeFromMarker(m)?.id || '')
-    .filter(id => id.length > 0)
-    .join(',')
-
-  return `${mainMenu.value.baseHref}topology?provider=Enhanced Linkd&focus-vertices=${vertices}`
 }
 
 const getItems = () => {

@@ -133,8 +133,6 @@
 *** xref:deep-dive/bsm/root-cause-impact-analysis.adoc[]
 
 ** xref:deep-dive/topology/introduction.adoc[]
-*** xref:deep-dive/topology/topology.adoc[]
-*** xref:deep-dive/topology/graphml-asset-topology-provider.adoc[]
 *** xref:deep-dive/topology/enlinkd/introduction.adoc[]
 **** xref:deep-dive/topology/enlinkd/shell/introduction.adoc[]
 **** xref:deep-dive/topology/enlinkd/layer-2-discovery.adoc[]
@@ -238,9 +236,6 @@
 **** xref:deep-dive/admin/configuration/system-properties.adoc[]
 *** xref:deep-dive/admin/housekeeping.adoc[]
 *** xref:deep-dive/admin/automatic-cleanup.adoc[]
-*** xref:deep-dive/admin/jmx-config-generator/introduction.adoc[]
-**** xref:deep-dive/admin/jmx-config-generator/cli.adoc[]
-**** xref:deep-dive/admin/jmx-config-generator/webui.adoc[]
 *** xref:deep-dive/admin/logging/introduction.adoc[]
 **** xref:deep-dive/admin/logging/log-reader.adoc[]
 **** xref:deep-dive/admin/logging/log-file-viewer.adoc[]

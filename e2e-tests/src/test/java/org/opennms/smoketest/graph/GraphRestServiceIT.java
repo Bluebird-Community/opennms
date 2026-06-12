@@ -54,7 +54,6 @@ import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.netmgt.xml.event.Event;
 import org.opennms.smoketest.OpenNMSSeleniumIT;
 import org.opennms.smoketest.graphml.GraphmlDocument;
-import org.opennms.smoketest.topo.GraphMLTopologyIT;
 import org.opennms.smoketest.utils.HibernateDaoFactory;
 import org.opennms.smoketest.utils.KarafShell;
 import org.opennms.smoketest.utils.RestClient;
@@ -72,6 +71,7 @@ import io.restassured.response.Response;
 public class GraphRestServiceIT extends OpenNMSSeleniumIT {
     private static final Logger LOG = LoggerFactory.getLogger(GraphRestServiceIT.class);
     private static final String CONTAINER_ID = "test";
+    private static final String GRAPHML_TOPOLOGY_PROVIDER_LABEL = "GraphML Topology Provider (test-graph)";
 
     private final RestClient restClient = stack.opennms().getRestClient();
     private final KarafShell karafShell = new KarafShell(stack.opennms().getSshAddress());
@@ -174,7 +174,7 @@ public class GraphRestServiceIT extends OpenNMSSeleniumIT {
                 .body("[2].graphs[10].description", Matchers.is("This Topology Provider displays the User Defined topology information."))
 
                 .body("[3].id", Matchers.is(CONTAINER_ID))
-                .body("[3].label", Matchers.is(GraphMLTopologyIT.LABEL))
+                .body("[3].label", Matchers.is(GRAPHML_TOPOLOGY_PROVIDER_LABEL))
                 .body("[3].graphs.size()", Matchers.is(2))
                 .body("[3].graphs[0].namespace", Matchers.is("acme:markets"))
                 .body("[3].graphs[0].label", Matchers.is("Markets"))

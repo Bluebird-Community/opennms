@@ -52,7 +52,6 @@ Follow these steps to enter simulation mode:
 
 You can customize the icons for each element in the Business Service view.
 To do so, select an element and choose *Change Icon* in the context menu.
-To add custom `.svg` files, follow the instructions in xref:deep-dive/topology/topology.adoc#ga-topology-add-icons[Add new icons].
 
 === Share view
 

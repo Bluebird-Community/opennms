@@ -2928,17 +2928,6 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.opennms.features.topology</groupId>
-        <artifactId>org.opennms.features.topology.api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.features</groupId>
-        <artifactId>vaadin</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
         <groupId>org.opennms</groupId>
         <artifactId>opennms-map-provisioning-adapter</artifactId>
         <version>${project.version}</version>
@@ -3507,12 +3496,6 @@
       <dependency>
         <groupId>org.opennms</groupId>
         <artifactId>opennms-provisiond</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.features</groupId>
-        <artifactId>jmxconfiggenerator</artifactId>
-        <classifier>onejar</classifier>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -4350,72 +4333,6 @@
             <artifactId>jsr305</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <!-- Vaadin -->
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-compatibility-server</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-compatibility-shared</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-compatibility-client-compiled</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-compatibility-client</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-compatibility-themes</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-server</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-shared</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-client-compiled</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-client</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-themes</artifactId>
-        <version>${vaadinVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-context-menu</artifactId>
-        <version>${vaadinAddonContextMenuVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.vaadin.addon</groupId>
-        <artifactId>confirmdialog</artifactId>
-        <version>${vaadinAddonConfirmDialogVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.features.vaadin-components</groupId>
-        <artifactId>extender-service</artifactId>
-        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>opensymphony</groupId>

@@ -5,8 +5,6 @@
     <span class="larger-icon"><FeatherIcon :icon="Location" /></span>
     {{ latitude }}, {{ longitude }}
     <br />
-    <a :href="getTopologyLink(node)">View in Topology Map</a>
-    <br />
     <br />
     <div class="flex">
       <div>IP Address:</div>
@@ -59,10 +57,6 @@ const props = defineProps({
 
 const latitude = computed(() => stringToFixedFloat(props.node.assetRecord.latitude, 6))
 const longitude = computed(() => stringToFixedFloat(props.node.assetRecord.longitude, 6))
-
-const getTopologyLink = (node: Node) => {
-  return `${props.baseHref}topology?provider=Enhanced Linkd&focus-vertices=${node.id}`
-}
 </script>
 
 <style lang="scss" scoped>

@@ -58,8 +58,7 @@ const linkItems = [
   { name: 'rescan', label: 'Node Rescan' },
   { name: 'admin', label: 'Admin / Node Management' },
   { name: 'updateSnmp', label: 'Update SNMP Information' },
-  { name: 'schedule-outage', label: 'Schedule an Outage' },
-  { name: 'topology', label: 'View Topology Map' }
+  { name: 'schedule-outage', label: 'Schedule an Outage' }
 ]
 
 const onNodeLink = (name: string, node: Node) => {
@@ -94,8 +93,6 @@ const mapLink = (name: string, node: Node) => {
       return `admin/updateSnmp.jsp?node=${node.id}&ipaddr=0.0.0.0`
     case 'schedule-outage':
       return `admin/sched-outages/editoutage.jsp?newName=${node.label}&addNew=true&nodeID=${node.id}`
-    case 'topology':
-      return `topology?provider=Enhanced+Linkd&szl=1&focus-vertices=${node.id}`
     default: return ''
   }
 }
