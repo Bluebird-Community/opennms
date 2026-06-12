@@ -28,12 +28,9 @@ import java.util.Arrays;
 
 import org.junit.Test;
 import org.opennms.integration.api.v1.model.Severity;
-import org.opennms.integration.api.v1.model.TopologyProtocol;
 import org.opennms.integration.api.v1.ticketing.Ticket.State;
-import org.opennms.netmgt.enlinkd.service.api.ProtocolSupported;
 import org.opennms.netmgt.model.OnmsSeverity;
 import org.opennms.netmgt.model.TroubleTicketState;
-import org.opennms.netmgt.topologies.service.api.OnmsTopologyProtocol;
 
 public class ModelMappersTest {
     @Test
@@ -87,33 +84,4 @@ public class ModelMappersTest {
         }
     }
 
-    @Test
-    public void testToTopologyProtocol() {
-        for (final var proto : ProtocolSupported.values()) {
-            final var from = OnmsTopologyProtocol.create(proto.toString());
-            final var to = ModelMappers.toTopologyProtocol(from);
-            assertEquals("the protocols should match (" + from.toString() + "=" + to.toString() + ")", from.toString(), to.toString());
-        }
-    }
-
-    @Test
-    public void testToOnmsTopologyProtocol() {
-        for (final var proto : ProtocolSupported.values()) {
-            final var from = TopologyProtocol.valueOf(proto.toString());
-            final var to = ModelMappers.toOnmsTopologyProtocol(from);
-            assertEquals("the protocols should match (" + from.toString() + "=" + to.toString() + ")", from.toString(), to.toString());
-        }
-    }
-
-    @Test
-    public void testAllToplogyProtocolsInProtocolSupported() {
-        for (final var from : TopologyProtocol.values()) {
-            if ("ALL".equals(from.toString())) {
-                // ALL is a special case that is not expected to be everywhere else
-                continue;
-            }
-            final var to = ProtocolSupported.valueOf(from.toString());
-            assertEquals("the protocols should match (" + from.toString() + "=" + to.toString() + ")", from.toString(), to.toString());
-        }
-    }
 }

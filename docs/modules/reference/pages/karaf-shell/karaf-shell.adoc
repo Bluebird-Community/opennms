@@ -322,24 +322,6 @@ This list is not exhaustive and only covers the most commonly used commands.
 |opennms:dns-reverse-lookup
 |DNS reverse lookup for the specified ipaddress
 |Enabled By Default
-|opennms:enlinkd-discovery-bridge-domain
-|Execute bridge topology discovery algorithm
-|xref:operation:deep-dive/topology/enlinkd/shell/introduction.adoc[opennms-enlinkd-shell]
-|opennms:enlinkd-reload
-|Triggers a restart of the enlinkd daemon
-|opennms-enlinkd-shell
-|opennms:enlinkd-reload-config
-|Triggers a reload of configuration file and restart of the enlinkd daemon
-|opennms-enlinkd-shell
-|opennms:enlinkd-reload-topology
-|Triggers a reload of the topology in case the topology has been updated
-|opennms-enlinkd-shell
-|opennms:enlinkd-run-collection
-|Execute a linkd snmp data collection and persist
-|opennms-enlinkd-shell
-|opennms:enlinkd-snmp-collect
-|Collect enlinkd snmp data
-|opennms-enlinkd-shell
 |opennms:event
 |Show event details for a given id
 |Enabled By Default

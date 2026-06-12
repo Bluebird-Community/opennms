@@ -155,10 +155,8 @@
 
 * xref:daemons/introduction.adoc[]
 ** xref:daemons/daemon-config-files/alarmd.adoc[]
-** xref:daemons/daemon-config-files/bsmd.adoc[]
 ** xref:daemons/daemon-config-files/collectd.adoc[]
 ** xref:daemons/daemon-config-files/discovery.adoc[]
-** xref:daemons/daemon-config-files/enlinkd.adoc[]
 ** xref:daemons/daemon-config-files/eventd.adoc[]
 ** xref:daemons/daemon-config-files/jettyserver.adoc[]
 ** xref:daemons/daemon-config-files/karaf.adoc[]

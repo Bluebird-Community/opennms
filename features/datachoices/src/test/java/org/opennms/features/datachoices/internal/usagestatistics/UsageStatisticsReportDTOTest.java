@@ -71,7 +71,6 @@ public class UsageStatisticsReportDTOTest {
             "\"applianceCounts\":{}," +
             "\"applications\":0," +
             "\"availableProcessors\":null," +
-            "\"businessEdgeCount\":0," +
             "\"coreFlowsPersisted\":0," +
             "\"coreNewtsSamplesInserted\":0," +
             "\"coreQueuedUpdatesCompleted\":0," +

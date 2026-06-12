@@ -21,12 +21,6 @@
     License.
 
 --%>
-<%@page import="org.opennms.web.enlinkd.LldpElementNode"%>
-<%@page import="org.opennms.web.enlinkd.CdpElementNode"%>
-<%@page import="org.opennms.web.enlinkd.OspfElementNode"%>
-<%@page import="org.opennms.web.enlinkd.IsisElementNode"%>
-<%@page import="org.opennms.web.enlinkd.BridgeElementNode"%>
-<%@page import="org.opennms.web.enlinkd.EnLinkdElementFactory"%>
 <%@page language="java"
 	contentType="text/html"
 	session="true"
@@ -158,12 +152,6 @@
     if (asset != null && asset.getBuilding() != null && asset.getBuilding().length() > 0) {
         nodeModel.put("statusSite", asset.getBuilding());
     }
-    
-    nodeModel.put("lldp",    EnLinkdElementFactory.getInstance(getServletContext()).getLldpElement(nodeId));
-    nodeModel.put("cdp",    EnLinkdElementFactory.getInstance(getServletContext()).getCdpElement(nodeId));
-    nodeModel.put("ospf",    EnLinkdElementFactory.getInstance(getServletContext()).getOspfElement(nodeId));
-    nodeModel.put("isis",    EnLinkdElementFactory.getInstance(getServletContext()).getIsisElement(nodeId));
-    nodeModel.put("bridges", EnLinkdElementFactory.getInstance(getServletContext()).getBridgeElements(nodeId));
 
     nodeModel.put("criticalPath", PathOutageManagerDaoImpl.getInstance().getPrettyCriticalPath(nodeId));
     nodeModel.put("noCriticalPath", PathOutageManager.NO_CRITICAL_PATH);

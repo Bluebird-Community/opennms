@@ -56,24 +56,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.opennms.features.bsm</groupId>
-            <artifactId>org.opennms.features.bsm.service.impl</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.bsm</groupId>
-            <artifactId>org.opennms.features.bsm.persistence.api</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.bsm</groupId>
-            <artifactId>org.opennms.features.bsm.persistence.impl</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.opennms</groupId>
             <artifactId>opennms-config</artifactId>
             <scope>test</scope>
@@ -137,24 +119,6 @@
         <dependency>
             <groupId>org.opennms.features</groupId>
             <artifactId>org.opennms.features.rest-provider</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.enlinkd</groupId>
-            <artifactId>org.opennms.features.enlinkd.service.api</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.enlinkd</groupId>
-            <artifactId>org.opennms.features.enlinkd.persistence.impl</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.enlinkd</groupId>
-            <artifactId>org.opennms.features.enlinkd.service.impl</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

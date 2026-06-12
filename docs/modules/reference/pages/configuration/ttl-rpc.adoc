@@ -32,7 +32,7 @@ The TTL used when invoking other types of SNMP requests remotely is:
 1. The value of the `ttl` associate with the SNMP agent's configuration
 2. Fall-back to using the service interval as the TTL (this is the rate at which the service is scheduled)
 
-TIP: These rules apply to SNMP queries like agent scans in provisiond, table scans in enlinkd, etc...
+TIP: These rules apply to SNMP queries like agent scans in provisiond, etc...
 
 == TTLs for provisiond detectors
 

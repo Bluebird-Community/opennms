@@ -87,63 +87,8 @@ curl -X GET -u admin:admin http://localhost:8980/opennms/api/v2/graphs
         ],
         "id": "application",
         "label": "Application Graph"
-    },
-    {
-        "description": "Displays the hierarchy of the defined Business Services and their computed operational states.",
-        "graphs": [
-            {
-                "description": "Displays the hierarchy of the defined Business Services and their computed operational states.",
-                "label": "Business Service Graph",
-                "namespace": "bsm"
-            }
-        ],
-        "id": "bsm",
-        "label": "Business Service Graph"
-    },
-    {
-        "description": "This Topology Provider displays the topology information discovered by the Enhanced Linkd daemon. It uses the SNMP information of several protocols like OSPF, ISIS, LLDP and CDP to generate an overall topology.",
-        "graphs": [
-            {
-                "description": "This Topology Provider displays the topology information discovered by the Enhanced Linkd daemon. It uses the SNMP information of several protocols like OSPF, ISIS, LLDP and CDP to generate an overall topology.",
-                "label": "Enhanced Linkd Topology Provider",
-                "namespace": "nodes"
-            }
-        ],
-        "id": "nodes",
-        "label": "Enhanced Linkd Topology Provider"
     }
 ]
-----
-
-=== Retrieve graph container 'bsm'
-
-.Request
-[source, console]
-----
-curl -X GET -u admin:admin http://localhost:8980/opennms/api/v2/graphs/bsm
-----
-
-.Response
-[source, json]
-----
-{
-    "description": "Displays the hierarchy of the defined Business Services and their computed operational states.",
-    "graphs": [
-        {
-            "defaultFocus": {
-                "type": "SELECTION",
-                "vertexIds": []
-            },
-            "description": "Displays the hierarchy of the defined Business Services and their computed operational states.",
-            "edges": [],
-            "label": "Business Service Graph",
-            "namespace": "bsm",
-            "vertices": []
-        }
-    ],
-    "id": "bsm",
-    "label": "Business Service Graph"
-}
 ----
 
 === Retrieve graph 'layer3-network' in container 'layer3-topology'

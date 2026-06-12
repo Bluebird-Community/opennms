@@ -65,7 +65,6 @@ public class StatusRestServiceIT extends AbstractSpringJerseyRestTestCase {
 
     @Test
     public void verifyStatus() throws Exception {
-        sendRequest("GET", "/status/business-services", 204);
         sendRequest("GET", "/status/applications", 204);
         sendRequest("GET", "/status/nodes/alarms", 204);
         sendRequest("GET", "/status/nodes/outages", 204);
@@ -73,7 +72,6 @@ public class StatusRestServiceIT extends AbstractSpringJerseyRestTestCase {
 
     @Test
     public void verifySummary() throws Exception {
-        getSummary("/status/summary/business-services");
         getSummary("/status/summary/applications");
         getSummary("/status/summary/nodes/alarms");
         getSummary("/status/summary/nodes/outages");

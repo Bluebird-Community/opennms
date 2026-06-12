@@ -232,11 +232,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testEnLinkdConfiguration() {
-        ignoreConfigFile("enlinkd-configuration.xml");
-    }
-
-    @Test
     public void testLog4j2Config() {
         ignoreConfigFile("log4j2.xml");
     }

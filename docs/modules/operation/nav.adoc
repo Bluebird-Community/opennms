@@ -122,25 +122,7 @@
 **** xref:deep-dive/notifications/strategies/slack.adoc[]
 *** xref:deep-dive/notifications/shell.adoc[]
 
-** xref:deep-dive/bsm/introduction.adoc[]
-*** xref:deep-dive/bsm/business-service-definition.adoc[]
-**** xref:deep-dive/bsm/edges.adoc[]
-*** xref:deep-dive/bsm/business-service-map.adoc[]
-*** xref:deep-dive/bsm/operational-status.adoc[]
-**** xref:deep-dive/bsm/map-functions.adoc[]
-**** xref:deep-dive/bsm/reduce-functions.adoc[]
-*** xref:deep-dive/bsm/root-cause-impact-analysis.adoc[]
-
 ** xref:deep-dive/topology/introduction.adoc[]
-*** xref:deep-dive/topology/enlinkd/introduction.adoc[]
-**** xref:deep-dive/topology/enlinkd/shell/introduction.adoc[]
-**** xref:deep-dive/topology/enlinkd/layer-2-discovery.adoc[]
-***** xref:deep-dive/topology/enlinkd/layer-2/lldp-discovery.adoc[]
-***** xref:deep-dive/topology/enlinkd/layer-2/cdp-discovery.adoc[]
-***** xref:deep-dive/topology/enlinkd/layer-2/bridge-discovery.adoc[]
-**** xref:deep-dive/topology/enlinkd/layer-3-discovery.adoc[]
-***** xref:deep-dive/topology/enlinkd/layer-3/ospf-discovery.adoc[]
-***** xref:deep-dive/topology/enlinkd/layer-3/is-is-discovery.adoc[]
 
 ** xref:deep-dive/ticketing/introduction.adoc[]
 

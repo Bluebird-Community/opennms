@@ -29,8 +29,6 @@ https://azure.microsoft.com/en-us/[Azure]:: A cloud hosting platform that allows
 https://commons.apache.org/proper/commons-bsf/[Bean Scripting Framework (BSF)]:: A framework that allows scripting to be used in Java code via a set of classes.
 The {page-component-title} xref:provisioning/detectors/BsfDetector.adoc[BSFDetector] runs arbitrary BSF scripts to determine the existence of a service, and the xref:service-assurance/monitors/BSFMonitor.adoc[BSFMonitor] uses scripts to determine the status of a service.
 
-business service monitoring:: A {page-component-title} feature that lets you monitor and generate alerts for issues affecting complex business services spanning multiple nodes (see xref:operation:deep-dive/bsm/introduction.adoc[]).
-
 == C
 
 https://cassandra.apache.org/_/index.html[Cassandra]:: An open-source distributed/scale-out NoSQL database designed to hold large amounts of structured or unstructured data across many servers.

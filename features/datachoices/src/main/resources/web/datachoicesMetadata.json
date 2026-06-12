@@ -43,12 +43,6 @@
             "datatype": "string"
         },
         {
-            "key": "businessEdgeCount",
-            "name": "Current business service count",
-            "description": "Number of business services defined in the system",
-            "datatype": "number"
-        },
-        {
             "key": "cloudInstanceType",
             "name": "Cloud instance type (Cloud VM only)",
             "description": "Name of the instance type (e.g. t2.large, Standard_F2s, e2-standard-4, ...)",
