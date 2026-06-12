@@ -112,11 +112,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testActiondConfiguration() {
-        testConfigFile("actiond-configuration.xml");
-    }
-
-    @Test
     public void testAmiConfig() {
         testConfigFile("ami-config.xml");
     }
@@ -348,11 +343,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testScriptdConfiguration() {
-        testConfigFile("scriptd-configuration.xml");
-    }
-
-    @Test
     public void testServiceConfiguration() {
         testConfigFile("service-configuration.xml");
     }
@@ -414,11 +404,6 @@ public class ConfigTesterTest {
     @Test
     public void testSnmpTrapNorthbounderConfiguration() {
         testConfigFile("snmptrap-northbounder-configuration.xml");
-    }
-
-    @Test
-    public void testStatsdConfiguration() {
-        testConfigFile("statsd-configuration.xml");
     }
 
     @Test
