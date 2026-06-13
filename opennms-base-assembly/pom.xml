@@ -371,6 +371,14 @@
       <artifactId>opennms-rrd-model</artifactId>
       <scope>compile</scope>
     </dependency>
+    <!-- Bean Validation provider required at runtime by the Hibernate
+         sessionFactory (applicationContext-shared.xml). Previously pulled
+         transitively via the bsm/enlinkd modules removed in phase 6b. -->
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-rrd-util</artifactId>
