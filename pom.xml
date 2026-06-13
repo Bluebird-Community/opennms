@@ -3386,11 +3386,6 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.opennms.features</groupId>
-        <artifactId>opennms-integration-rt</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.opennms</groupId>
         <artifactId>opennms-install</artifactId>
         <version>${project.version}</version>
