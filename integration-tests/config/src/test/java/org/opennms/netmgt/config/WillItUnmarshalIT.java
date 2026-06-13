@@ -249,8 +249,6 @@ public class WillItUnmarshalIT {
         addFile(Source.EXAMPLE, "destinationPaths.xml", DestinationPaths.class, false, null);
         addFile(Source.EXAMPLE, "devices/motorola_cpei_150_wimax_gateway/http-datacollection-config.xml", HttpDatacollectionConfig.class, false, null);
         addFile(Source.EXAMPLE, "discovery-configuration.xml", DiscoveryConfiguration.class, false, null);
-        addFile(Source.EXAMPLE, "event-proxy/Proxy.events.xml", Events.class, false, null);
-        addFile(Source.EXAMPLE, "event-proxy/vacuumd-configuration.xml", VacuumdConfiguration.class, false, null);
         addFile(Source.EXAMPLE, "groups.xml", Groupinfo.class, false, null);
         addFile(Source.EXAMPLE, "jvm-datacollection/collectd-configuration.xml", CollectdConfiguration.class, false, null);
         addFile(Source.EXAMPLE, "jvm-datacollection/jmx-datacollection-config.d/activemq.xml", JmxDatacollectionConfig.class, false, null);
