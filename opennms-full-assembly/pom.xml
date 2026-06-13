@@ -437,6 +437,11 @@
                 <feature>jira-troubleticketer</feature>
                 <feature>tsrm-troubleticketer</feature>
                 <feature>datachoices</feature>
+                <!-- Boot feature (org.apache.karaf.features.cfg); its geocoder/geolocation
+                     bundles were previously pulled into system/ transitively via the
+                     opennms-topology-runtime-base feature removed in phase 4. List it
+                     explicitly so the bundles are provisioned into the repo. -->
+                <feature>geolocation</feature>
                 <feature>eif-adapter</feature>
                 <feature>opennms-telemetry-collection</feature>
                 <feature>opennms-telemetry-bmp</feature>
