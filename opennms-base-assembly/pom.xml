@@ -379,6 +379,15 @@
       <artifactId>hibernate-validator</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <!-- FreeMarker is referenced by the legacy webapp (NavBarController) with
+         onmsLibScope=provided, i.e. expected in the shared lib/. Previously
+         pulled into lib/ transitively via a module removed in phase 3a. -->
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
+      <version>${freemarkerVersion}</version>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-rrd-util</artifactId>
