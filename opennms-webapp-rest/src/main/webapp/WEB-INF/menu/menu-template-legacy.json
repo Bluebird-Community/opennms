@@ -181,13 +181,6 @@
           "roles": null
         },
         {
-          "id": "charts",
-          "name": "Charts",
-          "url": "charts/index.jsp",
-          "locationMatch": "chart",
-          "roles": null
-        },
-        {
           "id": "resourceGraphs",
           "name": "Resource Graphs",
           "url": "graph/index.jsp",
@@ -199,13 +192,6 @@
           "name": "KSC Reports",
           "url": "KSC/index.jsp",
           "locationMatch": "ksc",
-          "roles": null
-        },
-        {
-          "id": "databaseReports",
-          "name": "Database Reports",
-          "url": "report/database/index.jsp",
-          "locationMatch": "database-reports",
           "roles": null
         }
       ]

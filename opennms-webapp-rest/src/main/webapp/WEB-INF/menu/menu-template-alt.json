@@ -202,20 +202,6 @@
           "roles": null
         },
         {
-          "id": "charts",
-          "name": "Charts",
-          "url": "charts/index.jsp",
-          "locationMatch": "chart",
-          "roles": null
-        },
-        {
-          "id": "databaseReports",
-          "name": "Database Reports",
-          "url": "report/database/index.jsp",
-          "locationMatch": "database-reports",
-          "roles": null
-        },
-        {
           "id": "kscReports",
           "name": "Metrics Dashboard (KSC Reports)",
           "url": "KSC/index.jsp",
