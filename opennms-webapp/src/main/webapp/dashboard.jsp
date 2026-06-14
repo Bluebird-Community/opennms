@@ -63,13 +63,13 @@
 <jsp:directive.include file="/includes/bootstrap.jsp" />
 
 <%
-    String viewName = "";
+    String viewName = "default";
 
     if (request.getParameterMap().containsKey("viewName")) {
-        viewName = "&viewName=" + request.getParameter("viewName");
+        viewName = request.getParameter("viewName");
     }
 %>
 
-<iframe name="dashboard" id="surveillance-view-ui" src="vaadin-surveillance-views?dashboard=true<%= WebSecurityUtils.sanitizeString(viewName) %>" frameborder="0" class="vaadin-fullscreen"></iframe>
+<iframe name="dashboard" id="surveillance-view-ui" src="surveillanceView.htm?viewName=<%= WebSecurityUtils.sanitizeString(viewName) %>" frameborder="0" class="vaadin-fullscreen"></iframe>
 
 <jsp:include page="/includes/bootstrap-footer.jsp" flush="true"/>

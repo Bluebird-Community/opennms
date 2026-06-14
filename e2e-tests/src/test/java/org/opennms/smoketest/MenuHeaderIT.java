@@ -74,7 +74,7 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("dashboardsMenu", "Surveillance Dashboard");
         driver.switchTo().frame(findElementByXpath("/html/body/div/iframe"));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance view: default']")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance View: default']")));
 
         driver.switchTo().parentFrame();
         frontPage();
@@ -111,7 +111,7 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         clickMenuItem("monitoringMenu", "Surveillance View");
         // switchTo() by xpath is much faster than by ID
         driver.switchTo().frame(findElementByXpath("/html/body/div/iframe"));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance view: default']")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance View: default']")));
         driver.switchTo().parentFrame();
         frontPage();
 
@@ -147,9 +147,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("manageInventoryMenu", "Delete Nodes");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Delete Nodes']")));
-
-        clickMenuItem("manageInventoryMenu", "Manage Business Services");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Business Services')]")));
         frontPage();
 
         // User Management Menu
@@ -174,9 +171,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         // Tools Menu
         clickMenuItem("toolsMenu", "SNMP MIB Compiler");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'SNMP MIB Compiler')]")));
-
-        clickMenuItem("toolsMenu", "JMX Metric Configuration Generator");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'JMX Configuration Generator')]")));
 
         clickMenuItem("toolsMenu", "Import/Export Node Asset Information");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Import/Export Assets')]")));
@@ -265,12 +259,12 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'System Reports')]")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-body']//div[@class='form-group']/input[@type='submit' and @value='Generate System Report']")));
 
-        // Omitting for now - need to fix!
-        // Vaadin Topology page
-        frontPage();
-        clickTopMenuItem("topologiesMenu");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(text(), 'Selection Context')]")));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[starts-with(@id, 'opennmstopology-')]")));
+        // Vaadin Topology page removed (topology-map removed); the Vaadin
+        // topology UI ("opennmstopology-" / Selection Context) no longer exists.
+        // frontPage();
+        // clickTopMenuItem("topologiesMenu");
+        // wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(text(), 'Selection Context')]")));
+        // wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[starts-with(@id, 'opennmstopology-')]")));
 
         // Navigation on Vue UI pages
         frontPage();
