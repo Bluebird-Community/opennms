@@ -25,13 +25,6 @@
       "roles": null,
       "items": [
         {
-          "id": "surveillanceDashboard",
-          "name": "Surveillance Dashboard",
-          "url": "dashboard.jsp",
-          "locationMatch": "dashboard",
-          "roles": null
-        },
-        {
           "id": "alarms",
           "name": "Alarms",
           "url": "alarm/list.htm",
@@ -57,13 +50,6 @@
           "name": "Events",
           "url": "event/list",
           "locationMatch": "event",
-          "roles": null
-        },
-        {
-          "id": "surveillanceView",
-          "name": "Surveillance View",
-          "url": "surveillance-view.jsp",
-          "locationMatch": "surveillance-view",
           "roles": null
         }
       ]
@@ -199,20 +185,6 @@
           "name": "Trend",
           "url": "trend/index.jsp",
           "locationMatch": "trend",
-          "roles": null
-        },
-        {
-          "id": "charts",
-          "name": "Charts",
-          "url": "charts/index.jsp",
-          "locationMatch": "chart",
-          "roles": null
-        },
-        {
-          "id": "databaseReports",
-          "name": "Database Reports",
-          "url": "report/database/index.jsp",
-          "locationMatch": "database-reports",
           "roles": null
         },
         {

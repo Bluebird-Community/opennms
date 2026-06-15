@@ -136,13 +136,6 @@
           "roles": null
         },
         {
-          "id": "surveillanceView",
-          "name": "Surveillance",
-          "url": "surveillance-view.jsp",
-          "locationMatch": "surveillance-view",
-          "roles": null
-        },
-        {
           "id": "heatmap",
           "name": "Heatmap",
           "url": "heatmap/index.jsp",
@@ -181,13 +174,6 @@
           "roles": null
         },
         {
-          "id": "charts",
-          "name": "Charts",
-          "url": "charts/index.jsp",
-          "locationMatch": "chart",
-          "roles": null
-        },
-        {
           "id": "resourceGraphs",
           "name": "Resource Graphs",
           "url": "graph/index.jsp",
@@ -199,13 +185,6 @@
           "name": "KSC Reports",
           "url": "KSC/index.jsp",
           "locationMatch": "ksc",
-          "roles": null
-        },
-        {
-          "id": "databaseReports",
-          "name": "Database Reports",
-          "url": "report/database/index.jsp",
-          "locationMatch": "database-reports",
           "roles": null
         }
       ]
@@ -223,13 +202,6 @@
           "name": "Main",
           "url": "dashboards.htm",
           "locationMatch": "entries",
-          "roles": null
-        },
-        {
-          "id": "surveillanceDashboard",
-          "name": "Dashboard",
-          "url": "dashboard.jsp",
-          "locationMatch": "dashboard",
           "roles": null
         }
       ]
