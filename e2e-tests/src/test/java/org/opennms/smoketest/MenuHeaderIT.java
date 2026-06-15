@@ -71,12 +71,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("dashboardsMenu", "Metrics Dashboard (KSC Reports)");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Customized Reports']")));
-
-        clickMenuItem("dashboardsMenu", "Surveillance Dashboard");
-        driver.switchTo().frame(findElementByXpath("/html/body/div/iframe"));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance View: default']")));
-
-        driver.switchTo().parentFrame();
         frontPage();
 
         // Inventory Menu
@@ -107,12 +101,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("monitoringMenu", "Path Outages");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='All Path Outages']")));
-
-        clickMenuItem("monitoringMenu", "Surveillance View");
-        // switchTo() by xpath is much faster than by ID
-        driver.switchTo().frame(findElementByXpath("/html/body/div/iframe"));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[text()='Surveillance View: default']")));
-        driver.switchTo().parentFrame();
         frontPage();
 
         // Metrics Menu

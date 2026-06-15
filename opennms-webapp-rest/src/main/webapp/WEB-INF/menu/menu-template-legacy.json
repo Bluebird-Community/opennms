@@ -136,13 +136,6 @@
           "roles": null
         },
         {
-          "id": "surveillanceView",
-          "name": "Surveillance",
-          "url": "surveillance-view.jsp",
-          "locationMatch": "surveillance-view",
-          "roles": null
-        },
-        {
           "id": "heatmap",
           "name": "Heatmap",
           "url": "heatmap/index.jsp",
@@ -209,13 +202,6 @@
           "name": "Main",
           "url": "dashboards.htm",
           "locationMatch": "entries",
-          "roles": null
-        },
-        {
-          "id": "surveillanceDashboard",
-          "name": "Dashboard",
-          "url": "dashboard.jsp",
-          "locationMatch": "dashboard",
           "roles": null
         }
       ]

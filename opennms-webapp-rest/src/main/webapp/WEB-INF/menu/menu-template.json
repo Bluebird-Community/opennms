@@ -25,13 +25,6 @@
       "roles": null,
       "items": [
         {
-          "id": "surveillanceDashboard",
-          "name": "Surveillance Dashboard",
-          "url": "dashboard.jsp",
-          "locationMatch": "dashboard",
-          "roles": null
-        },
-        {
           "id": "heatmap",
           "name": "Heatmap",
           "url": "heatmap/index.jsp",
@@ -133,13 +126,6 @@
           "name": "Path Outages",
           "url": "pathOutage/index.jsp",
           "locationMatch": "pathOutage",
-          "roles": null
-        },
-        {
-          "id": "surveillanceView",
-          "name": "Surveillance View",
-          "url": "surveillance-view.jsp",
-          "locationMatch": "surveillance-view",
           "roles": null
         }
      ]
