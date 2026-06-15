@@ -38,9 +38,13 @@
 
 package org.opennms.protocols.vmware;
 
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.URI;
 import java.rmi.RemoteException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -134,6 +138,8 @@ public class VmwareViJavaAccess implements AutoCloseable {
 
     private int m_timeout = DEFAULT_TIMEOUT;
 
+    private int m_cimTimeout = DEFAULT_TIMEOUT;
+
     /**
      * Constructor for creating a instance for a given server and credentials.
      *
@@ -155,6 +161,23 @@ public class VmwareViJavaAccess implements AutoCloseable {
 
     public int getTimeout() {
         return m_timeout;
+    }
+
+    public int getCimTimeout() {
+        return m_cimTimeout;
+    }
+
+    /**
+     * Sets the timeout, in milliseconds, used for the direct connection to a
+     * host system's CIM service (port 5989). This bounds the TCP connect that
+     * the underlying CIM client would otherwise attempt without a timeout, so
+     * an unreachable or firewalled CIM port fails fast instead of blocking the
+     * calling thread until the operating system connect timeout elapses.
+     *
+     * @param timeout the CIM connection timeout in milliseconds
+     */
+    public void setCimTimeout(int timeout) {
+        m_cimTimeout = timeout;
     }
 
     /**
@@ -394,23 +417,32 @@ public class VmwareViJavaAccess implements AutoCloseable {
 
         HostServiceTicket hostServiceTicket = m_hostServiceTickets.get(hostSystem);
 
-        if (!m_hostSystemCimUrls.containsKey(hostSystem)) {
-            String ipAddress = primaryIpAddress;
+        final String cimAgentAddress;
 
-            if (ipAddress == null) {
-                ipAddress = getPrimaryHostSystemIpAddress(hostSystem);
+        if (primaryIpAddress != null) {
+            // An explicit address was supplied (for example, the importer probing each of a
+            // host's interface addresses in turn). Use it directly rather than a value cached
+            // from an earlier call, so every candidate address is actually tried.
+            cimAgentAddress = "https://" + primaryIpAddress + ":5989";
+        } else {
+            if (!m_hostSystemCimUrls.containsKey(hostSystem)) {
+                final String ipAddress = getPrimaryHostSystemIpAddress(hostSystem);
+
+                if (ipAddress == null) {
+                    logger.warn("Cannot determine ip address for host system '{}'", hostSystem.getMOR().getVal());
+                    return cimObjects;
+                }
+
+                m_hostSystemCimUrls.put(hostSystem, "https://" + ipAddress + ":5989");
             }
 
-
-            if (ipAddress == null) {
-                logger.warn("Cannot determine ip address for host system '{}'", hostSystem.getMOR().getVal());
-                return cimObjects;
-            }
-
-            m_hostSystemCimUrls.put(hostSystem, "https://" + ipAddress + ":5989");
+            cimAgentAddress = m_hostSystemCimUrls.get(hostSystem);
         }
 
-        String cimAgentAddress = m_hostSystemCimUrls.get(hostSystem);
+        // The underlying CIM client opens its connection to the host's CIM port (5989)
+        // without a connect timeout, so an unreachable or firewalled host would block this
+        // thread until the operating system connect timeout elapses. Bound the connect first.
+        checkCimReachable(cimAgentAddress, m_cimTimeout);
 
         String namespace = "root/cimv2";
 
@@ -420,7 +452,7 @@ public class VmwareViJavaAccess implements AutoCloseable {
         CIMNameSpace ns = new CIMNameSpace(cimAgentAddress, namespace);
         CIMClient cimClient = new CIMClient(ns, userPr, pwCred);
 
-        cimClient.getSessionProperties().setHttpTimeOut(3000);
+        cimClient.getSessionProperties().setHttpTimeOut(m_cimTimeout);
 
         // very important to query esx5 hosts
         cimClient.useMPost(false);
@@ -445,6 +477,39 @@ public class VmwareViJavaAccess implements AutoCloseable {
      */
     public List<CIMObject> queryCimObjects(HostSystem hostSystem, String cimClass) throws ConnectException, RemoteException, CIMException {
         return queryCimObjects(hostSystem, cimClass, null);
+    }
+
+    /**
+     * Verifies that the CIM service at the given agent address accepts a TCP connection
+     * within the specified timeout.
+     *
+     * <p>The SBLIM CIM client performs an unbounded connect when it opens its socket, so
+     * an unreachable host (for example, one whose CIM port is dropped by a firewall) would
+     * block the calling thread for the operating system connect timeout. Probing the
+     * connection here first bounds that wait by {@code timeout} milliseconds.</p>
+     *
+     * @param cimAgentAddress the CIM agent URL, for example {@code https://host:5989}
+     * @param timeout         the connect timeout in milliseconds
+     * @throws ConnectException if the connection cannot be established within the timeout
+     */
+    protected void checkCimReachable(final String cimAgentAddress, final int timeout) throws ConnectException {
+        final URI uri = URI.create(cimAgentAddress);
+        final String host = uri.getHost();
+        final int port = uri.getPort();
+
+        if (host == null || port < 0) {
+            // Malformed address; let the CIM client surface the problem.
+            return;
+        }
+
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), timeout);
+        } catch (IOException e) {
+            final ConnectException connectException = new ConnectException("CIM service at " + host + ":" + port
+                    + " is not reachable within " + timeout + " ms (" + e.getMessage() + ")");
+            connectException.initCause(e);
+            throw connectException;
+        }
     }
 
     /**
