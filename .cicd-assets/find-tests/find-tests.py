@@ -96,6 +96,8 @@ def generate_test_lists(maven_project_root, changes_only=True, unit_test_output=
         itest_file = open(integration_test_output, 'w')
 
     print("Modules with tests:")
+    unit_classnames = []
+    itest_classnames = []
     for m in modules_to_consider:
         if m.has_tests():
             print(m)
@@ -103,11 +105,22 @@ def generate_test_lists(maven_project_root, changes_only=True, unit_test_output=
                 print("\t%s - %s (%s)" % (test.file, test.classname, "Failsafe" if test.is_integration_test else "Surefire"))
 
                 if not test.is_integration_test:
-                    if unit_file:
-                        unit_file.write("%s\n" % test.classname)
+                    unit_classnames.append(test.classname)
                 else:
-                    if itest_file:
-                        itest_file.write("%s\n" % test.classname)
+                    itest_classnames.append(test.classname)
+
+    # CI shards these lists by line number (awk "NR%shards==idx"), which only
+    # partitions tests correctly when every shard job sees an identical ordering.
+    # modules_to_consider may be a set (scoped builds) whose iteration order is
+    # non-deterministic across processes, so sort + de-duplicate before writing
+    # to guarantee a stable, shard-safe ordering (otherwise shards both duplicate
+    # and skip tests).
+    if unit_file:
+        for classname in sorted(set(unit_classnames)):
+            unit_file.write("%s\n" % classname)
+    if itest_file:
+        for classname in sorted(set(itest_classnames)):
+            itest_file.write("%s\n" % classname)
 
 
 def generate_test_modules(maven_project_root, test_class_names, output_file):
