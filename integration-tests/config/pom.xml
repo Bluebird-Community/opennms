@@ -91,6 +91,15 @@
       <artifactId>org.opennms.features.events.traps</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Provides org.opennms.netmgt.eventd.jmx.Eventd, referenced by the default
+         service-configuration.xml that ServiceConfigurationPublicConstructorIT
+         loads. It used to be pulled in transitively via enlinkd.daemon, removed
+         in phase 6b. -->
+    <dependency>
+      <groupId>org.opennms.features.events</groupId>
+      <artifactId>org.opennms.features.events.daemon</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms.features</groupId>
       <artifactId>org.opennms.features.discovery</artifactId>
