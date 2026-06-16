@@ -423,7 +423,7 @@ public class VmwareViJavaAccess implements AutoCloseable {
             // An explicit address was supplied (for example, the importer probing each of a
             // host's interface addresses in turn). Use it directly rather than a value cached
             // from an earlier call, so every candidate address is actually tried.
-            cimAgentAddress = "https://" + primaryIpAddress + ":5989";
+            cimAgentAddress = cimUrlFor(primaryIpAddress);
         } else {
             if (!m_hostSystemCimUrls.containsKey(hostSystem)) {
                 final String ipAddress = getPrimaryHostSystemIpAddress(hostSystem);
@@ -433,7 +433,7 @@ public class VmwareViJavaAccess implements AutoCloseable {
                     return cimObjects;
                 }
 
-                m_hostSystemCimUrls.put(hostSystem, "https://" + ipAddress + ":5989");
+                m_hostSystemCimUrls.put(hostSystem, cimUrlFor(ipAddress));
             }
 
             cimAgentAddress = m_hostSystemCimUrls.get(hostSystem);
@@ -452,7 +452,7 @@ public class VmwareViJavaAccess implements AutoCloseable {
         CIMNameSpace ns = new CIMNameSpace(cimAgentAddress, namespace);
         CIMClient cimClient = new CIMClient(ns, userPr, pwCred);
 
-        cimClient.getSessionProperties().setHttpTimeOut(m_cimTimeout);
+        cimClient.getSessionProperties().setHttpTimeOut(boundedTimeout(m_cimTimeout));
 
         // very important to query esx5 hosts
         cimClient.useMPost(false);
@@ -493,23 +493,57 @@ public class VmwareViJavaAccess implements AutoCloseable {
      * @throws ConnectException if the connection cannot be established within the timeout
      */
     protected void checkCimReachable(final String cimAgentAddress, final int timeout) throws ConnectException {
-        final URI uri = URI.create(cimAgentAddress);
-        final String host = uri.getHost();
-        final int port = uri.getPort();
+        final String host;
+        final int port;
+        try {
+            final URI uri = URI.create(cimAgentAddress);
+            host = uri.getHost();
+            port = uri.getPort();
+        } catch (IllegalArgumentException e) {
+            // Unparseable address; let the CIM client surface the problem.
+            return;
+        }
 
         if (host == null || port < 0) {
             // Malformed address; let the CIM client surface the problem.
             return;
         }
 
+        final int connectTimeout = boundedTimeout(timeout);
+
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, port), timeout);
+            socket.connect(new InetSocketAddress(host, port), connectTimeout);
         } catch (IOException e) {
             final ConnectException connectException = new ConnectException("CIM service at " + host + ":" + port
-                    + " is not reachable within " + timeout + " ms (" + e.getMessage() + ")");
+                    + " could not be reached (timeout " + connectTimeout + " ms): " + e.getMessage());
             connectException.initCause(e);
             throw connectException;
         }
+    }
+
+    /**
+     * Bounds a CIM timeout to a usable value. {@code Socket.connect} treats 0 as an infinite
+     * timeout and rejects negatives with an {@code IllegalArgumentException}, and
+     * {@code setSoTimeout(0)} is likewise an infinite read timeout, so non-positive values are
+     * clamped to the default bound.
+     *
+     * @param timeout the requested timeout in milliseconds
+     * @return the timeout to use, never less than 1
+     */
+    static int boundedTimeout(final int timeout) {
+        return timeout > 0 ? timeout : DEFAULT_TIMEOUT;
+    }
+
+    /**
+     * Builds the CIM agent URL for an address, bracketing IPv6 literals so the result is a
+     * valid URI authority (for example {@code https://[fe80::1]:5989}).
+     *
+     * @param ipAddress the host address
+     * @return the CIM agent URL
+     */
+    private static String cimUrlFor(final String ipAddress) {
+        final boolean ipv6 = ipAddress.indexOf(':') >= 0 && !ipAddress.startsWith("[");
+        return "https://" + (ipv6 ? "[" + ipAddress + "]" : ipAddress) + ":5989";
     }
 
     /**

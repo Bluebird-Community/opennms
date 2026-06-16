@@ -21,6 +21,7 @@
  */
 package org.opennms.protocols.vmware;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -146,5 +147,80 @@ public class VmwareCimReachabilityTest {
             assertTrue("second probe must use the supplied address, not a cached one: " + expected.getMessage(),
                     expected.getMessage().contains("192.0.2.2"));
         }
+    }
+
+    /**
+     * An IPv6 host literal must be bracketed so the URL is a valid authority and the address is
+     * actually probed -- an unbracketed IPv6 URL parses to a null host, so the probe would
+     * silently no-op and leave the unbounded connect in place.
+     */
+    @Test
+    public void queryCimObjectsProbesIpv6Address() throws Exception {
+        access.setCimTimeout(800);
+        final HostServiceTicket ticket = new HostServiceTicket();
+        ticket.setSessionId("sessionId");
+        final HostSystem hostSystem = mock(HostSystem.class);
+        when(hostSystem.acquireCimServicesTicket()).thenReturn(ticket);
+
+        try {
+            // 2001:db8::5 is RFC 3849 documentation space (unroutable).
+            access.queryCimObjects(hostSystem, "CIM_NumericSensor", "2001:db8::5");
+            fail("expected a ConnectException for an unreachable IPv6 CIM host");
+        } catch (ConnectException expected) {
+            assertTrue("the IPv6 address must be probed, not skipped: " + expected.getMessage(),
+                    expected.getMessage().contains("2001:db8::5"));
+        }
+    }
+
+    /**
+     * A timeout of 0 is an infinite Socket.connect timeout; it must be clamped so the probe
+     * returns rather than blocking indefinitely.
+     */
+    @Test(timeout = 20000)
+    public void clampsZeroTimeout() throws Exception {
+        final long start = System.currentTimeMillis();
+        try {
+            access.checkCimReachable("https://192.0.2.1:5989", 0);
+            fail("expected a ConnectException");
+        } catch (ConnectException expected) {
+            final long elapsed = System.currentTimeMillis() - start;
+            assertTrue("a zero timeout must be clamped, took " + elapsed + " ms",
+                    elapsed < VmwareViJavaAccess.DEFAULT_TIMEOUT + 5000);
+        }
+    }
+
+    /**
+     * A negative timeout would make Socket.connect throw IllegalArgumentException; it must be
+     * clamped and surface as a normal connect failure instead.
+     */
+    @Test(timeout = 20000)
+    public void clampsNegativeTimeout() throws Exception {
+        try {
+            access.checkCimReachable("https://192.0.2.1:5989", -1);
+            fail("expected a ConnectException");
+        } catch (ConnectException expected) {
+            // ok: clamped to the default and reported as a connect failure, not IllegalArgumentException
+        }
+    }
+
+    /**
+     * An address that URI parsing rejects must be swallowed (left for the CIM client) rather
+     * than propagated as an IllegalArgumentException.
+     */
+    @Test
+    public void ignoresUnparseableAddress() throws Exception {
+        access.checkCimReachable("https://bad host:5989", 1000);
+    }
+
+    /**
+     * Non-positive timeouts must be clamped: this guards both the connect probe and the read
+     * timeout (setHttpTimeOut), since 0 is an infinite timeout in both and a negative value is
+     * rejected outright by Socket.connect.
+     */
+    @Test
+    public void boundedTimeoutClampsNonPositive() {
+        assertEquals(VmwareViJavaAccess.DEFAULT_TIMEOUT, VmwareViJavaAccess.boundedTimeout(0));
+        assertEquals(VmwareViJavaAccess.DEFAULT_TIMEOUT, VmwareViJavaAccess.boundedTimeout(-5));
+        assertEquals(800, VmwareViJavaAccess.boundedTimeout(800));
     }
 }
