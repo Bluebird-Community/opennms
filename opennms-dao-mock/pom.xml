@@ -33,6 +33,16 @@
       <artifactId>opennms-dao</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <!-- Bean Validation provider required at runtime by the Hibernate
+         sessionFactory in opennms-dao's applicationContext-shared.xml. It used
+         to reach dao-mock consumers' test classpaths transitively; the
+         deprecated-module removals pruned that path, so declare it here so every
+         Hibernate-backed test using this harness can initialise the context. -->
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms.features.config.service</groupId>
       <artifactId>org.opennms.features.config.service.api</artifactId>
