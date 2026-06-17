@@ -144,6 +144,17 @@ const OpenNMSPreset = definePreset(Aura, {
           select: { background: '#15182B', borderColor: 'rgba(255, 255, 255, 0.24)', color: 'rgb(255, 255, 255)' },
           popover: { background: '#15182B', borderColor: 'rgba(255, 255, 255, 0.24)', color: 'rgb(255, 255, 255)' },
           modal: { background: '#15182B', borderColor: 'rgba(255, 255, 255, 0.24)', color: 'rgb(255, 255, 255)' }
+        },
+        // Dropdown / autocomplete option hover + selected backgrounds. Aura's dark
+        // defaults derive from the neutral surface scale (off the OpenNMS navy
+        // palette); use a subtle white overlay like the FeatherDS dropdowns. Light
+        // mode keeps Aura's defaults, which already match.
+        list: {
+          option: {
+            focusBackground: 'rgba(255, 255, 255, 0.06)',
+            selectedBackground: 'rgba(255, 255, 255, 0.06)',
+            selectedFocusBackground: 'rgba(255, 255, 255, 0.1)'
+          }
         }
       }
     }
@@ -177,6 +188,22 @@ const OpenNMSPreset = definePreset(Aura, {
           root: { color: 'rgb(255, 255, 255)' },
           icon: { color: 'rgb(255, 255, 255)' },
           removeIcon: { color: 'rgb(255, 255, 255)' }
+        }
+      }
+    },
+    // Toast (used by the Snackbar wrapper). Aura's dark scheme sets each severity's
+    // detail text to {surface.0}, expecting it to be a light surface — but our
+    // preset maps surface.0 to the dark navy (#15182B), which is unreadable on the
+    // translucent toast background. Force a light detail color in dark mode.
+    toast: {
+      colorScheme: {
+        dark: {
+          info: { detailColor: 'rgba(255, 255, 255, 0.9)' },
+          success: { detailColor: 'rgba(255, 255, 255, 0.9)' },
+          warn: { detailColor: 'rgba(255, 255, 255, 0.9)' },
+          error: { detailColor: 'rgba(255, 255, 255, 0.9)' },
+          secondary: { detailColor: 'rgba(255, 255, 255, 0.9)' },
+          contrast: { detailColor: 'rgba(255, 255, 255, 0.9)' }
         }
       }
     }
