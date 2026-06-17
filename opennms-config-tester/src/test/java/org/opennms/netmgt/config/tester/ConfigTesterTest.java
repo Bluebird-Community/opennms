@@ -192,11 +192,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testIfTttConfig() {
-        ignoreConfigFile("ifttt-config.xml");
-    }
-
-    @Test
     public void testJavamailConfigurationProperties() {
         testConfigFile("javamail-configuration.properties");
     }
@@ -470,11 +465,6 @@ public class ConfigTesterTest {
      */
     public void testXmppConfiguration() {
         ignoreConfigFile("xmpp-configuration.properties");
-    }
-
-    @Test
-    public void testRemoteRepositoyConfig() {
-        ignoreConfigFile("remote-repository.xml");
     }
 
     @Test
