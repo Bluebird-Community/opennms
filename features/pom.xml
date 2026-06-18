@@ -22,6 +22,8 @@
 
     <!-- Custom topology views (user-composed canvas) -->
     <module>topology-views</module>
+    <!-- Topology view image assets (backgrounds, custom node icons) -->
+    <module>topology-assets</module>
 
     <!-- ActiveMQ broker -->
     <module>activemq</module>
