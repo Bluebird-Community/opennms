@@ -372,4 +372,39 @@
         </bundle>
     </feature>
 
+    <!--
+        Spring 5.x compatibility alias.
+
+        OpenNMS ships a patched Spring 4.x fork and does not provide a real Spring 5. As of ActiveMQ
+        5.19.x the upstream activemq-karaf "activemq-client" feature requires the "spring" feature in
+        the range [5,6) (it was [4,6) up to 5.16.x). The activemq-osgi bundle itself only imports
+        org.springframework.* in [4,6), so our patched Spring 4.2.x bundles satisfy it at the package
+        level. This synthetic-version feature exposes those same Spring 4.2.x (${springVersion})
+        bundles under a [5,6) feature version so the upstream "activemq-client" feature resolves
+        without pulling in a second Spring version.
+    -->
+    <feature name="spring" description="Spring 4.2.x exposed as a [5,6) alias for ActiveMQ 5.19+ activemq-client" version="5.0.0.ONMScompat">
+        <bundle dependency="true" start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6
+        </bundle>
+        <bundle start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-core/${springVersion}
+        </bundle>
+        <bundle start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-expression/${patchedSpringVersion}
+        </bundle>
+        <bundle start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-beans/${patchedSpringVersion}
+        </bundle>
+        <bundle start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-aop/${patchedSpringVersion}
+        </bundle>
+        <bundle start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-context/${springVersion}
+        </bundle>
+        <bundle start-level="30">
+            mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-context-support/${springVersion}
+        </bundle>
+    </feature>
+
 </features>
