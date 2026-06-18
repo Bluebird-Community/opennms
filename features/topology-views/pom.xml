@@ -10,12 +10,16 @@
   <packaging>bundle</packaging>
   <name>OpenNMS :: Features :: Topology Views</name>
   <description>
-    Persistence and REST support for custom (user-composed) topology views.
-    A view is a named document describing a free-form canvas of OpenNMS
-    nodes, free-standing labels, and user-drawn edges; this module owns
-    the document model and JsonStore-backed DAO (kvstore_jsonb,
-    context "topology-views" -- no dedicated tables). The JAX-RS resource that
-    exposes /api/v2/topology/views lives in opennms-webapp-rest.
+    Persistence for custom (user-composed) topology views and the image
+    assets they reference -- two related concerns in this one module:
+    (1) views: named documents describing a free-form canvas of OpenNMS
+    nodes, free-standing labels, and user-drawn edges (model + JsonStore
+    DAO, kvstore_jsonb, context "topology-views");
+    (2) assets: background images and custom node icons referenced by
+    views (metadata in the JSON key-value store, bytes in the binary
+    key-value store). Both persist in the kv-store with no dedicated tables.
+    The JAX-RS resources exposing /api/v2/topology/views and
+    /api/v2/topology/assets live in opennms-webapp-rest.
   </description>
   <build>
     <plugins>
@@ -52,6 +56,19 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    <!-- The Postgres-backed BlobStore for topology-asset image bytes. Not in
+         the default runtime lib (only the no-op is), so this is a compile
+         dependency and the jar is added to opennms-base-assembly. -->
+    <dependency>
+      <groupId>org.opennms.features.distributed</groupId>
+      <artifactId>org.opennms.features.distributed.kv-store.blob.postgres</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
@@ -83,6 +100,11 @@
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-library</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
