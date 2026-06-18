@@ -78,7 +78,7 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         clickMenuItem("dashboardsMenu", "Metrics Statistics (statsd)");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span")));
 
-        clickMenuItem("dashboardsMenu", "Metrics Dashboard (KSC Reports)");
+        clickMenuItem("dashboardsMenu", "Graph Collections");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Customized Reports']")));
 
         clickMenuItem("dashboardsMenu", "Surveillance Dashboard");
@@ -371,7 +371,7 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         findElementByXpath("//div[@class='card-header']/span[text()='Network Performance Data']");
 
         reportsPage();
-        findElementByLink("KSC Performance, Nodes, Domains").click();
+        findElementByLink("Graph Collections (Performance, Nodes, Domains)").click();
         findElementByXpath("//div[@class='card-header']/span[text()='Customized Reports']");
         findElementByXpath("//div[@class='card-header']/span[text()='Descriptions']");
 
