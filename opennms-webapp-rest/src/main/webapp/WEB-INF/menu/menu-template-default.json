@@ -71,7 +71,7 @@
         },
         {
           "id": "kscReports",
-          "name": "Metrics Dashboard (KSC Reports)",
+          "name": "Graph Collections",
           "url": "KSC/index.jsp",
           "locationMatch": "ksc",
           "roles": null
