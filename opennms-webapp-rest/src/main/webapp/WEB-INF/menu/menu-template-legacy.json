@@ -182,7 +182,7 @@
         },
         {
           "id": "kscReports",
-          "name": "KSC Reports",
+          "name": "Graph Collections",
           "url": "KSC/index.jsp",
           "locationMatch": "ksc",
           "roles": null
