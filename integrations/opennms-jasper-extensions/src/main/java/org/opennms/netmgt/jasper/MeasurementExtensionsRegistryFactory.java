@@ -19,30 +19,18 @@
  * language governing permissions and limitations under the
  * License.
  */
-package org.opennms.netmgt.jasper.grafana;
+package org.opennms.netmgt.jasper;
 
-import java.util.Map;
+import net.sf.jasperreports.engine.JRPropertiesMap;
+import net.sf.jasperreports.engine.query.JRQueryExecuterFactoryBundle;
+import net.sf.jasperreports.extensions.ExtensionsRegistry;
+import net.sf.jasperreports.extensions.ExtensionsRegistryFactory;
+import net.sf.jasperreports.extensions.SingletonExtensionRegistry;
 
-import net.sf.jasperreports.engine.JRDataset;
-import net.sf.jasperreports.engine.JRValueParameter;
-import net.sf.jasperreports.engine.JasperReportsContext;
-import net.sf.jasperreports.engine.query.JRQueryExecuter;
-import net.sf.jasperreports.engine.query.QueryExecuterFactory;
-
-public class GrafanaExecutorFactory implements QueryExecuterFactory {
+public class MeasurementExtensionsRegistryFactory implements ExtensionsRegistryFactory {
 
     @Override
-    public Object[] getBuiltinParameters() {
-        return new Object[]{};
-    }
-
-    @Override
-    public JRQueryExecuter createQueryExecuter(JasperReportsContext jasperReportsContext, JRDataset dataset, Map<String, ? extends JRValueParameter> parameters) {
-        return new GrafanaQueryExecutor(jasperReportsContext, dataset, parameters);
-    }
-
-    @Override
-    public boolean supportsQueryParameterType(String className) {
-        return true;
+    public ExtensionsRegistry createRegistry(String registryId, JRPropertiesMap propertiesMap) {
+        return new SingletonExtensionRegistry<>(JRQueryExecuterFactoryBundle.class, new QueryExecutorFactoryBundle());
     }
 }
