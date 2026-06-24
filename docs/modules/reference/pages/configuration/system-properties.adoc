@@ -235,10 +235,6 @@ Many of the properties here are documented with much greater detail in their rel
 | 10
 | The maximum number of interfaces before the availability box is hidden in the node page
 
-| `org.opennms.jasperReportsVersion`
-| Varies with OpenNMS version
-| Defines the Version of the Jasperreports libraryaused for database reports
-
 | `org.opennms.netmgt.collectd.SnmpCollector.forceRescan`
 | false
 | Enable or disable the SNMP Collector's ability to force rescans when the interface count changes

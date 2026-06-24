@@ -20,7 +20,6 @@ asciidoc:
     compatible-kafka: '1.x - 4.x'
     compatible-postgresql: '14.x - 18.x'
     compatible-rrdtool: '1.8.x'
-    jasperreportsversion: '6.3.0'
     latest-meridian-stable: '2025'
     postgresql-version: '15'
     jmx-prom-exporter-version: '1.4.0'
