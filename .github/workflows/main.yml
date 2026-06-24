@@ -673,6 +673,8 @@ jobs:
             target/artifacts/failsafe-reports
             target/artifacts/recordings
             target/artifacts/smoke-test-*.tar.gz
+            target/artifacts/logs.tar.gz
+            target/artifacts/e2e-tests-logs.tar.gz
 
   e2e-tests-minion:
     if: "needs.decide-scope.outputs.full_build == 'true' && !contains(github.event.commits[0].message, '[skip e2e-tests-minion]')"
@@ -729,6 +731,8 @@ jobs:
             target/artifacts/failsafe-reports
             target/artifacts/recordings
             target/artifacts/smoke-test-*.tar.gz
+            target/artifacts/logs.tar.gz
+            target/artifacts/e2e-tests-logs.tar.gz
 
   e2e-tests-sentinel:
     if: "needs.decide-scope.outputs.full_build == 'true' && !contains(github.event.commits[0].message, '[skip e2e-tests-sentinel]')"
@@ -785,6 +789,8 @@ jobs:
             target/artifacts/failsafe-reports
             target/artifacts/recordings
             target/artifacts/smoke-test-*.tar.gz
+            target/artifacts/logs.tar.gz
+            target/artifacts/e2e-tests-logs.tar.gz
 
   publish-packages:
     needs:
