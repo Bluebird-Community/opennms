@@ -951,6 +951,11 @@
         <feature>opennms-collection-api</feature>
         <feature>opennms-thresholding-api</feature>
         <feature>opennms-osgi-jsr223</feature>
+        <!-- Scripted telemetry adapters (JTI, NX-OS, sFlow, NetFlow, Graphite) compile their
+             etc/telemetryd-adapters/*.groovy scripts via JSR-223, so the Groovy engine must be
+             present. Previously it was only pulled in transitively by opennms-newts, which left
+             RRD-based setups without an engine ("No engine found for extension: groovy"). -->
+        <feature>groovy</feature>
         <bundle dependency="true">wrap:mvn:com.google.protobuf/protobuf-java/${protobufVersion}</bundle>
         <bundle>mvn:com.google.code.gson/gson/${gsonVersion}</bundle>
         <bundle>wrap:mvn:io.pkts/pkts-core/${pktsVersion}</bundle>
