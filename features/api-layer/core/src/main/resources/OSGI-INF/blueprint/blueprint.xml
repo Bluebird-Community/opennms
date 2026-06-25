@@ -358,7 +358,12 @@
       <argument ref="edgeMapper"/>
     </bean>
   </service>
-  
+
+  <!-- User-defined links: no-op stub preserving the OIA contract since enlinkd was removed -->
+  <service interface="org.opennms.integration.api.v1.topology.UserDefinedLinkDao">
+    <bean class="org.opennms.features.apilayer.topology.UserDefinedLinkDaoImpl"/>
+  </service>
+
   <!-- Thresholding -->
   <bean id="threhsoldingConfigExtensionManager" class="org.opennms.features.apilayer.config.ThresholdingConfigExtensionManager">
     <argument ref="thresholdingDao"/>
