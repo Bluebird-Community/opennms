@@ -359,7 +359,7 @@
     </bean>
   </service>
 
-  <!-- User-defined links: no-op stub preserving the OIA contract since enlinkd was removed -->
+  <!-- User-defined links: in-memory store preserving the OIA contract since enlinkd was removed -->
   <service interface="org.opennms.integration.api.v1.topology.UserDefinedLinkDao">
     <bean class="org.opennms.features.apilayer.topology.UserDefinedLinkDaoImpl"/>
   </service>

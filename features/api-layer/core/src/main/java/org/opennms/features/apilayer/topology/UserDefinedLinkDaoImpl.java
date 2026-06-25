@@ -7,56 +7,82 @@
 
 package org.opennms.features.apilayer.topology;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.opennms.integration.api.v1.topology.UserDefinedLink;
 import org.opennms.integration.api.v1.topology.UserDefinedLinkDao;
+import org.opennms.integration.api.v1.topology.immutables.ImmutableUserDefinedLink;
 
 /**
- * No-op {@link UserDefinedLinkDao} that preserves the OpenNMS Integration API
+ * In-memory {@link UserDefinedLinkDao} that preserves the OpenNMS Integration API
  * topology contract for plugins that wire this service as a mandatory dependency.
  *
- * User-defined links were persisted by the Enhanced Linkd (enlinkd) subsystem,
- * which has been removed from BluebirdOps. There is no longer any backing store,
- * so reads return nothing and mutations are unsupported. The service is still
- * published so that OIA plugins referencing {@code UserDefinedLinkDao} can start.
+ * User-defined links used to be persisted by the Enhanced Linkd (enlinkd) subsystem,
+ * which has been removed from BluebirdOps. There is no longer a database-backed store,
+ * so links are held only in memory and do not survive a restart. This is sufficient to
+ * keep OIA plugins (which expect a functional {@code UserDefinedLinkDao}) operating.
  */
 public class UserDefinedLinkDaoImpl implements UserDefinedLinkDao {
 
+    private final Map<Integer, UserDefinedLink> linksById = new ConcurrentHashMap<>();
+    private final AtomicInteger dbIdSequence = new AtomicInteger();
+
     @Override
     public List<UserDefinedLink> getLinks() {
-        return Collections.emptyList();
+        return new ArrayList<>(linksById.values());
     }
 
     @Override
     public List<UserDefinedLink> getOutLinks(int nodeIdA) {
-        return Collections.emptyList();
+        return linksById.values().stream()
+                .filter(link -> link.getNodeIdA() == nodeIdA)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<UserDefinedLink> getInLinks(int nodeIdZ) {
-        return Collections.emptyList();
+        return linksById.values().stream()
+                .filter(link -> link.getNodeIdZ() == nodeIdZ)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<UserDefinedLink> getLinksWithLabel(String label) {
-        return Collections.emptyList();
+        return linksById.values().stream()
+                .filter(link -> Objects.equals(link.getLinkLabel(), label))
+                .collect(Collectors.toList());
     }
 
     @Override
     public UserDefinedLink saveOrUpdate(UserDefinedLink link) {
-        throw new UnsupportedOperationException("User-defined links are no longer persisted: the enlinkd subsystem has been removed.");
+        UserDefinedLink toStore = link;
+        if (toStore.getDbId() == null) {
+            toStore = ImmutableUserDefinedLink.newBuilderFrom(toStore)
+                    .setDbId(dbIdSequence.incrementAndGet())
+                    .build();
+        }
+        linksById.put(toStore.getDbId(), toStore);
+        return toStore;
     }
 
     @Override
     public void delete(UserDefinedLink link) {
-        throw new UnsupportedOperationException("User-defined links are no longer persisted: the enlinkd subsystem has been removed.");
+        if (link.getDbId() != null) {
+            linksById.remove(link.getDbId());
+        } else {
+            linksById.values().removeIf(stored -> Objects.equals(stored.getLinkId(), link.getLinkId()));
+        }
     }
 
     @Override
     public void delete(Collection<UserDefinedLink> links) {
-        throw new UnsupportedOperationException("User-defined links are no longer persisted: the enlinkd subsystem has been removed.");
+        links.forEach(this::delete);
     }
 }
