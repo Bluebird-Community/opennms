@@ -45,6 +45,12 @@ import com.google.common.primitives.Doubles;
  */
 public class MeasurementsWrapper {
 
+    /** Default look-back window for last-value and utilization queries: 15 minutes. */
+    private static final long DEFAULT_WINDOW_MS = 15 * 60 * 1000;
+
+    /** Default query step (resolution): 5 minutes. */
+    private static final long DEFAULT_STEP_MS = 5 * 60 * 1000;
+
     private final MeasurementsService measurementsService;
 
     public MeasurementsWrapper(final MeasurementsService measurementsService) {
@@ -63,9 +69,9 @@ public class MeasurementsWrapper {
 
     public double getLastValue(final String resource, final String attribute, final String aggregation, final boolean relaxed) throws MeasurementException {
         final long end = System.currentTimeMillis();
-        final long start = end - (15 * 60 * 1000);
+        final long start = end - DEFAULT_WINDOW_MS;
 
-        final QueryResponse.WrappedPrimitive[] columns = queryInt(resource, attribute, start, end, 300000, aggregation, relaxed).getColumns();
+        final QueryResponse.WrappedPrimitive[] columns = queryInt(resource, attribute, start, end, DEFAULT_STEP_MS, aggregation, relaxed).getColumns();
 
         if (columns.length > 0) {
             final double[] values = columns[0].getList();
@@ -93,12 +99,12 @@ public class MeasurementsWrapper {
      */
     public List<Double> computeUtilization(final OnmsNode node, final String ifName) throws MeasurementException {
         final long end = System.currentTimeMillis();
-        final long start = end - (15 * 60 * 1000);
+        final long start = end - DEFAULT_WINDOW_MS;
 
         for (final OnmsSnmpInterface snmpInterface : node.getSnmpInterfaces()) {
             if (ifName.equals(snmpInterface.getIfName())) {
                 final String resourceId = "node[" + node.getId() + "].interfaceSnmp[" + snmpInterface.computeLabelForRRD() + "]";
-                return computeUtilization(resourceId, start, end, 300000, "AVERAGE");
+                return computeUtilization(resourceId, start, end, DEFAULT_STEP_MS, "AVERAGE");
             }
         }
         return Arrays.asList(Double.NaN, Double.NaN);
