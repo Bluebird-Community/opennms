@@ -25,6 +25,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
 import java.io.StringReader;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -209,21 +210,31 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
             driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=smoketests:nodeForeignId");
 
-            await().atMost(5, SECONDS)
-                    .pollInterval(1, SECONDS)
+            // Use the suite's standard page-load budget rather than a tight 5s: node.jsp
+            // injects the timeline <img>s via JS after load and the PNGs are rendered
+            // server-side, which can take longer than 5s on a busy CI host. ignoreExceptions()
+            // lets transient StaleElementReference/NPE reads (the DOM churns while the images
+            // are added) retry on the next poll instead of failing the whole test.
+            await().atMost(Duration.ofMillis(LOAD_TIMEOUT))
+                    .pollInterval(Duration.ofSeconds(1))
+                    .ignoreExceptions()
                     .until(() -> {
-                        final List<WebElement> timelineImages = getDriver().findElements(By.tagName("img")).stream().filter(i -> i.getAttribute("src").contains("timeline")).collect(Collectors.toList());
-                        if (timelineImages.size() >= 2) {
-                            for (final WebElement timelineImage : timelineImages) {
-                                final Object result = ((JavascriptExecutor) driver).executeScript("return arguments[0].complete && typeof arguments[0].naturalWidth != \"undefined\" && arguments[0].naturalWidth > 0", timelineImage);
-                                if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        } else {
+                        final List<WebElement> timelineImages = getDriver().findElements(By.tagName("img")).stream()
+                                .filter(i -> {
+                                    final String src = i.getAttribute("src");
+                                    return src != null && src.contains("timeline");
+                                })
+                                .collect(Collectors.toList());
+                        if (timelineImages.size() < 2) {
                             return false;
                         }
+                        for (final WebElement timelineImage : timelineImages) {
+                            final Object result = ((JavascriptExecutor) driver).executeScript("return arguments[0].complete && typeof arguments[0].naturalWidth != \"undefined\" && arguments[0].naturalWidth > 0", timelineImage);
+                            if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
+                                return false;
+                            }
+                        }
+                        return true;
                     });
         } finally {
             sendDelete("rest/nodes/smoketests:nodeForeignId", 202);
