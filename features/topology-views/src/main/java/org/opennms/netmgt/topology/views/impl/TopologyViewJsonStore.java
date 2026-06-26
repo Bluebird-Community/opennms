@@ -73,8 +73,11 @@ public class TopologyViewJsonStore implements TopologyViewDao {
             // Key off the stable id, not the name: a user can rename the Default
             // view (its key stays DEFAULT_VIEW_ID), and re-seeding by name would
             // then overwrite that renamed view with a fresh empty Default. We
-            // only re-seed if the baseline entry was actually deleted.
-            if (get(DEFAULT_VIEW_ID) == null) {
+            // only re-seed if the baseline entry was actually deleted -- and also
+            // skip if some other view already claims the "Default" name (e.g. the
+            // user deleted the seeded view and created their own "Default"), so a
+            // restart can't resurrect a duplicate name.
+            if (get(DEFAULT_VIEW_ID) == null && findByName(DEFAULT_VIEW_NAME) == null) {
                 final TopologyView def = new TopologyView();
                 def.setId(DEFAULT_VIEW_ID);
                 def.setName(DEFAULT_VIEW_NAME);

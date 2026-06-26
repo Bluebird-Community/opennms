@@ -74,6 +74,9 @@ public class TopologyViewRestService {
 
     private static final Logger LOG = LoggerFactory.getLogger(TopologyViewRestService.class);
 
+    /** Serializes the name-uniqueness check-then-write; see {@link #create}. */
+    private static final Object WRITE_LOCK = new Object();
+
     @Autowired(required = false)
     private TopologyViewDao m_dao;
 
@@ -100,14 +103,9 @@ public class TopologyViewRestService {
         if (dto == null || dto.getName() == null || dto.getName().trim().isEmpty()) {
             throw webException(Response.Status.BAD_REQUEST, "A view name is required");
         }
-        // Normalize once; validation, collision check, persistence and error
-        // messages all use the trimmed name so "Core" and "Core " can't coexist.
         final String name = dto.getName().trim();
         if (dto.getDefinition() == null) {
             throw webException(Response.Status.BAD_REQUEST, "A view definition is required");
-        }
-        if (getDao().findByName(name) != null) {
-            throw webException(Response.Status.CONFLICT, "A view named '" + name + "' already exists");
         }
 
         final TopologyView view = new TopologyView();
@@ -116,7 +114,15 @@ public class TopologyViewRestService {
         view.setOwner(ownerOf(securityContext));
         view.setCreated(new Date());
 
-        final String id = getDao().save(view);
+        final String id;
+        // The store has no unique constraint on the name, so serialize the
+        // check-then-save against concurrent writers in this JVM.
+        synchronized (WRITE_LOCK) {
+            if (getDao().findByName(name) != null) {
+                throw webException(Response.Status.CONFLICT, "A view named '" + name + "' already exists");
+            }
+            id = getDao().save(view);
+        }
         return Response.created(uriInfo.getAbsolutePathBuilder().path(String.valueOf(id)).build()).build();
     }
 
@@ -128,22 +134,26 @@ public class TopologyViewRestService {
             throw webException(Response.Status.BAD_REQUEST, "A view body is required");
         }
 
-        if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
-            final String name = dto.getName().trim(); // same normalization as create
-            if (!name.equals(view.getName())) {
-                final TopologyView collision = getDao().findByName(name);
-                if (collision != null && !collision.getId().equals(id)) {
-                    throw webException(Response.Status.CONFLICT, "A view named '" + name + "' already exists");
-                }
-                view.setName(name);
-            }
-        }
         if (dto.getDefinition() != null) {
             view.setDefinition(writeDefinition(dto.getDefinition()));
         }
         view.setLastModified(new Date());
 
-        getDao().update(view);
+        // Same name-uniqueness window as create: hold the lock across the
+        // rename collision check and the persist.
+        synchronized (WRITE_LOCK) {
+            if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
+                final String name = dto.getName().trim(); // same normalization as create
+                if (!name.equals(view.getName())) {
+                    final TopologyView collision = getDao().findByName(name);
+                    if (collision != null && !collision.getId().equals(id)) {
+                        throw webException(Response.Status.CONFLICT, "A view named '" + name + "' already exists");
+                    }
+                    view.setName(name);
+                }
+            }
+            getDao().update(view);
+        }
         return Response.noContent().build();
     }
 
