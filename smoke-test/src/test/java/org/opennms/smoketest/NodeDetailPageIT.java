@@ -41,6 +41,7 @@ import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.smoketest.selenium.ResponseData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -212,12 +213,13 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
             // Use the suite's standard page-load budget rather than a tight 5s: node.jsp
             // injects the timeline <img>s via JS after load and the PNGs are rendered
-            // server-side, which can take longer than 5s on a busy CI host. ignoreExceptions()
-            // lets transient StaleElementReference/NPE reads (the DOM churns while the images
-            // are added) retry on the next poll instead of failing the whole test.
+            // server-side, which can take longer than 5s on a busy CI host. The DOM churns
+            // while those images are added, so an <img> found in one poll can be replaced
+            // before we read it -- ignore only that StaleElementReferenceException so a real
+            // page-load/JS failure still surfaces immediately instead of after the timeout.
             await().atMost(Duration.ofMillis(LOAD_TIMEOUT))
                     .pollInterval(Duration.ofSeconds(1))
-                    .ignoreExceptions()
+                    .ignoreExceptionsInstanceOf(StaleElementReferenceException.class)
                     .until(() -> {
                         final List<WebElement> timelineImages = getDriver().findElements(By.tagName("img")).stream()
                                 .filter(i -> {
