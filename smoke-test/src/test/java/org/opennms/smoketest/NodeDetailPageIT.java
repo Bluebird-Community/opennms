@@ -211,6 +211,16 @@ public class NodeDetailPageIT extends OpenNMSSeleniumIT {
 
             driver.get(getBaseUrlInternal() + "opennms/element/node.jsp?node=smoketests:nodeForeignId");
 
+            // Fail fast (and clearly) if the session bounced us to the login page instead
+            // of the node page -- that's an environmental/auth issue, not a timeline one,
+            // and without this guard the wait below would burn the full LOAD_TIMEOUT
+            // hunting for timeline images a login page will never have. getCurrentUrl() is
+            // immediate; testing for the login form via findElements would instead block
+            // on the implicit wait whenever the form is (correctly) absent.
+            final String currentUrl = getDriver().getCurrentUrl();
+            Assert.assertFalse("Expected the node detail page but was redirected to the login page "
+                    + "(session not authenticated); URL: " + currentUrl, currentUrl.contains("login.jsp"));
+
             // Use the suite's standard page-load budget rather than a tight 5s: node.jsp
             // injects the timeline <img>s via JS after load and the PNGs are rendered
             // server-side, which can take longer than 5s on a busy CI host. The DOM churns
