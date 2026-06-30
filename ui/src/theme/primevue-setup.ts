@@ -25,6 +25,7 @@ import Tooltip from 'primevue/tooltip'
 import OpenNMSPreset from './opennms-preset'
 import 'primeicons/primeicons.css'
 import '@/styles/primevue-overrides.scss'
+import '@/styles/onms-grid.scss'
 
 import type { App } from 'vue'
 
