@@ -1,0 +1,38 @@
+# nfpm config for the BluebirdOps Sentinel package (bbo-sentinel).
+# See nfpm-core.yaml for the shared conventions (env expansion, version_schema,
+# per-packager overrides).
+name: bbo-sentinel
+arch: ${ARCH}
+platform: linux
+version: ${OPENNMS_VERSION}
+version_schema: semver
+release: ${PKG_RELEASE}
+maintainer: "Maintainer <${MAINTAINER_EMAIL}>"
+description: BluebirdOps services to horizontally scale backend workloads
+homepage: https://github.com/bluebird-community/opennms
+
+contents:
+  - src: target/artifacts/buildroot/sentinel/opt/sentinel
+    dst: /opt/sentinel
+  - src: target/artifacts/buildroot/sentinel/usr/lib/systemd/system
+    dst: /usr/lib/systemd/system
+  - dst: /var/log/sentinel
+    type: dir
+    file_info: { mode: 0755 }
+  - dst: /var/lib/sentinel/deploy
+    type: dir
+    file_info: { mode: 0755 }
+  - src: target/artifacts/buildroot/sentinel/opt/sentinel/etc
+    dst: /opt/sentinel/etc
+    type: config
+
+overrides:
+  deb:
+    recommends:
+      - openjdk-21-jre-headless
+  rpm:
+    recommends:
+      - java-21-openjdk-headless
+
+scripts:
+  postinstall: packages/pkg-postinst-sentinel.sh

@@ -1,6 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track the pinned nfpm version in the setup-nfpm composite action. NOTE: Renovate bumps the version only; the sha256 default must be refreshed by hand from the release checksums.txt when the bump PR lands.",
+      "fileMatch": ["^\\.github/actions/setup-nfpm/action\\.yml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+default:\\s+\"(?<currentValue>[^\"]+)\""
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    }
+  ],
   "packageRules": [
     {
       "managers": ["npm"],

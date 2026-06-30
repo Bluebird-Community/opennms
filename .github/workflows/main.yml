@@ -246,6 +246,8 @@ jobs:
         with:
           name: tarball-core
           path: opennms-full-assembly/target
+      - name: Install nfpm
+        uses: ./.github/actions/setup-nfpm
       - name: Build Core Debian packages
         run: make core-pkg-deb PKG_RELEASE=${{ github.run_number }}
       - name: Build Core RPM packages
@@ -273,6 +275,8 @@ jobs:
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
+      - name: Install nfpm
+        uses: ./.github/actions/setup-nfpm
       - name: Build Minion Debian packages
         run: make minion-pkg-deb PKG_RELEASE=${{ github.run_number }}
       - name: Build Minion RPM packages
@@ -300,6 +304,8 @@ jobs:
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
+      - name: Install nfpm
+        uses: ./.github/actions/setup-nfpm
       - name: Build Sentinel Debian packages
         run: make sentinel-pkg-deb PKG_RELEASE=${{ github.run_number }}
       - name: Build Sentinel RPM packages
