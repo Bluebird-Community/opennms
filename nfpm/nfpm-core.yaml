@@ -1,0 +1,76 @@
+# nfpm config for the BluebirdOps Core package (bbo-core).
+# Consumed by `make core-pkg-deb` / `make core-pkg-rpm` (see Makefile), which
+# export OPENNMS_VERSION / PKG_RELEASE / ARCH / MAINTAINER_EMAIL before invoking
+# `nfpm package`. nfpm expands ${...} from the environment at load time.
+#
+# `version_schema: semver` is required: OPENNMS_VERSION carries `-SNAPSHOT` on
+# non-release builds and RPM forbids `-` in the Version field. semver parsing
+# relocates the SNAPSHOT prerelease so the RPM Version stays hyphen-free.
+#
+# recommends/suggests differ by packager (different distro package names), so
+# they live under `overrides:` rather than the shared top-level fields.
+name: bbo-core
+arch: ${ARCH}
+platform: linux
+version: ${OPENNMS_VERSION}
+version_schema: semver
+release: ${PKG_RELEASE}
+maintainer: "Maintainer <${MAINTAINER_EMAIL}>"
+description: BluebirdOps Core services
+homepage: https://github.com/bluebird-community/opennms
+
+depends:
+  - jicmp
+  - jicmp6
+  - jrrd2
+
+contents:
+  # Full payload tree assembled by the core-pkg-buildroot Makefile target.
+  - src: target/artifacts/buildroot/core/opt/opennms
+    dst: /opt/opennms
+  - src: target/artifacts/buildroot/core/usr/lib/systemd/system
+    dst: /usr/lib/systemd/system
+  # Empty runtime directories (no source files) — declared explicitly so nfpm
+  # includes them; postinstall chowns them to opennms:opennms.
+  - dst: /var/lib/opennms/rrd
+    type: dir
+    file_info: { mode: 0755 }
+  - dst: /var/lib/opennms/reports
+    type: dir
+    file_info: { mode: 0755 }
+  - dst: /var/log/opennms
+    type: dir
+    file_info: { mode: 0755 }
+  - dst: /var/lib/opennms/deploy
+    type: dir
+    file_info: { mode: 0755 }
+  # Mark the etc tree as configuration. Ordered after the broad /opt/opennms
+  # mapping so the config type wins for the overlapping paths (design D3/D4).
+  - src: target/artifacts/buildroot/core/opt/opennms/etc
+    dst: /opt/opennms/etc
+    type: config
+
+overrides:
+  deb:
+    recommends:
+      - openjdk-21-jre-headless
+    suggests:
+      - postgresql (>= 14.0)
+      - iplike-pgsql14
+      - iplike-pgsql15
+      - iplike-pgsql16
+      - iplike-pgsql17
+      - iplike-pgsql18
+  rpm:
+    recommends:
+      - java-21-openjdk-headless
+    suggests:
+      - postgresql-server >= 14.0
+      - iplike-pgsql14
+      - iplike-pgsql15
+      - iplike-pgsql16
+      - iplike-pgsql17
+      - iplike-pgsql18
+
+scripts:
+  postinstall: packages/pkg-postinst-core.sh
