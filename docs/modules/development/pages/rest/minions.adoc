@@ -24,7 +24,7 @@ The v1 API is read-only and produces `application/xml`, `application/json`, and 
 
 == Version 2 (`/api/v2/minions`)
 
-The v2 API supports read, update, and delete operations (Minions are created automatically on registration, not through REST) and produces/consumes `application/json` and `application/xml`.
+The v2 API supports read, update, and delete operations and produces/consumes `application/json` and `application/xml`.
 
 === GETs (reading data)
 
@@ -42,18 +42,6 @@ The v2 API supports read, update, and delete operations (Minions are created aut
 
 |===
 
-=== POSTs (Creating Data)
-
-[caption=]
-.Minions API (v2) POST function
-[options="autowidth"]
-|===
-| Resource  | Description
-
-| `/api/v2/minions` | Not implemented -- returns `501 Not Implemented`. Minions register automatically with OpenNMS when they connect; there is no create-via-REST operation.
-
-|===
-
 === PUT (modifying data)
 
 [caption=]
@@ -64,7 +52,6 @@ The v2 API supports read, update, and delete operations (Minions are created aut
 
 | `/api/v2/minions`        | Bulk-updates the matching Minions. Consumes `application/x-www-form-urlencoded`.
 | `/api/v2/minions/\{id}`  | Replaces a single Minion. Consumes `application/json` or `application/xml`. The `id` must match the `id` in the payload, otherwise `400 Bad Request`.
-| `/api/v2/minions/\{id}`  | Not implemented -- returns `501 Not Implemented`. To update properties, use the bulk `PUT /api/v2/minions` above with a filter (for example `?_s=id=={id}`), or replace the Minion with the `application/json`/`application/xml` `PUT` above.
 
 |===
 
