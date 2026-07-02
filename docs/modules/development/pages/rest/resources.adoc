@@ -4,6 +4,7 @@
 Use the Resources API to list or delete resources at the node level and below.
 This service is especially useful in conjunction with the Measurements API.
 
+[#gets-reading-data]
 == GETs (reading data)
 
 [caption=]

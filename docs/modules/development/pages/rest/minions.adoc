@@ -1,7 +1,7 @@
 
 = Minions API
 
-The Minions API exposes the Minions registered with OpenNMS. Two versions are available: the read-only v1 API under `/rest/minions`, and the full CRUD v2 API under `/api/v2/minions`.
+The Minions API exposes the Minions registered with OpenNMS. Two versions are available: the read-only v1 API under `/rest/minions`, and the v2 API under `/api/v2/minions`.
 
 A Minion is represented by the `OnmsMinion` model: `id`, `label`, `location`, `type`, `status`, `version`, `date`, `lastCheckedIn`, and a `properties` map.
 
@@ -24,7 +24,7 @@ The v1 API is read-only and produces `application/xml`, `application/json`, and 
 
 == Version 2 (`/api/v2/minions`)
 
-The v2 API supports full CRUD and produces/consumes `application/json` and `application/xml`.
+The v2 API supports read, update, and delete operations and produces/consumes `application/json` and `application/xml`.
 
 === GETs (reading data)
 
@@ -42,18 +42,6 @@ The v2 API supports full CRUD and produces/consumes `application/json` and `appl
 
 |===
 
-=== POSTs (Creating Data)
-
-[caption=]
-.Minions API (v2) POST function
-[options="autowidth"]
-|===
-| Resource  | Description
-
-| `/api/v2/minions` | Creates a new Minion. Returns `201 Created` with a `Location` header.
-
-|===
-
 === PUT (modifying data)
 
 [caption=]
@@ -64,7 +52,6 @@ The v2 API supports full CRUD and produces/consumes `application/json` and `appl
 
 | `/api/v2/minions`        | Bulk-updates the matching Minions. Consumes `application/x-www-form-urlencoded`.
 | `/api/v2/minions/\{id}`  | Replaces a single Minion. Consumes `application/json` or `application/xml`. The `id` must match the `id` in the payload, otherwise `400 Bad Request`.
-| `/api/v2/minions/\{id}`  | Updates individual properties of a single Minion. Consumes `application/x-www-form-urlencoded`.
 
 |===
 
