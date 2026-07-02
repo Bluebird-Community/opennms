@@ -57,7 +57,7 @@ public class ManagedBrokerImpl implements ManagedBroker {
     public int getMemoryPercentUsage() {
         try {
             return brokerService.getProducerSystemUsage().getMemoryUsage().getPercentUsage();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -66,7 +66,7 @@ public class ManagedBrokerImpl implements ManagedBroker {
     public long getMemoryUsage() {
         try {
             return brokerService.getProducerSystemUsage().getMemoryUsage().getUsage();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -75,7 +75,7 @@ public class ManagedBrokerImpl implements ManagedBroker {
     public long getMemoryLimit() {
         try {
             return brokerService.getProducerSystemUsage().getMemoryUsage().getLimit();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
