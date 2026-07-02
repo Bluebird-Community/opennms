@@ -26,6 +26,7 @@
       <cm:property name="nodeRefreshTimeoutMs" value="300000"/> <!-- 5 minutes -->
       <cm:property name="alarmSync" value="true"/>
       <cm:property name="alarmSyncClear" value="false"/>
+      <cm:property name="alarmStream" value="false"/>
       <cm:property name="eventFilter" value=""/>
       <cm:property name="alarmFilter" value=""/>
       <cm:property name="metricFilter" value=""/>
@@ -85,6 +86,7 @@
     <property name="eventFilter" value="${eventFilter}"/>
     <property name="alarmFilter" value="${alarmFilter}"/>
     <property name="suppressIncrementalAlarms" value="${suppressIncrementalAlarms}"/>
+    <property name="streamMode" value="${alarmStream}"/>
     <property name="kafkaSendQueueCapacity" value="${kafkaSendQueueCapacity}"/>
     <property name="encoding" value="${encoding}"/>
     <property name="numEventListenerThreads" value="${numEventListenerThreads}"/>

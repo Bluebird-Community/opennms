@@ -664,6 +664,51 @@ public class KafkaForwarderIT implements TemporaryDatabaseAware<MockDatabase> {
                 .count();
     }
 
+    @Test
+    public void testStreamModeSuppressesDeleteTombstone() throws Exception {
+        kafkaProducer.setSuppressIncrementalAlarms(false);
+        kafkaProducer.setStreamMode(true);
+
+        // Fire up the consumer
+        kafkaConsumer = startConsumer();
+
+        // Forward an alarm
+        final OnmsAlarm alarm = nodeDownAlarm();
+        final String reductionKey = alarm.getReductionKey();
+        alarmDao.save(alarm);
+        kafkaProducer.handleNewOrUpdatedAlarm(alarm);
+
+        await().atMost(1, TimeUnit.MINUTES)
+                .until(() -> kafkaConsumer.getAlarmByReductionKey(reductionKey), not(nullValue()));
+
+        // Delete via the live callback path; in stream mode this must not emit a tombstone.
+        kafkaProducer.handleDeletedAlarm((int) alarm.getId(), reductionKey);
+
+        // Give a tombstone time to (not) arrive, then confirm none was produced.
+        Thread.sleep(10000);
+        assertThat("stream mode must not emit a tombstone",
+                kafkaConsumer.getAlarmsByReductionKey().get(reductionKey), not(nullValue()));
+        assertThat(kafkaConsumer.getAlarms(), not(hasItem(nullValue())));
+    }
+
+    @Test
+    public void testStreamModeWithoutClearDisablesReconciliation() throws Exception {
+        kafkaProducer.setStreamMode(true);
+
+        // A fresh datastore in stream mode without alarmSyncClear must refuse to initialize.
+        final KafkaAlarmDataSync guarded =
+                new KafkaAlarmDataSync(kafkaProducerManager, kafkaProducer, protobufMapper);
+        guarded.setAlarmTopic(ALARM_TOPIC_NAME);
+        guarded.setAlarmSync(true);
+        guarded.setAlarmSyncClear(false);
+        guarded.init();
+
+        // Reconciliation was disabled by the guard, so the store never becomes ready.
+        Thread.sleep(5000);
+        assertThat(guarded.isReady(), is(false));
+        guarded.destroy();
+    }
+
 
     @Test
     public void testNotDroppingOfEventsWhenKafkaIsOffline() throws Exception {

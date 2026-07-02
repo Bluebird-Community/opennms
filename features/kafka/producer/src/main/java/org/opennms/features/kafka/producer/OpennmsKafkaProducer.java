@@ -104,6 +104,7 @@ public class OpennmsKafkaProducer implements AlarmLifecycleListener, EventListen
     private boolean forwardAlarms;
     private boolean forwardAlarmFeedback;
     private boolean suppressIncrementalAlarms;
+    private boolean streamMode;
     private boolean forwardNodes;
     private Expression eventFilterExpression;
     private Expression alarmFilterExpression;
@@ -279,6 +280,13 @@ public class OpennmsKafkaProducer implements AlarmLifecycleListener, EventListen
         if (alarm == null) {
             // The alarm has been deleted so we shouldn't track it in the map of outstanding alarms any longer
             outstandingAlarms.remove(reductionKey);
+
+            if (streamMode) {
+                // Stream mode: deletes are silent. Downstream relies on the preceding CLEARED
+                // update; uncleared/cascade deletes are reconciled by alarmSyncClear.
+                LOG.debug("Stream mode: suppressing tombstone for reduction key: {}", reductionKey);
+                return;
+            }
 
             // The alarm was deleted, push a null record to the reduction key
             sendRecord(KafkaProducerManager.MessageType.ALARM,() -> {
@@ -621,6 +629,14 @@ public class OpennmsKafkaProducer implements AlarmLifecycleListener, EventListen
 
     public void setSuppressIncrementalAlarms(boolean suppressIncrementalAlarms) {
         this.suppressIncrementalAlarms = suppressIncrementalAlarms;
+    }
+
+    public void setStreamMode(boolean streamMode) {
+        this.streamMode = streamMode;
+    }
+
+    public boolean isStreamMode() {
+        return streamMode;
     }
 
     @VisibleForTesting

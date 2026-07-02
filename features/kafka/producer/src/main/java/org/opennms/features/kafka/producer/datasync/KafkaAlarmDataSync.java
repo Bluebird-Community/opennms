@@ -120,6 +120,15 @@ public class KafkaAlarmDataSync implements AlarmDataStore, Runnable {
             return;
         }
 
+        if (kafkaProducer.isStreamMode() && !alarmSyncClear) {
+            // In stream mode the producer suppresses tombstones, so reconciliation cannot express
+            // orphan removal at all: it would silently never clean up orphaned keys. Rather than run
+            // an incomplete reconciliation, disable it and require an explicit choice.
+            LOG.warn("alarmStream is enabled without alarmSyncClear; disabling alarm synchronization "
+                    + "for this run. Enable alarmSyncClear or set alarmSync=false.");
+            return;
+        }
+
         if (!kafkaProducerManager.hasConfigurationForMessageType(KafkaProducerManager.MessageType.ALARM)) {
             LOG.warn("No Kafka configuration found for alarms. Alarm synchronization will not be initialized.");
             return;
@@ -399,6 +408,11 @@ public class KafkaAlarmDataSync implements AlarmDataStore, Runnable {
 
     @Override
     public boolean isReady() {
+        if (streams == null) {
+            // Not initialized, or reconciliation was disabled (e.g. alarmSync off, or stream mode
+            // without alarmSyncClear).
+            return false;
+        }
         try {
             getAlarmTableNow();
             return true;
