@@ -85,6 +85,7 @@ public class KafkaAlarmDataSync implements AlarmDataStore, Runnable {
 
     private String alarmTopic;
     private boolean alarmSync;
+    private boolean alarmSyncClear;
     private boolean startWithCleanState = false;
 
     private KafkaStreams streams;
@@ -109,6 +110,11 @@ public class KafkaAlarmDataSync implements AlarmDataStore, Runnable {
      * @throws IOException when an error occurs in loading/parsing the Kafka client/stream configuration
      */
     public void init() throws IOException {
+        if (alarmSyncClear && !alarmSync) {
+            // alarmSyncClear is a strategy for reconciliation, so it has no effect without alarmSync.
+            LOG.warn("alarmSyncClear is enabled but alarmSync is disabled; ignoring alarmSyncClear.");
+        }
+
         if (!isEnabled()) {
             LOG.info("Alarm synchronization disabled. Skipping initialization.");
             return;
@@ -236,7 +242,21 @@ public class KafkaAlarmDataSync implements AlarmDataStore, Runnable {
                     // Only remove it if the alarm we have dates before the snapshot
                     .filter(reductionKey -> !stateTracker.wasAlarmWithReductionKeyUpdated(reductionKey))
                     .collect(Collectors.toSet());
-            reductionKeysNotInDb.forEach(rkey -> kafkaProducer.handleDeletedAlarm((int)alarmsInKtableByReductionKey.get(rkey).getId(), rkey));
+            reductionKeysNotInDb.forEach(rkey -> {
+                final OpennmsModelProtos.Alarm onTopic = alarmsInKtableByReductionKey.get(rkey);
+                if (onTopic == null) {
+                    return;
+                }
+                if (alarmSyncClear) {
+                    // Clear instead of tombstone; skip if already cleared so we converge without re-emitting.
+                    if (onTopic.getSeverity() == OpennmsModelProtos.Severity.CLEARED) {
+                        return;
+                    }
+                    kafkaProducer.forwardSyncClearedAlarm(onTopic);
+                } else {
+                    kafkaProducer.handleDeletedAlarm((int) onTopic.getId(), rkey);
+                }
+            });
 
             // Push new entries for keys that are in the database, but not in the ktable
             final Set<String> reductionKeysNotInKtable = Sets.difference(reductionKeysInDb, reductionKeysInKtable).stream()
@@ -357,6 +377,10 @@ public class KafkaAlarmDataSync implements AlarmDataStore, Runnable {
 
     public void setAlarmSync(boolean alarmSync) {
         this.alarmSync = alarmSync;
+    }
+
+    public void setAlarmSyncClear(boolean alarmSyncClear) {
+        this.alarmSyncClear = alarmSyncClear;
     }
 
     @Override

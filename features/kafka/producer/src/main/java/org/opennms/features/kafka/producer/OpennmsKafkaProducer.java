@@ -478,6 +478,39 @@ public class OpennmsKafkaProducer implements AlarmLifecycleListener, EventListen
         updateAlarm(reductionKey, null);
     }
 
+    // Reconciliation strategy for alarmSyncClear: republish an orphaned key as CLEARED
+    // instead of tombstoning it, reusing its last-known value from the topic.
+    public void forwardSyncClearedAlarm(OpennmsModelProtos.Alarm lastKnownFromTopic) {
+        if (!forwardAlarms) {
+            return;
+        }
+        final String reductionKey = lastKnownFromTopic.getReductionKey();
+        // The alarm is gone from the database; drop any stale outstanding entry so a later re-raise
+        // of this reduction key is not suppressed as incremental against the pre-clear value.
+        outstandingAlarms.remove(reductionKey);
+        final OpennmsModelProtos.Alarm cleared = lastKnownFromTopic.toBuilder()
+                .setSeverity(OpennmsModelProtos.Severity.CLEARED)
+                .setLogMessage(appendSyncClearNote(lastKnownFromTopic))
+                .build();
+        sendRecord(KafkaProducerManager.MessageType.ALARM, () -> {
+            LOG.info("Clearing orphaned alarm with reduction key: {}, instanceId={}, alarmId={}",
+                    reductionKey, SystemInfoUtils.getInstanceId(), lastKnownFromTopic.getId());
+            return new ProducerRecord<>(alarmTopic, reductionKey.getBytes(encoding), cleared.toByteArray());
+        }, recordMetadata -> forwardedAlarm.countDown());
+    }
+
+    private static String appendSyncClearNote(OpennmsModelProtos.Alarm alarm) {
+        final String note = String.format(
+                "Auto-cleared by Kafka alarm synchronization (alarmSyncClear): the source alarm "
+                        + "(id=%d, reductionKey=%s) no longer exists in the OpenNMS database.",
+                alarm.getId(), alarm.getReductionKey());
+        final String existing = alarm.getLogMessage();
+        if (Strings.isNullOrEmpty(existing) || existing.trim().isEmpty()) {
+            return note;
+        }
+        return existing + " " + note;
+    }
+
     @Override
     public String getName() {
         return OpennmsKafkaProducer.class.getName();

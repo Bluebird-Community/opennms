@@ -84,6 +84,12 @@ Set this to `false` to prevent suppressing these alarms.
 | Set this to `false` to disable synchronization of the alarms topics.
 This is automatically disabled when alarm forwarding is not enabled.
 | true
+
+| alarmSyncClear
+| Changes how alarm synchronization reconciles reduction keys that are on the topic but no longer in the database (see <<alarm-synchronization>>).
+When `true`, such keys are published as a record with severity `CLEARED` instead of a `null` tombstone.
+Only takes effect when `alarmSync` is also enabled.
+| false
 |===
 
 == Configure filtering
@@ -211,6 +217,21 @@ admin@opennms()> config:update
 ----
 
 In the example above, we set the vertex and edge topics to be different by default.
+
+[[alarm-synchronization]]
+== Alarm synchronization
+
+When alarm forwarding is enabled, the producer runs a periodic reconciliation loop (`alarmSync`, on by default).
+It compares a materialized view of the alarm topic against a database snapshot and emits corrections so the topic converges on the database over time.
+This is eventually consistent: corrections are applied on the next snapshot cycle, not the moment a discrepancy appears.
+It mainly recovers from cases the live path can miss, such as a dropped send or an alarm removed without a lifecycle callback (for example, a node-deletion cascade).
+
+For a reduction key that is on the topic but no longer in the database, there are two strategies:
+
+* Tombstone (default): the key is removed with a `null`-value record. This is standard KTable semantics.
+* Clear (`alarmSyncClear = true`): the key's last-known value is republished with severity `CLEARED`, so no `null` records are written. A note is appended to the alarm's log message recording that it was auto-cleared by synchronization because the source alarm no longer exists in the database. This can help consumers that do not model the topic as a compacted KTable and mishandle `null` values, such as some Kafka Connect sinks. The clear is idempotent, so an already-cleared key is not re-emitted.
+
+Because the clear strategy never tombstones, keys are not dropped from the materialized store, so it can grow larger over a long-running session.
 
 == Configure the alarm sync streams client
 
