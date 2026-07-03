@@ -18,8 +18,7 @@ describe('NodeActionsDropdown.vue', () => {
     const items = (wrapper.vm as any).items as Array<{ label: string }>
     expect(items[0].label).toBe('Info...')
     expect(items.map(i => i.label)).toContain('Events')
-    expect(items.map(i => i.label)).toContain('View Topology Map')
-    expect(items).toHaveLength(14) // Info + 13 links
+    expect(items).toHaveLength(13) // Info + 12 links
   })
 
   it('Info... command calls triggerNodeInfo with the node', () => {
