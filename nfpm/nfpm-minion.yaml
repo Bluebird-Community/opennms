@@ -1,0 +1,42 @@
+# nfpm config for the BluebirdOps Minion package (bbo-minion).
+# See nfpm-core.yaml for the shared conventions (env expansion, version_schema,
+# per-packager overrides).
+name: bbo-minion
+arch: ${ARCH}
+platform: linux
+version: ${OPENNMS_VERSION}
+version_schema: semver
+release: ${PKG_RELEASE}
+maintainer: "Maintainer <${MAINTAINER_EMAIL}>"
+description: BluebirdOps monitoring proxy service
+homepage: https://github.com/bluebird-community/opennms
+
+depends:
+  - jicmp
+  - jicmp6
+
+contents:
+  - src: target/artifacts/buildroot/minion/opt/minion
+    dst: /opt/minion
+  - src: target/artifacts/buildroot/minion/usr/lib/systemd/system
+    dst: /usr/lib/systemd/system
+  - dst: /var/log/minion
+    type: dir
+    file_info: { mode: 0755 }
+  - dst: /var/lib/minion/deploy
+    type: dir
+    file_info: { mode: 0755 }
+  - src: target/artifacts/buildroot/minion/opt/minion/etc
+    dst: /opt/minion/etc
+    type: config
+
+overrides:
+  deb:
+    recommends:
+      - openjdk-21-jre-headless
+  rpm:
+    recommends:
+      - java-21-openjdk-headless
+
+scripts:
+  postinstall: packages/pkg-postinst-minion.sh

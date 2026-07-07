@@ -1,0 +1,32 @@
+name: Setup nfpm
+description: Install a pinned, checksum-verified nfpm binary onto PATH for package builds.
+
+inputs:
+  version:
+    description: nfpm version to install (without the leading v).
+    required: false
+    # renovate: datasource=github-releases depName=goreleaser/nfpm
+    default: "2.47.0"
+  sha256:
+    description: SHA-256 of nfpm_<version>_Linux_x86_64.tar.gz.
+    required: false
+    default: "0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783"
+
+runs:
+  using: composite
+  steps:
+    - name: Download and verify nfpm
+      shell: bash
+      run: |
+        set -euo pipefail
+        version="${{ inputs.version }}"
+        sha256="${{ inputs.sha256 }}"
+        tarball="nfpm_${version}_Linux_x86_64.tar.gz"
+        url="https://github.com/goreleaser/nfpm/releases/download/v${version}/${tarball}"
+        tmp="$(mktemp -d)"
+        curl -fsSL -o "${tmp}/${tarball}" "${url}"
+        echo "${sha256}  ${tmp}/${tarball}" | sha256sum -c -
+        tar -xzf "${tmp}/${tarball}" -C "${tmp}" nfpm
+        install -m 0755 "${tmp}/nfpm" /usr/local/bin/nfpm
+        rm -rf "${tmp}"
+        nfpm --version

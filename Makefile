@@ -57,6 +57,7 @@ PKG_SENTINEL_DEPLOY   := /var/lib/sentinel/deploy
 BUILD_ROOT            := $(ARTIFACTS_DIR)/buildroot
 PKG_RELEASE           := $(RELEASE_BUILD_NUM)
 MAINTAINER_EMAIL      ?= maintainer@bluebirdops.org
+ARCH                  ?= amd64
 
 INSTALL_VERSION       := ${OPENNMS_VERSION}-${RELEASE_COMMIT}
 DEPLOY_BASE_IMAGE     := quay.io/bluebird/deploy-base:5.0.0.b46
@@ -211,8 +212,13 @@ deps-build:
 .PHONY: deps-packages
 deps-packages:
 	@echo "Check dependencies to build packages"
-	command -v fpm
-	command -v rpmbuild
+	@command -v nfpm >/dev/null 2>&1 || { \
+		echo "nfpm not found. Install it to build packages:"; \
+		echo "  brew install nfpm"; \
+		echo "  go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest"; \
+		echo "  (CI installs a pinned binary via .github/actions/setup-nfpm)"; \
+		exit 1; \
+	}
 
 .PHONY: deps-docs
 deps-docs:
@@ -531,25 +537,8 @@ core-pkg-deb: deps-packages core-pkg-buildroot
 	@echo "Version:     " $(OPENNMS_VERSION)
 	@echo "Release:     " $(PKG_RELEASE)
 	@echo
-	fpm -s dir -t deb -p $(ARTIFACTS_DIR)/packages/core/NAME_VERSION_ARCH_$(PKG_RELEASE).deb \
-		-n "bbo-core" \
-		-v "$(OPENNMS_VERSION)-$(PKG_RELEASE)" \
-		--config-files /opt/opennms/etc \
-		--description "BluebirdOps Core services" \
-		--url "https://github.com/bluebird-community/opennms" \
-		--maintainer "Maintainer <$(MAINTAINER_EMAIL)>" \
-		--depends jicmp \
-		--depends jicmp6 \
-		--depends jrrd2 \
-		--deb-recommends openjdk-17-jdk-headless \
-		--deb-suggests "postgresql (>= 14.0)" \
-		--deb-suggests iplike-pgsql14 \
-		--deb-suggests iplike-pgsql15 \
-		--deb-suggests iplike-pgsql16 \
-		--deb-suggests iplike-pgsql17 \
-		--deb-suggests iplike-pgsql18 \
-		--after-install packages/pkg-postinst-core.sh \
-		-C "$(BUILD_ROOT)/core"
+	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
+		nfpm package --packager deb --config nfpm/nfpm-core.yaml --target "$(ARTIFACTS_DIR)/packages/core/"
 
 .PHONY: core-pkg-rpm
 core-pkg-rpm: deps-packages core-pkg-buildroot
@@ -558,25 +547,8 @@ core-pkg-rpm: deps-packages core-pkg-buildroot
 	@echo "Version:     " $(OPENNMS_VERSION)
 	@echo "Release:     " $(PKG_RELEASE)
 	@echo
-	fpm -s dir -t rpm -p $(ARTIFACTS_DIR)/packages/core/NAME_VERSION_ARCH_$(PKG_RELEASE).rpm \
-	    -n "bbo-core" \
-		-v "$(OPENNMS_VERSION)_$(PKG_RELEASE)" \
-		--config-files /opt/opennms/etc \
-		--description "BluebirdOps Core services" \
-		--url "https://github.com/bluebird-community/opennms" \
-		--maintainer "Maintainer <$(MAINTAINER_EMAIL)>" \
-		--depends jicmp \
-		--depends jicmp6 \
-		--depends jrrd2 \
-		--rpm-tag "Recommends: java-17-openjdk-devel" \
-		--rpm-tag "Suggests: postgresql-server >= 14.0" \
-		--rpm-tag "Suggests: iplike-pgsql14" \
-		--rpm-tag "Suggests: iplike-pgsql15" \
-		--rpm-tag "Suggests: iplike-pgsql16" \
-		--rpm-tag "Suggests: iplike-pgsql17" \
-		--rpm-tag "Suggests: iplike-pgsql18" \
-		--after-install packages/pkg-postinst-core.sh \
-		-C "$(BUILD_ROOT)/core"
+	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
+		nfpm package --packager rpm --config nfpm/nfpm-core.yaml --target "$(ARTIFACTS_DIR)/packages/core/"
 
 .PHONY: minion-pkg-buildroot
 minion-pkg-buildroot:
@@ -609,18 +581,8 @@ minion-pkg-deb: deps-packages minion-pkg-buildroot
 	@echo "Version:     " $(OPENNMS_VERSION)
 	@echo "Release:     " $(DEB_PKG_RELEASE)
 	@echo
-	fpm -s dir -t deb -p $(ARTIFACTS_DIR)/packages/minion/NAME_VERSION_ARCH_$(PKG_RELEASE).deb \
-		-n "bbo-minion" \
-		-v "$(OPENNMS_VERSION)-$(PKG_RELEASE)" \
-		--config-files /opt/minion/etc \
-		--description "BluebirdOps monitoring proxy service" \
-		--url "https://github.com/bluebird-community/opennms" \
-		--maintainer "Maintainer <$(MAINTAINER_EMAIL)>" \
-		--depends jicmp \
-		--depends jicmp6 \
-		--deb-recommends openjdk-17-jdk-headless \
-		--after-install packages/pkg-postinst-minion.sh \
-		-C "$(BUILD_ROOT)/minion"
+	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
+		nfpm package --packager deb --config nfpm/nfpm-minion.yaml --target "$(ARTIFACTS_DIR)/packages/minion/"
 
 .PHONY: minion-pkg-rpm
 minion-pkg-rpm: deps-packages minion-pkg-buildroot
@@ -629,18 +591,8 @@ minion-pkg-rpm: deps-packages minion-pkg-buildroot
 	@echo "Version:     " $(OPENNMS_VERSION)
 	@echo "Release:     " $(DEB_PKG_RELEASE)
 	@echo
-	fpm -s dir -t rpm -p $(ARTIFACTS_DIR)/packages/minion/NAME_VERSION_ARCH_$(PKG_RELEASE).rpm \
-		-n "bbo-minion" \
-		-v "$(OPENNMS_VERSION)_$(PKG_RELEASE)" \
-		--config-files /opt/minion/etc \
-		--description "BluebirdOps monitoring proxy service" \
-		--url "https://github.com/bluebird-community/opennms" \
-		--maintainer "Maintainer <$(MAINTAINER_EMAIL)>" \
-		--depends jicmp \
-		--depends jicmp6 \
-		--rpm-tag "Recommends: java-17-openjdk-devel" \
-		--after-install packages/pkg-postinst-minion.sh \
-		-C "$(BUILD_ROOT)/minion"
+	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
+		nfpm package --packager rpm --config nfpm/nfpm-minion.yaml --target "$(ARTIFACTS_DIR)/packages/minion/"
 
 .PHONY: sentinel-pkg-buildroot
 sentinel-pkg-buildroot:
@@ -673,16 +625,8 @@ sentinel-pkg-deb: deps-packages sentinel-pkg-buildroot
 	@echo "Version:     " $(OPENNMS_VERSION)
 	@echo "Release:     " $(DEB_PKG_RELEASE)
 	@echo
-	fpm -s dir -t deb -p $(ARTIFACTS_DIR)/packages/sentinel/NAME_VERSION_ARCH_$(PKG_RELEASE).deb \
-		-n "bbo-sentinel" \
-		-v "$(OPENNMS_VERSION)-$(PKG_RELEASE)" \
-		--config-files /opt/sentinel/etc \
-		--description "BluebirdOps services to horizontally scale backend workloads" \
-		--url "https://github.com/bluebird-community/opennms" \
-		--maintainer "Maintainer <$(MAINTAINER_EMAIL)>" \
-		--deb-recommends openjdk-17-jdk-headless \
-		--after-install packages/pkg-postinst-sentinel.sh \
-		-C "$(BUILD_ROOT)/sentinel"
+	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
+		nfpm package --packager deb --config nfpm/nfpm-sentinel.yaml --target "$(ARTIFACTS_DIR)/packages/sentinel/"
 
 .PHONY: sentinel-pkg-rpm
 sentinel-pkg-rpm: deps-packages sentinel-pkg-buildroot
@@ -691,16 +635,8 @@ sentinel-pkg-rpm: deps-packages sentinel-pkg-buildroot
 	@echo "Version:     " $(OPENNMS_VERSION)
 	@echo "Release:     " $(DEB_PKG_RELEASE)
 	@echo
-	fpm -s dir -t rpm -p $(ARTIFACTS_DIR)/packages/sentinel/NAME_VERSION_ARCH_$(PKG_RELEASE).rpm \
-		-n "bbo-sentinel" \
-		-v "$(OPENNMS_VERSION)_$(PKG_RELEASE)" \
-		--config-files /opt/sentinel/etc \
-		--description "BluebirdOps services to horizontally scale backend workloads" \
-		--url "https://github.com/bluebird-community/opennms" \
-		--maintainer "Maintainer <$(MAINTAINER_EMAIL)>" \
-		--rpm-tag "Recommends: java-17-openjdk-devel" \
-		--after-install packages/pkg-postinst-sentinel.sh \
-		-C "$(BUILD_ROOT)/sentinel"
+	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
+		nfpm package --packager rpm --config nfpm/nfpm-sentinel.yaml --target "$(ARTIFACTS_DIR)/packages/sentinel/"
 
 .PHON: all-pkgs
 all-pkgs: core-pkg-deb core-pkg-rpm minion-pkg-deb minion-pkg-rpm sentinel-pkg-deb sentinel-pkg-rpm
