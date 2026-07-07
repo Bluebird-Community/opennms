@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opennms</groupId>
   <artifactId>e2e-tests</artifactId>
-  <version>38.0.1-SNAPSHOT</version>
+  <version>38.0.1</version>
   <name>BluebirdOps E2E Tests</name>
   <url>https://github.com/Bluebird-Community/opennms</url>
   <description>Smoke Test APIs for OpenNMS</description>
