@@ -4872,11 +4872,6 @@
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
-        <artifactId>netty-codec-base</artifactId>
-        <version>${netty4Version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
         <artifactId>netty-codec-xml</artifactId>
         <version>${netty4Version}</version>
       </dependency>
