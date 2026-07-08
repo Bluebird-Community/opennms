@@ -52,6 +52,8 @@
     <groovyVersion>3.0.21</groovyVersion>
     <frontendPluginVersion>1.15.1</frontendPluginVersion>
     <jackson2Version>2.22.0</jackson2Version>
+    <!-- Since Jackson 2.20 jackson-annotations is released decoupled from the rest (no patch digit: 2.20, 2.21, 2.22) -->
+    <jackson2AnnotationsVersion>2.22</jackson2AnnotationsVersion>
     <jersey.version>2.46</jersey.version>
     <jestVersion>5.3.4</jestVersion>
     <junit5Version>5.9.2</junit5Version>
