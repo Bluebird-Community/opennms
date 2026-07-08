@@ -1817,6 +1817,8 @@
     <ipaddressVersion>5.5.0</ipaddressVersion>
     <jacksonVersion>1.9.14-atlassian-6</jacksonVersion>
     <jackson2Version>2.22.0</jackson2Version>
+    <!-- Since Jackson 2.20 jackson-annotations is released decoupled from the rest (no patch digit: 2.20, 2.21, 2.22) -->
+    <jackson2AnnotationsVersion>2.22</jackson2AnnotationsVersion>
     <jinjavaVersion>2.8.2</jinjavaVersion>
     <jmsApiVersion>2.0.1</jmsApiVersion>
     <snakeyamlVersion>2.3</snakeyamlVersion>
@@ -4388,7 +4390,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson2Version}</version>
+        <version>${jackson2AnnotationsVersion}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
