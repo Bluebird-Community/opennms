@@ -96,6 +96,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     public CompletableFuture<List<TrafficSummary<String>>> getApplicationSummaries(final Set<String> applications,
                                                                                    final boolean includeOther,
                                                                                    final List<Filter> filters) {
+        if (applications.isEmpty()) {
+            return CompletableFuture.completedFuture(new ArrayList<>());
+        }
         final String w = where(filters);
         final String sql = "SELECT application AS e,"
                 + " sumIf(bytes, direction = 'ingress') AS bin,"
@@ -146,8 +149,11 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
     }
 
-    private static String quote(final String value) {
-        return "'" + value.replace("'", "''") + "'";
+    // Package-private for testing. Escape backslashes before quotes: ClickHouse honours
+    // backslash escapes inside string literals, so a trailing '\' would otherwise escape the
+    // closing quote and let the value break out of the literal.
+    static String quote(final String value) {
+        return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'";
     }
 
     private static String quoteAll(final Set<String> values) {
@@ -183,21 +189,23 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     private Table<Directional<String>, Long, Double> applicationSeries(final Set<String> applications,
                                                                        final long step, final boolean includeOther,
                                                                        final List<Filter> filters) {
+        final Table<Directional<String>, Long, Double> table = HashBasedTable.create();
+        // No entities requested -> empty series (do not emit an all-traffic "Other").
+        if (applications.isEmpty()) {
+            return table;
+        }
         final long[] range = timeRange(filters);
         final String w = where(filters);
-        final Table<Directional<String>, Long, Double> table = HashBasedTable.create();
         // selected[bucket] = {ingressSum, egressSum}, only tracked when we need the "Other" residual.
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
 
-        if (!applications.isEmpty()) {
-            for (final GenericRecord r : client.queryAll(seriesSql(w, applications, range[0], range[1], step))) {
-                final boolean ingress = "ingress".equals(r.getString("d"));
-                final long bucket = r.getLong("b");
-                final double bytes = r.getDouble("bytes");
-                table.put(new Directional<>(r.getString("e"), ingress), bucket, bytes);
-                if (includeOther) {
-                    selectedByBucket.computeIfAbsent(bucket, k -> new double[2])[ingress ? 0 : 1] += bytes;
-                }
+        for (final GenericRecord r : client.queryAll(seriesSql(w, applications, range[0], range[1], step))) {
+            final boolean ingress = "ingress".equals(r.getString("d"));
+            final long bucket = r.getLong("b");
+            final double bytes = r.getDouble("bytes");
+            table.put(new Directional<>(r.getString("e"), ingress), bucket, bytes);
+            if (includeOther) {
+                selectedByBucket.computeIfAbsent(bucket, k -> new double[2])[ingress ? 0 : 1] += bytes;
             }
         }
 
