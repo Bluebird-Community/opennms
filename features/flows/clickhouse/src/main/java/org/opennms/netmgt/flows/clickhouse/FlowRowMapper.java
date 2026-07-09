@@ -73,6 +73,9 @@ public final class FlowRowMapper {
         n.put(FlowColumns.SRC_LOCALITY, enumName(flow.getSrcLocality()));
         n.put(FlowColumns.DST_LOCALITY, enumName(flow.getDstLocality()));
         n.put(FlowColumns.FLOW_LOCALITY, enumName(flow.getFlowLocality()));
+        n.put(FlowColumns.SRC_HOSTNAME, flow.getSrcAddrHostname().orElse(""));
+        n.put(FlowColumns.DST_HOSTNAME, flow.getDstAddrHostname().orElse(""));
+        n.put(FlowColumns.CONVO_KEY, nz(flow.getConvoKey()));
 
         return n.toString();
     }

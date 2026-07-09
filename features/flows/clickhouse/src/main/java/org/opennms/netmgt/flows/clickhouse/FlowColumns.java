@@ -45,6 +45,9 @@ public final class FlowColumns {
     public static final String SRC_LOCALITY = "src_locality";
     public static final String DST_LOCALITY = "dst_locality";
     public static final String FLOW_LOCALITY = "flow_locality";
+    public static final String SRC_HOSTNAME = "src_hostname";
+    public static final String DST_HOSTNAME = "dst_hostname";
+    public static final String CONVO_KEY = "convo_key";
 
     /** Every column of the {@code flows} table, in DDL order. */
     public static final List<String> ALL = List.of(
@@ -54,7 +57,8 @@ public final class FlowColumns {
             DIRECTION, EXPORTER_NODE, INPUT_SNMP, OUTPUT_SNMP,
             BYTES, PACKETS, FIRST_SWITCHED, LAST_SWITCHED,
             DSCP, ECN, TOS, VLAN, TCP_FLAGS,
-            SRC_LOCALITY, DST_LOCALITY, FLOW_LOCALITY);
+            SRC_LOCALITY, DST_LOCALITY, FLOW_LOCALITY,
+            SRC_HOSTNAME, DST_HOSTNAME, CONVO_KEY);
 
     private FlowColumns() {
     }
