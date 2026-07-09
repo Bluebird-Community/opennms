@@ -38,7 +38,13 @@ CREATE TABLE IF NOT EXISTS flows
     tcp_flags      UInt16,
     src_locality   Enum8('unknown' = 0, 'public' = 1, 'private' = 2),
     dst_locality   Enum8('unknown' = 0, 'public' = 1, 'private' = 2),
-    flow_locality  Enum8('unknown' = 0, 'public' = 1, 'private' = 2)
+    flow_locality  Enum8('unknown' = 0, 'public' = 1, 'private' = 2),
+    -- Hostnames and the canonical conversation key are denormalised onto each row at
+    -- enrichment time (D-ENRICH); the query service reads them back rather than resolving
+    -- via DAOs. src_hostname/dst_hostname pair with src_addr/dst_addr.
+    src_hostname   String,
+    dst_hostname   String,
+    convo_key      String
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMMDD(timestamp)

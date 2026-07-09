@@ -200,7 +200,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
 
         final String appFilter = "application IN (" + quoteAll(applications) + ")";
-        for (final GenericRecord r : client.queryAll(seriesSql("application", appFilter, w, range[0], range[1], step))) {
+        for (final GenericRecord r : client.queryAll(seriesSql(this.table, "application", appFilter, w, range[0], range[1], step))) {
             final boolean ingress = "ingress".equals(r.getString("d"));
             final long bucket = r.getLong("b");
             final double bytes = r.getDouble("bytes");
@@ -211,7 +211,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
 
         if (includeOther) {
-            for (final GenericRecord r : client.queryAll(seriesSql(null, null, w, range[0], range[1], step))) {
+            for (final GenericRecord r : client.queryAll(seriesSql(this.table, null, null, w, range[0], range[1], step))) {
                 final boolean ingress = "ingress".equals(r.getString("d"));
                 final long bucket = r.getLong("b");
                 final double grand = r.getDouble("bytes");
@@ -240,8 +240,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
      * used for the "Other" residual); otherwise it is grouped by {@code toString(entityColumn)} /
      * direction / bucket. {@code entityFilter} (may be null/empty) is ANDed into the WHERE clause.
      */
-    private String seriesSql(final String entityColumn, final String entityFilter, final String whereClause,
-                             final long start, final long end, final long step) {
+    private String seriesSql(final String fromExpr, final String entityColumn, final String entityFilter,
+                             final String whereClause, final long start, final long end, final long step) {
         final boolean byEntity = entityColumn != null;
         final String innerEntity = byEntity ? entityColumn + ", " : "";                 // raw column, innermost select
         final String midEntity = byEntity ? "toString(" + entityColumn + ") AS e, " : ""; // stringified in the middle
@@ -260,7 +260,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                 + "      greatest(toUnixTimestamp64Milli(first_switched), q_start) AS lo,"
                 + "      least(toUnixTimestamp64Milli(last_switched), q_end - 1) AS hi,"
                 + "      if(hi >= lo, range(toUInt64(intDiv(lo - q_start, q_step)), toUInt64(intDiv(hi - q_start, q_step)) + 1), emptyArrayUInt64()) AS idxs"
-                + "    FROM " + table + " WHERE " + whereClause + appFilter + " AND direction IN ('ingress', 'egress')"
+                + "    FROM " + fromExpr + " WHERE " + whereClause + appFilter + " AND direction IN ('ingress', 'egress')"
                 + "  ) ARRAY JOIN idxs AS i"
                 + ") WHERE share > 0 GROUP BY " + entityGroup + "d, b ORDER BY " + entityGroup + "d, b";
     }
@@ -310,31 +310,147 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     @Override
     public CompletableFuture<List<String>> getHosts(final String regex, final long limit, final List<Filter> filters) {
-        throw todo("getHosts");
+        final String sql = "SELECT DISTINCT toString(host) AS e FROM " + hostUnion(where(filters))
+                + " WHERE match(toString(host), " + quote(regex) + ") ORDER BY e LIMIT " + limit;
+        final List<String> hosts = client.queryAll(sql).stream()
+                .map(r -> r.getString("e")).collect(Collectors.toList());
+        return CompletableFuture.completedFuture(hosts);
     }
 
     @Override
     public CompletableFuture<List<TrafficSummary<Host>>> getTopNHostSummaries(
             final int n, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getTopNHostSummaries");
+        final String w = where(filters);
+        final String sql = hostSummarySelect(w) + " GROUP BY host ORDER BY (bin + bout) DESC, e LIMIT " + n;
+        final List<TrafficSummary<Host>> summaries = hostSummariesFrom(client.queryAll(sql));
+        if (includeOther) {
+            appendOtherHost(summaries, w);
+        }
+        return CompletableFuture.completedFuture(summaries);
     }
 
     @Override
     public CompletableFuture<List<TrafficSummary<Host>>> getHostSummaries(
             final Set<String> hosts, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getHostSummaries");
+        if (hosts.isEmpty()) {
+            return CompletableFuture.completedFuture(new ArrayList<>());
+        }
+        final String w = where(filters);
+        final String sql = hostSummarySelect(w) + " WHERE toString(host) IN (" + quoteAll(hosts) + ")"
+                + " GROUP BY host ORDER BY e";
+        final List<TrafficSummary<Host>> summaries = hostSummariesFrom(client.queryAll(sql));
+        if (includeOther) {
+            appendOtherHost(summaries, w);
+        }
+        return CompletableFuture.completedFuture(summaries);
     }
 
     @Override
     public CompletableFuture<Table<Directional<Host>, Long, Double>> getHostSeries(
             final Set<String> hosts, final long step, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getHostSeries");
+        return CompletableFuture.completedFuture(hostSeries(hosts, step, includeOther, filters));
     }
 
     @Override
     public CompletableFuture<Table<Directional<Host>, Long, Double>> getTopNHostSeries(
             final int n, final long step, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getTopNHostSeries");
+        return CompletableFuture.completedFuture(hostSeries(topNHosts(n, where(filters)), step, includeOther, filters));
+    }
+
+    // --- host helpers -----------------------------------------------------
+
+    /** src+dst endpoints unioned so each flow contributes to both its source and destination host. */
+    private String hostUnion(final String whereClause) {
+        return "(SELECT src_addr AS host, src_hostname AS host_hostname, direction, bytes, first_switched, last_switched"
+                + " FROM " + table + " WHERE " + whereClause
+                + " UNION ALL SELECT dst_addr AS host, dst_hostname AS host_hostname, direction, bytes, first_switched, last_switched"
+                + " FROM " + table + " WHERE " + whereClause + ")";
+    }
+
+    private String hostSummarySelect(final String whereClause) {
+        return "SELECT toString(host) AS e, anyIf(host_hostname, host_hostname != '') AS hn,"
+                + " sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
+                + " FROM " + hostUnion(whereClause);
+    }
+
+    private static List<TrafficSummary<Host>> hostSummariesFrom(final List<GenericRecord> rows) {
+        final List<TrafficSummary<Host>> out = new ArrayList<>(rows.size());
+        for (final GenericRecord r : rows) {
+            out.add(TrafficSummary.from(host(r.getString("e"), r.getString("hn")))
+                    .withBytes(r.getLong("bin"), r.getLong("bout")).build());
+        }
+        return out;
+    }
+
+    private void appendOtherHost(final List<TrafficSummary<Host>> summaries, final String whereClause) {
+        final List<GenericRecord> grand = client.queryAll(
+                "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout FROM "
+                        + hostUnion(whereClause));
+        final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
+        final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
+        final long otherIn = grandIn - summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
+        final long otherOut = grandOut - summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
+        if (otherIn > 0 || otherOut > 0) {
+            summaries.add(TrafficSummary.from(Host.forOther().build()).withBytes(otherIn, otherOut).build());
+        }
+    }
+
+    private Set<String> topNHosts(final int n, final String whereClause) {
+        final String sql = "SELECT toString(host) AS e FROM " + hostUnion(whereClause)
+                + " GROUP BY host ORDER BY sum(bytes) DESC, e LIMIT " + n;
+        return client.queryAll(sql).stream().map(r -> r.getString("e"))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private Table<Directional<Host>, Long, Double> hostSeries(final Set<String> hosts, final long step,
+                                                              final boolean includeOther, final List<Filter> filters) {
+        final Table<Directional<Host>, Long, Double> table = HashBasedTable.create();
+        if (hosts.isEmpty()) {
+            return table;
+        }
+        final long[] range = timeRange(filters);
+        final String w = where(filters);
+        final Map<String, String> hostnames = resolveHostHostnames(hosts, w);
+        final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
+        final String filter = "toString(host) IN (" + quoteAll(hosts) + ")";
+        for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), "host", filter, "1 = 1", range[0], range[1], step))) {
+            final boolean ingress = "ingress".equals(r.getString("d"));
+            final long bucket = r.getLong("b");
+            final double bytes = r.getDouble("bytes");
+            table.put(new Directional<>(host(r.getString("e"), hostnames.get(r.getString("e"))), ingress), bucket, bytes);
+            if (includeOther) {
+                selectedByBucket.computeIfAbsent(bucket, k -> new double[2])[ingress ? 0 : 1] += bytes;
+            }
+        }
+        if (includeOther) {
+            for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), null, null, "1 = 1", range[0], range[1], step))) {
+                final boolean ingress = "ingress".equals(r.getString("d"));
+                final long bucket = r.getLong("b");
+                final double other = r.getDouble("bytes")
+                        - selectedByBucket.getOrDefault(bucket, new double[2])[ingress ? 0 : 1];
+                if (Math.abs(other) > 1e-9) {
+                    table.put(new Directional<>(Host.forOther().build(), ingress), bucket, other);
+                }
+            }
+        }
+        return table;
+    }
+
+    private Map<String, String> resolveHostHostnames(final Set<String> hosts, final String whereClause) {
+        final Map<String, String> map = new HashMap<>();
+        final String sql = "SELECT toString(host) AS e, anyIf(host_hostname, host_hostname != '') AS hn FROM "
+                + hostUnion(whereClause) + " WHERE toString(host) IN (" + quoteAll(hosts) + ") GROUP BY host";
+        for (final GenericRecord r : client.queryAll(sql)) {
+            final String hn = r.getString("hn");
+            if (hn != null && !hn.isEmpty()) {
+                map.put(r.getString("e"), hn);
+            }
+        }
+        return map;
+    }
+
+    private static Host host(final String ip, final String hostname) {
+        return (hostname != null && !hostname.isEmpty()) ? new Host(ip, hostname) : new Host(ip);
     }
 
     @Override
@@ -367,7 +483,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final String col = fieldColumn(field);
         final long[] range = timeRange(filters);
         final Table<Directional<String>, Long, Double> table = HashBasedTable.create();
-        for (final GenericRecord r : client.queryAll(seriesSql(col, null, where(filters), range[0], range[1], step))) {
+        for (final GenericRecord r : client.queryAll(seriesSql(this.table, col, null, where(filters), range[0], range[1], step))) {
             table.put(new Directional<>(r.getString("e"), "ingress".equals(r.getString("d"))),
                       r.getLong("b"), r.getDouble("bytes"));
         }
