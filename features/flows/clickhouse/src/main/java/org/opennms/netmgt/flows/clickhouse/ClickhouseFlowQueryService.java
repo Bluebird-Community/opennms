@@ -199,7 +199,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         // selected[bucket] = {ingressSum, egressSum}, only tracked when we need the "Other" residual.
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
 
-        for (final GenericRecord r : client.queryAll(seriesSql(w, applications, range[0], range[1], step))) {
+        final String appFilter = "application IN (" + quoteAll(applications) + ")";
+        for (final GenericRecord r : client.queryAll(seriesSql("application", appFilter, w, range[0], range[1], step))) {
             final boolean ingress = "ingress".equals(r.getString("d"));
             final long bucket = r.getLong("b");
             final double bytes = r.getDouble("bytes");
@@ -210,7 +211,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
 
         if (includeOther) {
-            for (final GenericRecord r : client.queryAll(seriesSql(w, null, range[0], range[1], step))) {
+            for (final GenericRecord r : client.queryAll(seriesSql(null, null, w, range[0], range[1], step))) {
                 final boolean ingress = "ingress".equals(r.getString("d"));
                 final long bucket = r.getLong("b");
                 final double grand = r.getDouble("bytes");
@@ -234,17 +235,18 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     }
 
     /**
-     * Build the proportional-series SQL. When {@code applications} is null the result is grouped by
-     * direction/bucket only (the grand total used for the "Other" residual); otherwise it is grouped
-     * by application/direction/bucket and restricted to those applications.
+     * Build the proportional-series SQL for an arbitrary entity column (D-PROPORTION). When
+     * {@code entityColumn} is null the result is grouped by direction/bucket only (the grand total
+     * used for the "Other" residual); otherwise it is grouped by {@code toString(entityColumn)} /
+     * direction / bucket. {@code entityFilter} (may be null/empty) is ANDed into the WHERE clause.
      */
-    private String seriesSql(final String whereClause, final Set<String> applications,
+    private String seriesSql(final String entityColumn, final String entityFilter, final String whereClause,
                              final long start, final long end, final long step) {
-        final boolean byApp = applications != null;
-        final String innerEntity = byApp ? "application, " : "";   // raw column in the innermost select
-        final String midEntity = byApp ? "application AS e, " : ""; // aliased in the middle select
-        final String entityGroup = byApp ? "e, " : "";
-        final String appFilter = byApp ? " AND application IN (" + quoteAll(applications) + ")" : "";
+        final boolean byEntity = entityColumn != null;
+        final String innerEntity = byEntity ? entityColumn + ", " : "";                 // raw column, innermost select
+        final String midEntity = byEntity ? "toString(" + entityColumn + ") AS e, " : ""; // stringified in the middle
+        final String entityGroup = byEntity ? "e, " : "";
+        final String appFilter = (entityFilter != null && !entityFilter.isEmpty()) ? " AND " + entityFilter : "";
         return "WITH " + start + " AS q_start, " + end + " AS q_end, " + step + " AS q_step "
                 + "SELECT " + entityGroup + "d, b, sum(share) AS bytes FROM ("
                 + "  SELECT " + midEntity + "direction AS d, (q_start + i * q_step) AS b,"
@@ -338,18 +340,47 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     @Override
     public CompletableFuture<List<String>> getFieldValues(final LimitedCardinalityField field,
                                                           final List<Filter> filters) {
-        throw todo("getFieldValues");
+        final String col = fieldColumn(field);
+        final String sql = "SELECT DISTINCT toString(" + col + ") AS v FROM " + table
+                + " WHERE " + where(filters) + " ORDER BY " + col;
+        final List<String> values = client.queryAll(sql).stream()
+                .map(r -> r.getString("v"))
+                .collect(Collectors.toList());
+        return CompletableFuture.completedFuture(values);
     }
 
     @Override
     public CompletableFuture<List<TrafficSummary<String>>> getFieldSummaries(final LimitedCardinalityField field,
                                                                              final List<Filter> filters) {
-        throw todo("getFieldSummaries");
+        final String col = fieldColumn(field);
+        // A limited-cardinality field returns every value, so there is no top-N / "Other".
+        final String sql = "SELECT toString(" + col + ") AS e,"
+                + " sumIf(bytes, direction = 'ingress') AS bin,"
+                + " sumIf(bytes, direction = 'egress') AS bout"
+                + " FROM " + table + " WHERE " + where(filters) + " GROUP BY " + col + " ORDER BY " + col;
+        return CompletableFuture.completedFuture(summariesFrom(client.queryAll(sql)));
     }
 
     @Override
     public CompletableFuture<Table<Directional<String>, Long, Double>> getFieldSeries(
             final LimitedCardinalityField field, final long step, final List<Filter> filters) {
-        throw todo("getFieldSeries");
+        final String col = fieldColumn(field);
+        final long[] range = timeRange(filters);
+        final Table<Directional<String>, Long, Double> table = HashBasedTable.create();
+        for (final GenericRecord r : client.queryAll(seriesSql(col, null, where(filters), range[0], range[1], step))) {
+            table.put(new Directional<>(r.getString("e"), "ingress".equals(r.getString("d"))),
+                      r.getLong("b"), r.getDouble("bytes"));
+        }
+        return CompletableFuture.completedFuture(table);
+    }
+
+    /** Map a {@link LimitedCardinalityField} to its ClickHouse column. */
+    private static String fieldColumn(final LimitedCardinalityField field) {
+        switch (field) {
+            case DSCP:
+                return "dscp";
+            default:
+                throw new IllegalArgumentException("Unsupported field: " + field);
+        }
     }
 }
