@@ -16,53 +16,54 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Loads the ClickHouse schema DDL bundled on the classpath and exposes it as an
- * ordered list of executable statements.
+ * Loads the ClickHouse schema DDL bundled on the classpath and exposes it as an ordered list of
+ * {@link Migration}s. Each DDL resource is one migration, versioned by its position; the bootstrap
+ * records applied versions in a ledger table and only runs migrations it has not seen, so future
+ * schema changes ship as new resources rather than being silently skipped (design D-BOOTSTRAP).
  *
- * <p>This is the single source of truth for the flow schema (raw {@code flows} table plus
- * the per-minute rollup tables and their materialized views) used by both write paths;
- * see design decision D-BOOTSTRAP. All statements are written {@code IF NOT EXISTS} so a
- * bootstrap that runs them is idempotent and safe to re-run on reconnect.
- *
- * <p>This class deliberately has no dependency on the ClickHouse client: it only reads and
- * splits the DDL. The component that executes the statements against a server is
- * {@code ClickhouseSchemaBootstrap} (task 1.5).
+ * <p>This class has no dependency on the ClickHouse client: it only reads, splits and templates the
+ * DDL. {@code ClickhouseSchemaBootstrap} executes it against a server.
  */
 public final class ClickhouseSchema {
 
-    /** DDL resources, applied in order. */
+    /** DDL resources, applied in order; index+1 is the migration version. */
     static final List<String> DDL_RESOURCES = List.of(
             "/ddl/01_flows.sql",
             "/ddl/02_rollups.sql");
-
-    private ClickhouseSchema() {
-    }
 
     /** Placeholder in the DDL for the retention window; substituted from {@code ttlDays}. */
     private static final String TTL_PLACEHOLDER = "__TTL_DAYS__";
 
     /** Matches the whole {@code TTL … INTERVAL __TTL_DAYS__ DAY} clause so it can be dropped. */
-    private static final java.util.regex.Pattern TTL_CLAUSE =
-            java.util.regex.Pattern.compile("\\s*TTL\\b[^;]*INTERVAL " + TTL_PLACEHOLDER + " DAY",
-                                            java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final Pattern TTL_CLAUSE =
+            Pattern.compile("\\s*TTL\\b[^;]*INTERVAL " + TTL_PLACEHOLDER + " DAY", Pattern.CASE_INSENSITIVE);
+
+    /** One ordered schema migration: a set of statements applied atomically-ish and recorded by version. */
+    public record Migration(int version, String name, List<String> statements) {
+    }
+
+    private ClickhouseSchema() {
+    }
 
     /**
      * @param ttlDays retention window in days; {@code <= 0} removes the {@code TTL} clause entirely
      *                (used by integration tests whose fixtures use ancient timestamps).
-     * @return the ordered list of DDL statements that create the flow schema, comments and blank
-     *         lines stripped, split on the statement terminator, with the retention TTL applied.
+     * @return the ordered migrations that create the flow schema, with the retention TTL applied.
      */
-    public static List<String> statements(final int ttlDays) {
-        final List<String> statements = new ArrayList<>();
-        for (final String resource : DDL_RESOURCES) {
-            for (final String statement : splitStatements(readResource(resource))) {
-                statements.add(applyTtl(statement, ttlDays));
-            }
+    public static List<Migration> migrations(final int ttlDays) {
+        final List<Migration> migrations = new ArrayList<>();
+        for (int i = 0; i < DDL_RESOURCES.size(); i++) {
+            final String resource = DDL_RESOURCES.get(i);
+            final List<String> statements = splitStatements(readResource(resource)).stream()
+                    .map(s -> applyTtl(s, ttlDays))
+                    .collect(Collectors.toList());
+            migrations.add(new Migration(i + 1, resource, statements));
         }
-        return statements;
+        return migrations;
     }
 
     private static String applyTtl(final String statement, final int ttlDays) {
