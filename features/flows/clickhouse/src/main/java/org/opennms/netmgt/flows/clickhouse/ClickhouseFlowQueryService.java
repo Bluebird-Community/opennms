@@ -8,7 +8,10 @@
 package org.opennms.netmgt.flows.clickhouse;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -21,9 +24,11 @@ import org.opennms.netmgt.flows.api.Host;
 import org.opennms.netmgt.flows.api.LimitedCardinalityField;
 import org.opennms.netmgt.flows.api.TrafficSummary;
 import org.opennms.netmgt.flows.filter.api.Filter;
+import org.opennms.netmgt.flows.filter.api.TimeRangeFilter;
 
 import com.clickhouse.client.api.Client;
 import com.clickhouse.client.api.query.GenericRecord;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
@@ -159,13 +164,106 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     @Override
     public CompletableFuture<Table<Directional<String>, Long, Double>> getApplicationSeries(
             final Set<String> applications, final long step, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getApplicationSeries");
+        return CompletableFuture.completedFuture(applicationSeries(applications, step, includeOther, filters));
     }
 
     @Override
     public CompletableFuture<Table<Directional<String>, Long, Double>> getTopNApplicationSeries(
             final int n, final long step, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getTopNApplicationSeries");
+        final Set<String> topN = topNApplications(n, where(filters));
+        return CompletableFuture.completedFuture(applicationSeries(topN, step, includeOther, filters));
+    }
+
+    /**
+     * Proportional byte-per-bucket series for the given applications (D-PROPORTION). Each flow's
+     * bytes are spread across the step-aligned buckets its {@code [first_switched, last_switched]}
+     * interval overlaps, weighted by the overlap. When {@code includeOther}, an "Other" row per
+     * direction/bucket carries the grand total minus the selected applications.
+     */
+    private Table<Directional<String>, Long, Double> applicationSeries(final Set<String> applications,
+                                                                       final long step, final boolean includeOther,
+                                                                       final List<Filter> filters) {
+        final long[] range = timeRange(filters);
+        final String w = where(filters);
+        final Table<Directional<String>, Long, Double> table = HashBasedTable.create();
+        // selected[bucket] = {ingressSum, egressSum}, only tracked when we need the "Other" residual.
+        final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
+
+        if (!applications.isEmpty()) {
+            for (final GenericRecord r : client.queryAll(seriesSql(w, applications, range[0], range[1], step))) {
+                final boolean ingress = "ingress".equals(r.getString("d"));
+                final long bucket = r.getLong("b");
+                final double bytes = r.getDouble("bytes");
+                table.put(new Directional<>(r.getString("e"), ingress), bucket, bytes);
+                if (includeOther) {
+                    selectedByBucket.computeIfAbsent(bucket, k -> new double[2])[ingress ? 0 : 1] += bytes;
+                }
+            }
+        }
+
+        if (includeOther) {
+            for (final GenericRecord r : client.queryAll(seriesSql(w, null, range[0], range[1], step))) {
+                final boolean ingress = "ingress".equals(r.getString("d"));
+                final long bucket = r.getLong("b");
+                final double grand = r.getDouble("bytes");
+                final double selected = selectedByBucket.getOrDefault(bucket, new double[2])[ingress ? 0 : 1];
+                final double other = grand - selected;
+                if (Math.abs(other) > 1e-9) {
+                    table.put(new Directional<>(OTHER_APPLICATION, ingress), bucket, other);
+                }
+            }
+        }
+        return table;
+    }
+
+    /** Top-N application names by total bytes over the range (the entities the top-N series covers). */
+    private Set<String> topNApplications(final int n, final String whereClause) {
+        final String sql = "SELECT application AS e FROM " + table + " WHERE " + whereClause
+                + " GROUP BY application ORDER BY sum(bytes) DESC, e LIMIT " + n;
+        return client.queryAll(sql).stream()
+                .map(r -> r.getString("e"))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    /**
+     * Build the proportional-series SQL. When {@code applications} is null the result is grouped by
+     * direction/bucket only (the grand total used for the "Other" residual); otherwise it is grouped
+     * by application/direction/bucket and restricted to those applications.
+     */
+    private String seriesSql(final String whereClause, final Set<String> applications,
+                             final long start, final long end, final long step) {
+        final boolean byApp = applications != null;
+        final String innerEntity = byApp ? "application, " : "";   // raw column in the innermost select
+        final String midEntity = byApp ? "application AS e, " : ""; // aliased in the middle select
+        final String entityGroup = byApp ? "e, " : "";
+        final String appFilter = byApp ? " AND application IN (" + quoteAll(applications) + ")" : "";
+        return "WITH " + start + " AS q_start, " + end + " AS q_end, " + step + " AS q_step "
+                + "SELECT " + entityGroup + "d, b, sum(share) AS bytes FROM ("
+                + "  SELECT " + midEntity + "direction AS d, (q_start + i * q_step) AS b,"
+                + "    if(dur = 0,"
+                + "       if((q_start + i * q_step) <= fs AND fs < least(q_start + (i + 1) * q_step, q_end), toFloat64(bytes_), 0),"
+                + "       toFloat64(bytes_) * greatest(0, least(ls, least(q_start + (i + 1) * q_step, q_end)) - greatest(fs, q_start + i * q_step)) / dur) AS share"
+                + "  FROM ("
+                + "    SELECT " + innerEntity + "direction, bytes AS bytes_,"
+                + "      toUnixTimestamp64Milli(first_switched) AS fs, toUnixTimestamp64Milli(last_switched) AS ls,"
+                + "      (toUnixTimestamp64Milli(last_switched) - toUnixTimestamp64Milli(first_switched)) AS dur,"
+                + "      greatest(toUnixTimestamp64Milli(first_switched), q_start) AS lo,"
+                + "      least(toUnixTimestamp64Milli(last_switched), q_end - 1) AS hi,"
+                + "      if(hi >= lo, range(toUInt64(intDiv(lo - q_start, q_step)), toUInt64(intDiv(hi - q_start, q_step)) + 1), emptyArrayUInt64()) AS idxs"
+                + "    FROM " + table + " WHERE " + whereClause + appFilter + " AND direction IN ('ingress', 'egress')"
+                + "  ) ARRAY JOIN idxs AS i"
+                + ") WHERE share > 0 GROUP BY " + entityGroup + "d, b ORDER BY " + entityGroup + "d, b";
+    }
+
+    private static long[] timeRange(final List<Filter> filters) {
+        if (filters != null) {
+            for (final Filter f : filters) {
+                if (f instanceof TimeRangeFilter t) {
+                    return new long[]{t.getStart(), t.getEnd()};
+                }
+            }
+        }
+        throw new IllegalArgumentException("A TimeRangeFilter is required for time series queries.");
     }
 
     @Override
