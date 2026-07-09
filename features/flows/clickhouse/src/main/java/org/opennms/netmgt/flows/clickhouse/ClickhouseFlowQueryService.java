@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.opennms.netmgt.flows.api.Conversation;
+import org.opennms.netmgt.flows.api.ConversationKey;
 import org.opennms.netmgt.flows.api.Directional;
 import org.opennms.netmgt.flows.api.FlowQueryService;
 import org.opennms.netmgt.flows.api.Host;
@@ -25,6 +26,7 @@ import org.opennms.netmgt.flows.api.LimitedCardinalityField;
 import org.opennms.netmgt.flows.api.TrafficSummary;
 import org.opennms.netmgt.flows.filter.api.Filter;
 import org.opennms.netmgt.flows.filter.api.TimeRangeFilter;
+import org.opennms.netmgt.flows.processing.ConversationKeyUtils;
 
 import com.clickhouse.client.api.Client;
 import com.clickhouse.client.api.query.GenericRecord;
@@ -160,13 +162,6 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         return values.stream().map(ClickhouseFlowQueryService::quote).collect(Collectors.joining(", "));
     }
 
-    private static UnsupportedOperationException todo(final String method) {
-        return new UnsupportedOperationException(
-                "ClickhouseFlowQueryService." + method + " is not yet implemented (phase 3 continuation).");
-    }
-
-    // --- not yet implemented (phase 3 continuation) -----------------------
-
     @Override
     public CompletableFuture<Table<Directional<String>, Long, Double>> getApplicationSeries(
             final Set<String> applications, final long step, final boolean includeOther, final List<Filter> filters) {
@@ -281,31 +276,175 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                                                             final String lowerIPPattern, final String upperIPPattern,
                                                             final String applicationPattern, final long limit,
                                                             final List<Filter> filters) {
-        throw todo("getConversations");
+        // Match against the stored convo_key JSON: ["location",protocol,"lowerIp","upperIp",app|null]
+        String appPat = applicationPattern;
+        if (".*".equals(appPat)) {
+            appPat = "(\"" + appPat + "\"|null)";
+        } else if (!"null".equals(appPat)) {
+            appPat = "\"" + appPat + "\"";
+        }
+        final String regex = "\\[\"" + locationPattern + "\"," + protocolPattern + ",\"" + lowerIPPattern
+                + "\",\"" + upperIPPattern + "\"," + appPat + "\\]";
+        final String sql = "SELECT DISTINCT convo_key AS e FROM " + table + " WHERE " + where(filters)
+                + " AND convo_key != '' AND match(convo_key, " + quote(regex) + ") ORDER BY e LIMIT " + limit;
+        final List<String> keys = client.queryAll(sql).stream().map(r -> r.getString("e")).collect(Collectors.toList());
+        return CompletableFuture.completedFuture(keys);
     }
 
     @Override
     public CompletableFuture<List<TrafficSummary<Conversation>>> getTopNConversationSummaries(
             final int n, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getTopNConversationSummaries");
+        final String w = where(filters);
+        final String sql = convoSummarySelect(w) + " GROUP BY e ORDER BY (bin + bout) DESC, e LIMIT " + n;
+        final List<TrafficSummary<Conversation>> summaries = convoSummariesFrom(client.queryAll(sql));
+        if (includeOther) {
+            appendOtherConvo(summaries, w);
+        }
+        return CompletableFuture.completedFuture(summaries);
     }
 
     @Override
     public CompletableFuture<List<TrafficSummary<Conversation>>> getConversationSummaries(
             final Set<String> conversations, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getConversationSummaries");
+        if (conversations.isEmpty()) {
+            return CompletableFuture.completedFuture(new ArrayList<>());
+        }
+        final String w = where(filters);
+        final String sql = convoSummarySelect(w) + " WHERE e IN (" + quoteAll(conversations) + ") GROUP BY e ORDER BY e";
+        final List<TrafficSummary<Conversation>> summaries = convoSummariesFrom(client.queryAll(sql));
+        if (includeOther) {
+            appendOtherConvo(summaries, w);
+        }
+        return CompletableFuture.completedFuture(summaries);
     }
 
     @Override
     public CompletableFuture<Table<Directional<Conversation>, Long, Double>> getConversationSeries(
             final Set<String> conversations, final long step, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getConversationSeries");
+        return CompletableFuture.completedFuture(convoSeries(conversations, step, includeOther, filters));
     }
 
     @Override
     public CompletableFuture<Table<Directional<Conversation>, Long, Double>> getTopNConversationSeries(
             final int n, final long step, final boolean includeOther, final List<Filter> filters) {
-        throw todo("getTopNConversationSeries");
+        return CompletableFuture.completedFuture(convoSeries(topNConversations(n, where(filters)), step, includeOther, filters));
+    }
+
+    // --- conversation helpers ---------------------------------------------
+
+    /** Projects each flow to its conversation key plus the lower/upper endpoint hostname. */
+    private String convoProjection(final String whereClause) {
+        return "SELECT convo_key AS e,"
+                + " if(src_addr <= dst_addr, src_hostname, dst_hostname) AS lo_hn,"
+                + " if(src_addr <= dst_addr, dst_hostname, src_hostname) AS up_hn,"
+                + " direction, bytes"
+                + " FROM " + table + " WHERE " + whereClause + " AND convo_key != ''";
+    }
+
+    private String convoSummarySelect(final String whereClause) {
+        return "SELECT e, anyIf(lo_hn, lo_hn != '') AS lower_hn, anyIf(up_hn, up_hn != '') AS upper_hn,"
+                + " sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
+                + " FROM (" + convoProjection(whereClause) + ")";
+    }
+
+    private static List<TrafficSummary<Conversation>> convoSummariesFrom(final List<GenericRecord> rows) {
+        final List<TrafficSummary<Conversation>> out = new ArrayList<>(rows.size());
+        for (final GenericRecord r : rows) {
+            final Conversation c = conversation(r.getString("e"), r.getString("lower_hn"), r.getString("upper_hn"));
+            if (c != null) {
+                out.add(TrafficSummary.from(c).withBytes(r.getLong("bin"), r.getLong("bout")).build());
+            }
+        }
+        return out;
+    }
+
+    private void appendOtherConvo(final List<TrafficSummary<Conversation>> summaries, final String whereClause) {
+        final List<GenericRecord> grand = client.queryAll(
+                "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout FROM "
+                        + table + " WHERE " + whereClause + " AND convo_key != ''");
+        final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
+        final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
+        final long otherIn = grandIn - summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
+        final long otherOut = grandOut - summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
+        if (otherIn > 0 || otherOut > 0) {
+            summaries.add(TrafficSummary.from(Conversation.forOther().build()).withBytes(otherIn, otherOut).build());
+        }
+    }
+
+    private Set<String> topNConversations(final int n, final String whereClause) {
+        final String sql = "SELECT convo_key AS e FROM " + table + " WHERE " + whereClause
+                + " AND convo_key != '' GROUP BY convo_key ORDER BY sum(bytes) DESC, e LIMIT " + n;
+        return client.queryAll(sql).stream().map(r -> r.getString("e"))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private Table<Directional<Conversation>, Long, Double> convoSeries(final Set<String> conversations, final long step,
+                                                                       final boolean includeOther, final List<Filter> filters) {
+        final Table<Directional<Conversation>, Long, Double> table = HashBasedTable.create();
+        if (conversations.isEmpty()) {
+            return table;
+        }
+        final long[] range = timeRange(filters);
+        final String w = where(filters);
+        final Map<String, String[]> hostnames = resolveConvoHostnames(conversations, w);
+        final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
+        final String filter = "convo_key IN (" + quoteAll(conversations) + ")";
+        for (final GenericRecord r : client.queryAll(seriesSql(this.table, "convo_key", filter, w, range[0], range[1], step))) {
+            final String key = r.getString("e");
+            final String[] hn = hostnames.get(key);
+            final Conversation c = conversation(key, hn != null ? hn[0] : null, hn != null ? hn[1] : null);
+            if (c == null) {
+                continue;
+            }
+            final boolean ingress = "ingress".equals(r.getString("d"));
+            final long bucket = r.getLong("b");
+            final double bytes = r.getDouble("bytes");
+            table.put(new Directional<>(c, ingress), bucket, bytes);
+            if (includeOther) {
+                selectedByBucket.computeIfAbsent(bucket, k -> new double[2])[ingress ? 0 : 1] += bytes;
+            }
+        }
+        if (includeOther) {
+            for (final GenericRecord r : client.queryAll(
+                    seriesSql(this.table, null, null, w + " AND convo_key != ''", range[0], range[1], step))) {
+                final boolean ingress = "ingress".equals(r.getString("d"));
+                final long bucket = r.getLong("b");
+                final double other = r.getDouble("bytes")
+                        - selectedByBucket.getOrDefault(bucket, new double[2])[ingress ? 0 : 1];
+                if (Math.abs(other) > 1e-9) {
+                    table.put(new Directional<>(Conversation.forOther().build(), ingress), bucket, other);
+                }
+            }
+        }
+        return table;
+    }
+
+    private Map<String, String[]> resolveConvoHostnames(final Set<String> conversations, final String whereClause) {
+        final Map<String, String[]> map = new HashMap<>();
+        final String sql = "SELECT e, anyIf(lo_hn, lo_hn != '') AS lower_hn, anyIf(up_hn, up_hn != '') AS upper_hn FROM ("
+                + convoProjection(whereClause) + ") WHERE e IN (" + quoteAll(conversations) + ") GROUP BY e";
+        for (final GenericRecord r : client.queryAll(sql)) {
+            map.put(r.getString("e"), new String[]{r.getString("lower_hn"), r.getString("upper_hn")});
+        }
+        return map;
+    }
+
+    /** Build a {@link Conversation} from its stored key JSON, attaching lower/upper hostnames. */
+    private static Conversation conversation(final String convoKey, final String lowerHn, final String upperHn) {
+        final ConversationKey key;
+        try {
+            key = ConversationKeyUtils.fromJsonString(convoKey);
+        } catch (final RuntimeException e) {
+            return null; // malformed key -> skip rather than fail the whole result
+        }
+        final Conversation.Builder b = Conversation.from(key);
+        if (lowerHn != null && !lowerHn.isEmpty()) {
+            b.withLowerHostname(lowerHn);
+        }
+        if (upperHn != null && !upperHn.isEmpty()) {
+            b.withUpperHostname(upperHn);
+        }
+        return b.build();
     }
 
     @Override
