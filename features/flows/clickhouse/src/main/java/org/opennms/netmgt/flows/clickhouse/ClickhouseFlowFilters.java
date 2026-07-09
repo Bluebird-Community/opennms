@@ -1,0 +1,76 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Copyright 2026 The OpenNMS Group, Inc.
+ *
+ * Created by Ronny Trommer <ronny@opennms.com>
+ */
+package org.opennms.netmgt.flows.clickhouse;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.opennms.netmgt.flows.filter.api.DscpFilter;
+import org.opennms.netmgt.flows.filter.api.ExporterNodeFilter;
+import org.opennms.netmgt.flows.filter.api.Filter;
+import org.opennms.netmgt.flows.filter.api.FilterVisitor;
+import org.opennms.netmgt.flows.filter.api.SnmpInterfaceIdFilter;
+import org.opennms.netmgt.flows.filter.api.TimeRangeFilter;
+
+/**
+ * Translates the flow {@link Filter}s into a ClickHouse SQL {@code WHERE} fragment. All emitted
+ * values are numeric, so no user-controlled string is interpolated here.
+ */
+public final class ClickhouseFlowFilters implements FilterVisitor<String> {
+
+    private static final ClickhouseFlowFilters INSTANCE = new ClickhouseFlowFilters();
+
+    private ClickhouseFlowFilters() {
+    }
+
+    /**
+     * @return the conjunction of all filter predicates, or {@code 1 = 1} when there are none. The
+     *         returned string does not include the {@code WHERE} keyword.
+     */
+    public static String whereClause(final List<Filter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return "1 = 1";
+        }
+        return filters.stream()
+                .map(f -> f.visit(INSTANCE))
+                .collect(Collectors.joining(" AND "));
+    }
+
+    @Override
+    public String visit(final TimeRangeFilter f) {
+        return "(timestamp >= fromUnixTimestamp64Milli(" + f.getStart() + ") "
+                + "AND timestamp < fromUnixTimestamp64Milli(" + f.getEnd() + "))";
+    }
+
+    @Override
+    public String visit(final SnmpInterfaceIdFilter f) {
+        final int id = f.getSnmpInterfaceId();
+        return "(input_snmp = " + id + " OR output_snmp = " + id + ")";
+    }
+
+    @Override
+    public String visit(final DscpFilter f) {
+        final List<Integer> dscp = f.getDscp();
+        if (dscp == null || dscp.isEmpty()) {
+            return "1 = 1";
+        }
+        return "dscp IN (" + dscp.stream().map(String::valueOf).collect(Collectors.joining(", ")) + ")";
+    }
+
+    @Override
+    public String visit(final ExporterNodeFilter f) {
+        final Integer nodeId = f.getCriteria().getNodeId();
+        if (nodeId == null) {
+            // foreignSource:foreignId criteria requires NodeDao resolution (query-service concern);
+            // fail loudly rather than silently returning cross-node data.
+            throw new UnsupportedOperationException(
+                    "ExporterNodeFilter with foreignSource:foreignId is not yet supported; use a numeric node id.");
+        }
+        return "exporter_node = " + nodeId;
+    }
+}
