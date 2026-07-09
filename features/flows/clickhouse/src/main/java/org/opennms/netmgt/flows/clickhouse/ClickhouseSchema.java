@@ -41,16 +41,36 @@ public final class ClickhouseSchema {
     private ClickhouseSchema() {
     }
 
+    /** Placeholder in the DDL for the retention window; substituted from {@code ttlDays}. */
+    private static final String TTL_PLACEHOLDER = "__TTL_DAYS__";
+
+    /** Matches the whole {@code TTL … INTERVAL __TTL_DAYS__ DAY} clause so it can be dropped. */
+    private static final java.util.regex.Pattern TTL_CLAUSE =
+            java.util.regex.Pattern.compile("\\s*TTL\\b[^;]*INTERVAL " + TTL_PLACEHOLDER + " DAY",
+                                            java.util.regex.Pattern.CASE_INSENSITIVE);
+
     /**
-     * @return the ordered list of DDL statements that create the flow schema, comments and
-     *         blank lines stripped, split on the statement terminator.
+     * @param ttlDays retention window in days; {@code <= 0} removes the {@code TTL} clause entirely
+     *                (used by integration tests whose fixtures use ancient timestamps).
+     * @return the ordered list of DDL statements that create the flow schema, comments and blank
+     *         lines stripped, split on the statement terminator, with the retention TTL applied.
      */
-    public static List<String> statements() {
+    public static List<String> statements(final int ttlDays) {
         final List<String> statements = new ArrayList<>();
         for (final String resource : DDL_RESOURCES) {
-            statements.addAll(splitStatements(readResource(resource)));
+            for (final String statement : splitStatements(readResource(resource))) {
+                statements.add(applyTtl(statement, ttlDays));
+            }
         }
         return statements;
+    }
+
+    private static String applyTtl(final String statement, final int ttlDays) {
+        if (ttlDays > 0) {
+            return statement.replace(TTL_PLACEHOLDER, Integer.toString(ttlDays));
+        }
+        // No retention: strip the TTL clause so ancient-timestamp fixtures survive.
+        return TTL_CLAUSE.matcher(statement).replaceAll("");
     }
 
     private static String readResource(final String resource) {

@@ -38,6 +38,7 @@
             <cm:property name="enablePersistence" value="true" />
             <cm:property name="bulkSize" value="1000" />
             <cm:property name="bulkFlushMs" value="500" />
+            <cm:property name="maxBufferedFlows" value="100000" />
         </cm:default-properties>
     </cm:property-placeholder>
 
@@ -47,6 +48,41 @@
         <service-properties>
             <entry key="name" value="org.opennms.netmgt.flows.clickhouse" />
             <entry key="description" value="ClickHouse Flow Repository" />
+        </service-properties>
+    </service>
+
+    <!-- ClickHouse client -->
+    <bean id="clickhouseClientFactory" class="org.opennms.netmgt.flows.clickhouse.ClickhouseClientFactory">
+        <argument value="${endpoint}"/>
+        <argument value="${username}"/>
+        <argument value="${password}"/>
+        <argument value="${database}"/>
+    </bean>
+    <bean id="clickhouseClient" factory-ref="clickhouseClientFactory" factory-method="createClient" destroy-method="close"/>
+
+    <!-- Schema bootstrap (single source of truth for DDL; idempotent) -->
+    <bean id="clickhouseSchemaBootstrap" class="org.opennms.netmgt.flows.clickhouse.ClickhouseSchemaBootstrap" init-method="initialize">
+        <argument ref="clickhouseClient"/>
+        <argument value="${ttlDays}"/>
+    </bean>
+
+    <!-- Path A: in-process write repository -->
+    <bean id="clickhouseFlowRepository" class="org.opennms.netmgt.flows.clickhouse.ClickhouseFlowRepository"
+          init-method="start" destroy-method="stop" depends-on="clickhouseSchemaBootstrap">
+        <argument ref="clickhouseFlowMetricRegistry"/>
+        <argument ref="clickhouseClient"/>
+        <argument value="${table}"/>
+        <property name="bulkSize" value="${bulkSize}"/>
+        <property name="bulkFlushMs" value="${bulkFlushMs}"/>
+        <property name="maxBufferedFlows" value="${maxBufferedFlows}"/>
+    </bean>
+    <bean id="switchedClickhouseFlowRepository" class="org.opennms.netmgt.flows.processing.persisting.SwitchedFlowRepository">
+        <argument ref="clickhouseFlowRepository"/>
+        <property name="enabled" value="${enablePersistence}"/>
+    </bean>
+    <service interface="org.opennms.integration.api.v1.flows.FlowRepository" ref="switchedClickhouseFlowRepository">
+        <service-properties>
+            <entry key="flows.repository.id" value="clickhouse"/>
         </service-properties>
     </service>
 

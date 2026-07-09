@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS flows
     dst_port       UInt16,
     dst_as         UInt32,
     dst_mask_len   UInt8,
-    direction      Enum8('ingress' = 1, 'egress' = 2),
+    direction      Enum8('unknown' = 0, 'ingress' = 1, 'egress' = 2),
     exporter_node  UInt32,
     input_snmp     UInt32,
     output_snmp    UInt32,
@@ -36,11 +36,11 @@ CREATE TABLE IF NOT EXISTS flows
     tos            UInt8,
     vlan           UInt16,
     tcp_flags      UInt16,
-    src_locality   Enum8('public' = 1, 'private' = 2, 'local' = 3),
-    dst_locality   Enum8('public' = 1, 'private' = 2, 'local' = 3),
-    flow_locality  Enum8('public' = 1, 'private' = 2, 'local' = 3)
+    src_locality   Enum8('unknown' = 0, 'public' = 1, 'private' = 2),
+    dst_locality   Enum8('unknown' = 0, 'public' = 1, 'private' = 2),
+    flow_locality  Enum8('unknown' = 0, 'public' = 1, 'private' = 2)
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMMDD(timestamp)
 ORDER BY (location, exporter_node, application, timestamp)
-TTL toDateTime(timestamp) + INTERVAL 30 DAY;
+TTL toDateTime(timestamp) + INTERVAL __TTL_DAYS__ DAY;

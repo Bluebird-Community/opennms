@@ -17,14 +17,14 @@ CREATE TABLE IF NOT EXISTS flows_by_app_1m
     location      LowCardinality(String),
     exporter_node UInt32,
     application   LowCardinality(String),
-    direction     Enum8('ingress' = 1, 'egress' = 2),
+    direction     Enum8('unknown' = 0, 'ingress' = 1, 'egress' = 2),
     bytes         SimpleAggregateFunction(sum, UInt64),
     packets       SimpleAggregateFunction(sum, UInt64)
 )
 ENGINE = AggregatingMergeTree
 PARTITION BY toYYYYMMDD(bucket)
 ORDER BY (location, exporter_node, application, direction, bucket)
-TTL bucket + INTERVAL 30 DAY;
+TTL bucket + INTERVAL __TTL_DAYS__ DAY;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_flows_by_app TO flows_by_app_1m AS
 SELECT
@@ -47,14 +47,14 @@ CREATE TABLE IF NOT EXISTS flows_by_host_1m
     location      LowCardinality(String),
     exporter_node UInt32,
     host_addr     IPv6,
-    direction     Enum8('ingress' = 1, 'egress' = 2),
+    direction     Enum8('unknown' = 0, 'ingress' = 1, 'egress' = 2),
     bytes         SimpleAggregateFunction(sum, UInt64),
     packets       SimpleAggregateFunction(sum, UInt64)
 )
 ENGINE = AggregatingMergeTree
 PARTITION BY toYYYYMMDD(bucket)
 ORDER BY (location, exporter_node, host_addr, direction, bucket)
-TTL bucket + INTERVAL 30 DAY;
+TTL bucket + INTERVAL __TTL_DAYS__ DAY;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_flows_by_host TO flows_by_host_1m AS
 SELECT
@@ -81,14 +81,14 @@ CREATE TABLE IF NOT EXISTS flows_by_conversation_1m
     lower_ip      IPv6,
     upper_ip      IPv6,
     application   LowCardinality(String),
-    direction     Enum8('ingress' = 1, 'egress' = 2),
+    direction     Enum8('unknown' = 0, 'ingress' = 1, 'egress' = 2),
     bytes         SimpleAggregateFunction(sum, UInt64),
     packets       SimpleAggregateFunction(sum, UInt64)
 )
 ENGINE = AggregatingMergeTree
 PARTITION BY toYYYYMMDD(bucket)
 ORDER BY (location, exporter_node, protocol, lower_ip, upper_ip, application, direction, bucket)
-TTL bucket + INTERVAL 30 DAY;
+TTL bucket + INTERVAL __TTL_DAYS__ DAY;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_flows_by_conversation TO flows_by_conversation_1m AS
 SELECT
