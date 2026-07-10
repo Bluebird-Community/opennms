@@ -7,6 +7,7 @@
  */
 package org.opennms.netmgt.flows.clickhouse;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import com.clickhouse.client.api.Client;
@@ -16,6 +17,9 @@ import com.clickhouse.client.api.Client;
  * so the fluent builder can be driven from blueprint via {@code factory-method}.
  */
 public class ClickhouseClientFactory {
+
+    /** Fail fast when the server is unreachable rather than blocking on the OS-default connect timeout. */
+    private static final long CONNECT_TIMEOUT_MS = 5_000L;
 
     private final String endpoint;
     private final String username;
@@ -39,6 +43,11 @@ public class ClickhouseClientFactory {
                 .setPassword(password)
                 .setDefaultDatabase(database)
                 .setClientName("opennms-flows-clickhouse")
+                // Fail fast on an unreachable/firewalled server instead of blocking a query (or the
+                // startup schema bootstrap) on the OS-default connect timeout. Deliberately NO socket
+                // (read) timeout: ClickHouse streams no bytes until an aggregation completes, so a read
+                // timeout would abort large-but-valid flow queries (the documented socket_timeout gotcha).
+                .setConnectTimeout(CONNECT_TIMEOUT_MS, ChronoUnit.MILLIS)
                 // client-v2 0.8.6's pooled connection manager times out leasing a connection even to
                 // a reachable server (ConnectionRequestTimeout on the first request); disable pooling
                 // so each request opens a fresh (working) connection.
