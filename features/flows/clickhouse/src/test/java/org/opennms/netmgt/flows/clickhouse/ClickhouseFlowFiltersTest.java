@@ -29,7 +29,8 @@ public class ClickhouseFlowFiltersTest {
 
     @Test
     public void timeRange() {
-        assertEquals("(timestamp >= fromUnixTimestamp64Milli(1000) AND timestamp < fromUnixTimestamp64Milli(2000))",
+        // Interval-overlap, not point-in-time: first_switched <= end AND last_switched >= start (ES parity).
+        assertEquals("(first_switched <= fromUnixTimestamp64Milli(2000) AND last_switched >= fromUnixTimestamp64Milli(1000))",
                 ClickhouseFlowFilters.whereClause(List.of(new TimeRangeFilter(1000, 2000))));
     }
 
@@ -48,7 +49,7 @@ public class ClickhouseFlowFiltersTest {
         final List<Filter> filters = List.of(new TimeRangeFilter(0, 10), new SnmpInterfaceIdFilter(7));
         final String where = ClickhouseFlowFilters.whereClause(filters);
         assertTrue(where.contains(" AND "));
-        assertTrue(where.startsWith("(timestamp >="));
+        assertTrue(where.startsWith("(first_switched <="));
         assertTrue(where.endsWith("(input_snmp = 7 OR output_snmp = 7)"));
     }
 

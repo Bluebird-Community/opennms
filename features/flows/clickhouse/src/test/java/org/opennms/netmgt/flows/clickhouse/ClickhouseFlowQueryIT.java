@@ -12,9 +12,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -159,6 +161,25 @@ public class ClickhouseFlowQueryIT {
         assertEquals(2, two.size());
         assertSummary(find(two, "https"), "https", 210, 2100);
         assertSummary(find(two, "http"), "http", 10, 100);
+
+        // Specific-set summaries follow the input collection's iteration order (ES contract), NOT
+        // byte-descending: passing [http, https] must return http first even though https has more
+        // bytes. A LinkedHashSet pins a deterministic order (Set.of has none).
+        final Set<String> ordered = new LinkedHashSet<>(List.of("http", "https"));
+        final List<String> byInput = query.getApplicationSummaries(ordered, false, filters()).get()
+                .stream().map(TrafficSummary::getEntity).collect(Collectors.toList());
+        assertEquals(List.of("http", "https"), byInput);
+    }
+
+    @Test
+    public void applicationSummariesPartialRange() throws Exception {
+        // Proportional (partial) summary over a sub-range: the https flows [13,26] and [14,45] only
+        // partially overlap [10,20), so their bytes are apportioned by overlap/duration
+        // (100*7/13 + 110*6/31 = 75.13 in; ×~10 = 751.36 out) — matching FlowQueryIT's 75/751 oracle.
+        final List<Filter> range = List.of(new TimeRangeFilter(10, 20), new SnmpInterfaceIdFilter(98));
+        final List<TrafficSummary<String>> s = query.getTopNApplicationSummaries(1, false, range).get();
+        assertEquals(1, s.size());
+        assertSummary(s.get(0), "https", 75, 751);
     }
 
     @Test
@@ -170,6 +191,7 @@ public class ClickhouseFlowQueryIT {
         assertEquals(210, h12.getBytesIn());
         assertEquals(2100, h12.getBytesOut());
         final TrafficSummary<Host> h11 = two.stream().filter(s -> "10.1.1.11".equals(s.getEntity().getIp())).findFirst().orElseThrow();
+        assertEquals(new Host("10.1.1.11"), h11.getEntity()); // no hostname in the fixture for this endpoint
         assertEquals(10, h11.getBytesIn());
         assertEquals(100, h11.getBytesOut());
     }
