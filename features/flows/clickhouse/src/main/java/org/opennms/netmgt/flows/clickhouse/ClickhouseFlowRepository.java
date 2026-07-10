@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.opennms.integration.api.v1.flows.Flow;
@@ -25,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.clickhouse.client.api.Client;
+import com.clickhouse.client.api.insert.InsertResponse;
 import com.clickhouse.data.ClickHouseFormat;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -111,17 +111,18 @@ public class ClickhouseFlowRepository implements FlowRepository {
         }
         final String payload = String.join("\n", buffer);
         final int count = buffer.size();
-        try (final Context ctx = logPersistingTimer.time()) {
-            client.insert(table,
-                          new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8)),
-                          ClickHouseFormat.JSONEachRow).get();
+        // The InsertResponse must be closed to release the connection for the next flush.
+        try (final Context ctx = logPersistingTimer.time();
+             final InsertResponse response = client.insert(table,
+                     new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8)),
+                     ClickHouseFormat.JSONEachRow).get()) {
             flowsPersistedMeter.mark(count);
             buffer.clear();
             lastPersist = System.currentTimeMillis();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new FlowException("Interrupted while persisting flows to ClickHouse.", e);
-        } catch (final ExecutionException e) {
+        } catch (final Exception e) {
             throw new FlowException("Failed to persist " + count + " flows to ClickHouse.", e);
         }
     }

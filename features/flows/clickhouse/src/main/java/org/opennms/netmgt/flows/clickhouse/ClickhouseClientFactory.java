@@ -39,6 +39,10 @@ public class ClickhouseClientFactory {
                 .setPassword(password)
                 .setDefaultDatabase(database)
                 .setClientName("opennms-flows-clickhouse")
+                // client-v2 0.8.6's pooled connection manager times out leasing a connection even to
+                // a reachable server (ConnectionRequestTimeout on the first request); disable pooling
+                // so each request opens a fresh (working) connection.
+                .enableConnectionPool(false)
                 .build();
     }
 }
