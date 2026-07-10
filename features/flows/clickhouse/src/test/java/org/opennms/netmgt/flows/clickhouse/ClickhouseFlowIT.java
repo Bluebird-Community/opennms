@@ -21,6 +21,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opennms.integration.api.v1.flows.Flow;
 import org.opennms.netmgt.flows.api.TrafficSummary;
+import org.opennms.netmgt.flows.filter.api.Filter;
+import org.opennms.netmgt.flows.filter.api.TimeRangeFilter;
 import org.testcontainers.clickhouse.ClickHouseContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -87,9 +89,14 @@ public class ClickhouseFlowIT {
         assertEquals(List.of("http", "https"), query.getApplications("", 10, List.of()).get());
     }
 
+    /** A range spanning the (instantaneous) fixture flows; summaries require a TimeRangeFilter (D-PROPORTION). */
+    private static List<Filter> range() {
+        return List.of(new TimeRangeFilter(0, T.toEpochMilli() + 1000));
+    }
+
     @Test
     public void topNApplicationSummariesMatchIngestedBytes() throws Exception {
-        final List<TrafficSummary<String>> summaries = query.getTopNApplicationSummaries(10, false, List.of()).get();
+        final List<TrafficSummary<String>> summaries = query.getTopNApplicationSummaries(10, false, range()).get();
         assertEquals(2, summaries.size());
         // https has the most total bytes (200) and sorts first.
         final TrafficSummary<String> https = summaries.get(0);
@@ -104,7 +111,7 @@ public class ClickhouseFlowIT {
 
     @Test
     public void includeOtherAddsResidual() throws Exception {
-        final List<TrafficSummary<String>> summaries = query.getTopNApplicationSummaries(1, true, List.of()).get();
+        final List<TrafficSummary<String>> summaries = query.getTopNApplicationSummaries(1, true, range()).get();
         // top-1 = https(200/0); Other = everything else = http(100/40)
         assertEquals(2, summaries.size());
         assertTrue(summaries.stream().anyMatch(s -> "Other".equals(s.getEntity())

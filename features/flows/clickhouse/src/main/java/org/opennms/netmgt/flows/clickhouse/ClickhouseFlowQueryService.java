@@ -8,7 +8,9 @@
 package org.opennms.netmgt.flows.clickhouse;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +38,19 @@ import com.google.common.collect.Table;
 
 /**
  * ClickHouse-backed {@link FlowQueryService}. Short ranges hit the raw {@code flows} table; long
- * ranges will use the per-minute rollup tables (D-QUERY). Proportional byte distribution across
- * time buckets (D-PROPORTION) is applied in the series queries.
+ * ranges may use the per-minute rollup tables (D-QUERY).
  *
- * <p>Phase-3 status: the application dimension (count, enumeration, top-N and specific summaries)
- * is implemented; the series methods and the host/conversation/field dimensions follow the same
- * patterns and currently throw {@link UnsupportedOperationException}. The exact "Other"/unknown
- * labels are reconciled against the {@code FlowQueryIT} oracle in phase 4.
+ * <p>Summaries and series both apply proportional byte distribution over the query time range
+ * (D-PROPORTION): a flow whose {@code [first_switched, last_switched]} interval only partially
+ * overlaps the range contributes {@code bytes * overlap / duration}. A summary is the single-bucket
+ * case of a series (bucket width = the whole range), so the same {@link #seriesSql} engine backs
+ * both. This mirrors the ES {@code proportional_sum} aggregation the {@code FlowQueryIT} oracle
+ * pins, including the {@code Unknown}/{@code Other} entities and the input-collection ordering of
+ * specific-set summaries.
+ *
+ * <p>The opt-in per-minute application rollup (D-QUERY) is a point-in-time approximation — it cannot
+ * reproduce the proportional distribution — so it is used only for application summaries and only
+ * when explicitly enabled; every other dimension and all series stay on the raw proportional path.
  */
 public class ClickhouseFlowQueryService implements FlowQueryService {
 
@@ -56,12 +64,10 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     private final String table;
 
     // Rollup routing (D-QUERY). Defaults mirror the ES SmartQueryService default (alwaysUseRaw=true):
-    // queries use the exact raw table; the rollup path is opt-in. Rollups back SUMMARIES only — their
-    // point-in-time bucketing does not reproduce the proportional series — and only when the filters
-    // reference columns the rollup carries (time range + exporter node).
-    // NOTE: currently wired for the APPLICATION summaries only; host/conversation/field summaries and
-    // all series stay on the raw path regardless of these flags (host/conversation rollup summaries
-    // are a follow-on). The flags/threshold therefore affect application summaries today.
+    // queries use the exact raw table; the rollup path is opt-in. Rollups back application SUMMARIES
+    // only — their point-in-time bucketing does not reproduce the proportional distribution — and only
+    // when the filters reference columns the rollup carries (time range + exporter node). Host/
+    // conversation/field summaries and all series stay on the raw proportional path regardless.
     private String appRollupTable = "flows_by_app_1m";
     private boolean alwaysUseRawForQueries = true;
     private boolean alwaysUseAggForQueries = false;
@@ -113,15 +119,26 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     public CompletableFuture<List<TrafficSummary<String>>> getTopNApplicationSummaries(final int n,
                                                                                        final boolean includeOther,
                                                                                        final List<Filter> filters) {
-        final String[] target = appTarget(filters);
-        final String from = target[0];
-        final String w = target[1];
-        final String sql = appSummarySelect(from, w) + " GROUP BY application ORDER BY (bin + bout) DESC, e LIMIT " + n;
-        final List<TrafficSummary<String>> summaries = summariesFrom(client.queryAll(sql));
-        if (includeOther) {
-            appendOther(summaries, from, w);
+        if (useAppRollup(filters)) {
+            return CompletableFuture.completedFuture(rollupTopNAppSummaries(n, includeOther, filters));
         }
-        return CompletableFuture.completedFuture(summaries);
+        final long[] range = timeRange(filters);
+        final String w = where(filters);
+        final List<Map.Entry<String, double[]>> entries =
+                byTotalDesc(proportionalByEntity(table, "application", null, w, range));
+        final int limit = Math.min(n, entries.size());
+        final List<TrafficSummary<String>> out = new ArrayList<>(limit + 1);
+        final double[] shown = new double[2];
+        for (int i = 0; i < limit; i++) {
+            final double[] io = entries.get(i).getValue();
+            shown[0] += io[0];
+            shown[1] += io[1];
+            out.add(appSummary(entries.get(i).getKey(), io));
+        }
+        if (includeOther) {
+            out.add(otherSummary(OTHER_APPLICATION, shown, proportionalGrand(table, w, range)));
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
     @Override
@@ -131,23 +148,70 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         if (applications.isEmpty()) {
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
-        final String[] target = appTarget(filters);
-        final String from = target[0];
-        final String w = target[1];
-        final String sql = appSummarySelect(from, w) + " AND application IN (" + quoteAll(applications) + ")"
-                + " GROUP BY application ORDER BY e";
-        final List<TrafficSummary<String>> summaries = summariesFrom(client.queryAll(sql));
-        if (includeOther) {
-            appendOther(summaries, from, w);
+        if (useAppRollup(filters)) {
+            return CompletableFuture.completedFuture(rollupAppSummariesForSet(applications, includeOther, filters));
         }
-        return CompletableFuture.completedFuture(summaries);
+        final long[] range = timeRange(filters);
+        final String w = where(filters);
+        final Map<String, double[]> byApp = proportionalByEntity(table, "application",
+                "application IN (" + quoteAll(applications) + ")", w, range);
+        final List<TrafficSummary<String>> out = new ArrayList<>();
+        final double[] shown = new double[2];
+        for (final String app : applications) {              // input-collection order (ES contract)
+            final double[] io = byApp.get(app);
+            if (io == null) {
+                continue;
+            }
+            shown[0] += io[0];
+            shown[1] += io[1];
+            out.add(appSummary(app, io));
+        }
+        if (includeOther) {
+            out.add(otherSummary(OTHER_APPLICATION, shown, proportionalGrand(table, w, range)));
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
-    /** Returns {fromTable, whereClause} for an application summary, routed to the rollup when enabled. */
-    private String[] appTarget(final List<Filter> filters) {
-        return useAppRollup(filters)
-                ? new String[]{appRollupTable, rollupWhere(filters)}
-                : new String[]{table, where(filters)};
+    private static TrafficSummary<String> appSummary(final String rawApplication, final double[] io) {
+        return TrafficSummary.from(rawApplication.isEmpty() ? UNKNOWN_APPLICATION : rawApplication)
+                .withBytes((long) io[0], (long) io[1]).build();
+    }
+
+    // --- application rollup path (point-in-time approximation, opt-in) -----
+
+    private List<TrafficSummary<String>> rollupTopNAppSummaries(final int n, final boolean includeOther,
+                                                               final List<Filter> filters) {
+        final String w = rollupWhere(filters);
+        final String sql = appSummarySelect(appRollupTable, w)
+                + " GROUP BY application ORDER BY (bin + bout) DESC, e LIMIT " + n;
+        final List<TrafficSummary<String>> summaries = summariesFrom(client.queryAll(sql));
+        if (includeOther) {
+            appendOther(summaries, appRollupTable, w);
+        }
+        return summaries;
+    }
+
+    private List<TrafficSummary<String>> rollupAppSummariesForSet(final Set<String> applications,
+                                                                 final boolean includeOther,
+                                                                 final List<Filter> filters) {
+        final String w = rollupWhere(filters);
+        final String sql = appSummarySelect(appRollupTable, w)
+                + " AND application IN (" + quoteAll(applications) + ") GROUP BY application";
+        final Map<String, TrafficSummary<String>> byKey = new LinkedHashMap<>();
+        for (final TrafficSummary<String> s : summariesFrom(client.queryAll(sql))) {
+            byKey.put(s.getEntity(), s);
+        }
+        final List<TrafficSummary<String>> summaries = new ArrayList<>();
+        for (final String app : applications) {              // input-collection order (ES contract)
+            final TrafficSummary<String> s = byKey.get(app.isEmpty() ? UNKNOWN_APPLICATION : app);
+            if (s != null) {
+                summaries.add(s);
+            }
+        }
+        if (includeOther) {
+            appendOther(summaries, appRollupTable, w);
+        }
+        return summaries;
     }
 
     private static String appSummarySelect(final String from, final String whereClause) {
@@ -158,10 +222,33 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                 + " FROM " + from + " WHERE " + whereClause;
     }
 
+    private static List<TrafficSummary<String>> summariesFrom(final List<GenericRecord> rows) {
+        final List<TrafficSummary<String>> out = new ArrayList<>(rows.size());
+        for (final GenericRecord r : rows) {
+            out.add(TrafficSummary.from(r.getString("e"))
+                    .withBytes(r.getLong("bin"), r.getLong("bout"))
+                    .build());
+        }
+        return out;
+    }
+
+    /** Point-in-time "Other" = rollup grand total minus the summaries already collected. */
+    private void appendOther(final List<TrafficSummary<String>> summaries, final String from, final String whereClause) {
+        final List<GenericRecord> grand = client.queryAll(
+                "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
+                        + " FROM " + from + " WHERE " + whereClause);
+        final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
+        final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
+        final long topIn = summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
+        final long topOut = summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
+        // ES always emits the "Other" bucket when includeOther is set, even when it is 0/0.
+        summaries.add(TrafficSummary.from(OTHER_APPLICATION).withBytes(grandIn - topIn, grandOut - topOut).build());
+    }
+
     /**
      * Choose the per-minute application rollup over the raw table when routing is enabled and the
-     * filters only reference columns the rollup carries (time range + exporter node). Summaries only
-     * (D-QUERY); series always use the raw proportional path.
+     * filters only reference columns the rollup carries (time range + exporter node). Application
+     * summaries only (D-QUERY); everything else uses the raw proportional path.
      */
     private boolean useAppRollup(final List<Filter> filters) {
         if (alwaysUseRawForQueries || !rollupCompatible(filters)) {
@@ -218,6 +305,56 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         return parts.isEmpty() ? "1 = 1" : String.join(" AND ", parts);
     }
 
+    // --- proportional summary engine (D-PROPORTION) -----------------------
+
+    /**
+     * Proportional per-entity ingress/egress byte sums over the query range as a SINGLE bucket
+     * (step = the whole range width): a flow contributes {@code bytes * overlap / duration}. Keyed by
+     * the raw {@code e} value the series query returns (application {@code ''} stays {@code ''}, a host
+     * stays in its IPv6 string form, a conversation stays its raw {@code convo_key}); the caller maps
+     * the key to the display entity. {@code entityFilter} (may be null) restricts to a specific set.
+     */
+    private LinkedHashMap<String, double[]> proportionalByEntity(final String fromExpr, final String entityColumn,
+                                                                 final String entityFilter, final String whereClause,
+                                                                 final long[] range) {
+        final long step = Math.max(1, range[1] - range[0]);
+        final LinkedHashMap<String, double[]> byEntity = new LinkedHashMap<>();
+        for (final GenericRecord r : client.queryAll(
+                seriesSql(fromExpr, entityColumn, entityFilter, whereClause, range[0], range[1], step))) {
+            byEntity.computeIfAbsent(r.getString("e"), k -> new double[2])
+                    ["ingress".equals(r.getString("d")) ? 0 : 1] += r.getDouble("bytes");
+        }
+        return byEntity;
+    }
+
+    /** Proportional grand total {@code [ingress, egress]} over the range as a single bucket. */
+    private double[] proportionalGrand(final String fromExpr, final String whereClause, final long[] range) {
+        final long step = Math.max(1, range[1] - range[0]);
+        final double[] grand = new double[2];
+        for (final GenericRecord r : client.queryAll(
+                seriesSql(fromExpr, null, null, whereClause, range[0], range[1], step))) {
+            grand["ingress".equals(r.getString("d")) ? 0 : 1] += r.getDouble("bytes");
+        }
+        return grand;
+    }
+
+    /** Per-entity entries ordered by total bytes descending, then raw key ascending (top-N order). */
+    private static List<Map.Entry<String, double[]>> byTotalDesc(final Map<String, double[]> byEntity) {
+        final List<Map.Entry<String, double[]>> entries = new ArrayList<>(byEntity.entrySet());
+        entries.sort((a, b) -> {
+            final double ta = a.getValue()[0] + a.getValue()[1];
+            final double tb = b.getValue()[0] + b.getValue()[1];
+            return ta != tb ? Double.compare(tb, ta) : a.getKey().compareTo(b.getKey());
+        });
+        return entries;
+    }
+
+    /** The "Other" residual = proportional grand total minus the bytes of the shown entities. */
+    private static <T> TrafficSummary<T> otherSummary(final T otherEntity, final double[] shown, final double[] grand) {
+        return TrafficSummary.from(otherEntity)
+                .withBytes((long) (grand[0] - shown[0]), (long) (grand[1] - shown[1])).build();
+    }
+
     // --- helpers ----------------------------------------------------------
 
     private static String where(final List<Filter> filters) {
@@ -227,31 +364,6 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     private long scalarLong(final String sql, final String column) {
         final List<GenericRecord> rows = client.queryAll(sql);
         return rows.isEmpty() ? 0L : rows.get(0).getLong(column);
-    }
-
-    private static List<TrafficSummary<String>> summariesFrom(final List<GenericRecord> rows) {
-        final List<TrafficSummary<String>> out = new ArrayList<>(rows.size());
-        for (final GenericRecord r : rows) {
-            out.add(TrafficSummary.from(r.getString("e"))
-                    .withBytes(r.getLong("bin"), r.getLong("bout"))
-                    .build());
-        }
-        return out;
-    }
-
-    /** Add the "Other" bucket = grand total (matching the filters) minus the summaries already collected. */
-    private void appendOther(final List<TrafficSummary<String>> summaries, final String from, final String whereClause) {
-        final List<GenericRecord> grand = client.queryAll(
-                "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
-                        + " FROM " + from + " WHERE " + whereClause);
-        final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
-        final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
-        final long topIn = summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
-        final long topOut = summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
-        final long otherIn = grandIn - topIn;
-        final long otherOut = grandOut - topOut;
-        // ES always emits the "Other" bucket when includeOther is set, even when it is 0/0.
-        summaries.add(TrafficSummary.from(OTHER_APPLICATION).withBytes(otherIn, otherOut).build());
     }
 
     // Package-private for testing. Escape backslashes before quotes: ClickHouse honours
@@ -337,6 +449,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
      * {@code entityColumn} is null the result is grouped by direction/bucket only (the grand total
      * used for the "Other" residual); otherwise it is grouped by {@code toString(entityColumn)} /
      * direction / bucket. {@code entityFilter} (may be null/empty) is ANDed into the WHERE clause.
+     * A summary is the single-bucket case: pass {@code step = end - start}.
      */
     private String seriesSql(final String fromExpr, final String entityColumn, final String entityFilter,
                              final String whereClause, final long start, final long end, final long step) {
@@ -397,13 +510,35 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     @Override
     public CompletableFuture<List<TrafficSummary<Conversation>>> getTopNConversationSummaries(
             final int n, final boolean includeOther, final List<Filter> filters) {
+        final long[] range = timeRange(filters);
         final String w = where(filters);
-        final String sql = convoSummarySelect(w) + " GROUP BY e ORDER BY (bin + bout) DESC, e LIMIT " + n;
-        final List<TrafficSummary<Conversation>> summaries = convoSummariesFrom(client.queryAll(sql));
-        if (includeOther) {
-            appendOtherConvo(summaries, w);
+        final String cw = w + " AND convo_key != ''";
+        final List<Map.Entry<String, double[]>> entries =
+                byTotalDesc(proportionalByEntity(table, "convo_key", null, cw, range));
+        final int limit = Math.min(n, entries.size());
+        final Set<String> shownKeys = new LinkedHashSet<>();
+        for (int i = 0; i < limit; i++) {
+            shownKeys.add(entries.get(i).getKey());
         }
-        return CompletableFuture.completedFuture(summaries);
+        final Map<String, String[]> hostnames = resolveConvoHostnames(shownKeys, w);
+        final List<TrafficSummary<Conversation>> out = new ArrayList<>(limit + 1);
+        final double[] shown = new double[2];
+        for (int i = 0; i < limit; i++) {
+            final String key = entries.get(i).getKey();
+            final String[] hn = hostnames.get(key);
+            final Conversation c = conversation(key, hn != null ? hn[0] : null, hn != null ? hn[1] : null);
+            if (c == null) {
+                continue; // malformed key -> its bytes fall into "Other"
+            }
+            final double[] io = entries.get(i).getValue();
+            shown[0] += io[0];
+            shown[1] += io[1];
+            out.add(TrafficSummary.from(c).withBytes((long) io[0], (long) io[1]).build());
+        }
+        if (includeOther) {
+            out.add(otherSummary(Conversation.forOther().build(), shown, proportionalGrand(table, cw, range)));
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
     @Override
@@ -412,13 +547,32 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         if (conversations.isEmpty()) {
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
+        final long[] range = timeRange(filters);
         final String w = where(filters);
-        final String sql = convoSummarySelect(w) + " WHERE e IN (" + quoteAll(conversations) + ") GROUP BY e ORDER BY e";
-        final List<TrafficSummary<Conversation>> summaries = convoSummariesFrom(client.queryAll(sql));
-        if (includeOther) {
-            appendOtherConvo(summaries, w);
+        final String cw = w + " AND convo_key != ''";
+        final Map<String, double[]> byConvo = proportionalByEntity(table, "convo_key",
+                "convo_key IN (" + quoteAll(conversations) + ")", cw, range);
+        final Map<String, String[]> hostnames = resolveConvoHostnames(conversations, w);
+        final List<TrafficSummary<Conversation>> out = new ArrayList<>();
+        final double[] shown = new double[2];
+        for (final String key : conversations) {             // input-collection order
+            final double[] io = byConvo.get(key);
+            if (io == null) {
+                continue;
+            }
+            final String[] hn = hostnames.get(key);
+            final Conversation c = conversation(key, hn != null ? hn[0] : null, hn != null ? hn[1] : null);
+            if (c == null) {
+                continue;
+            }
+            shown[0] += io[0];
+            shown[1] += io[1];
+            out.add(TrafficSummary.from(c).withBytes((long) io[0], (long) io[1]).build());
         }
-        return CompletableFuture.completedFuture(summaries);
+        if (includeOther) {
+            out.add(otherSummary(Conversation.forOther().build(), shown, proportionalGrand(table, cw, range)));
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
     @Override
@@ -445,34 +599,6 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                 + " if(" + srcIsLower + ", dst_hostname, src_hostname) AS up_hn,"
                 + " direction, bytes"
                 + " FROM " + table + " WHERE " + whereClause + " AND convo_key != ''";
-    }
-
-    private String convoSummarySelect(final String whereClause) {
-        return "SELECT e, anyIf(lo_hn, lo_hn != '') AS lower_hn, anyIf(up_hn, up_hn != '') AS upper_hn,"
-                + " sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
-                + " FROM (" + convoProjection(whereClause) + ")";
-    }
-
-    private static List<TrafficSummary<Conversation>> convoSummariesFrom(final List<GenericRecord> rows) {
-        final List<TrafficSummary<Conversation>> out = new ArrayList<>(rows.size());
-        for (final GenericRecord r : rows) {
-            final Conversation c = conversation(r.getString("e"), r.getString("lower_hn"), r.getString("upper_hn"));
-            if (c != null) {
-                out.add(TrafficSummary.from(c).withBytes(r.getLong("bin"), r.getLong("bout")).build());
-            }
-        }
-        return out;
-    }
-
-    private void appendOtherConvo(final List<TrafficSummary<Conversation>> summaries, final String whereClause) {
-        final List<GenericRecord> grand = client.queryAll(
-                "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout FROM "
-                        + table + " WHERE " + whereClause + " AND convo_key != ''");
-        final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
-        final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
-        final long otherIn = grandIn - summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
-        final long otherOut = grandOut - summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
-        summaries.add(TrafficSummary.from(Conversation.forOther().build()).withBytes(otherIn, otherOut).build());
     }
 
     private Set<String> topNConversations(final int n, final String whereClause) {
@@ -525,6 +651,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     private Map<String, String[]> resolveConvoHostnames(final Set<String> conversations, final String whereClause) {
         final Map<String, String[]> map = new HashMap<>();
+        if (conversations.isEmpty()) {
+            return map;
+        }
         final String sql = "SELECT e, anyIf(lo_hn, lo_hn != '') AS lower_hn, anyIf(up_hn, up_hn != '') AS upper_hn FROM ("
                 + convoProjection(whereClause) + ") WHERE e IN (" + quoteAll(conversations) + ") GROUP BY e";
         for (final GenericRecord r : client.queryAll(sql)) {
@@ -563,13 +692,31 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     @Override
     public CompletableFuture<List<TrafficSummary<Host>>> getTopNHostSummaries(
             final int n, final boolean includeOther, final List<Filter> filters) {
+        final long[] range = timeRange(filters);
         final String w = where(filters);
-        final String sql = hostSummarySelect(w) + " GROUP BY host ORDER BY (bin + bout) DESC, e LIMIT " + n;
-        final List<TrafficSummary<Host>> summaries = hostSummariesFrom(client.queryAll(sql));
-        if (includeOther) {
-            appendOtherHost(summaries, w);
+        final List<Map.Entry<String, double[]>> entries =
+                byTotalDesc(proportionalByEntity(hostUnion(w), "host", null, "1 = 1", range));
+        final int limit = Math.min(n, entries.size());
+        final Set<String> shownIps = new LinkedHashSet<>();
+        for (int i = 0; i < limit; i++) {
+            shownIps.add(displayIp(entries.get(i).getKey()));
         }
-        return CompletableFuture.completedFuture(summaries);
+        final Map<String, String> hostnames = resolveHostHostnames(shownIps, w);
+        final List<TrafficSummary<Host>> out = new ArrayList<>(limit + 1);
+        final double[] shown = new double[2];
+        for (int i = 0; i < limit; i++) {
+            final double[] io = entries.get(i).getValue();
+            final String ip = displayIp(entries.get(i).getKey());
+            shown[0] += io[0];
+            shown[1] += io[1];
+            out.add(TrafficSummary.from(host(ip, hostnames.get(ip))).withBytes((long) io[0], (long) io[1]).build());
+        }
+        if (includeOther) {
+            // Grand total counts each flow ONCE (raw table), not per-endpoint like the host union, so
+            // "Other" = real total minus the shown top-N hosts (matches ES).
+            out.add(otherSummary(Host.forOther().build(), shown, proportionalGrand(table, w, range)));
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
     @Override
@@ -578,14 +725,30 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         if (hosts.isEmpty()) {
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
+        final long[] range = timeRange(filters);
         final String w = where(filters);
-        final String sql = hostSummarySelect(w) + " WHERE " + ipDisplay("host") + " IN (" + quoteAll(hosts) + ")"
-                + " GROUP BY host ORDER BY e";
-        final List<TrafficSummary<Host>> summaries = hostSummariesFrom(client.queryAll(sql));
-        if (includeOther) {
-            appendOtherHost(summaries, w);
+        final Map<String, double[]> byHost = proportionalByEntity(hostUnion(w), "host",
+                ipDisplay("host") + " IN (" + quoteAll(hosts) + ")", "1 = 1", range);
+        // Collapse the raw IPv6 keys to their dotted-quad display form (v4-mapped addresses).
+        final Map<String, double[]> byIp = new LinkedHashMap<>();
+        byHost.forEach((raw, io) -> byIp.merge(displayIp(raw), new double[]{io[0], io[1]},
+                (a, b) -> new double[]{a[0] + b[0], a[1] + b[1]}));
+        final Map<String, String> hostnames = resolveHostHostnames(hosts, w);
+        final List<TrafficSummary<Host>> out = new ArrayList<>();
+        final double[] shown = new double[2];
+        for (final String ip : hosts) {                      // input-collection order (ES contract)
+            final double[] io = byIp.get(ip);
+            if (io == null) {
+                continue;
+            }
+            shown[0] += io[0];
+            shown[1] += io[1];
+            out.add(TrafficSummary.from(host(ip, hostnames.get(ip))).withBytes((long) io[0], (long) io[1]).build());
         }
-        return CompletableFuture.completedFuture(summaries);
+        if (includeOther) {
+            out.add(otherSummary(Host.forOther().build(), shown, proportionalGrand(table, w, range)));
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
     @Override
@@ -608,34 +771,6 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                 + " FROM " + table + " WHERE " + whereClause
                 + " UNION ALL SELECT dst_addr AS host, dst_hostname AS host_hostname, direction, bytes, first_switched, last_switched"
                 + " FROM " + table + " WHERE " + whereClause + ")";
-    }
-
-    private String hostSummarySelect(final String whereClause) {
-        return "SELECT " + ipDisplay("host") + " AS e, anyIf(host_hostname, host_hostname != '') AS hn,"
-                + " sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
-                + " FROM " + hostUnion(whereClause);
-    }
-
-    private static List<TrafficSummary<Host>> hostSummariesFrom(final List<GenericRecord> rows) {
-        final List<TrafficSummary<Host>> out = new ArrayList<>(rows.size());
-        for (final GenericRecord r : rows) {
-            out.add(TrafficSummary.from(host(r.getString("e"), r.getString("hn")))
-                    .withBytes(r.getLong("bin"), r.getLong("bout")).build());
-        }
-        return out;
-    }
-
-    private void appendOtherHost(final List<TrafficSummary<Host>> summaries, final String whereClause) {
-        // Grand total counts each flow ONCE (raw table), not per-endpoint like the host union, so
-        // "Other" = real total minus the shown top-N hosts (matches ES).
-        final List<GenericRecord> grand = client.queryAll(
-                "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout FROM "
-                        + table + " WHERE " + whereClause);
-        final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
-        final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
-        final long otherIn = grandIn - summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
-        final long otherOut = grandOut - summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
-        summaries.add(TrafficSummary.from(Host.forOther().build()).withBytes(otherIn, otherOut).build());
     }
 
     private Set<String> topNHosts(final int n, final String whereClause) {
@@ -682,6 +817,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     private Map<String, String> resolveHostHostnames(final Set<String> hosts, final String whereClause) {
         final Map<String, String> map = new HashMap<>();
+        if (hosts.isEmpty()) {
+            return map;
+        }
         final String sql = "SELECT " + ipDisplay("host") + " AS e, anyIf(host_hostname, host_hostname != '') AS hn FROM "
                 + hostUnion(whereClause) + " WHERE " + ipDisplay("host") + " IN (" + quoteAll(hosts) + ") GROUP BY host";
         for (final GenericRecord r : client.queryAll(sql)) {
@@ -724,12 +862,17 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     public CompletableFuture<List<TrafficSummary<String>>> getFieldSummaries(final LimitedCardinalityField field,
                                                                              final List<Filter> filters) {
         final String col = fieldColumn(field);
-        // A limited-cardinality field returns every value, so there is no top-N / "Other".
-        final String sql = "SELECT toString(" + col + ") AS e,"
-                + " sumIf(bytes, direction = 'ingress') AS bin,"
-                + " sumIf(bytes, direction = 'egress') AS bout"
-                + " FROM " + table + " WHERE " + where(filters) + " GROUP BY " + col + " ORDER BY " + col;
-        return CompletableFuture.completedFuture(summariesFrom(client.queryAll(sql)));
+        final long[] range = timeRange(filters);
+        final Map<String, double[]> byValue = proportionalByEntity(table, col, null, where(filters), range);
+        // A limited-cardinality field returns every value in ascending field-value order; no top-N / "Other".
+        final List<Map.Entry<String, double[]>> entries = new ArrayList<>(byValue.entrySet());
+        entries.sort(Comparator.comparingInt(e -> Integer.parseInt(e.getKey())));
+        final List<TrafficSummary<String>> out = new ArrayList<>(entries.size());
+        for (final Map.Entry<String, double[]> e : entries) {
+            out.add(TrafficSummary.from(e.getKey())
+                    .withBytes((long) e.getValue()[0], (long) e.getValue()[1]).build());
+        }
+        return CompletableFuture.completedFuture(out);
     }
 
     @Override
