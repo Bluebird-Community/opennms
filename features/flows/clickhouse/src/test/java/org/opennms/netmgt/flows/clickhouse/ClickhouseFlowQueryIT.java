@@ -20,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opennms.integration.api.v1.flows.Flow;
 import org.opennms.netmgt.flows.api.Conversation;
+import org.opennms.netmgt.flows.api.Directional;
 import org.opennms.netmgt.flows.api.Host;
 import org.opennms.netmgt.flows.api.TrafficSummary;
 import org.opennms.netmgt.flows.filter.api.Filter;
@@ -31,6 +32,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.clickhouse.client.api.Client;
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.collect.Table;
 
 /**
  * Oracle integration test: loads the exact fixture from the Elasticsearch {@code FlowQueryIT} into
@@ -144,6 +146,40 @@ public class ClickhouseFlowQueryIT {
         assertEquals("https", c1.getApplication());
         assertEquals(100, s.get(1).getBytesIn());
         assertEquals(1000, s.get(1).getBytesOut());
+    }
+
+    /** Buckets [10,20,30,40] with the exact proportional https ingress bytes (egress = ×10). */
+    private static final long[] BUCKETS = {10, 20, 30, 40};
+    private static final double[] HTTPS_INGRESS = {
+            75.136476426799, 81.63771712158808, 35.483870967741936, 17.741935483870968};
+
+    @Test
+    public void topNApplicationSeries() throws Exception {
+        // step = 10ms; top-1 app = https. Proportional distribution across the buckets each flow overlaps.
+        final Table<Directional<String>, Long, Double> t =
+                query.getTopNApplicationSeries(1, 10, false, filters()).get();
+        assertEquals(2, t.rowKeySet().size());
+        final Directional<String> in = new Directional<>("https", true);
+        final Directional<String> out = new Directional<>("https", false);
+        for (int i = 0; i < BUCKETS.length; i++) {
+            assertEquals(HTTPS_INGRESS[i], t.get(in, BUCKETS[i]), 1e-8);
+            assertEquals(HTTPS_INGRESS[i] * 10, t.get(out, BUCKETS[i]), 1e-8);
+        }
+    }
+
+    @Test
+    public void topNHostSeries() throws Exception {
+        // top-1 host = 10.1.1.12; its ingress/egress series equal the https series above.
+        final Table<Directional<Host>, Long, Double> t =
+                query.getTopNHostSeries(1, 10, false, filters()).get();
+        assertEquals(2, t.rowKeySet().size());
+        final Host host = new Host("10.1.1.12", "la.le.lu");
+        final Directional<Host> in = new Directional<>(host, true);
+        final Directional<Host> out = new Directional<>(host, false);
+        for (int i = 0; i < BUCKETS.length; i++) {
+            assertEquals(HTTPS_INGRESS[i], t.get(in, BUCKETS[i]), 1e-8);
+            assertEquals(HTTPS_INGRESS[i] * 10, t.get(out, BUCKETS[i]), 1e-8);
+        }
     }
 
     private static void assertSummary(final TrafficSummary<String> s, final String entity,
