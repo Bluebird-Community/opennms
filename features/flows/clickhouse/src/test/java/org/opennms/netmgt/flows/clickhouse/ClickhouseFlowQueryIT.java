@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -146,6 +147,57 @@ public class ClickhouseFlowQueryIT {
         assertEquals("https", c1.getApplication());
         assertEquals(100, s.get(1).getBytesIn());
         assertEquals(1000, s.get(1).getBytesOut());
+    }
+
+    @Test
+    public void applicationSummariesForSet() throws Exception {
+        final List<TrafficSummary<String>> one = query.getApplicationSummaries(Set.of("https"), false, filters()).get();
+        assertEquals(1, one.size());
+        assertSummary(one.get(0), "https", 210, 2100);
+
+        final List<TrafficSummary<String>> two = query.getApplicationSummaries(Set.of("https", "http"), false, filters()).get();
+        assertEquals(2, two.size());
+        assertSummary(find(two, "https"), "https", 210, 2100);
+        assertSummary(find(two, "http"), "http", 10, 100);
+    }
+
+    @Test
+    public void hostSummariesForSet() throws Exception {
+        final List<TrafficSummary<Host>> two = query.getHostSummaries(Set.of("10.1.1.11", "10.1.1.12"), false, filters()).get();
+        assertEquals(2, two.size());
+        final TrafficSummary<Host> h12 = two.stream().filter(s -> "10.1.1.12".equals(s.getEntity().getIp())).findFirst().orElseThrow();
+        assertEquals(new Host("10.1.1.12", "la.le.lu"), h12.getEntity());
+        assertEquals(210, h12.getBytesIn());
+        assertEquals(2100, h12.getBytesOut());
+        final TrafficSummary<Host> h11 = two.stream().filter(s -> "10.1.1.11".equals(s.getEntity().getIp())).findFirst().orElseThrow();
+        assertEquals(10, h11.getBytesIn());
+        assertEquals(100, h11.getBytesOut());
+    }
+
+    @Test
+    public void conversationSummariesForSet() throws Exception {
+        final String key = ConversationKeyUtils.getConvoKeyAsJsonString("test", 6, "192.168.1.100", "10.1.1.11", "http");
+        final List<TrafficSummary<Conversation>> s = query.getConversationSummaries(Set.of(key), false, filters()).get();
+        assertEquals(1, s.size());
+        final Conversation c = s.get(0).getEntity();
+        assertEquals("10.1.1.11", c.getLowerIp());
+        assertEquals("192.168.1.100", c.getUpperIp());
+        assertEquals("http", c.getApplication());
+        assertEquals(10, s.get(0).getBytesIn());
+        assertEquals(100, s.get(0).getBytesOut());
+    }
+
+    @Test
+    public void getHostsRegex() throws Exception {
+        assertEquals(List.of("10.1.1.11"), query.getHosts(".*", 1, filters()).get());
+        assertEquals(List.of("10.1.1.11", "10.1.1.12", "10.1.1.13", "192.168.1.100", "192.168.1.101", "192.168.1.102"),
+                query.getHosts(".*", 10, filters()).get());
+        assertEquals(List.of("10.1.1.11", "10.1.1.12", "10.1.1.13"),
+                query.getHosts("^10\\.1\\.1\\.", 10, filters()).get());
+    }
+
+    private static TrafficSummary<String> find(final List<TrafficSummary<String>> list, final String entity) {
+        return list.stream().filter(s -> entity.equals(s.getEntity())).findFirst().orElseThrow();
     }
 
     /** Buckets [10,20,30,40] with the exact proportional https ingress bytes (egress = ×10). */
