@@ -49,6 +49,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     /** Synthetic entity for the aggregate of everything outside the returned top-N (D-OTHER). */
     static final String OTHER_APPLICATION = "Other";
 
+    /** Label for flows with no classified application (matches the ES contract). */
+    static final String UNKNOWN_APPLICATION = "Unknown";
+
     private final Client client;
     private final String table;
 
@@ -148,7 +151,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     }
 
     private static String appSummarySelect(final String from, final String whereClause) {
-        return "SELECT application AS e,"
+        // Unclassified flows (empty application) surface as the "Unknown" entity, matching ES.
+        return "SELECT if(application = '', '" + UNKNOWN_APPLICATION + "', application) AS e,"
                 + " sumIf(bytes, direction = 'ingress') AS bin,"
                 + " sumIf(bytes, direction = 'egress') AS bout"
                 + " FROM " + from + " WHERE " + whereClause;
@@ -246,9 +250,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final long topOut = summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
         final long otherIn = grandIn - topIn;
         final long otherOut = grandOut - topOut;
-        if (otherIn > 0 || otherOut > 0) {
-            summaries.add(TrafficSummary.from(OTHER_APPLICATION).withBytes(otherIn, otherOut).build());
-        }
+        // ES always emits the "Other" bucket when includeOther is set, even when it is 0/0.
+        summaries.add(TrafficSummary.from(OTHER_APPLICATION).withBytes(otherIn, otherOut).build());
     }
 
     // Package-private for testing. Escape backslashes before quotes: ClickHouse honours
@@ -434,9 +437,12 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     /** Projects each flow to its conversation key plus the lower/upper endpoint hostname. */
     private String convoProjection(final String whereClause) {
+        // Lower/upper endpoint is decided by the SAME lexicographic string order ConversationKeyUtils
+        // uses to build convo_key, so the lower/upper hostname lines up with the key's lower/upper IP.
+        final String srcIsLower = ipDisplay("src_addr") + " <= " + ipDisplay("dst_addr");
         return "SELECT convo_key AS e,"
-                + " if(src_addr <= dst_addr, src_hostname, dst_hostname) AS lo_hn,"
-                + " if(src_addr <= dst_addr, dst_hostname, src_hostname) AS up_hn,"
+                + " if(" + srcIsLower + ", src_hostname, dst_hostname) AS lo_hn,"
+                + " if(" + srcIsLower + ", dst_hostname, src_hostname) AS up_hn,"
                 + " direction, bytes"
                 + " FROM " + table + " WHERE " + whereClause + " AND convo_key != ''";
     }
@@ -466,9 +472,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
         final long otherIn = grandIn - summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
         final long otherOut = grandOut - summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
-        if (otherIn > 0 || otherOut > 0) {
-            summaries.add(TrafficSummary.from(Conversation.forOther().build()).withBytes(otherIn, otherOut).build());
-        }
+        summaries.add(TrafficSummary.from(Conversation.forOther().build()).withBytes(otherIn, otherOut).build());
     }
 
     private Set<String> topNConversations(final int n, final String whereClause) {
@@ -549,8 +553,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     @Override
     public CompletableFuture<List<String>> getHosts(final String regex, final long limit, final List<Filter> filters) {
-        final String sql = "SELECT DISTINCT toString(host) AS e FROM " + hostUnion(where(filters))
-                + " WHERE match(toString(host), " + quote(regex) + ") ORDER BY e LIMIT " + limit;
+        final String sql = "SELECT DISTINCT " + ipDisplay("host") + " AS e FROM " + hostUnion(where(filters))
+                + " WHERE match(" + ipDisplay("host") + ", " + quote(regex) + ") ORDER BY e LIMIT " + limit;
         final List<String> hosts = client.queryAll(sql).stream()
                 .map(r -> r.getString("e")).collect(Collectors.toList());
         return CompletableFuture.completedFuture(hosts);
@@ -575,7 +579,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
         final String w = where(filters);
-        final String sql = hostSummarySelect(w) + " WHERE toString(host) IN (" + quoteAll(hosts) + ")"
+        final String sql = hostSummarySelect(w) + " WHERE " + ipDisplay("host") + " IN (" + quoteAll(hosts) + ")"
                 + " GROUP BY host ORDER BY e";
         final List<TrafficSummary<Host>> summaries = hostSummariesFrom(client.queryAll(sql));
         if (includeOther) {
@@ -607,7 +611,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     }
 
     private String hostSummarySelect(final String whereClause) {
-        return "SELECT toString(host) AS e, anyIf(host_hostname, host_hostname != '') AS hn,"
+        return "SELECT " + ipDisplay("host") + " AS e, anyIf(host_hostname, host_hostname != '') AS hn,"
                 + " sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout"
                 + " FROM " + hostUnion(whereClause);
     }
@@ -622,20 +626,20 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     }
 
     private void appendOtherHost(final List<TrafficSummary<Host>> summaries, final String whereClause) {
+        // Grand total counts each flow ONCE (raw table), not per-endpoint like the host union, so
+        // "Other" = real total minus the shown top-N hosts (matches ES).
         final List<GenericRecord> grand = client.queryAll(
                 "SELECT sumIf(bytes, direction = 'ingress') AS bin, sumIf(bytes, direction = 'egress') AS bout FROM "
-                        + hostUnion(whereClause));
+                        + table + " WHERE " + whereClause);
         final long grandIn = grand.isEmpty() ? 0L : grand.get(0).getLong("bin");
         final long grandOut = grand.isEmpty() ? 0L : grand.get(0).getLong("bout");
         final long otherIn = grandIn - summaries.stream().mapToLong(TrafficSummary::getBytesIn).sum();
         final long otherOut = grandOut - summaries.stream().mapToLong(TrafficSummary::getBytesOut).sum();
-        if (otherIn > 0 || otherOut > 0) {
-            summaries.add(TrafficSummary.from(Host.forOther().build()).withBytes(otherIn, otherOut).build());
-        }
+        summaries.add(TrafficSummary.from(Host.forOther().build()).withBytes(otherIn, otherOut).build());
     }
 
     private Set<String> topNHosts(final int n, final String whereClause) {
-        final String sql = "SELECT toString(host) AS e FROM " + hostUnion(whereClause)
+        final String sql = "SELECT " + ipDisplay("host") + " AS e FROM " + hostUnion(whereClause)
                 + " GROUP BY host ORDER BY sum(bytes) DESC, e LIMIT " + n;
         return client.queryAll(sql).stream().map(r -> r.getString("e"))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -651,12 +655,13 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final String w = where(filters);
         final Map<String, String> hostnames = resolveHostHostnames(hosts, w);
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
-        final String filter = "toString(host) IN (" + quoteAll(hosts) + ")";
+        final String filter = ipDisplay("host") + " IN (" + quoteAll(hosts) + ")";
         for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), "host", filter, "1 = 1", range[0], range[1], step))) {
             final boolean ingress = "ingress".equals(r.getString("d"));
             final long bucket = r.getLong("b");
             final double bytes = r.getDouble("bytes");
-            table.put(new Directional<>(host(r.getString("e"), hostnames.get(r.getString("e"))), ingress), bucket, bytes);
+            final String ip = displayIp(r.getString("e"));
+            table.put(new Directional<>(host(ip, hostnames.get(ip)), ingress), bucket, bytes);
             if (includeOther) {
                 selectedByBucket.computeIfAbsent(bucket, k -> new double[2])[ingress ? 0 : 1] += bytes;
             }
@@ -677,8 +682,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     private Map<String, String> resolveHostHostnames(final Set<String> hosts, final String whereClause) {
         final Map<String, String> map = new HashMap<>();
-        final String sql = "SELECT toString(host) AS e, anyIf(host_hostname, host_hostname != '') AS hn FROM "
-                + hostUnion(whereClause) + " WHERE toString(host) IN (" + quoteAll(hosts) + ") GROUP BY host";
+        final String sql = "SELECT " + ipDisplay("host") + " AS e, anyIf(host_hostname, host_hostname != '') AS hn FROM "
+                + hostUnion(whereClause) + " WHERE " + ipDisplay("host") + " IN (" + quoteAll(hosts) + ") GROUP BY host";
         for (final GenericRecord r : client.queryAll(sql)) {
             final String hn = r.getString("hn");
             if (hn != null && !hn.isEmpty()) {
@@ -690,6 +695,17 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     private static Host host(final String ip, final String hostname) {
         return (hostname != null && !hostname.isEmpty()) ? new Host(ip, hostname) : new Host(ip);
+    }
+
+    /** SQL: render an IPv6 column as a dotted-quad when it is a v4-mapped address, else as IPv6. */
+    private static String ipDisplay(final String column) {
+        final String s = "toString(" + column + ")";
+        return "if(startsWith(" + s + ", '::ffff:'), substring(" + s + ", 8), " + s + ")";
+    }
+
+    /** Java equivalent of {@link #ipDisplay} for values already read back as strings (series entities). */
+    private static String displayIp(final String ip) {
+        return (ip != null && ip.startsWith("::ffff:")) ? ip.substring("::ffff:".length()) : ip;
     }
 
     @Override
