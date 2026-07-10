@@ -28,6 +28,7 @@ import org.opennms.netmgt.flows.api.LimitedCardinalityField;
 import org.opennms.netmgt.flows.api.TrafficSummary;
 import org.opennms.netmgt.flows.filter.api.ExporterNodeFilter;
 import org.opennms.netmgt.flows.filter.api.Filter;
+import org.opennms.netmgt.flows.filter.api.SnmpInterfaceIdFilter;
 import org.opennms.netmgt.flows.filter.api.TimeRangeFilter;
 import org.opennms.netmgt.flows.processing.ConversationKeyUtils;
 
@@ -124,8 +125,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final List<Map.Entry<String, double[]>> entries =
-                byTotalDesc(proportionalByEntity(table, "application", null, w, range));
+                byTotalDesc(proportionalByEntity(table, "application", null, w, dir, range));
         final int limit = Math.min(n, entries.size());
         final List<TrafficSummary<String>> out = new ArrayList<>(limit + 1);
         final double[] shown = new double[2];
@@ -136,7 +138,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             out.add(appSummary(entries.get(i).getKey(), io));
         }
         if (includeOther) {
-            out.add(otherSummary(OTHER_APPLICATION, shown, proportionalGrand(table, w, range)));
+            out.add(otherSummary(OTHER_APPLICATION, shown, proportionalGrand(table, w, dir, range)));
         }
         return CompletableFuture.completedFuture(out);
     }
@@ -153,8 +155,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final Map<String, double[]> byApp = proportionalByEntity(table, "application",
-                "application IN (" + quoteAll(applications) + ")", w, range);
+                "application IN (" + quoteAll(applications) + ")", w, dir, range);
         final List<TrafficSummary<String>> out = new ArrayList<>();
         final double[] shown = new double[2];
         for (final String app : applications) {              // input-collection order (ES contract)
@@ -167,7 +170,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             out.add(appSummary(app, io));
         }
         if (includeOther) {
-            out.add(otherSummary(OTHER_APPLICATION, shown, proportionalGrand(table, w, range)));
+            out.add(otherSummary(OTHER_APPLICATION, shown, proportionalGrand(table, w, dir, range)));
         }
         return CompletableFuture.completedFuture(out);
     }
@@ -316,11 +319,11 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
      */
     private LinkedHashMap<String, double[]> proportionalByEntity(final String fromExpr, final String entityColumn,
                                                                  final String entityFilter, final String whereClause,
-                                                                 final long[] range) {
+                                                                 final String directionExpr, final long[] range) {
         final long step = Math.max(1, range[1] - range[0]);
         final LinkedHashMap<String, double[]> byEntity = new LinkedHashMap<>();
         for (final GenericRecord r : client.queryAll(
-                seriesSql(fromExpr, entityColumn, entityFilter, whereClause, range[0], range[1], step))) {
+                seriesSql(fromExpr, entityColumn, entityFilter, whereClause, directionExpr, range[0], range[1], step))) {
             byEntity.computeIfAbsent(r.getString("e"), k -> new double[2])
                     ["ingress".equals(r.getString("d")) ? 0 : 1] += r.getDouble("bytes");
         }
@@ -328,11 +331,12 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     }
 
     /** Proportional grand total {@code [ingress, egress]} over the range as a single bucket. */
-    private double[] proportionalGrand(final String fromExpr, final String whereClause, final long[] range) {
+    private double[] proportionalGrand(final String fromExpr, final String whereClause, final String directionExpr,
+                                       final long[] range) {
         final long step = Math.max(1, range[1] - range[0]);
         final double[] grand = new double[2];
         for (final GenericRecord r : client.queryAll(
-                seriesSql(fromExpr, null, null, whereClause, range[0], range[1], step))) {
+                seriesSql(fromExpr, null, null, whereClause, directionExpr, range[0], range[1], step))) {
             grand["ingress".equals(r.getString("d")) ? 0 : 1] += r.getDouble("bytes");
         }
         return grand;
@@ -406,11 +410,12 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         // selected[bucket] = {ingressSum, egressSum}, only tracked when we need the "Other" residual.
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
 
         final String appFilter = "application IN (" + quoteAll(applications) + ")";
-        for (final GenericRecord r : client.queryAll(seriesSql(this.table, "application", appFilter, w, range[0], range[1], step))) {
+        for (final GenericRecord r : client.queryAll(seriesSql(this.table, "application", appFilter, w, dir, range[0], range[1], step))) {
             final boolean ingress = "ingress".equals(r.getString("d"));
             final long bucket = r.getLong("b");
             final double bytes = r.getDouble("bytes");
@@ -421,7 +426,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
 
         if (includeOther) {
-            for (final GenericRecord r : client.queryAll(seriesSql(this.table, null, null, w, range[0], range[1], step))) {
+            for (final GenericRecord r : client.queryAll(seriesSql(this.table, null, null, w, dir, range[0], range[1], step))) {
                 final boolean ingress = "ingress".equals(r.getString("d"));
                 final long bucket = r.getLong("b");
                 final double grand = r.getDouble("bytes");
@@ -452,26 +457,29 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
      * A summary is the single-bucket case: pass {@code step = end - start}.
      */
     private String seriesSql(final String fromExpr, final String entityColumn, final String entityFilter,
-                             final String whereClause, final long start, final long end, final long step) {
+                             final String whereClause, final String directionExpr,
+                             final long start, final long end, final long step) {
         final boolean byEntity = entityColumn != null;
         final String innerEntity = byEntity ? entityColumn + ", " : "";                 // raw column, innermost select
         final String midEntity = byEntity ? "toString(" + entityColumn + ") AS e, " : ""; // stringified in the middle
         final String entityGroup = byEntity ? "e, " : "";
         final String appFilter = (entityFilter != null && !entityFilter.isEmpty()) ? " AND " + entityFilter : "";
+        // Effective direction (reclassifies UNKNOWN flows under an SNMP-interface filter); non-ingress/
+        // egress flows are dropped by the predicate in the innermost WHERE.
         return "WITH " + start + " AS q_start, " + end + " AS q_end, " + step + " AS q_step "
                 + "SELECT " + entityGroup + "d, b, sum(share) AS bytes FROM ("
-                + "  SELECT " + midEntity + "direction AS d, (q_start + i * q_step) AS b,"
+                + "  SELECT " + midEntity + "dir AS d, (q_start + i * q_step) AS b,"
                 + "    if(dur = 0,"
                 + "       if((q_start + i * q_step) <= fs AND fs < least(q_start + (i + 1) * q_step, q_end), toFloat64(bytes_), 0),"
                 + "       toFloat64(bytes_) * greatest(0, least(ls, least(q_start + (i + 1) * q_step, q_end)) - greatest(fs, q_start + i * q_step)) / dur) AS share"
                 + "  FROM ("
-                + "    SELECT " + innerEntity + "direction, bytes AS bytes_,"
+                + "    SELECT " + innerEntity + directionExpr + " AS dir, bytes AS bytes_,"
                 + "      toUnixTimestamp64Milli(first_switched) AS fs, toUnixTimestamp64Milli(last_switched) AS ls,"
                 + "      (toUnixTimestamp64Milli(last_switched) - toUnixTimestamp64Milli(first_switched)) AS dur,"
                 + "      greatest(toUnixTimestamp64Milli(first_switched), q_start) AS lo,"
                 + "      least(toUnixTimestamp64Milli(last_switched), q_end - 1) AS hi,"
                 + "      if(hi >= lo, range(toUInt64(intDiv(lo - q_start, q_step)), toUInt64(intDiv(hi - q_start, q_step)) + 1), emptyArrayUInt64()) AS idxs"
-                + "    FROM " + fromExpr + " WHERE " + whereClause + appFilter + " AND direction IN ('ingress', 'egress')"
+                + "    FROM " + fromExpr + " WHERE " + whereClause + appFilter + " AND " + directionExpr + " IN ('ingress', 'egress')"
                 + "  ) ARRAY JOIN idxs AS i"
                 + ") WHERE share > 0 GROUP BY " + entityGroup + "d, b ORDER BY " + entityGroup + "d, b";
     }
@@ -485,6 +493,35 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             }
         }
         throw new IllegalArgumentException("A TimeRangeFilter is required for time series queries.");
+    }
+
+    private static Integer snmpInterfaceId(final List<Filter> filters) {
+        if (filters != null) {
+            for (final Filter f : filters) {
+                if (f instanceof SnmpInterfaceIdFilter s) {
+                    return s.getSnmpInterfaceId();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * SQL expression yielding a flow's effective direction ('ingress'/'egress'/'unknown'). With an
+     * {@link SnmpInterfaceIdFilter} present, an UNKNOWN-direction flow is reclassified by the matched
+     * interface side — input_snmp == id &rarr; ingress, else output_snmp == id &rarr; egress — matching
+     * the ES {@code onms.unknownDirectionScript}. Known directions are kept as stored. Without the
+     * filter it is just the raw {@code direction} column (unknown flows are then dropped by the
+     * ingress/egress predicate in {@link #seriesSql}, as in ES).
+     */
+    private static String directionExpr(final List<Filter> filters) {
+        final Integer snmp = snmpInterfaceId(filters);
+        if (snmp == null) {
+            return "direction";
+        }
+        return "if(direction != 'unknown', toString(direction),"
+                + " if(input_snmp = " + snmp + ", 'ingress',"
+                + " if(output_snmp = " + snmp + ", 'egress', 'unknown')))";
     }
 
     @Override
@@ -512,9 +549,10 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             final int n, final boolean includeOther, final List<Filter> filters) {
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final String cw = w + " AND convo_key != ''";
         final List<Map.Entry<String, double[]>> entries =
-                byTotalDesc(proportionalByEntity(table, "convo_key", null, cw, range));
+                byTotalDesc(proportionalByEntity(table, "convo_key", null, cw, dir, range));
         final int limit = Math.min(n, entries.size());
         final Set<String> shownKeys = new LinkedHashSet<>();
         for (int i = 0; i < limit; i++) {
@@ -536,7 +574,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             out.add(TrafficSummary.from(c).withBytes((long) io[0], (long) io[1]).build());
         }
         if (includeOther) {
-            out.add(otherSummary(Conversation.forOther().build(), shown, proportionalGrand(table, cw, range)));
+            out.add(otherSummary(Conversation.forOther().build(), shown, proportionalGrand(table, cw, dir, range)));
         }
         return CompletableFuture.completedFuture(out);
     }
@@ -549,9 +587,10 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final String cw = w + " AND convo_key != ''";
         final Map<String, double[]> byConvo = proportionalByEntity(table, "convo_key",
-                "convo_key IN (" + quoteAll(conversations) + ")", cw, range);
+                "convo_key IN (" + quoteAll(conversations) + ")", cw, dir, range);
         final Map<String, String[]> hostnames = resolveConvoHostnames(conversations, w);
         final List<TrafficSummary<Conversation>> out = new ArrayList<>();
         final double[] shown = new double[2];
@@ -570,7 +609,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             out.add(TrafficSummary.from(c).withBytes((long) io[0], (long) io[1]).build());
         }
         if (includeOther) {
-            out.add(otherSummary(Conversation.forOther().build(), shown, proportionalGrand(table, cw, range)));
+            out.add(otherSummary(Conversation.forOther().build(), shown, proportionalGrand(table, cw, dir, range)));
         }
         return CompletableFuture.completedFuture(out);
     }
@@ -616,10 +655,11 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final Map<String, String[]> hostnames = resolveConvoHostnames(conversations, w);
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
         final String filter = "convo_key IN (" + quoteAll(conversations) + ")";
-        for (final GenericRecord r : client.queryAll(seriesSql(this.table, "convo_key", filter, w, range[0], range[1], step))) {
+        for (final GenericRecord r : client.queryAll(seriesSql(this.table, "convo_key", filter, w, dir, range[0], range[1], step))) {
             final String key = r.getString("e");
             final String[] hn = hostnames.get(key);
             final Conversation c = conversation(key, hn != null ? hn[0] : null, hn != null ? hn[1] : null);
@@ -636,7 +676,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         if (includeOther) {
             for (final GenericRecord r : client.queryAll(
-                    seriesSql(this.table, null, null, w + " AND convo_key != ''", range[0], range[1], step))) {
+                    seriesSql(this.table, null, null, w + " AND convo_key != ''", dir, range[0], range[1], step))) {
                 final boolean ingress = "ingress".equals(r.getString("d"));
                 final long bucket = r.getLong("b");
                 final double other = r.getDouble("bytes")
@@ -694,8 +734,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             final int n, final boolean includeOther, final List<Filter> filters) {
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final List<Map.Entry<String, double[]>> entries =
-                byTotalDesc(proportionalByEntity(hostUnion(w), "host", null, "1 = 1", range));
+                byTotalDesc(proportionalByEntity(hostUnion(w), "host", null, "1 = 1", dir, range));
         final int limit = Math.min(n, entries.size());
         final Set<String> shownIps = new LinkedHashSet<>();
         for (int i = 0; i < limit; i++) {
@@ -714,7 +755,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         if (includeOther) {
             // Grand total counts each flow ONCE (raw table), not per-endpoint like the host union, so
             // "Other" = real total minus the shown top-N hosts (matches ES).
-            out.add(otherSummary(Host.forOther().build(), shown, proportionalGrand(table, w, range)));
+            out.add(otherSummary(Host.forOther().build(), shown, proportionalGrand(table, w, dir, range)));
         }
         return CompletableFuture.completedFuture(out);
     }
@@ -727,8 +768,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final Map<String, double[]> byHost = proportionalByEntity(hostUnion(w), "host",
-                ipDisplay("host") + " IN (" + quoteAll(hosts) + ")", "1 = 1", range);
+                ipDisplay("host") + " IN (" + quoteAll(hosts) + ")", "1 = 1", dir, range);
         // Collapse the raw IPv6 keys to their dotted-quad display form (v4-mapped addresses).
         final Map<String, double[]> byIp = new LinkedHashMap<>();
         byHost.forEach((raw, io) -> byIp.merge(displayIp(raw), new double[]{io[0], io[1]},
@@ -746,7 +788,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             out.add(TrafficSummary.from(host(ip, hostnames.get(ip))).withBytes((long) io[0], (long) io[1]).build());
         }
         if (includeOther) {
-            out.add(otherSummary(Host.forOther().build(), shown, proportionalGrand(table, w, range)));
+            out.add(otherSummary(Host.forOther().build(), shown, proportionalGrand(table, w, dir, range)));
         }
         return CompletableFuture.completedFuture(out);
     }
@@ -765,11 +807,15 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     // --- host helpers -----------------------------------------------------
 
-    /** src+dst endpoints unioned so each flow contributes to both its source and destination host. */
+    /**
+     * src+dst endpoints unioned so each flow contributes to both its source and destination host.
+     * input_snmp/output_snmp are carried through so the direction reclassification (D-UNKNOWN) can be
+     * applied to host series/summaries just like the raw-table dimensions.
+     */
     private String hostUnion(final String whereClause) {
-        return "(SELECT src_addr AS host, src_hostname AS host_hostname, direction, bytes, first_switched, last_switched"
+        return "(SELECT src_addr AS host, src_hostname AS host_hostname, direction, input_snmp, output_snmp, bytes, first_switched, last_switched"
                 + " FROM " + table + " WHERE " + whereClause
-                + " UNION ALL SELECT dst_addr AS host, dst_hostname AS host_hostname, direction, bytes, first_switched, last_switched"
+                + " UNION ALL SELECT dst_addr AS host, dst_hostname AS host_hostname, direction, input_snmp, output_snmp, bytes, first_switched, last_switched"
                 + " FROM " + table + " WHERE " + whereClause + ")";
     }
 
@@ -788,10 +834,11 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         }
         final long[] range = timeRange(filters);
         final String w = where(filters);
+        final String dir = directionExpr(filters);
         final Map<String, String> hostnames = resolveHostHostnames(hosts, w);
         final Map<Long, double[]> selectedByBucket = includeOther ? new HashMap<>() : null;
         final String filter = ipDisplay("host") + " IN (" + quoteAll(hosts) + ")";
-        for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), "host", filter, "1 = 1", range[0], range[1], step))) {
+        for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), "host", filter, "1 = 1", dir, range[0], range[1], step))) {
             final boolean ingress = "ingress".equals(r.getString("d"));
             final long bucket = r.getLong("b");
             final double bytes = r.getDouble("bytes");
@@ -802,7 +849,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             }
         }
         if (includeOther) {
-            for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), null, null, "1 = 1", range[0], range[1], step))) {
+            for (final GenericRecord r : client.queryAll(seriesSql(hostUnion(w), null, null, "1 = 1", dir, range[0], range[1], step))) {
                 final boolean ingress = "ingress".equals(r.getString("d"));
                 final long bucket = r.getLong("b");
                 final double other = r.getDouble("bytes")
@@ -863,7 +910,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                                                                              final List<Filter> filters) {
         final String col = fieldColumn(field);
         final long[] range = timeRange(filters);
-        final Map<String, double[]> byValue = proportionalByEntity(table, col, null, where(filters), range);
+        final Map<String, double[]> byValue =
+                proportionalByEntity(table, col, null, where(filters), directionExpr(filters), range);
         // A limited-cardinality field returns every value in ascending field-value order; no top-N / "Other".
         final List<Map.Entry<String, double[]>> entries = new ArrayList<>(byValue.entrySet());
         entries.sort(Comparator.comparingInt(e -> Integer.parseInt(e.getKey())));
@@ -881,7 +929,8 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final String col = fieldColumn(field);
         final long[] range = timeRange(filters);
         final Table<Directional<String>, Long, Double> table = HashBasedTable.create();
-        for (final GenericRecord r : client.queryAll(seriesSql(this.table, col, null, where(filters), range[0], range[1], step))) {
+        for (final GenericRecord r : client.queryAll(
+                seriesSql(this.table, col, null, where(filters), directionExpr(filters), range[0], range[1], step))) {
             table.put(new Directional<>(r.getString("e"), "ingress".equals(r.getString("d"))),
                       r.getLong("b"), r.getDouble("bytes"));
         }

@@ -38,7 +38,10 @@ public class ClickhouseFlowFiltersTest {
     public void dscpSnmpAndExporterNode() {
         assertEquals("dscp IN (1, 46)",
                 ClickhouseFlowFilters.whereClause(List.of(new DscpFilter(List.of(1, 46)))));
-        assertEquals("(input_snmp = 5 OR output_snmp = 5)",
+        // Direction-aware match (ES filter_snmp_interface): ingress->input, egress->output, unknown->either.
+        assertEquals("((direction = 'ingress' AND input_snmp = 5)"
+                        + " OR (direction = 'egress' AND output_snmp = 5)"
+                        + " OR (direction = 'unknown' AND (input_snmp = 5 OR output_snmp = 5)))",
                 ClickhouseFlowFilters.whereClause(List.of(new SnmpInterfaceIdFilter(5))));
         assertEquals("exporter_node = 42",
                 ClickhouseFlowFilters.whereClause(List.of(new ExporterNodeFilter(new NodeCriteria(42)))));
@@ -50,7 +53,7 @@ public class ClickhouseFlowFiltersTest {
         final String where = ClickhouseFlowFilters.whereClause(filters);
         assertTrue(where.contains(" AND "));
         assertTrue(where.startsWith("(first_switched <="));
-        assertTrue(where.endsWith("(input_snmp = 7 OR output_snmp = 7)"));
+        assertTrue(where.endsWith("(direction = 'unknown' AND (input_snmp = 7 OR output_snmp = 7)))"));
     }
 
     @Test(expected = UnsupportedOperationException.class)
