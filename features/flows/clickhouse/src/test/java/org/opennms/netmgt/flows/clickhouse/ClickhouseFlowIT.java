@@ -18,7 +18,6 @@ import java.util.Optional;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.integration.api.v1.flows.Flow;
 import org.opennms.netmgt.flows.api.TrafficSummary;
@@ -35,12 +34,6 @@ import com.codahale.metrics.MetricRegistry;
  * gotcha). This is the seed of the phase-4 oracle harness; the full {@code FlowQueryIT} assertions
  * are ported on top.
  */
-@Ignore("BLOCKED: client-v2 0.8.6 HTTP transport times out acquiring a connection to the "
-        + "Testcontainers ClickHouse (ConnectionRequestTimeout) even though a raw HTTP /ping to the "
-        + "same host:port returns 200. Not a flow-logic issue (all SQL is verified via unit tests + "
-        + "manual ClickHouse runs). TODO: resolve the client-v2 connection config (or bump the client "
-        + "version), then remove @Ignore. Tried: 127.0.0.1 vs localhost, compression off, explicit "
-        + "addEndpoint(Protocol,host,port,secure) — none fixed it.")
 public class ClickhouseFlowIT {
 
     private static final Instant T = Instant.parse("2026-07-10T10:00:00Z");

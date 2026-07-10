@@ -9,7 +9,6 @@ package org.opennms.netmgt.flows.clickhouse;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 import org.opennms.netmgt.flows.clickhouse.ClickhouseSchema.Migration;
 import org.slf4j.Logger;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.clickhouse.client.api.Client;
 import com.clickhouse.client.api.query.GenericRecord;
+import com.clickhouse.client.api.query.QueryResponse;
 
 /**
  * Creates the flow schema on startup and applies any not-yet-applied migrations. Applied versions
@@ -67,12 +67,13 @@ public class ClickhouseSchemaBootstrap {
     }
 
     private void execute(final String statement) {
-        try {
-            client.query(statement).get();
+        // The QueryResponse must be closed to release the connection for the next statement.
+        try (final QueryResponse response = client.query(statement).get()) {
+            // DDL has no result set to read.
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while applying ClickHouse schema DDL.", e);
-        } catch (final ExecutionException e) {
+        } catch (final Exception e) {
             throw new IllegalStateException("Failed to apply ClickHouse schema DDL: " + statement, e);
         }
     }
