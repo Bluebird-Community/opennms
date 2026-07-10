@@ -57,7 +57,13 @@ public final class ClickhouseFlowFilters implements FilterVisitor<String> {
     @Override
     public String visit(final SnmpInterfaceIdFilter f) {
         final int id = f.getSnmpInterfaceId();
-        return "(input_snmp = " + id + " OR output_snmp = " + id + ")";
+        // Match the flow direction to the interface (ES filter_snmp_interface.ftl): ingress uses
+        // input_snmp, egress uses output_snmp, and an unknown-direction flow matches on either. The
+        // query then reclassifies the unknown flow to ingress/egress by which side matched — see
+        // ClickhouseFlowQueryService#directionExpr (ES onms.unknownDirectionScript).
+        return "((direction = 'ingress' AND input_snmp = " + id + ")"
+                + " OR (direction = 'egress' AND output_snmp = " + id + ")"
+                + " OR (direction = 'unknown' AND (input_snmp = " + id + " OR output_snmp = " + id + ")))";
     }
 
     @Override
