@@ -7,10 +7,9 @@
     Created by Ronny Trommer <ronny@opennms.com>
 
     ClickHouse flow persistence + query (flow-persistence-clickhouse).
-    Skeleton: config PID defaults are declared here. The schema bootstrap,
-    the Path A ClickhouseFlowRepository (FlowRepository, flows.repository.id=clickhouse),
-    the ClickhouseFlowQueryService (FlowQueryService), and the health check are added in
-    tasks 1.5, 2.4, 3.8 respectively.
+    Config PID defaults, the schema bootstrap, the Path A ClickhouseFlowRepository
+    (FlowRepository, flows.repository.id=clickhouse), the ClickhouseFlowQueryService
+    (FlowQueryService) and the ClickHouse health check are all declared here.
 -->
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
@@ -84,6 +83,24 @@
         <service-properties>
             <entry key="flows.repository.id" value="clickhouse"/>
         </service-properties>
+    </service>
+
+    <!-- Read path: the ClickHouse-backed FlowQueryService (defaults are sane; rollup routing off). -->
+    <bean id="clickhouseFlowQueryService" class="org.opennms.netmgt.flows.clickhouse.ClickhouseFlowQueryService">
+        <argument ref="clickhouseClient"/>
+        <argument value="${table}"/>
+    </bean>
+    <service interface="org.opennms.netmgt.flows.api.FlowQueryService" ref="clickhouseFlowQueryService"/>
+
+    <!-- Health check: SELECT 1 against ClickHouse; reports "Not configured" when the PID is unset. -->
+    <reference id="configurationAdmin" interface="org.osgi.service.cm.ConfigurationAdmin"/>
+    <service interface="org.opennms.core.health.api.HealthCheck">
+        <bean class="org.opennms.netmgt.flows.clickhouse.ClickhouseHealthCheck">
+            <argument ref="clickhouseClient"/>
+            <argument value="Flows"/>
+            <argument ref="configurationAdmin"/>
+            <argument value="org.opennms.features.flows.persistence.clickhouse"/>
+        </bean>
     </service>
 
 </blueprint>
