@@ -45,7 +45,7 @@ public class ClickhouseFlowQueryServiceTest {
     /** Rollup WHERE targets the bucket/exporter_node columns, not the raw timestamp/snmp columns. */
     @Test
     public void rollupWhereUsesBucketColumns() {
-        assertEquals("(bucket >= fromUnixTimestamp(1) AND bucket < fromUnixTimestamp(2))",
+        assertEquals("(bucket >= toStartOfMinute(fromUnixTimestamp64Milli(1000)) AND bucket < fromUnixTimestamp64Milli(2000))",
                 ClickhouseFlowQueryService.rollupWhere(List.of(new TimeRangeFilter(1000, 2000))));
         assertEquals("exporter_node = 7",
                 ClickhouseFlowQueryService.rollupWhere(List.of(new ExporterNodeFilter(new NodeCriteria(7)))));

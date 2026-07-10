@@ -56,6 +56,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     // queries use the exact raw table; the rollup path is opt-in. Rollups back SUMMARIES only — their
     // point-in-time bucketing does not reproduce the proportional series — and only when the filters
     // reference columns the rollup carries (time range + exporter node).
+    // NOTE: currently wired for the APPLICATION summaries only; host/conversation/field summaries and
+    // all series stay on the raw path regardless of these flags (host/conversation rollup summaries
+    // are a follow-on). The flags/threshold therefore affect application summaries today.
     private String appRollupTable = "flows_by_app_1m";
     private boolean alwaysUseRawForQueries = true;
     private boolean alwaysUseAggForQueries = false;
@@ -107,9 +110,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
     public CompletableFuture<List<TrafficSummary<String>>> getTopNApplicationSummaries(final int n,
                                                                                        final boolean includeOther,
                                                                                        final List<Filter> filters) {
-        final boolean rollup = useAppRollup(filters);
-        final String from = rollup ? appRollupTable : table;
-        final String w = rollup ? rollupWhere(filters) : where(filters);
+        final String[] target = appTarget(filters);
+        final String from = target[0];
+        final String w = target[1];
         final String sql = appSummarySelect(from, w) + " GROUP BY application ORDER BY (bin + bout) DESC, e LIMIT " + n;
         final List<TrafficSummary<String>> summaries = summariesFrom(client.queryAll(sql));
         if (includeOther) {
@@ -125,9 +128,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         if (applications.isEmpty()) {
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
-        final boolean rollup = useAppRollup(filters);
-        final String from = rollup ? appRollupTable : table;
-        final String w = rollup ? rollupWhere(filters) : where(filters);
+        final String[] target = appTarget(filters);
+        final String from = target[0];
+        final String w = target[1];
         final String sql = appSummarySelect(from, w) + " AND application IN (" + quoteAll(applications) + ")"
                 + " GROUP BY application ORDER BY e";
         final List<TrafficSummary<String>> summaries = summariesFrom(client.queryAll(sql));
@@ -135,6 +138,13 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
             appendOther(summaries, from, w);
         }
         return CompletableFuture.completedFuture(summaries);
+    }
+
+    /** Returns {fromTable, whereClause} for an application summary, routed to the rollup when enabled. */
+    private String[] appTarget(final List<Filter> filters) {
+        return useAppRollup(filters)
+                ? new String[]{appRollupTable, rollupWhere(filters)}
+                : new String[]{table, where(filters)};
     }
 
     private static String appSummarySelect(final String from, final String whereClause) {
@@ -156,9 +166,11 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         if (alwaysUseAggForQueries) {
             return true;
         }
-        for (final Filter f : filters) {
-            if (f instanceof TimeRangeFilter t && t.getDurationMs() > aggregateThresholdMs) {
-                return true;
+        if (filters != null) {
+            for (final Filter f : filters) {
+                if (f instanceof TimeRangeFilter t && t.getDurationMs() > aggregateThresholdMs) {
+                    return true;
+                }
             }
         }
         return false;
@@ -185,8 +197,11 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
         final List<String> parts = new ArrayList<>();
         for (final Filter f : filters) {
             if (f instanceof TimeRangeFilter t) {
-                parts.add("(bucket >= fromUnixTimestamp(" + (t.getStart() / 1000)
-                        + ") AND bucket < fromUnixTimestamp(" + (t.getEnd() / 1000) + "))");
+                // Round the lower bound down to the minute bucket that CONTAINS the range start, so
+                // the first (partial) bucket is included rather than dropped; milli precision matches
+                // the raw path. Point-in-time rollups are inherently minute-granular at the edges.
+                parts.add("(bucket >= toStartOfMinute(fromUnixTimestamp64Milli(" + t.getStart()
+                        + ")) AND bucket < fromUnixTimestamp64Milli(" + t.getEnd() + "))");
             } else if (f instanceof ExporterNodeFilter en) {
                 final Integer nodeId = en.getCriteria().getNodeId();
                 if (nodeId == null) {
