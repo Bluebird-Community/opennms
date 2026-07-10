@@ -23,8 +23,6 @@ package org.opennms.smoketest.telemetry;
 
 import java.util.Objects;
 
-import org.opennms.netmgt.flows.elastic.NetflowVersion;
-
 public class FlowPacket extends Packet {
 
     private final NetflowVersion netflowVersion;
