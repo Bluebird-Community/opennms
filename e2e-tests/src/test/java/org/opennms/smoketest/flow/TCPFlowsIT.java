@@ -25,8 +25,6 @@ import java.io.BufferedOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.ClassRule;
 import org.junit.Test;
