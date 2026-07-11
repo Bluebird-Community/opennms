@@ -24,7 +24,6 @@ This section presents a set of procedures to set up flows that progress from a b
 * xref:deep-dive/flows/basic.adoc[Basic setup].
 * Collect flows data in a xref:deep-dive/flows/distributed.adoc[distributed or remote network].
 * Process a xref:deep-dive/flows/sentinel/sentinel.adoc[large volume of flows data].
-* Use https://github.com/OpenNMS/nephron[OpenNMS Nephron] to diagnose issues with flows at scale and queries taking too long.
 
 == How it works
 
@@ -35,14 +34,13 @@ At a high level, with a xref:deep-dive/flows/basic.adoc[basic setup], {page-comp
 . Flows are enriched:
 ** The xref:deep-dive/flows/classification-engine.adoc[flow support classification engine] tags flows and groups them under a name based on a set of rules.
 ** Metadata related to associated nodes (such as IDs and categories) are added to the flows.
-. Enriched flows are persisted in Elasticsearch and/or forwarded to Kafka.
-. (Optional) The OpenNMS streaming analytics tool aggregates flows and outputs them to Elasticsearch, Cortex, or Kafka.
+. Enriched flows are persisted in ClickHouse, either in-process (default) or by an external Kafka-to-ClickHouse consumer when flows are forwarded to Kafka.
+. Per-minute aggregates are maintained in-database by ClickHouse rollup materialized views, created automatically with the flow schema.
 
 You can access collected flows data in the following locations:
 
 * OpenNMS plugin for Grafana dashboards:
-** The "Flow Deep Dive" dashboard visualizes flows and aggregates that are stored in Elasticsearch using a flows datasource.
-** The "Cortex Flow Deep Dive" dashboard visualizes aggregates that are stored in Cortex using a Prometheus datasource.
+** The "Flow Deep Dive" dashboard visualizes flows and aggregates that are stored in ClickHouse using a flows datasource.
 * The REST API can generate summaries and time series data from the stored flows or aggregates.
 
 .Overview of flows integration
