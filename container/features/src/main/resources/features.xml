@@ -1102,7 +1102,7 @@
         <feature>opennms-dnsresolver-api</feature>
         <feature>opennms-kafka</feature>
         <feature>opennms-mate-impl</feature>
-        <feature>opennms-elastic-client</feature>
+        <feature>opennms-clickhouse-client</feature>
         <feature>rate-limited-logger</feature>
 
         <bundle>mvn:org.opennms.core.ipc.twin/org.opennms.core.ipc.twin.api/${project.version}</bundle>
@@ -1114,7 +1114,7 @@
         <bundle>mvn:org.opennms.features.flows.rest/org.opennms.features.flows.rest.impl/${project.version}</bundle>
         <bundle>mvn:org.freemarker/freemarker/${freemarkerVersion}</bundle>
         <bundle>mvn:org.opennms.features.flows.classification.engine/org.opennms.features.flows.classification.engine.impl/${project.version}</bundle>
-        <bundle>mvn:org.opennms.features.flows/org.opennms.features.flows.elastic/${project.version}</bundle>
+        <bundle>mvn:org.opennms.features.flows/org.opennms.features.flows.clickhouse/${project.version}</bundle>
         <bundle dependency="true">mvn:org.opennms.core/org.opennms.core.fileutils/${project.version}</bundle>
         <bundle>mvn:org.opennms.features.flows/org.opennms.features.flows.processing/${project.version}</bundle>
         <bundle>mvn:org.opennms.features.flows/org.opennms.features.flows.kafka-persistence/${project.version}</bundle>

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.stacks.OpenNMSStack;
@@ -43,6 +44,7 @@ import org.opennms.smoketest.telemetry.Sender;
  * Verifies that sending flow packets to a TCP listener.
  * See issue NMS-12430 for more details.
  */
+@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class TCPFlowsIT {
 
     @ClassRule

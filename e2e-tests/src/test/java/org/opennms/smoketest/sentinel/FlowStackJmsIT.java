@@ -29,6 +29,7 @@ import org.opennms.core.utils.SystemInfoUtils;
 import org.opennms.smoketest.stacks.IpcStrategy;
 
 // Verifies that flows can be processed by a sentinel and are persisted to Elastic communicating via activemq (jms)
+@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class FlowStackJmsIT extends AbstractFlowIT {
 
     @Override

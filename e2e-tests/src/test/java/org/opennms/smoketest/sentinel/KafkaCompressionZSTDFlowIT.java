@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.opennms.features.jest.client.SearchResultUtils;
@@ -45,6 +46,7 @@ import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 
 @Category(SentinelTests.class)
+@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class KafkaCompressionZSTDFlowIT {
 
     @ClassRule

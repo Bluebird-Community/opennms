@@ -14,9 +14,7 @@
     <module>api</module>
     <module>processing</module>
     <module>classification</module>
-    <module>elastic</module>
     <module>clickhouse</module>
-    <module>itests</module>
     <module>rest</module>
     <module>kafka-persistence</module>
   </modules>

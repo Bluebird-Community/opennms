@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.net.InetSocketAddress;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.opennms.core.criteria.CriteriaBuilder;
@@ -57,6 +58,7 @@ import org.opennms.smoketest.utils.RestClient;
 import com.google.common.collect.ImmutableList;
 
 @Category(MinionTests.class)
+@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class ClockSkewIT {
     @ClassRule
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
