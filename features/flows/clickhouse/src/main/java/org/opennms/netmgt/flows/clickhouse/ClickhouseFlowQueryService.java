@@ -42,7 +42,7 @@ import com.google.common.collect.Table;
  * ranges may use the per-minute rollup tables (D-QUERY).
  *
  * <p>Summaries and series both apply proportional byte distribution over the query time range
- * (D-PROPORTION): a flow whose {@code [first_switched, last_switched]} interval only partially
+ * (D-PROPORTION): a flow whose {@code [delta_switched, last_switched]} interval only partially
  * overlaps the range contributes {@code bytes * overlap / duration}. A summary is the single-bucket
  * case of a series (bucket width = the whole range), so the same {@link #seriesSql} engine backs
  * both. This mirrors the ES {@code proportional_sum} aggregation the {@code FlowQueryIT} oracle
@@ -396,7 +396,7 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
 
     /**
      * Proportional byte-per-bucket series for the given applications (D-PROPORTION). Each flow's
-     * bytes are spread across the step-aligned buckets its {@code [first_switched, last_switched]}
+     * bytes are spread across the step-aligned buckets its {@code [delta_switched, last_switched]}
      * interval overlaps, weighted by the overlap. When {@code includeOther}, an "Other" row per
      * direction/bucket carries the grand total minus the selected applications.
      */
@@ -474,9 +474,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
                 + "       toFloat64(bytes_) * greatest(0, least(ls, least(q_start + (i + 1) * q_step, q_end)) - greatest(fs, q_start + i * q_step)) / dur) AS share"
                 + "  FROM ("
                 + "    SELECT " + innerEntity + directionExpr + " AS dir, bytes AS bytes_,"
-                + "      toUnixTimestamp64Milli(first_switched) AS fs, toUnixTimestamp64Milli(last_switched) AS ls,"
-                + "      (toUnixTimestamp64Milli(last_switched) - toUnixTimestamp64Milli(first_switched)) AS dur,"
-                + "      greatest(toUnixTimestamp64Milli(first_switched), q_start) AS lo,"
+                + "      toUnixTimestamp64Milli(delta_switched) AS fs, toUnixTimestamp64Milli(last_switched) AS ls,"
+                + "      (toUnixTimestamp64Milli(last_switched) - toUnixTimestamp64Milli(delta_switched)) AS dur,"
+                + "      greatest(toUnixTimestamp64Milli(delta_switched), q_start) AS lo,"
                 + "      least(toUnixTimestamp64Milli(last_switched), q_end - 1) AS hi,"
                 + "      if(hi >= lo, range(toUInt64(intDiv(lo - q_start, q_step)), toUInt64(intDiv(hi - q_start, q_step)) + 1), emptyArrayUInt64()) AS idxs"
                 + "    FROM " + fromExpr + " WHERE " + whereClause + appFilter + " AND " + directionExpr + " IN ('ingress', 'egress')"
@@ -813,9 +813,9 @@ public class ClickhouseFlowQueryService implements FlowQueryService {
      * applied to host series/summaries just like the raw-table dimensions.
      */
     private String hostUnion(final String whereClause) {
-        return "(SELECT src_addr AS host, src_hostname AS host_hostname, direction, input_snmp, output_snmp, bytes, first_switched, last_switched"
+        return "(SELECT src_addr AS host, src_hostname AS host_hostname, direction, input_snmp, output_snmp, bytes, delta_switched, last_switched"
                 + " FROM " + table + " WHERE " + whereClause
-                + " UNION ALL SELECT dst_addr AS host, dst_hostname AS host_hostname, direction, input_snmp, output_snmp, bytes, first_switched, last_switched"
+                + " UNION ALL SELECT dst_addr AS host, dst_hostname AS host_hostname, direction, input_snmp, output_snmp, bytes, delta_switched, last_switched"
                 + " FROM " + table + " WHERE " + whereClause + ")";
     }
 

@@ -36,6 +36,7 @@ public final class FlowColumns {
     public static final String BYTES = "bytes";
     public static final String PACKETS = "packets";
     public static final String FIRST_SWITCHED = "first_switched";
+    public static final String DELTA_SWITCHED = "delta_switched";
     public static final String LAST_SWITCHED = "last_switched";
     public static final String DSCP = "dscp";
     public static final String ECN = "ecn";
@@ -55,7 +56,7 @@ public final class FlowColumns {
             SRC_ADDR, SRC_PORT, SRC_AS, SRC_MASK_LEN,
             DST_ADDR, DST_PORT, DST_AS, DST_MASK_LEN,
             DIRECTION, EXPORTER_NODE, INPUT_SNMP, OUTPUT_SNMP,
-            BYTES, PACKETS, FIRST_SWITCHED, LAST_SWITCHED,
+            BYTES, PACKETS, FIRST_SWITCHED, DELTA_SWITCHED, LAST_SWITCHED,
             DSCP, ECN, TOS, VLAN, TCP_FLAGS,
             SRC_LOCALITY, DST_LOCALITY, FLOW_LOCALITY,
             SRC_HOSTNAME, DST_HOSTNAME, CONVO_KEY);

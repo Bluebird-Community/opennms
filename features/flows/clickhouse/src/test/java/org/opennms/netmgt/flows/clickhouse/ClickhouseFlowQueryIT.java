@@ -274,6 +274,7 @@ public class ClickhouseFlowQueryIT {
         when(f.getDirection()).thenReturn(dir);
         when(f.getBytes()).thenReturn(bytes);
         when(f.getFirstSwitched()).thenReturn(Instant.ofEpochMilli(first));
+        when(f.getDeltaSwitched()).thenReturn(Instant.ofEpochMilli(first));
         when(f.getLastSwitched()).thenReturn(Instant.ofEpochMilli(last));
         when(f.getTimestamp()).thenReturn(Instant.ofEpochMilli(last));
         when(f.getLocation()).thenReturn("test");

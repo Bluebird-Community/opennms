@@ -64,6 +64,7 @@ public final class FlowRowMapper {
         n.put(FlowColumns.BYTES, l(flow.getBytes()));
         n.put(FlowColumns.PACKETS, l(flow.getPackets()));
         n.put(FlowColumns.FIRST_SWITCHED, ts(flow.getFirstSwitched()));
+        n.put(FlowColumns.DELTA_SWITCHED, ts(flow.getDeltaSwitched()));
         n.put(FlowColumns.LAST_SWITCHED, ts(flow.getLastSwitched()));
         n.put(FlowColumns.DSCP, i(flow.getDscp()));
         n.put(FlowColumns.ECN, i(flow.getEcn()));
