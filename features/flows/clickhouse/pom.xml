@@ -12,8 +12,9 @@
   <name>OpenNMS :: Features :: Flows :: ClickHouse</name>
   <properties>
     <skipITs>true</skipITs>
-    <!-- TODO(1.2): hoist to root pom / dependencies BOM once spike 0.1 confirms OSGi bundling. -->
-    <clickhouseClientVersion>0.8.6</clickhouseClientVersion>
+    <!-- clickhouseClientVersion (and the httpclient5/httpcore5/roaringbitmap/jspecify pins used by the
+         opennms-clickhouse-client Karaf feature) are defined in the root pom so the module and the
+         feature stay in lockstep. -->
   </properties>
   <build>
     <plugins>

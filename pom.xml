@@ -1734,6 +1734,13 @@
     <camelVersion>2.21.5</camelVersion>
     <!-- Match (or beat) Newts version -->
     <cassandraVersion>4.17.0</cassandraVersion>
+    <!-- ClickHouse flow-persistence client stack (features/flows/clickhouse + opennms-clickhouse-client feature).
+         Versions track com.clickhouse:client-v2's transitive tree; keep in lockstep with the feature bundles. -->
+    <clickhouseClientVersion>0.8.6</clickhouseClientVersion>
+    <httpclient5Version>5.3.1</httpclient5Version>
+    <httpcore5Version>5.2.4</httpcore5Version>
+    <roaringbitmapVersion>0.9.47</roaringbitmapVersion>
+    <jspecifyVersion>0.3.0</jspecifyVersion>
     <cloverVersion>3.2.0</cloverVersion>
     <commonsBeanutilsVersion>1.11.0</commonsBeanutilsVersion>
     <commonsChainVersion>1.2</commonsChainVersion>
