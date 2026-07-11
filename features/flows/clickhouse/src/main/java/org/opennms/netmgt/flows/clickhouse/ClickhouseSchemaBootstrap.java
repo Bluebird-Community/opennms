@@ -41,6 +41,23 @@ public class ClickhouseSchemaBootstrap {
         this.ttlDays = ttlDays;
     }
 
+    /**
+     * Blueprint entry point: bootstrap the schema but never fail bundle startup. When ClickHouse is
+     * unreachable at boot (e.g. the smoke tests, or the server not yet up), this logs and returns so
+     * the flow services still register — matching the previous Elasticsearch repository's lazy
+     * behaviour. The ClickHouse health check reports the connectivity failure; persistence and queries
+     * will error until ClickHouse is reachable and OpenNMS is restarted so the schema can be applied.
+     */
+    public void initializeQuietly() {
+        try {
+            initialize();
+        } catch (final RuntimeException e) {
+            LOG.warn("ClickHouse flow schema bootstrap did not complete (is ClickHouse reachable at the "
+                    + "configured endpoint?). Flow persistence and queries will not work until ClickHouse "
+                    + "is available and OpenNMS is restarted.", e);
+        }
+    }
+
     public void initialize() {
         LOG.info("Initializing ClickHouse flow schema (ttlDays={}).", ttlDays);
         execute(LEDGER_DDL);

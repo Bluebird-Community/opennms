@@ -60,7 +60,7 @@
     <bean id="clickhouseClient" factory-ref="clickhouseClientFactory" factory-method="createClient" destroy-method="close"/>
 
     <!-- Schema bootstrap (single source of truth for DDL; idempotent) -->
-    <bean id="clickhouseSchemaBootstrap" class="org.opennms.netmgt.flows.clickhouse.ClickhouseSchemaBootstrap" init-method="initialize">
+    <bean id="clickhouseSchemaBootstrap" class="org.opennms.netmgt.flows.clickhouse.ClickhouseSchemaBootstrap" init-method="initializeQuietly">
         <argument ref="clickhouseClient"/>
         <argument value="${ttlDays}"/>
     </bean>
