@@ -22,6 +22,7 @@
 package org.opennms.smoketest.flow;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.NetworkProtocol;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
  * Verifies that sending flow packets to a single port is dispatching the flows in the according queues.
  * See issue HZN-1270 for more details.
  */
+@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class SinglePortFlowsIT {
 
     @ClassRule

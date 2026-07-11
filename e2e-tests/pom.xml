@@ -865,17 +865,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms.features.flows</groupId>
-      <artifactId>org.opennms.features.flows.elastic</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.searchbox</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.flows</groupId>
       <artifactId>org.opennms.features.flows.processing</artifactId>
       <version>${project.version}</version>
     </dependency>
