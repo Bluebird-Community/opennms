@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 import io.searchbox.client.JestResult;
 import io.searchbox.indices.template.GetTemplate;
 import org.opennms.features.elastic.client.DefaultElasticRestClient;
-import org.opennms.netmgt.flows.elastic.NetflowVersion;
 import org.opennms.features.jest.client.SearchResultUtils;
 import org.opennms.smoketest.utils.RestClient;
 import org.slf4j.Logger;

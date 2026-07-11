@@ -23,8 +23,6 @@ package org.opennms.smoketest.telemetry;
 
 import java.util.List;
 
-import org.opennms.netmgt.flows.elastic.NetflowVersion;
-
 import com.google.common.collect.Lists;
 
 public interface Packets {
