@@ -34,7 +34,8 @@ public final class ClickhouseSchema {
     static final List<String> DDL_RESOURCES = List.of(
             "/ddl/01_flows.sql",
             "/ddl/02_rollups.sql",
-            "/ddl/03_hostnames.sql");
+            "/ddl/03_hostnames.sql",
+            "/ddl/04_delta_switched.sql");
 
     /** Placeholder in the DDL for the retention window; substituted from {@code ttlDays}. */
     private static final String TTL_PLACEHOLDER = "__TTL_DAYS__";

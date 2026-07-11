@@ -29,7 +29,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.net.InetSocketAddress;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.opennms.core.criteria.CriteriaBuilder;
@@ -58,7 +57,6 @@ import org.opennms.smoketest.utils.RestClient;
 import com.google.common.collect.ImmutableList;
 
 @Category(MinionTests.class)
-@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class ClockSkewIT {
     @ClassRule
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
@@ -71,8 +69,7 @@ public class ClockSkewIT {
         // setting up endpoint addresses
         final InetSocketAddress flowTelemetryAddress = stack.minion().getNetworkProtocolAddress(NetworkProtocol.FLOWS);
         final InetSocketAddress opennmsWebAddress = stack.opennms().getWebAddress();
-        final InetSocketAddress elasticRestAddress = InetSocketAddress.createUnresolved(
-                stack.elastic().getContainerIpAddress(), stack.elastic().getMappedPort(9200));
+        final InetSocketAddress clickHouseAddress = stack.clickhouse().getRestAddress();
 
         // we need the host ip address in the docker network to be used as the exporter address
         final String localAddress = stack.minion()
@@ -118,7 +115,7 @@ public class ClockSkewIT {
         final FlowTester flowTester = new FlowTestBuilder()
                 .withNetflow5Packet(Sender.udp(flowTelemetryAddress))
                 .verifyOpennmsRestEndpoint(opennmsWebAddress)
-                .build(elasticRestAddress);
+                .build(clickHouseAddress);
 
         // and verify
         flowTester.verifyFlows();

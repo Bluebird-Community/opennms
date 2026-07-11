@@ -82,8 +82,8 @@ public class FlowTestBuilder {
         return this;
     }
 
-    public FlowTester build(InetSocketAddress elasticAddress) {
-        final FlowTester flowTester = new FlowTester(elasticAddress, opennmsWebAddress, deliveries);
+    public FlowTester build(InetSocketAddress clickHouseAddress) {
+        final FlowTester flowTester = new FlowTester(clickHouseAddress, opennmsWebAddress, deliveries);
         flowTester.setRunAfter(runAfter);
         flowTester.setRunBefore(runBefore);
         return flowTester;

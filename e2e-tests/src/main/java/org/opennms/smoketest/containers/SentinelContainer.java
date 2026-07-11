@@ -181,9 +181,14 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                         .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
                         .build());
 
-        writeProps(etc.resolve("org.opennms.features.flows.persistence.elastic.cfg"),
+        writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                 ImmutableMap.<String,String>builder()
-                        .put("elasticUrl", "http://" + OpenNMSContainer.ELASTIC_ALIAS + ":9200")
+                        .put("endpoint", "http://" + OpenNMSContainer.CLICKHOUSE_ALIAS + ":8123")
+                        .put("database", "default")
+                        .put("username", "default")
+                        .put("password", "")
+                        .put("table", "flows")
+                        .put("ttlDays", "0")
                         .build());
 
         if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {

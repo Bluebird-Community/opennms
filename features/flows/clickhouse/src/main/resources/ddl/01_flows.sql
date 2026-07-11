@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS flows
     bytes          UInt64,
     packets        UInt64,
     first_switched DateTime64(3),
+    -- Clock-skew-corrected effective flow start (D-PROPORTION). ES filters and apportions on
+    -- delta_switched, not first_switched; the query service uses this as the interval lower bound.
+    delta_switched DateTime64(3),
     last_switched  DateTime64(3),
     dscp           UInt8,
     ecn            UInt8,

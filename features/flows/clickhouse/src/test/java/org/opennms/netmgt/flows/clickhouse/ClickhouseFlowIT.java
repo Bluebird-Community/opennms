@@ -129,6 +129,7 @@ public class ClickhouseFlowIT {
         when(f.getProtocol()).thenReturn(6);
         when(f.getTimestamp()).thenReturn(T);
         when(f.getFirstSwitched()).thenReturn(T);
+        when(f.getDeltaSwitched()).thenReturn(T);
         when(f.getLastSwitched()).thenReturn(T);
         when(f.getSrcAddrHostname()).thenReturn(Optional.empty());
         when(f.getDstAddrHostname()).thenReturn(Optional.empty());

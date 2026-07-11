@@ -22,7 +22,6 @@
 package org.opennms.smoketest.flow;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.NetworkProtocol;
@@ -41,7 +40,6 @@ import java.util.stream.Collectors;
  * Verifies that sending flow packets to a single port is dispatching the flows in the according queues.
  * See issue HZN-1270 for more details.
  */
-@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class SinglePortFlowsIT {
 
     @ClassRule
@@ -55,13 +53,12 @@ public class SinglePortFlowsIT {
     public void verifyFlowStack() throws Exception {
         final InetSocketAddress flowTelemetryAddress = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.FLOWS);
         final InetSocketAddress opennmsWebAddress = stack.opennms().getWebAddress();
-        final InetSocketAddress elasticRestAddress = InetSocketAddress.createUnresolved(
-                stack.elastic().getContainerIpAddress(), stack.elastic().getMappedPort(9200));
+        final InetSocketAddress clickHouseAddress = stack.clickhouse().getRestAddress();
 
         final FlowTester tester = new FlowTestBuilder()
                 .withFlowPackets(Packets.getFlowPackets(), Sender.udp(flowTelemetryAddress))
                 .verifyOpennmsRestEndpoint(opennmsWebAddress)
-                .build(elasticRestAddress);
+                .build(clickHouseAddress);
         tester.verifyFlows();
     }
 }

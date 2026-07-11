@@ -42,6 +42,7 @@ public class StackModel {
     private final List<SentinelProfile> sentinels;
     private final boolean jaegerEnabled;
     private final boolean elasticsearchEnabled;
+    private final boolean clickhouseEnabled;
     private final boolean telemetryProcessingEnabled;
     private final boolean simulateRestricedOpenShiftEnvironment;
     private final IpcStrategy ipcStrategy;
@@ -59,6 +60,7 @@ public class StackModel {
         // Flags
         jaegerEnabled = builder.jaegerEnabled;
         elasticsearchEnabled = builder.elasticsearchEnabled;
+        clickhouseEnabled = builder.clickhouseEnabled;
         telemetryProcessingEnabled = builder.telemetryProcessingEnabled;
         simulateRestricedOpenShiftEnvironment = builder.simulateRestricedOpenShiftEnvironment;
 
@@ -80,6 +82,7 @@ public class StackModel {
         private List<SentinelProfile> sentinels = new LinkedList<>();
         public boolean jaegerEnabled = false;
         private boolean elasticsearchEnabled = false;
+        private boolean clickhouseEnabled = false;
         private boolean telemetryProcessingEnabled = false;
         private boolean simulateRestricedOpenShiftEnvironment = false;
 
@@ -182,6 +185,16 @@ public class StackModel {
         }
 
         /**
+         * Enable ClickHouse.
+         *
+         * @return this builder
+         */
+        public Builder withClickhouse() {
+            clickhouseEnabled = true;
+            return this;
+        }
+
+        /**
          * Type of service used to communicate between Minion/OpenNMS/Sentinel
          *
          * @param ipcStrategy JMS vs Kafka, etc...
@@ -264,8 +277,8 @@ public class StackModel {
          */
         public StackModel build() {
             if (telemetryProcessingEnabled) {
-                // Enable Elasticsearch when telemetry/flows are enabled
-                elasticsearchEnabled = true;
+                // Enable ClickHouse when telemetry/flows are enabled (flows persist to ClickHouse)
+                clickhouseEnabled = true;
                 // If Sentinels are being used, then enable Newts
                 if (!sentinels.isEmpty()) {
                     timeSeriesStrategy = TimeSeriesStrategy.NEWTS;
@@ -294,6 +307,10 @@ public class StackModel {
 
     public boolean isElasticsearchEnabled() {
         return elasticsearchEnabled;
+    }
+
+    public boolean isClickhouseEnabled() {
+        return clickhouseEnabled;
     }
 
     public boolean isTelemetryProcessingEnabled() {

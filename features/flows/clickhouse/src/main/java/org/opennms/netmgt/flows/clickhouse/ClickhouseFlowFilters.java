@@ -44,13 +44,11 @@ public final class ClickhouseFlowFilters implements FilterVisitor<String> {
     @Override
     public String visit(final TimeRangeFilter f) {
         // Interval-overlap, not a point-in-time test: a flow is in range when its
-        // [first_switched, last_switched] interval overlaps [start, end]. This matches the ES
-        // filter (netflow.delta_switched <= end AND netflow.last_switched >= start), so a flow that
-        // only partially overlaps the range is still selected and its bytes are apportioned by the
-        // proportional summary/series math. (ES uses delta_switched as the lower bound for clock-skew
-        // correction; we do not persist delta_switched yet, so first_switched stands in for it — the
-        // two are identical absent skew.)
-        return "(first_switched <= fromUnixTimestamp64Milli(" + f.getEnd() + ") "
+        // [delta_switched, last_switched] interval overlaps [start, end]. This matches the ES filter
+        // (netflow.delta_switched <= end AND netflow.last_switched >= start), so a flow that only
+        // partially overlaps the range is still selected and its bytes are apportioned by the
+        // proportional summary/series math. delta_switched is the clock-skew-corrected effective start.
+        return "(delta_switched <= fromUnixTimestamp64Milli(" + f.getEnd() + ") "
                 + "AND last_switched >= fromUnixTimestamp64Milli(" + f.getStart() + "))";
     }
 

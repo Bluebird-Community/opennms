@@ -138,6 +138,7 @@ public class ClickhouseUnknownDirectionIT {
         org.mockito.Mockito.when(f.getDirection()).thenReturn(dir);
         org.mockito.Mockito.when(f.getBytes()).thenReturn(bytes);
         org.mockito.Mockito.when(f.getFirstSwitched()).thenReturn(Instant.ofEpochMilli(first));
+        org.mockito.Mockito.when(f.getDeltaSwitched()).thenReturn(Instant.ofEpochMilli(first));
         org.mockito.Mockito.when(f.getLastSwitched()).thenReturn(Instant.ofEpochMilli(last));
         org.mockito.Mockito.when(f.getTimestamp()).thenReturn(Instant.ofEpochMilli(last));
         org.mockito.Mockito.when(f.getLocation()).thenReturn("test");

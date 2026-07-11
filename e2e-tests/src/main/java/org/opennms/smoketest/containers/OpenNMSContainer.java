@@ -91,6 +91,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     public static final String DB_ALIAS = "db";
     public static final String KAFKA_ALIAS = "kafka";
     public static final String ELASTIC_ALIAS = "elastic";
+    public static final String CLICKHOUSE_ALIAS = "clickhouse";
     public static final String CASSANDRA_ALIAS = "cassandra";
 
     public static final String ADMIN_USER = "admin";
@@ -268,14 +269,19 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         Files.createDirectories(bootD);
         writeFeaturesBoot(bootD.resolve("stest.boot"), getFeaturesOnBoot());
 
-        if (model.isElasticsearchEnabled()) {
-            writeProps(etc.resolve("org.opennms.features.flows.persistence.elastic.cfg"),
+        if (model.isClickhouseEnabled()) {
+            writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                     ImmutableMap.<String,String>builder()
-                            .put("elasticUrl", "http://" + ELASTIC_ALIAS + ":9200")
-                            // Try to use composable templates on OpenNMS
-                            .put("useComposableTemplates", "true")
+                            .put("endpoint", "http://" + CLICKHOUSE_ALIAS + ":8123")
+                            .put("database", "default")
+                            .put("username", "default")
+                            .put("password", "")
+                            .put("table", "flows")
+                            .put("ttlDays", "0")
                             .build());
+        }
 
+        if (model.isElasticsearchEnabled()) {
             writeProps(etc.resolve("org.opennms.plugin.elasticsearch.rest.forwarder.cfg"),
                     ImmutableMap.<String,String>builder()
                             .put("elasticUrl", "http://" + ELASTIC_ALIAS + ":9200")
