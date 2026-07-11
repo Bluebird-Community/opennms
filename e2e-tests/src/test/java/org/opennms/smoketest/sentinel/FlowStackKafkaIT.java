@@ -21,13 +21,11 @@
  */
 package org.opennms.smoketest.sentinel;
 
-import org.junit.Ignore;
 import org.opennms.core.utils.SystemInfoUtils;
 import org.opennms.smoketest.stacks.IpcStrategy;
 
-// Verifies that flows can be processed by a sentinel and are persisted to Elastic communicating via kafka
+// Verifies that flows can be processed by a sentinel and are persisted to ClickHouse communicating via kafka
 @org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
-@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class FlowStackKafkaIT extends AbstractFlowIT {
 
     @Override

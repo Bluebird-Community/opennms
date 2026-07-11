@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.stacks.OpenNMSStack;
@@ -44,7 +43,6 @@ import org.opennms.smoketest.telemetry.Sender;
  * Verifies that sending flow packets to a TCP listener.
  * See issue NMS-12430 for more details.
  */
-@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class TCPFlowsIT {
 
     @ClassRule
@@ -58,8 +56,7 @@ public class TCPFlowsIT {
     public void verifyFlowStack() throws Exception {
         final InetSocketAddress flowTelemetryAddress = stack.opennms().getNetworkProtocolAddress(NetworkProtocol.IPFIX_TCP);
         final InetSocketAddress opennmsWebAddress = stack.opennms().getWebAddress();
-        final InetSocketAddress elasticRestAddress = InetSocketAddress.createUnresolved(
-                stack.elastic().getContainerIpAddress(), stack.elastic().getMappedPort(9200));
+        final InetSocketAddress clickHouseAddress = stack.clickhouse().getRestAddress();
 
         final FlowPacket packet1 = Packets.Ipfix;
         final FlowPacket packet2 = Packets.Ipfix;
@@ -74,7 +71,7 @@ public class TCPFlowsIT {
                 .withFlowPacket(packet1, sender)
                 .withFlowPacket(packet2, sender)
                 .verifyOpennmsRestEndpoint(opennmsWebAddress)
-                .build(elasticRestAddress);
+                .build(clickHouseAddress);
         tester.verifyFlows();
     }
 }

@@ -31,30 +31,17 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import io.searchbox.client.JestResult;
-import io.searchbox.indices.template.GetTemplate;
-import org.opennms.features.elastic.client.DefaultElasticRestClient;
-import org.opennms.features.jest.client.SearchResultUtils;
+import org.opennms.smoketest.utils.ClickHouseRestClient;
 import org.opennms.smoketest.utils.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-
-import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.core.Search;
-import io.searchbox.core.SearchResult;
-
 /**
  * Simple helper which sends a defined set of {@link FlowPacket}s to OpenNMS or Minion and afterwards verifies
- * the data at the elastic endpoints.
+ * the data at the ClickHouse endpoint.
  * <p>
  * Optionally, it can also run verifications before sending flows or check the results at the OpenNMS ReST endpoint as well.
  *
@@ -76,11 +63,7 @@ public class FlowTester {
         }
     }
 
-    private static final String TEMPLATE_NAME = "netflow";
-
     private static final Logger LOG = LoggerFactory.getLogger(FlowTester.class);
-
-    private static final Gson gson = new Gson();
 
     /** The packets to send */
     private final List<Delivery> deliveries;
@@ -88,14 +71,11 @@ public class FlowTester {
     private final List<Consumer<FlowTester>> runBefore = new ArrayList<>();
     private final List<Consumer<FlowTester>> runAfter = new ArrayList<>();
 
-    private final InetSocketAddress elasticRestAddress;
     private final int totalFlowCount;
-    private DefaultElasticRestClient elasticRestClient;
+    private final ClickHouseRestClient clickhouse;
 
-    private JestClient client;
-
-    public FlowTester(InetSocketAddress elasticAddress, InetSocketAddress opennmsWebAddress, List<Delivery> deliveries) {
-        this.elasticRestAddress = Objects.requireNonNull(elasticAddress);
+    public FlowTester(InetSocketAddress clickHouseAddress, InetSocketAddress opennmsWebAddress, List<Delivery> deliveries) {
+        this.clickhouse = new ClickHouseRestClient(Objects.requireNonNull(clickHouseAddress));
         this.deliveries = Objects.requireNonNull(deliveries);
         this.totalFlowCount = deliveries.stream().mapToInt(delivery -> delivery.packet.getFlowCount()).sum();
 
@@ -104,116 +84,52 @@ public class FlowTester {
         }
 
         if (opennmsWebAddress != null) {
-            final RestClient restclient = new RestClient(opennmsWebAddress);
-
-            // No flows should be present
-            runBefore.add(flowTester -> assertEquals(Long.valueOf(0L), restclient.getFlowCount(0L, System.currentTimeMillis())));
-
-
-            // Verify the flow count via the REST API
-            runAfter.add(flowTester -> {
-                with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
-                    .until(() -> restclient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount));
-            });
-        }
-
-
-        if (opennmsWebAddress != null) {
             final RestClient restClient = new RestClient(opennmsWebAddress);
 
             // No flows should be present
-            runBefore.add((flowTester) -> assertEquals(Long.valueOf(0L), restClient.getFlowCount(0L, System.currentTimeMillis())));
-
+            runBefore.add(flowTester -> assertEquals(Long.valueOf(0L), restClient.getFlowCount(0L, System.currentTimeMillis())));
 
             // Verify the flow count via the REST API
-            runAfter.add((flowTester) -> with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
-                                     .until(() -> restClient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount)));
+            runAfter.add(flowTester -> with().pollInterval(5, SECONDS).await().atMost(1, MINUTES)
+                    .until(() -> restClient.getFlowCount(0L, System.currentTimeMillis()), equalTo((long) totalFlowCount)));
         }
     }
 
     public void verifyFlows() throws IOException {
-        final String elasticRestUrl = String.format("http://%s:%d", elasticRestAddress.getHostString(), elasticRestAddress.getPort());
+        LOG.info("Verifying flows. Expecting to persist {} flows.", totalFlowCount);
 
-        // Build the Elastic Rest Client
-        final JestClientFactory factory = new JestClientFactory();
-        factory.setHttpClientConfig(new HttpClientConfig.Builder(elasticRestUrl)
-                .connTimeout(5000)
-                .readTimeout(10000)
-                .multiThreaded(true).build());
+        runBefore.forEach(rb -> rb.accept(this));
 
-        elasticRestClient = new DefaultElasticRestClient(elasticRestUrl, null, null);
-        try {
-            client = factory.getObject();
-            runBefore.forEach(rb -> rb.accept(this));
-
-            // Group the packets by protocol
-            final Map<NetflowVersion, List<Delivery>> delivieriesByProtocol = deliveries.stream()
-                                                                                        .collect(Collectors.groupingBy(delivery -> delivery.packet.getNetflowVersion()));
-            LOG.info("Verifying flows. Expecting to persist {} flows across protocols: {}",
-                    totalFlowCount, delivieriesByProtocol.keySet());
-
-            // Send all the packets once
-            for (Delivery delivery : deliveries) {
-                LOG.info("Sending packet payload from {} containing {} flows to: {}",
-                        delivery.packet.getPayload(), delivery.packet.getFlowCount(),
-                        delivery.sender);
-                delivery.send();
-            }
-
-            for (NetflowVersion netflowVersion : delivieriesByProtocol.keySet()) {
-                final List<Delivery> deliveriesForProtocol = delivieriesByProtocol.get(netflowVersion);
-                final int numFlowsExpected = deliveriesForProtocol.stream().mapToInt(delivery -> delivery.packet.getFlowCount()).sum();
-
-                LOG.info("Verifying flows for {}", netflowVersion);
-                verify(() -> {
-                    // Verify directly in Elasticsearch that the flows have been created
-                    final String query = "{\"query\":{\"term\":{\"netflow.version\":{\"value\":"
-                            + gson.toJson(netflowVersion)
-                            + "}}}}";
-                    LOG.info("Executing query: {}", query);
-                    final SearchResult response = client.execute(new Search.Builder(query)
-                            .addIndex("netflow-*")
-                            .build());
-                    LOG.info("Response {} with {} flow documents: {}", response.isSucceeded() ? "successful" : "failed", SearchResultUtils.getTotal(response), response.getJsonString());
-                    final boolean foundAllFlowsForProtocol = response.isSucceeded() && SearchResultUtils.getTotal(response) >= numFlowsExpected;
-
-                    if (!foundAllFlowsForProtocol) {
-                        // If we haven't found them all yet, try sending all the packets for this protocol again.
-                        // We do this since the flows are UDP packages and aren't 100% reliable.
-                        // This test is only concerned that they eventually do make their way into ES.
-                        for (Delivery delivery : deliveriesForProtocol) {
-                            LOG.info("Sending packet payload from {} containing {} flows to: {}",
-                                    delivery.packet.getPayload(), delivery.packet.getFlowCount(),
-                                    delivery.sender);
-                            delivery.send();
-                        }
-                    }
-                    return foundAllFlowsForProtocol;
-                });
-            }
-
-            LOG.info("Ensuring that the index template was created...");
-            verify(() -> {
-                Map<String, String> indexTemplates = elasticRestClient.listTemplates();
-                boolean hasIndexTemplate = indexTemplates.keySet().stream()
-                        .anyMatch(name -> name.contains(TEMPLATE_NAME));
-                if (!hasIndexTemplate) {
-                    final JestResult result = client.execute(new GetTemplate.Builder(TEMPLATE_NAME).build());
-                    return result.isSucceeded() && result.getJsonObject().get(TEMPLATE_NAME) != null;
-                } else {
-                    return true;
-                }
-            });
-
-            runAfter.forEach(ra -> ra.accept(this));
-        } finally {
-            if (client != null) {
-                client.close();
-            }
-            if (elasticRestClient != null) {
-                elasticRestClient.close();
-            }
+        // Send all the packets once
+        for (Delivery delivery : deliveries) {
+            LOG.info("Sending packet payload from {} containing {} flows to: {}",
+                    delivery.packet.getPayload(), delivery.packet.getFlowCount(),
+                    delivery.sender);
+            delivery.send();
         }
+
+        verify(() -> {
+            // Verify directly in ClickHouse that the flows have been created.
+            // The ClickHouse flows table has no netflow-version column, so all deliveries collapse to a total row count.
+            final long persistedFlowCount = clickhouse.count("SELECT count() FROM flows");
+            LOG.info("Found {} of expected {} flows in ClickHouse", persistedFlowCount, totalFlowCount);
+            final boolean foundAllFlows = persistedFlowCount >= totalFlowCount;
+
+            if (!foundAllFlows) {
+                // If we haven't found them all yet, try sending all the packets again.
+                // We do this since the flows are UDP packages and aren't 100% reliable.
+                // This test is only concerned that they eventually do make their way into ClickHouse.
+                for (Delivery delivery : deliveries) {
+                    LOG.info("Sending packet payload from {} containing {} flows to: {}",
+                            delivery.packet.getPayload(), delivery.packet.getFlowCount(),
+                            delivery.sender);
+                    delivery.send();
+                }
+            }
+            return foundAllFlows;
+        });
+
+        runAfter.forEach(ra -> ra.accept(this));
     }
 
     public void setRunBefore(List<Consumer<FlowTester>> runBefore) {
@@ -226,8 +142,8 @@ public class FlowTester {
         this.runAfter.addAll(runAfter);
     }
 
-    public JestClient getJestClient() {
-        return Objects.requireNonNull(this.client);
+    public ClickHouseRestClient clickhouse() {
+        return clickhouse;
     }
 
     public interface Block {
@@ -241,10 +157,10 @@ public class FlowTester {
         // Verify
         with().pollInterval(5, SECONDS).await().atMost(5, MINUTES).until(() -> {
             try {
-                LOG.info("Querying elastic search");
+                LOG.info("Querying ClickHouse");
                 return verifyCallback.test();
             } catch (Exception e) {
-                LOG.error("Error while querying to elastic search", e);
+                LOG.error("Error while querying ClickHouse", e);
             }
             return false;
         });

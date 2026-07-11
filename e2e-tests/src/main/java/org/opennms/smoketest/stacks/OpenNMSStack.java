@@ -31,6 +31,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.opennms.smoketest.containers.OpenNMSCassandraContainer;
+import org.opennms.smoketest.containers.ClickHouseContainer;
 import org.opennms.smoketest.containers.ElasticsearchContainer;
 import org.opennms.smoketest.containers.JaegerContainer;
 import org.opennms.smoketest.containers.LocalOpenNMS;
@@ -99,6 +100,8 @@ public final class OpenNMSStack implements TestRule {
 
     private final ElasticsearchContainer elasticsearchContainer;
 
+    private final ClickHouseContainer clickhouseContainer;
+
     private final OpenNMSCassandraContainer cassandraContainer;
 
     private final List<MinionContainer> minionContainers;
@@ -126,6 +129,7 @@ public final class OpenNMSStack implements TestRule {
         postgreSQLContainer = null;
         jaegerContainer = null;
         elasticsearchContainer = null;
+        clickhouseContainer = null;
         kafkaContainer = null;
         cassandraContainer = null;
         opennmsContainer = new LocalOpenNMS();
@@ -151,6 +155,13 @@ public final class OpenNMSStack implements TestRule {
             chain = chain.around(elasticsearchContainer);
         } else {
             elasticsearchContainer = null;
+        }
+
+        if (model.isClickhouseEnabled()) {
+            clickhouseContainer = new ClickHouseContainer();
+            chain = chain.around(clickhouseContainer);
+        } else {
+            clickhouseContainer = null;
         }
 
         final boolean shouldEnableKafka = IpcStrategy.KAFKA.equals(model.getIpcStrategy())
@@ -234,6 +245,13 @@ public final class OpenNMSStack implements TestRule {
             throw new IllegalStateException("Elasticsearch container is not enabled in this stack.");
         }
         return elasticsearchContainer;
+    }
+
+    public ClickHouseContainer clickhouse() {
+        if (clickhouseContainer == null) {
+            throw new IllegalStateException("ClickHouse container is not enabled in this stack.");
+        }
+        return clickhouseContainer;
     }
 
     public PostgreSQLContainer postgres() {

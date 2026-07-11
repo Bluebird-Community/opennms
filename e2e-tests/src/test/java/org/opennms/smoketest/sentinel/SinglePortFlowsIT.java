@@ -21,16 +21,11 @@
  */
 package org.opennms.smoketest.sentinel;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.opennms.features.jest.client.SearchResultUtils;
 import org.opennms.smoketest.junit.SentinelTests;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.NetworkProtocol;
@@ -41,11 +36,7 @@ import org.opennms.smoketest.telemetry.FlowTester;
 import org.opennms.smoketest.telemetry.Packets;
 import org.opennms.smoketest.telemetry.Sender;
 
-import io.searchbox.core.Search;
-import io.searchbox.core.SearchResult;
-
 @Category(SentinelTests.class)
-@Ignore("ES flow persistence was removed in the ClickHouse cut-over (phase 6); the flow e2e harness will be rewritten against ClickHouse in a follow-on.")
 public class SinglePortFlowsIT {
 
     @ClassRule
@@ -59,26 +50,14 @@ public class SinglePortFlowsIT {
     @Test
     public void verifySinglePort() throws Exception {
         // Determine endpoints
-        final InetSocketAddress elasticRestAddress = InetSocketAddress.createUnresolved(
-                stack.elastic().getContainerIpAddress(), stack.elastic().getMappedPort(9200));
+        final InetSocketAddress clickHouseAddress = stack.clickhouse().getRestAddress();
         final InetSocketAddress flowTelemetryAddress = stack.minion().getNetworkProtocolAddress(NetworkProtocol.FLOWS);
 
         // Now verify Flow creation
         final FlowTester tester = new FlowTestBuilder()
                 .withFlowPackets(Packets.getFlowPackets(), Sender.udp(flowTelemetryAddress))
-                .verifyBeforeSendingFlows((flowTester) -> {
-                    try {
-                        final SearchResult response = flowTester.getJestClient().execute(
-                                new Search.Builder("")
-                                        .addIndex("netflow-*")
-                                        .build());
-                        assertEquals(Boolean.TRUE, response.isSucceeded());
-                        assertEquals(0L, SearchResultUtils.getTotal(response));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .build(elasticRestAddress);
+                .verifyBeforeSendingFlows((flowTester) -> flowTester.clickhouse().execute("TRUNCATE TABLE flows"))
+                .build(clickHouseAddress);
         tester.verifyFlows();
     }
 
