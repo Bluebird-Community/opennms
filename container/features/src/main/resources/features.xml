@@ -1705,4 +1705,25 @@
         <bundle>mvn:org.apache.httpcomponents/httpasyncclient-osgi/${httpasyncclientVersion}</bundle>
     </feature>
 
+    <feature name="opennms-clickhouse-client" description="OpenNMS :: ClickHouse Client" version="${project.version}">
+        <!-- Already-OSGi deps reused from existing features. -->
+        <feature>jackson-core</feature>
+        <feature>commons-codec</feature>
+        <feature>commons-io</feature>
+        <feature>commons-compress</feature>
+        <bundle>mvn:org.ow2.asm/asm/${asmVersion}</bundle>
+        <bundle>mvn:at.yawk.lz4/lz4-java/${lz4JavaVersion}</bundle>
+        <!-- Plain jars (no OSGi manifest) wrapped on install. ClickHouse's client-v2 stack pulls
+             HttpComponents 5.x (disjoint from the 4.x used by opennms-elastic-client). -->
+        <bundle>wrap:mvn:org.apache.httpcomponents.core5/httpcore5/${httpcore5Version}</bundle>
+        <bundle>wrap:mvn:org.apache.httpcomponents.core5/httpcore5-h2/${httpcore5Version}</bundle>
+        <bundle>wrap:mvn:org.apache.httpcomponents.client5/httpclient5/${httpclient5Version}</bundle>
+        <bundle>wrap:mvn:org.roaringbitmap/RoaringBitmap/${roaringbitmapVersion}</bundle>
+        <bundle>wrap:mvn:org.roaringbitmap/shims/${roaringbitmapVersion}</bundle>
+        <bundle>wrap:mvn:org.jspecify/jspecify/${jspecifyVersion}</bundle>
+        <bundle>wrap:mvn:com.clickhouse/clickhouse-data/${clickhouseClientVersion}</bundle>
+        <bundle>wrap:mvn:com.clickhouse/clickhouse-client/${clickhouseClientVersion}</bundle>
+        <bundle>wrap:mvn:com.clickhouse/client-v2/${clickhouseClientVersion}</bundle>
+    </feature>
+
 </features>
