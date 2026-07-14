@@ -26,15 +26,12 @@ import org.junit.Test;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.stacks.StackModel;
-import org.opennms.smoketest.telemetry.FlowPacket;
 import org.opennms.smoketest.telemetry.FlowTestBuilder;
 import org.opennms.smoketest.telemetry.FlowTester;
 import org.opennms.smoketest.telemetry.Packets;
 import org.opennms.smoketest.telemetry.Sender;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Verifies that sending flow packets to a single port is dispatching the flows in the according queues.
