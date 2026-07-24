@@ -25,9 +25,30 @@ depends:
   - jrrd2
 
 contents:
-  # Full payload tree assembled by the core-pkg-buildroot Makefile target.
-  - src: target/artifacts/buildroot/core/opt/opennms
-    dst: /opt/opennms
+  # Payload tree assembled by the core-pkg-buildroot Makefile target. nfpm has
+  # no per-entry exclude and rejects overlapping content entries as a collision,
+  # so each top-level child of /opt/opennms is mapped exactly once: everything
+  # but etc as regular files, and etc as config (design D3/D4). Keep this list in
+  # sync with the buildroot tree if the assembly adds a new top-level directory.
+  - src: target/artifacts/buildroot/core/opt/opennms/agent
+    dst: /opt/opennms/agent
+  - src: target/artifacts/buildroot/core/opt/opennms/bin
+    dst: /opt/opennms/bin
+  - src: target/artifacts/buildroot/core/opt/opennms/data
+    dst: /opt/opennms/data
+  - src: target/artifacts/buildroot/core/opt/opennms/jetty-webapps
+    dst: /opt/opennms/jetty-webapps
+  - src: target/artifacts/buildroot/core/opt/opennms/lib
+    dst: /opt/opennms/lib
+  - src: target/artifacts/buildroot/core/opt/opennms/licenses
+    dst: /opt/opennms/licenses
+  - src: target/artifacts/buildroot/core/opt/opennms/share
+    dst: /opt/opennms/share
+  - src: target/artifacts/buildroot/core/opt/opennms/system
+    dst: /opt/opennms/system
+  - src: target/artifacts/buildroot/core/opt/opennms/etc
+    dst: /opt/opennms/etc
+    type: config
   - src: target/artifacts/buildroot/core/usr/lib/systemd/system
     dst: /usr/lib/systemd/system
   # Empty runtime directories (no source files) — declared explicitly so nfpm
@@ -44,11 +65,6 @@ contents:
   - dst: /var/lib/opennms/deploy
     type: dir
     file_info: { mode: 0755 }
-  # Mark the etc tree as configuration. Ordered after the broad /opt/opennms
-  # mapping so the config type wins for the overlapping paths (design D3/D4).
-  - src: target/artifacts/buildroot/core/opt/opennms/etc
-    dst: /opt/opennms/etc
-    type: config
 
 overrides:
   deb:
