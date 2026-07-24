@@ -66,13 +66,6 @@ categories:
             description: "Unique Minion identifier in the location"
             key: "/id"
             example: "id: my-minion-nyc"
-          - name: "broker-url"
-            type:
-              name: "url"
-            label: "Message broker URL"
-            description: "Message broker connection URL"
-            key: "/broker-url"
-            example: "ActiveMQ: failover:[tcp,ssl]://my-activemq-ip:61616, Kafka: broker-01:9092, broker-02:9092"
   # Dominion
   - name: "dominion"
     label: "Dominion"

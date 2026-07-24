@@ -85,7 +85,6 @@ Simply copy it to `$\{SENTINEL_HOME}/deploy/`.
         <config name="org.opennms.sentinel.controller">
             location = SENTINEL
             id = 00000000-0000-0000-0000-000000ddba11
-            broker-url = failover:tcp://127.0.0.1:61616
         </config>
 
         <!-- Configure datasource connection -->
@@ -292,14 +291,13 @@ The following describes the keys available in `sentinel-config.yaml` to configur
 ==== Sentinel controller config
 [source, yaml]
 ----
-broker-url: "<broker url>"
 id: "<id>"
 location: "<location>"
 ----
 Config specified will be written to `etc/org.opennms.sentinel.controller.cfg`.
 
 ==== User/password
-Supplying the broker username/password via YAML file for configuration via confd is not supported.
+Supplying the username/password via YAML file for configuration via confd is not supported.
 
 ==== Sentinel Elasticsearch config
 [source, yaml]

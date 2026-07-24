@@ -62,11 +62,20 @@ public class JaegerTracingIT {
     public void horizonTrapdListenerConfigTraceCheck() throws Exception {
         /*
          * I'm just checking for a random trace that Horizon generates.
-         * This one seems consistent on startup and usually has two spans.
+         * This one seems consistent on startup.
          * It might take a short while for the traces to show up, so we
          * poll for a little while.
+         *
+         * Only the local twin subscriber's span shows up here. The gRPC twin
+         * publisher is built without a TracerRegistry (see NMS-17732: it
+         * conflicts with the classloader that marshals the protobuf), so it
+         * falls back to a GlobalTracer that was never registered in its
+         * bundle -- it emits no span of its own and injects no trace context
+         * into the update, leaving the subscriber to open a fresh root trace.
+         * minionEcho below still covers the parent/child case across
+         * processes.
          */
-        await("Wait for a 'trapd.listener.config' trace with two spans")
+        await("Wait for a 'trapd.listener.config' trace")
                 .atMost(20, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .pollDelay(0, TimeUnit.SECONDS)
@@ -81,7 +90,7 @@ public class JaegerTracingIT {
                                     .then().log().ifValidationFails()
                                     .assertThat()
                                     .statusCode(200)
-                                    .body("data[0].spans.size()", Matchers.is(2));
+                                    .body("data[0].spans.size()", Matchers.is(1));
                             return true;
                         });
 
