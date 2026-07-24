@@ -18,7 +18,7 @@ gh pr create ...  # defaults to OpenNMS/opennms
 
 ## Project Overview
 
-BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 36.0.2-SNAPSHOT, licensed under AGPL v3. Java 21 required (enforced range `[21,22)` — bumped from 17 via NMS-19396).
+BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 38.0.2-SNAPSHOT, licensed under AGPL v3. Java 21 required (enforced range `[21,22)` — bumped from 17 via NMS-19396).
 
 ## Build Commands
 
@@ -100,7 +100,7 @@ The codebase has two structural patterns:
 
 **Modern structure:**
 - `core/` — Core platform (38 modules: api, cache, config, daemon, db, grpc, ipc, jmx, snmp, web, etc.)
-- `features/` — 87+ feature modules (alarms, collection, discovery, events, flows, kafka, poller, provisioning, rest, telemetry, topology-map, vaadin UI components, etc.)
+- `features/` — 67 feature modules (alarms, collection, discovery, events, flows, graph, kafka, poller, provisioning, rest, telemetry, etc.)
 - `dependencies/` — Centralized dependency management (66 sub-modules)
 - `container/` — Karaf OSGi container assembly and features
 - `protocols/` — Protocol implementations (CIFS, NSClient, RADIUS, Selenium, XML)
@@ -139,22 +139,22 @@ OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *abo
 | Language | Java 21 |
 | Build | Apache Maven Wrapper (`./mvnw`, downloads Maven 3.9.14 on demand), Perl wrapper scripts |
 | OSGi Container | Apache Karaf 4.4.9 |
-| Web Framework | Spring 4.2.x (OpenNMS-patched fork), Spring Security 4.2.x (patched) |
-| ORM | Hibernate 3.6.11 (OpenNMS build) |
-| REST | Apache CXF 3.6.8 |
+| Web Framework | Spring 5.3.x, Spring Security 5.8.x (stock ServiceMix OSGi bundles — the old OpenNMS-patched 4.x fork is gone) |
+| ORM | Hibernate 5.6.15.Final (stock) |
+| REST | Apache CXF 3.6.11 |
 | Messaging | Apache Kafka 3.6.2 |
 | Time-Series | Newts 3.0.0 (Cassandra-backed), RRDtool via JRRD2 |
 | Servlet Container | Jetty 9.4.x (embedded) |
 | Database | PostgreSQL (Liquibase 3.6.3 for schema) |
-| Frontend | Vue 3 + TypeScript + Vite + Pinia, Feather Design System |
-| Serialization | Jackson 2.16.2, Protobuf 3.25.5, JAXB 2.3.3, gRPC 1.75.0 |
+| Frontend | Vue 3 + TypeScript + Vite + Pinia, PrimeVue |
+| Serialization | Jackson 2.22.0, Protobuf 3.25.5, JAXB 2.3.3, gRPC 1.75.0 |
 
 ### Frontend (ui/)
 
 The modern UI is a Vue 3 SPA in `ui/` built with:
-- **Package manager:** pnpm (enforced, version 10.24.0)
+- **Package manager:** pnpm (enforced, version 10.33.0)
 - **Build tool:** Vite — **two separate Vite apps** share `src/` but build independently: `src/main/` (full SPA at `/opennms/ui`) and `src/menu/` (embeds in legacy JSP at `/opennms-menu`)
-- **Component library:** Feather Design System (`@featherds/*`)
+- **Component library:** PrimeVue (`primevue`, `@primevue/themes`, `primeicons`) — Feather (`@featherds/*`) was removed entirely via NMS-19981; a few `--feather-*` CSS custom-property *names* survive as local tokens in `src/styles/`, but nothing imports the Feather packages
 - **State:** Pinia (**setup store pattern**, not Options API)
 - **Components:** `<script setup lang="ts">` Composition API only
 - **Auto-imports:** `ref`/`computed`/`watch`/`useRouter`/VueUse via `unplugin-auto-import` — don't import these manually; custom composables (`useSnackbar`, `useSpinner`, `useRole`) must still be imported
