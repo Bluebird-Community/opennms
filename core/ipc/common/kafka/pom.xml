@@ -49,9 +49,9 @@
         <artifactId>osgi.cmpn</artifactId>
       </dependency>
       <dependency>
-        <!-- This is required for the JmsQueueNameFactory -->
+        <!-- Provides SystemInfoUtils, used by JmsQueueNameFactory -->
         <groupId>org.opennms.core</groupId>
-        <artifactId>org.opennms.core.camel</artifactId>
+        <artifactId>org.opennms.core.lib</artifactId>
       </dependency>
       <dependency>
         <groupId>org.apache.servicemix.bundles</groupId>

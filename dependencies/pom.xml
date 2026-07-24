@@ -10,11 +10,7 @@
   <packaging>pom</packaging>
   <name>OpenNMS :: Dependencies</name>
   <modules>
-    <module>activemq</module>
-    <module>activemq-web</module>
     <module>atomikos</module>
-    <module>camel</module>
-    <module>camel-test</module>
     <module>cassandra-test</module>
     <module>cxf</module>
     <module>dnsjava</module>

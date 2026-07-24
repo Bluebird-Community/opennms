@@ -142,8 +142,7 @@ OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *abo
 | Web Framework | Spring 4.2.x (OpenNMS-patched fork), Spring Security 4.2.x (patched) |
 | ORM | Hibernate 3.6.11 (OpenNMS build) |
 | REST | Apache CXF 3.6.8 |
-| Messaging | Apache ActiveMQ 5.16.8, Apache Kafka 3.6.2 |
-| Integration | Apache Camel 2.21.5 |
+| Messaging | Apache Kafka 3.6.2 |
 | Time-Series | Newts 3.0.0 (Cassandra-backed), RRDtool via JRRD2 |
 | Servlet Container | Jetty 9.4.x (embedded) |
 | Database | PostgreSQL (Liquibase 3.6.3 for schema) |

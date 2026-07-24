@@ -120,8 +120,6 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
                 })
                 .withEnv("OPENNMS_HTTP_USER", "admin")
                 .withEnv("OPENNMS_HTTP_PASS", "admin")
-                .withEnv("OPENNMS_BROKER_USER", "admin")
-                .withEnv("OPENNMS_BROKER_PASS", "admin")
                 .withEnv("JACOCO_AGENT_ENABLED", "1")
                 .withEnv("JAVA_OPTS", "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom")
                 .withNetwork(Network.SHARED)
@@ -168,8 +166,7 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
 
         String config = "{\n" +
                 "\t\"location\": \"" + profile.getLocation() + "\",\n" +
-                "\t\"id\": \"" + profile.getId() + "\",\n" +
-                "\t\"broker-url\": \"failover:tcp://" + OpenNMSContainer.ALIAS + ":61616\"\n" +
+                "\t\"id\": \"" + profile.getId() + "\"\n" +
                 "}";
         OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(config, Map.class));
 

@@ -106,14 +106,14 @@ You can immediately activate following features via Karaf shell to start process
 ----
 feature:install sentinel-core
 feature:install sentinel-persistence <1>
-feature:install sentinel-jms <2>
+feature:install sentinel-kafka <2>
 feature:install sentinel-blobstore-noop
 feature:install sentinel-jsonstore-postgres
 feature:install sentinel-telemetry-bmp-persist
 ----
 
 <1> Needs datasource configuration setup per xref:operation:deep-dive/flows/sentinel/sentinel.adoc#flows-scaling[Sentinel Flow Processing].
-<2> Can alternatively be set to `sentinel-kafka` based on your selected message broker.
+<2> Provides connectivity to the Kafka message broker.
 Refer to xref:reference:configuration/sentinel-features.adoc#ga-kafka-configuration[Sentinel Kafka Configuration].
 
 To automatically start the adapter each time the Sentinel restarts, add the following to `$\{SENTINEL_HOME}/etc/featuresBoot.d/bmp-adapter.boot`.
@@ -122,7 +122,7 @@ To automatically start the adapter each time the Sentinel restarts, add the foll
 ----
 sentinel-core
 sentinel-persistence
-sentinel-jms
+sentinel-kafka
 sentinel-blobstore-noop
 sentinel-jsonstore-postgres
 sentinel-telemetry-bmp-persist

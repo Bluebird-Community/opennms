@@ -13,9 +13,9 @@
   <modules>
     <module>api</module>
     <module>common</module>
-    <module>camel</module>
     <module>kafka</module>
     <module>mock-impl</module>
+    <module>local</module>
     <module>xml</module>
     <module>off-heap</module>
   </modules>

@@ -23,16 +23,32 @@
 | `MINION_LOCATION`    | Name of the location associated with the Minion | required | –
 |===
 
-.Settings when using ActiveMQ
-[options="header, autowidth"]
-|===
-| Environment variable  | Description                              | Required | Default value
-| `OPENNMS_HTTP_USER`   | User name for the REST API             | optional | `admin`
-| `OPENNMS_HTTP_PASS`   | Password for the REST API              | optional | `admin`
-| `OPENNMS_BROKER_URL`  | ActiveMQ broker URL                    | required | –
-| `OPENNMS_BROKER_USER` | Username for ActiveMQ authentication   | optional | `admin`
-| `OPENNMS_BROKER_PASS` | Password for ActiveMQ authentication   | optional | `admin`
-|===
+.Settings when using gRPC
+
+If you want to use gRPC, the environment variable names are converted with a prefix convention:
+
+* Prefix `GRPC_IPC_` will be written to `org.opennms.core.ipc.grpc.client.cfg`
+
+* Everything behind will be converted to lower case and `_` is replaced with `.`
+
+Setting `GRPC_IPC_HOST` also enables the `opennms-core-ipc-grpc-client` feature at boot.
+
+As an example:
+
+[source, shell]
+----
+environment:
+  - GRPC_IPC_HOST=192.168.1.1
+  - GRPC_IPC_PORT=8990
+----
+
+This creates the file `org.opennms.core.ipc.grpc.client.cfg` with the content:
+
+[source, shell]
+----
+host=192.168.1.1
+port=8990
+----
 
 .Settings when using Apache Kafka
 
@@ -41,6 +57,8 @@ If you want to use Apache Kafka, the environment variable names are converted wi
 * Prefix `KAFKA_IPC_` will be written to `org.opennms.core.ipc.kafka.cfg`
 
 * Everything behind will be converted to lower case and `_` is replaced with `.`
+
+Setting `KAFKA_IPC_BOOTSTRAP_SERVERS` also enables the `opennms-core-ipc-kafka` feature at boot.
 
 As an example:
 

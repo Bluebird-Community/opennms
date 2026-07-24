@@ -23,7 +23,7 @@
     <constructor-arg><ref bean="eventConfDao"/></constructor-arg>
   </bean>
 
-  <bean id="syslogPort" class="org.opennms.core.test.camel.CamelBlueprintTest" factory-method="getAvailablePort">
+  <bean id="syslogPort" class="org.opennms.netmgt.syslogd.AvailablePortFinder" factory-method="getAvailablePort">
     <constructor-arg>
       <bean class="java.util.concurrent.atomic.AtomicInteger">
         <constructor-arg value="10514"/>

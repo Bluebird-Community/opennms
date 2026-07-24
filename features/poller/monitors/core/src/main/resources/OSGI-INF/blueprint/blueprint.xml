@@ -12,13 +12,6 @@
 
     <reference id="secureCredentialsVault" interface="org.opennms.features.scv.api.SecureCredentialsVault" availability="mandatory"/>
 
-	<bean id="activeMQMonitor" class="org.opennms.netmgt.poller.monitors.ActiveMQMonitor" />
-	<service ref="activeMQMonitor" interface="org.opennms.netmgt.poller.ServiceMonitor">
-		<service-properties>
-			<entry key="type"
-				value="org.opennms.netmgt.poller.monitors.ActiveMQMonitor" />
-		</service-properties>
-	</service>
 
 	<bean id="availabilityMonitor" class="org.opennms.netmgt.poller.monitors.AvailabilityMonitor" />
 	<service ref="availabilityMonitor" interface="org.opennms.netmgt.poller.ServiceMonitor">

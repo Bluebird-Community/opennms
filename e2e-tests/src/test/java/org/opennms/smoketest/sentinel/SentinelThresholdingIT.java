@@ -79,7 +79,7 @@ public class SentinelThresholdingIT {
             .withTelemetryProcessing()
             .withBlobStoreStrategy(BlobStoreStrategy.NEWTS_CASSANDRA)
             .withJsonStoreStrategy(JsonStoreStrategy.POSTGRES)
-            .withIpcStrategy(IpcStrategy.JMS)
+            .withIpcStrategy(IpcStrategy.KAFKA)
             .build());
 
     @Test

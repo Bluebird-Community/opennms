@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <features name="opennms-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.3.0">
     <repository>mvn:${project.groupId}/${project.artifactId}/${project.version}/xml/core</repository>
-    <repository>mvn:${project.groupId}/${project.artifactId}/${project.version}/xml/camel</repository>
     <repository>mvn:org.apache.cxf.karaf/apache-cxf/${cxfVersion}/xml/features</repository>
-    <repository>mvn:org.apache.activemq/activemq-karaf/${activemqVersion}/xml/features</repository>
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/1.0.1/xml/features</repository>
-    <repository>mvn:org.apache.activemq/activemq-karaf/${activemqVersion}/xml/features</repository>
     <repository>mvn:org.opennms.integration.api/karaf-features/${opennmsApiVersion}/xml</repository>
     <repository>mvn:com.eclipsesource.jaxrs/features/${osgiJaxRsVersion}/xml/features</repository>
     <repository>mvn:org.apache.karaf.features/framework/${karafVersion}/xml/features</repository>
@@ -217,22 +214,6 @@
         <bundle>mvn:org.opennms.core.tracing/org.opennms.core.tracing.jaeger-tracer/${project.version}</bundle>
     </feature>
 
-    <feature name="opennms-activemq-pool" version="${project.version}" description="OpenNMS :: Features :: ActiveMQ :: Pool">
-        <feature prerequisite="true">zookeeper-dependencies</feature>
-        <feature>activemq-client</feature>
-        <feature>asm</feature>
-        <feature>camel-core</feature>
-        <feature>camel-jms</feature>
-        <feature version="[4.2,4.3)">spring</feature>
-        <feature>opennms-core</feature>
-        <bundle>mvn:org.opennms.features.activemq/org.opennms.features.activemq.pool/${project.version}</bundle>
-    </feature>
-
-    <feature name="opennms-activemq-shell" description="OpenNMS :: Features :: ActiveMQ :: Shell" version="${project.version}">
-      <!-- Additional dependenices are expected to be pulled from the root classloader -->
-      <bundle>mvn:org.opennms.features.activemq/org.opennms.features.activemq.shell/${project.version}</bundle>
-    </feature>
-
     <feature name="opennms-bootstrap" version="${project.version}" description="opennms-bootstrap">
         <bundle>mvn:org.opennms/opennms-bootstrap/${project.version}</bundle>
     </feature>
@@ -272,24 +253,9 @@
         <bundle>mvn:org.opennms.core/org.opennms.core.xml/${project.version}</bundle>
         <bundle>mvn:org.opennms.core/org.opennms.core.fileutils/${project.version}</bundle>
     </feature>
-    <feature name="opennms-core-camel" version="${project.version}" description="OpenNMS :: Core :: Camel">
-        <bundle start-level="${earlyStartLevel}">mvn:io.netty/netty-transport-classes-epoll/${netty4Version}</bundle>
-        <feature>camel-core</feature>
-        <feature>camel-http</feature>
-        <!-- netty-transport-classes-epoll must be loaded before camel-netty4 resolves io.netty.channel.epoll -->
-        <bundle dependency="true">mvn:io.netty/netty-transport-classes-epoll/${netty4Version}</bundle>
-        <feature>camel-netty4</feature>
-        <feature>opennms-core</feature>
-        <bundle dependency="true">mvn:com.fasterxml/aalto-xml/${aaltoXmlVersion}</bundle>
-        <bundle dependency="true">mvn:io.netty/netty-codec-xml/${netty4Version}</bundle>
-        <bundle>mvn:org.opennms.core/org.opennms.core.camel/${project.version}</bundle>
-    </feature>
     <feature name="opennms-core-daemon" version="${project.version}" description="OpenNMS :: Core :: Daemon">
-        <feature>activemq-client</feature>
         <feature>asm</feature>
-        <feature>camel-jms</feature>
         <feature version="${guavaOsgiVersion}">guava</feature>
-        <feature>opennms-activemq-pool</feature>
         <feature>opennms-core</feature>
         <feature>opennms-config</feature>
         <feature>opennms-icmp-api</feature>
@@ -316,22 +282,6 @@
     <feature name="opennms-distributed-core-impl" description="OpenNMS :: Distributed :: Core :: Impl" version="${project.version}">
         <feature>opennms-distributed-core-api</feature>
         <bundle>mvn:org.opennms.features.distributed/core-impl/${project.version}</bundle>
-    </feature>
-    <feature name="opennms-distributed-core-jms" description="OpenNMS :: Distributed :: Core :: JMS" version="${project.version}">
-        <feature>camel-jms</feature>
-        <feature>activemq-camel</feature>
-        <feature>activemq-client</feature>
-        <feature>jms</feature>
-        <feature version="[4.2,4.3)">spring</feature>
-        <feature>opennms-distributed-core-api</feature>
-        <feature>opennms-health-api</feature>
-        <feature>scv-api</feature>
-
-        <!-- spring put these MFs at start-level 10, so I gotta beat them -->
-        <bundle start-level="8">mvn:javax.jms/javax.jms-api/${jmsApiVersion}</bundle>
-        <bundle start-level="8">mvn:org.apache.geronimo.specs/geronimo-jms_1.1_spec/${geronimoVersion}</bundle>
-
-        <bundle>mvn:org.opennms.features.distributed/jms/${project.version}</bundle>
     </feature>
     <feature name="opennms-model" version="${project.version}" description="OpenNMS :: Model">
         <feature version="[4.2,4.3)">spring</feature>
@@ -442,27 +392,9 @@
         <bundle>wrap:mvn:com.squareup.tape2/tape/${tape2Version}$Bundle-SymbolicName=com.squareup.tape2&amp;Bundle-Version=2.0</bundle>
         <bundle dependency="true">wrap:mvn:org.rocksdb/rocksdbjni/${rocksdbjniVersion}$Bundle-SymbolicName=org.rocksdb.jni&amp;Bundle-Version=${rocksdbjniVersion}</bundle>
     </feature>
-    <feature name="opennms-core-ipc-sink-camel-common" version="${project.version}" description="OpenNMS :: Core :: IPC :: Sink :: Camel :: Common">
-        <feature>camel-blueprint</feature>
-        <feature>camel-jms</feature>
-        <feature version="[4.2,4.3)">spring</feature>
-        <feature>opennms-core-ipc-sink-api</feature>
-        <feature>opennms-core-camel</feature>
-        <feature>opennms-dao-api</feature>
-        <bundle>mvn:org.opennms.core.ipc.sink.camel/org.opennms.core.ipc.sink.camel.common/${project.version}</bundle>
-    </feature>
-    <feature name="opennms-core-ipc-sink-camel" version="${project.version}" description="OpenNMS :: Core :: IPC :: Sink :: Camel :: Client">
-        <feature>opennms-core-ipc-sink-camel-common</feature>
-        <bundle>mvn:org.opennms.core.ipc.sink.camel/org.opennms.core.ipc.sink.camel.client/${project.version}</bundle>
-    </feature>
-    <feature name="opennms-core-ipc-sink-camel-server" version="${project.version}" description="OpenNMS :: Core :: IPC :: Sink :: Camel :: Server">
-        <feature>opennms-core-ipc-sink-camel-common</feature>
-        <bundle>mvn:org.opennms.core.ipc.sink.camel/org.opennms.core.ipc.sink.camel.server/${project.version}</bundle>
-    </feature>
     <feature name="opennms-core-ipc-sink-kafka-common" version="${project.version}" description="OpenNMS :: Core :: IPC :: Sink :: Kafka :: Common">
         <feature>opennms-core-ipc-sink-api</feature>
         <feature>opennms-kafka</feature>
-        <feature>opennms-core-camel</feature>
         <feature>opennms-core-ipc-kafka-shell</feature>
         <bundle>mvn:org.opennms.core.health/org.opennms.core.health.api/${project.version}</bundle>
         <bundle>mvn:org.opennms.core.ipc.common/org.opennms.core.ipc.common.kafka/${project.version}</bundle>
@@ -476,13 +408,10 @@
         <bundle>mvn:org.opennms.core.ipc.sink.kafka/org.opennms.core.ipc.sink.kafka.server/${project.version}</bundle>
     </feature>
     <feature name="opennms-core-ipc-rpc-api" version="${project.version}" description="OpenNMS :: Core :: IPC :: RPC :: API">
-        <feature>camel-blueprint</feature>
-        <feature>camel-jms</feature>
         <feature>dropwizard-metrics</feature>
         <feature>org.json</feature>
         <feature>javax.mail</feature>
         <feature version="[4.2,4.3)">spring</feature>
-        <feature>opennms-core-camel</feature>
         <feature>opennms-core-tracing</feature>
         <feature>opennms-dao-api</feature>
         <feature>opennms-distributed-core-api</feature>
@@ -491,18 +420,12 @@
         <bundle>mvn:org.opennms.core.ipc.rpc/org.opennms.core.ipc.rpc.api/${project.version}</bundle>
         <bundle>mvn:org.opennms.core.ipc.rpc/org.opennms.core.ipc.rpc.xml/${project.version}</bundle>
         <bundle>mvn:org.opennms.core.ipc.rpc/org.opennms.core.ipc.rpc.common/${project.version}</bundle>
-        <bundle>mvn:org.opennms.core.ipc.rpc/org.opennms.core.ipc.rpc.camel/${project.version}</bundle>
     </feature>
     <feature name="opennms-rpc-utils" version="${project.version}" description="OpenNMS :: Core :: IPC : RPC :: Utils">
         <feature>opennms-mate-api</feature>
         <feature>opennms-mate-shell</feature>
         <bundle>mvn:org.opennms.features.scv/org.opennms.features.scv.api/${project.version}</bundle>
         <bundle>mvn:org.opennms.core.ipc.rpc/org.opennms.core.ipc.rpc.utils/${project.version}</bundle>
-    </feature>
-    <feature name="opennms-core-ipc-rpc-jms" version="${project.version}" description="OpenNMS :: Core :: IPC :: RPC :: JMS Impl.">
-        <feature>opennms-core-ipc-rpc-api</feature>
-        <feature>opennms-dao-api</feature>
-        <bundle>mvn:org.opennms.core.ipc.rpc/org.opennms.core.ipc.rpc.jms-impl/${project.version}</bundle>
     </feature>
     <feature name="opennms-core-ipc-rpc-kafka" version="${project.version}" description="OpenNMS :: Core :: IPC :: RPC :: Kafka Impl.">
         <feature>opennms-kafka</feature>
@@ -548,7 +471,6 @@
     </feature>
     <feature name="opennms-events-api" version="${project.version}" description="OpenNMS :: Events :: API">
         <feature version="[4.2,4.3)">spring</feature>
-        <feature>camel-core</feature>
         <feature>commons-lang3</feature>
         <feature>jaxb</feature>
         <feature>javax.validation</feature>
@@ -692,13 +614,9 @@
     </feature>
     <feature name="opennms-syslogd" version="${project.version}" description="OpenNMS :: Syslogd">
         <feature version="[4.2,4.3)">spring</feature>
-        <feature>camel-core</feature>
-        <feature>camel-http</feature>
-        <feature>camel-netty4</feature>
         <feature version="${guavaOsgiVersion}">guava</feature>
         <feature>dropwizard-metrics</feature>
         <feature>opennms-core</feature>
-        <feature>opennms-core-camel</feature>
         <feature>opennms-core-daemon</feature>
         <feature>opennms-core-db</feature>
         <feature>opennms-config</feature>
@@ -707,14 +625,8 @@
         <bundle>mvn:org.opennms.features.events/org.opennms.features.events.syslog/${project.version}</bundle>
     </feature>
     <feature name="opennms-syslogd-listener-javanet" version="${project.version}" description="OpenNMS :: Syslogd :: Listener :: java.net">
-        <feature>camel-blueprint</feature>
         <feature>opennms-syslogd</feature>
         <bundle>blueprint:mvn:org.opennms.features.events/org.opennms.features.events.syslog/${project.version}/xml/blueprint-syslog-listener-javanet</bundle>
-    </feature>
-    <feature name="opennms-syslogd-listener-camel-netty" version="${project.version}" description="OpenNMS :: Syslogd :: Listener :: camel-netty">
-        <feature>camel-blueprint</feature>
-        <feature>opennms-syslogd</feature>
-        <bundle>blueprint:mvn:org.opennms.features.events/org.opennms.features.events.syslog/${project.version}/xml/blueprint-syslog-listener-camel-netty</bundle>
     </feature>
     <feature name="opennms-thresholding-api" version="${project.version}" description="OpenNMS :: Thresholding :: API">
         <feature>opennms-config</feature>
@@ -724,12 +636,9 @@
     </feature>
     <feature name="opennms-trapd" version="${project.version}" description="OpenNMS :: Trapd">
         <feature version="[4.2,4.3)">spring</feature>
-        <feature>camel-core</feature>
-        <feature>camel-http</feature>
         <feature version="${guavaOsgiVersion}">guava</feature>
         <feature>opennms-distributed-core-api</feature>
         <feature>opennms-core</feature>
-        <feature>opennms-core-camel</feature>
         <feature>opennms-core-daemon</feature>
         <feature>opennms-core-db</feature>
         <feature>opennms-config</feature>
@@ -747,15 +656,6 @@
         <bundle start-level="${earlyStartLevel}">mvn:org.codehaus.jettison/jettison/${jettisonVersion}</bundle>
         <bundle>mvn:org.opennms.features.ticketing/org.opennms.features.ticketing.api/${project.version}</bundle>
         <bundle>mvn:org.opennms.features/opennms-integration-tsrm/${project.version}</bundle>
-    </feature>
-    <feature name="eif-adapter" version="${project.version}" description="OpenNMS :: Features :: EIF Adapter">
-        <feature>camel-core</feature>
-        <feature>camel-blueprint</feature>
-        <feature>camel-netty4</feature>
-        <feature>opennms-core-camel</feature>
-        <feature>opennms-collection-api</feature>
-        <feature>opennms-dao-api</feature>
-        <bundle>mvn:org.opennms.features/org.opennms.features.eif-adapter/${project.version}</bundle>
     </feature>
     <feature name="smack" version="${smackVersion}" description="Ignite Realtime :: Smack">
         <bundle>mvn:org.igniterealtime.smack/smack-core/${smackVersion}$Bundle-Sym</bundle>
@@ -825,7 +725,6 @@
         <bundle>mvn:org.opennms/opennms-detector-generic/${project.version}</bundle>
         <bundle>mvn:org.opennms/opennms-detector-jdbc/${project.version}</bundle>
         <bundle>mvn:org.opennms/opennms-detector-jmx/${project.version}</bundle>
-        <bundle>mvn:org.opennms/opennms-detector-jms/${project.version}</bundle>
         <bundle>mvn:org.opennms/opennms-detector-lineoriented/${project.version}</bundle>
         <bundle>mvn:org.opennms/opennms-detector-rdns-lookup/${project.version}</bundle>
         <bundle>mvn:org.opennms/opennms-detector-simple/${project.version}</bundle>
@@ -839,10 +738,7 @@
         <bundle dependency="true">mvn:org.apache.httpcomponents/httpclient-osgi/${httpclientVersion}</bundle>
     </feature>
     <feature name="opennms-poller-monitors-core" version="${project.version}" description="OpenNMS :: Poller :: Monitors :: Core">
-        <feature>activemq-client</feature>
         <feature>bsf</feature>
-        <feature>camel-core</feature>
-        <feature>camel-http</feature>
         <feature>commons-io</feature>
         <feature>commons-jexl</feature>
         <feature>commons-lang</feature>
@@ -972,7 +868,6 @@
 
     <feature name="opennms-telemetry-daemon" start-level="${earlyStartLevel}" version="${project.version}" description="OpenNMS :: Telemetry :: Daemon">
         <feature>bson</feature>
-        <feature>camel-spring</feature>
         <feature>dropwizard-metrics</feature>
         <feature version="${netty4Version}">netty</feature>
         <feature>opennms-core-daemon</feature>
@@ -1177,51 +1072,6 @@
         <bundle start-level="${lateStartLevel}">mvn:org.opennms.features.geocoder/org.opennms.features.geocoder.google/${project.version}</bundle>
         <bundle start-level="${lateStartLevel}">mvn:org.opennms.features.geocoder/org.opennms.features.geocoder.mapquest/${project.version}</bundle>
         <bundle start-level="${lateStartLevel}">mvn:org.opennms.features.geocoder/org.opennms.features.geocoder.nominatim/${project.version}</bundle>
-    </feature>
-    <feature name="osgi-nrtg-api" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: API">
-        <details>The API contains the models for the NRTG OSGI projects. It has models for collection jobs, measurements and protocol collectors.</details>
-        <bundle>mvn:org.opennms.features.nrtg/nrtg-api/${project.version}</bundle>
-    </feature>
-    <feature name="osgi-nrtg-protocolcollector-snmp" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: Collectors :: SNMP">
-        <details>Plugin for the NRTCollector OSGI Satellit to collect data from snmp agents</details>
-        <feature>osgi-nrtg-api</feature>
-        <bundle>mvn:org.opennms.features.nrtg.protocolcollector/nrtg-protocolcollector-snmp/${project.version}</bundle>
-    </feature>
-    <feature name="osgi-nrtg-protocolcollector-tca" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: Collectors :: TCA">
-        <details>Plugin for the NRTCollector OSGI Satellite to collect data from TCA agents.</details>
-        <feature>osgi-nrtg-api</feature>
-        <bundle>mvn:org.opennms.features.nrtg.protocolcollector/nrtg-protocolcollector-tca/${project.version}</bundle>
-    </feature>
-    <feature name="osgi-nrtg-web" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: Web">
-        <details>NRTG Web Runtime Feature</details>
-        <feature>osgi-nrtg-api</feature>
-        <bundle>mvn:org.opennms.features.nrtg/nrtg-web/${project.version}</bundle>
-    </feature>
-    <feature name="osgi-nrtg-base" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: Base">
-        <details>OSGI Runtime for the NRTCollector.</details>
-        <feature>osgi-nrtg-protocolcollector-snmp</feature>
-        <feature>osgi-nrtg-protocolcollector-tca</feature>
-        <feature>osgi-nrtg-web</feature>
-    </feature>
-    <feature name="osgi-nrtg-jms" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: JMS">
-        <details>OSGI Runtime for the NRTCollector.</details>
-        <feature>osgi-nrtg-base</feature>
-        <feature>activemq</feature>
-        <feature>activemq-blueprint</feature>
-        <feature version="${springVersion}">spring-jms</feature>
-        <bundle>mvn:org.opennms.features.nrtg/nrtg-collector/${project.version}</bundle>
-        <bundle>mvn:org.opennms.features.nrtg/nrtg-nrtbroker-jms/${project.version}</bundle>
-        <bundle>mvn:org.opennms.features.nrtg/nrtg-broker/${project.version}</bundle>
-    </feature>
-    <feature name="osgi-nrtg-local" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: Local">
-        <details>OSGI Runtime for the NRTCollector.</details>
-        <feature>osgi-nrtg-base</feature>
-        <bundle>mvn:org.opennms.features.nrtg/nrtg-nrtbroker-local/${project.version}</bundle>
-    </feature>
-    <feature name="nrtg" version="${project.version}" description="OpenNMS :: Features :: NRTG :: Features :: All">
-        <details>OSGI Runtime for the NRTCollector.</details>
-        <feature>osgi-nrtg-jms</feature>
-        <feature>osgi-nrtg-local</feature>
     </feature>
 
     <feature name="jira-troubleticketer" version="${project.version}" description="OpenNMS :: Features :: Ticketing :: JIRA">
@@ -1554,15 +1404,6 @@
         </conditional>
     </feature>
 
-    <feature name="opennms-core-ipc-twin-jms" description="OpenNMS :: Core :: IPC :: Twin :: JMS" version="${project.version}">
-        <feature>camel-blueprint</feature>
-        <feature>camel-jms</feature>
-        <feature version="[4.2,4.3)">spring</feature>
-        <feature>opennms-core-camel</feature>
-        <feature>opennms-core-ipc-twin-common</feature>
-        <bundle>mvn:org.opennms.core.ipc.twin.jms/org.opennms.core.ipc.twin.jms.subscriber/${project.version}</bundle>
-    </feature>
-
     <feature name="opennms-core-ipc-twin-common" description="OpenNMS :: Core :: IPC :: Twin :: Common" version="${project.version}">
         <feature>dropwizard-metrics</feature>
         <feature version="${guavaOsgiVersion}">guava</feature>
@@ -1583,11 +1424,6 @@
         <bundle>wrap:mvn:com.github.java-json-tools/json-patch/1.13$overwrite=merge&amp;Import-Package=*;resolution:=optional&amp;Export-Package=com.github.fge.jsonpatch.diff,com.github.fge.jsonpatch</bundle>
     </feature>
 
-    <feature name="opennms-core-ipc-jms" description="OpenNMS :: Core :: IPC :: JMS" version="${project.version}">
-        <feature>opennms-core-ipc-sink-camel</feature>
-        <feature>opennms-core-ipc-rpc-jms</feature>
-        <feature>opennms-core-ipc-twin-jms</feature>
-    </feature>
     <feature name="opennms-core-ipc-kafka" description="OpenNMS :: Core :: IPC :: Kafka" version="${project.version}">
         <feature>opennms-core-ipc-sink-kafka</feature>
         <feature>opennms-core-ipc-rpc-kafka</feature>

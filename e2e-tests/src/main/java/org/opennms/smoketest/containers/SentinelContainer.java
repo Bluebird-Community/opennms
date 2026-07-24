@@ -101,11 +101,8 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                 .withEnv("OPENNMS_DBNAME", "opennms")
                 .withEnv("OPENNMS_DBUSER", "opennms")
                 .withEnv("OPENNMS_DBPASS", "opennms")
-                .withEnv("OPENNMS_BROKER_URL", "failover:tcp://" + OpenNMSContainer.ALIAS + ":61616")
                 .withEnv("OPENNMS_HTTP_USER", "admin")
                 .withEnv("OPENNMS_HTTP_PASS", "admin")
-                .withEnv("OPENNMS_BROKER_USER", "admin")
-                .withEnv("OPENNMS_BROKER_PASS", "admin")
                 .withEnv("JACOCO_AGENT_ENABLED", "1")
                 .withEnv("JAVA_OPTS", "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom -Dorg.opennms.rrd.storeByForeignSource=true")
                 .withNetwork(Network.SHARED)
@@ -184,9 +181,9 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                 ImmutableMap.<String,String>builder()
                         .put("endpoint", "http://" + OpenNMSContainer.CLICKHOUSE_ALIAS + ":8123")
-                        .put("database", "default")
-                        .put("username", "default")
-                        .put("password", "")
+                        .put("database", ClickHouseContainer.DATABASE)
+                        .put("username", ClickHouseContainer.USERNAME)
+                        .put("password", ClickHouseContainer.PASSWORD)
                         .put("table", "flows")
                         .put("ttlDays", "0")
                         .build());
@@ -207,8 +204,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         featuresOnBoot.add("opennms-health-rest-service");
         if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
             featuresOnBoot.add("sentinel-kafka");
-        } else if (IpcStrategy.JMS.equals(model.getIpcStrategy())) {
-            featuresOnBoot.add("sentinel-jms");
         }
         if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
             featuresOnBoot.add("sentinel-newts");

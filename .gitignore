@@ -31,8 +31,6 @@ npm-debug.log
 yarn-error.log
 /core/web-assets/node_modules
 /core/web-assets/**/node_modules
-/features/discovery/activemq-data
-/opennms-alarms/jms-northbounder/activemq-data/
 core/web-assets/.pnpm-store/
 core/web-assets/.pnpm-debug.log
 ui/.pnpm-store/

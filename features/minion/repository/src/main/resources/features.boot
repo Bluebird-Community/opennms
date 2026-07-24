@@ -1,12 +1,10 @@
 # Minion Default Features
 pax-web-war
-# Install specific versions of the spring and spring-jms features to
+# Install a specific version of the spring feature to
 # reduce the computations needed by the bundle dependency resolver
 spring/${springVersion}
-spring-jms/${springVersion}
-opennms-core-ipc-jms
 opennms-core-ipc-twin-shell
-opennms-syslogd-listener-camel-netty
+opennms-syslogd-listener-javanet
 opennms-trapd-listener
 opennms-events-sink-dispatcher
 opennms-send-event-command

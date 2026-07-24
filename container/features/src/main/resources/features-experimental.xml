@@ -17,38 +17,7 @@
     <repository>mvn:${project.groupId}/${project.artifactId}/${project.version}/xml/core</repository>
     <repository>mvn:${project.groupId}/${project.artifactId}/${project.version}/xml/features</repository>
 
-    <!-- ActiveMQ service features -->
     <repository>mvn:org.apache.karaf.features/enterprise/${karafVersion}/xml/features</repository>
-    <repository>mvn:org.apache.activemq/activemq-karaf/${activemqVersion}/xml/features</repository>
-
-    <feature name="opennms-activemq-dispatcher-config" description="OpenNMS :: Features :: ActiveMQ :: Dispatcher Broker Config" version="${project.version}">
-      <!-- This broker configuration will configure a broker to talk to a remote OpenNMS machine -->
-      <configfile override="true" finalname="/etc/activemq-dispatcher.xml">mvn:org.opennms.features.activemq/org.opennms.features.activemq.broker/${project.version}/xml/activemq-dispatcher</configfile>
-      <!-- Don't overwrite any existing properties file -->
-      <configfile finalname="/etc/org.apache.activemq.server-dispatcher.cfg">mvn:org.opennms.features.activemq/org.opennms.features.activemq.broker/${project.version}/cfg/activemq-dispatcher</configfile>
-    </feature>
-
-    <feature name="opennms-activemq-dispatcher" description="OpenNMS :: Features :: ActiveMQ :: Dispatcher Broker" version="${project.version}">
-      <feature>opennms-activemq-dispatcher-config</feature>
-      <feature>activemq</feature>
-    </feature>
-
-    <feature name="opennms-activemq-config" description="OpenNMS :: Features :: ActiveMQ :: Broker Config" version="${project.version}">
-      <!-- This broker configuration will configure a local ActiveMQ broker to process messages on the OpenNMS machine -->
-      <configfile override="true" finalname="/etc/activemq-receiver.xml">mvn:org.opennms.features.activemq/org.opennms.features.activemq.broker/${project.version}/xml/activemq-receiver</configfile>
-      <!-- Don't overwrite any existing properties file -->
-      <configfile finalname="/etc/org.apache.activemq.server-broker.cfg">mvn:org.opennms.features.activemq/org.opennms.features.activemq.broker/${project.version}/cfg/activemq-receiver</configfile>
-    </feature>
-
-    <feature name="opennms-activemq" description="OpenNMS :: Features :: ActiveMQ :: Broker" version="${project.version}">
-      <feature>opennms-activemq-config</feature>
-      <feature>activemq</feature>
-    </feature>
-
-    <feature name="opennms-activemq-component" description="OpenNMS :: Features :: ActiveMQ :: Component" version="${project.version}">
-      <feature>opennms-activemq-pool</feature>
-      <bundle>mvn:org.opennms.features.activemq/org.opennms.features.activemq.component/${project.version}</bundle>
-    </feature>
 
     <!-- OpenNMS features -->
 
@@ -65,7 +34,6 @@
     </feature>
 
     <feature name="opennms-events-daemon" description="OpenNMS :: Events :: Daemon" version="${project.version}">
-      <feature>camel-netty4</feature>
       <feature>commons-beanutils</feature>
       <feature>guava</feature>
       <feature>gemini-blueprint</feature>

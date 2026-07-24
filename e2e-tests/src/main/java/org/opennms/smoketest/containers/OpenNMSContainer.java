@@ -273,9 +273,9 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                     ImmutableMap.<String,String>builder()
                             .put("endpoint", "http://" + CLICKHOUSE_ALIAS + ":8123")
-                            .put("database", "default")
-                            .put("username", "default")
-                            .put("password", "")
+                            .put("database", ClickHouseContainer.DATABASE)
+                            .put("username", ClickHouseContainer.USERNAME)
+                            .put("password", ClickHouseContainer.PASSWORD)
                             .put("table", "flows")
                             .put("ttlDays", "0")
                             .build());
@@ -375,10 +375,6 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
     public Properties getSystemProperties() {
         final Properties props = new Properties();
 
-        if (!IpcStrategy.JMS.equals(model.getIpcStrategy())) {
-            props.put("org.opennms.activemq.broker.disable", "true");
-        }
-
         if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
             props.put("org.opennms.core.ipc.strategy", "kafka");
             props.put("org.opennms.core.ipc.kafka.bootstrap.servers", KAFKA_ALIAS + ":9092");
@@ -468,20 +464,13 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
 
         @Override
         protected void waitUntilReady() {
-            try {
-                waitUntilReadyWrapped();
-            } catch (Exception e) {
-                var logs =
-                        "\n\t\t----------------------------------------------------------\n"
-                                + container.getLogs()
-                                .replaceFirst(
-                                        "(?ms).*?(^An error occurred while attempting to start the .*?)\\s*^\\[INFO\\].*",
-                                        "$1\n")
-                                .replaceAll("(?m)^", "\t\t")
-                                + "\t\t----------------------------------------------------------";
-
-                throw e;
-            }
+            // Let startup/health-check failures propagate immediately. We deliberately do NOT call
+            // container.getLogs() here: it is an unbounded blocking fetch against a container that is
+            // still running (e.g. when a health check stays red), which previously swallowed the
+            // enclosing awaitility timeout and let the smoke job run to the CI 6h wall-clock limit
+            // instead of failing fast. Container logs and a thread dump are still gathered on failure
+            // by afterTest() -> retainLogsfNeeded(), which is time-bounded.
+            waitUntilReadyWrapped();
         }
 
         protected void waitUntilReadyWrapped() {

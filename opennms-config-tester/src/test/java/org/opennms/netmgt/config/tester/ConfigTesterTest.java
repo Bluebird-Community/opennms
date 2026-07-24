@@ -212,11 +212,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testJmsNorthbounderConfiguration() {
-        ignoreConfigFile("jms-northbounder-configuration.xml");
-    }
-
-    @Test
     public void testJmxDatacollectionConfig() {
         testConfigFile("jmx-datacollection-config.xml");
     }
@@ -267,14 +262,6 @@ public class ConfigTesterTest {
     @Test
     public void testNotifications() {
         testConfigFile("notifications.xml");
-    }
-
-    /**
-     * Used by the ActiveMQ broker embedded inside applicationContext-daemon.xml.
-     */
-    @Test
-    public void testOpennmsActivemq() {
-        ignoreConfigFile("opennms-activemq.xml");
     }
 
     @Test

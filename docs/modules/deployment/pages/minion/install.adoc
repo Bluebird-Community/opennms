@@ -1,7 +1,7 @@
 
 [[install-minion]]
 = Install Minion
-:description: How to install OpenNMS Minion on CentOS/RHEL 7-9, Debian/Ubuntu, Docker, and configure with message brokers: Kafka, ActiveMQ, Embedded ActiveMQ, gRPC.
+:description: How to install OpenNMS Minion on CentOS/RHEL 7-9, Debian/Ubuntu, Docker, and configure with message brokers: Kafka, gRPC.
 
 [[objectives]]
 == Objectives
@@ -19,7 +19,7 @@
 * Java installed {compatible-javajdk}.
 * DNS configured so that `localhost` and your server's host name resolve properly.
 * A {page-component-title} core instance runs on latest stable release.
-* A Minion server can access desired message broker nodes (for example, ActiveMQ `61616/tcp`, Apache Kafka `9092/tcp`).
+* A Minion server can access the {page-component-title} Core gRPC server (`8990/tcp`) or the desired message broker nodes (for example, Apache Kafka `9092/tcp`).
 * A system user with administrative permissions (sudo) to perform the installation tasks.
 ifeval::["{page-component-title}" == "Horizon"]
 * If you are running the services in link:https://docs.docker.com/[Docker], you also need link:https://docs.docker.com/compose/install[Docker Compose] for the service stacks from our examples.
@@ -142,12 +142,6 @@ Kafka::
 +
 --
 include::message-broker/kafka.adoc[]
---
-
-ActiveMQ::
-+
---
-include::message-broker/activemq.adoc[]
 --
 
 gRPC::

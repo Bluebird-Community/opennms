@@ -300,10 +300,6 @@
     <filter-name>Origin Filter</filter-name>
     <url-pattern>/rest/*</url-pattern>
   </filter-mapping>
-  <filter-mapping>
-    <filter-name>Origin Filter</filter-name>
-    <url-pattern>/nrt/*</url-pattern>
-  </filter-mapping>
 
   <!--
   <filter-mapping>
@@ -313,10 +309,6 @@
   <filter-mapping>
     <filter-name>CORS Filter</filter-name>
     <url-pattern>/rest/*</url-pattern>
-  </filter-mapping>
-  <filter-mapping>
-    <filter-name>CORS Filter</filter-name>
-    <url-pattern>/nrt/*</url-pattern>
   </filter-mapping>
   -->
 
@@ -428,13 +420,6 @@
   <listener>
     <listener-class>org.opennms.core.spring.web.ContextLoaderListener</listener-class>
   </listener>
-
-  <!-- NrtCollection -->
-    <context-param>
-        <description>The URL of the Message Broker to connect to</description>
-        <param-name>org.apache.activemq.brokerURL</param-name>
-        <param-value>tcp://localhost:61616</param-value>
-    </context-param>
 
   <!-- WARMERGE: insert listener -->
 

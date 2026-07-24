@@ -1,7 +1,7 @@
 = Off-heap Storage
 :description: Off-heap storage with the OpenNMS Minion.
 
-If a Minion loses connectivity with the broker (Kafka or ActiveMQ), then any received messages (syslog, flows, SNMP traps) are queued until connectivity is restored.
+If a Minion loses connectivity with the {page-component-title} core instance (over gRPC or Kafka), then any received messages (syslog, flows, SNMP traps) are queued until connectivity is restored.
 This queue is limited by a fixed (and configurable) number of messages queued in the JVM heap and can optionally queue additional messages by persisting directly to the file system, avoiding heap memory use.
 Once the queue is full, additional messages are dropped.
 

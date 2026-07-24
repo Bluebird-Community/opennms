@@ -344,23 +344,17 @@ If you keep reading back, _that_ bundle was pulled in by a feature called `openn
 Now you can look for the `opennms-dnsresolver-netty` feature in [the `features/container/src/main/resources/` directory](container/src/main/resources/) and fix its dependencies.
 In this particular bit of code, I had some things that wanted version 3+, and some that wanted 2.x, so I reverted our updates to `dnsjava` to version `2.1.9` for our build.
 
-### Future Refactoring: Spring, ActiveMQ, Camel, Oh My!
+### Future Refactoring: Spring, Hibernate, Karaf
 
 There are a bunch of long-term refactoring goals that still need work, to address potential security and other issues.
 
 Our worst Spring and other security issues are handled by us having special backports of security fixes to OpenNMS-specific forks of those jars.
-This helps us in the short-term, but ultimately we need to uplift the core to be using the latest Spring, Hibernate, Karaf, ActiveMQ, and Camel.
+This helps us in the short-term, but ultimately we need to uplift the core to be using the latest Spring, Hibernate, and Karaf.
 
-The unfortunate thing is that a lot of these are cross-dependent, so you can only update them in increments.
-For example, Camel 2.x is the last version that supports Spring 4, if we wanted to move forward, we'd also need to update Spring.
-ActiveMQ is similarly tied to both Spring and Camel.
+Historically these uplifts were badly entangled with Apache Camel and ActiveMQ: Camel 2.x was the last version that supported Spring 4, and ActiveMQ was similarly tied to both Spring and Camel, so any attempt to move Spring forward dragged them along.
+That entanglement is now gone — Apache Camel, ActiveMQ (including the embedded broker), and the JMS IPC transport have been removed entirely, leaving gRPC (the default for Minion) and Kafka as the only IPC transports. Removing the Camel-2/Spring-4 anchor is what unblocks the Spring uplift.
 
-We have taken a number of shots at updating these incrementally, and that work is partially complete, most notably the recent update to Camel.
-We aren't at the _latest_ Camel 2.x, but the only remaining known CVEs exercise Camel code we don't use.
-
-We will need to continue to work on these uplifts, a little at a time.
-First, moving from Spring 4.2.x to 4.3.x (the last attempt had some strange failures, but might be better with some of the recent Karaf work).
-Then, updating ActiveMQ and Camel.
+We will need to continue to work on these uplifts, a little at a time, starting with moving from Spring 4.2.x to 4.3.x (the last attempt had some strange failures, but might be better with some of the recent Karaf work).
 
 Another large thing that will eventually hit us is when it's time to move to the latest servlet and related APIs.
 Whole packages have been moved around (to `jakarta.*`) and a lot of things need to change at once.

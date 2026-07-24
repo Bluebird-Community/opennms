@@ -3,7 +3,6 @@ src = "org.opennms.sentinel.controller.cfg.tmpl"
 dest = "/opt/sentinel/etc/org.opennms.sentinel.controller.cfg"
 keys = [
     "/location",
-    "/id",
-    "/broker-url"
+    "/id"
 ]
 reload_cmd = "/opt/sentinel/confd/scripts/remove-if-empty /opt/sentinel/etc/org.opennms.sentinel.controller.cfg"

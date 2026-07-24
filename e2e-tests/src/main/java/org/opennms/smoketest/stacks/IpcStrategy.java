@@ -22,10 +22,9 @@
 package org.opennms.smoketest.stacks;
 
 /**
- * JMS vs Kafka
+ * gRPC vs Kafka
  */
 public enum IpcStrategy {
-    JMS,
     KAFKA,
     GRPC
 }

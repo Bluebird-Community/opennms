@@ -89,7 +89,6 @@ useEnvCredentials(){
   echo "WARNING: Credentials can be exposed via docker inspect and log files. Please consider to use a keystore file."
   echo "         You can initialize a keystore file with the -s option."
   ${SENTINEL_HOME}/bin/scvcli set opennms.http ${OPENNMS_HTTP_USER} ${OPENNMS_HTTP_PASS}
-  ${SENTINEL_HOME}/bin/scvcli set opennms.broker ${OPENNMS_BROKER_USER} ${OPENNMS_BROKER_PASS}
 }
 
 setCredentials() {
@@ -100,12 +99,7 @@ setCredentials() {
   read -r -s -p "Enter OpenNMS HTTP password: " OPENNMS_HTTP_PASS
   echo ""
 
-  read -r -p "Enter OpenNMS Broker username: " OPENNMS_BROKER_USER
-  read -r -s -p "Enter OpenNMS Broker password: " OPENNMS_BROKER_PASS
-  echo ""
-
   ${SENTINEL_HOME}/bin/scvcli set opennms.http ${OPENNMS_HTTP_USER} ${OPENNMS_HTTP_PASS}
-  ${SENTINEL_HOME}/bin/scvcli set opennms.broker ${OPENNMS_BROKER_USER} ${OPENNMS_BROKER_PASS}
 
   rsync --out-format="%n %C" ${SENTINEL_HOME}/etc/scv.jce /keystore/.
 }
@@ -136,7 +130,6 @@ initConfig() {
         SENTINEL_CONFIG=${SENTINEL_HOME}/etc/org.opennms.sentinel.controller.cfg
         echo "location = ${SENTINEL_LOCATION}" > ${SENTINEL_CONFIG}
         echo "id = ${SENTINEL_ID:=$(uuidgen)}" >> ${SENTINEL_CONFIG}
-        echo "broker-url = ${OPENNMS_BROKER_URL}" >> ${SENTINEL_CONFIG}
 
         # Configure datasource
         DB_CONFIG=${SENTINEL_HOME}/etc/org.opennms.netmgt.distributed.datasource.cfg
