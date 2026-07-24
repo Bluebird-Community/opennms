@@ -182,16 +182,6 @@ public class SyslogdLoadIT implements InitializingBean {
         SyslogdTestUtils.startSyslogdGracefully(m_syslogd);
     }
 
-    private void startSyslogdCamelNetty() throws Exception {
-        m_syslogd = new Syslogd();
-        SyslogReceiverCamelNettyImpl receiver = new SyslogReceiverCamelNettyImpl(m_config);
-        receiver.setDistPollerDao(m_distPollerDao);
-        receiver.setMessageDispatcherFactory(m_messageDispatcherFactory);
-        m_syslogd.setSyslogReceiver(receiver);
-        m_syslogd.init();
-        SyslogdTestUtils.startSyslogdGracefully(m_syslogd);
-    }
-
     @Test
     @Transactional
     public void testSyslogConnectionHandlerDefaultImpl() throws Exception {
@@ -238,20 +228,6 @@ public class SyslogdLoadIT implements InitializingBean {
     @Transactional
     public void testSyslogReceiverJavaNet() throws Exception {
         startSyslogdJavaNet();
-        doTestSyslogReceiver();
-    }
-
-    @Test
-    @Transactional
-    public void testSyslogReceiverCamelNetty() throws Exception {
-        startSyslogdCamelNetty();
-        // Wait for the Camel context to start
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return ((SyslogReceiverCamelNettyImpl)m_syslogd.getSyslogReceiver()).isStarted();
-            }
-        });
         doTestSyslogReceiver();
     }
 
