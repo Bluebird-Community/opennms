@@ -11,7 +11,7 @@
   </blacklistedRepositories>
 
   <blacklistedFeatures>
-    <!-- replaced by `spring-security-opennms` -->
+    <!-- not used in OSGi; webapp security runs on the host classpath -->
     <feature>spring-security</feature>
   </blacklistedFeatures>
 

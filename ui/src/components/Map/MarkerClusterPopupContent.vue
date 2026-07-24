@@ -5,7 +5,7 @@
       <br />
       <div class="marker-cluster-header-info">
         <div class="col">
-          <span class="larger-icon"><FeatherIcon :icon="Location" /></span>
+          <span class="larger-icon"><OnmsIcon :icon="Location" /></span>
           <span>{{ latitude }}, {{ longitude }}</span>
         </div>
       </div>
@@ -40,8 +40,8 @@
 import { PropType, computed } from 'vue'
 import { orderBy } from 'lodash'
 import { Marker, MarkerCluster as Cluster } from 'leaflet'
-import { FeatherIcon } from '@featherds/icon'
-import Location from '@featherds/icon/action/Location'
+import OnmsIcon from '@/components/icons/OnmsIcon.vue'
+import Location from '@/components/icons/action/Location.vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useMenuStore } from '@/stores/menuStore'
 import { IpInterface, Node } from '@/types'
@@ -109,8 +109,8 @@ const getItems = () => {
 </script>
 
 <style lang="scss" scoped>
-@import "@featherds/table/scss/table";
-@import "@featherds/styles/themes/variables";
+@import "@/styles/onms-table";
+@import "@/styles/onms-tokens";
 
 .marker-cluster-header-info {
   display: flex;
@@ -134,13 +134,13 @@ const getItems = () => {
   table {
     margin-top: 0px !important;
     font-size: 12px !important;
-    @include table;
+    @include onms-table;
   }
 
   thead {
     z-index: 2;
     position: relative;
-    background: var($surface);
+    background: var(--p-content-background);
   }
 
   td {
@@ -151,7 +151,7 @@ const getItems = () => {
 
       &.NORMAL {
         background: var($success);
-        color: var($state-text-color-on-surface-dark); // --feather-state-text-color-on-surface-dark;
+        color: var($state-text-color-on-surface-dark);
       }
       &.WARNING,
       &.MINOR,
@@ -160,7 +160,7 @@ const getItems = () => {
       }
       &.CRITICAL {
         background: var($error);
-        color: var($state-text-color-on-surface-dark); // --feather-state-text-color-on-surface-dark;
+        color: var($state-text-color-on-surface-dark);
       }
     }
    }

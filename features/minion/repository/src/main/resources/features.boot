@@ -2,7 +2,7 @@
 pax-web-war
 # Install a specific version of the spring feature to
 # reduce the computations needed by the bundle dependency resolver
-spring/${springVersion}
+spring/${springOsgiVersion}
 opennms-core-ipc-twin-shell
 opennms-syslogd-listener-javanet
 opennms-trapd-listener
