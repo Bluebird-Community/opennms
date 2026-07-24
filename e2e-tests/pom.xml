@@ -48,7 +48,6 @@
     <skip.surefire.tests>false</skip.surefire.tests>
     <skipITs>true</skipITs>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <camelVersion>2.21.5</camelVersion>
     <groovyVersion>3.0.21</groovyVersion>
     <frontendPluginVersion>1.15.1</frontendPluginVersion>
     <jackson2Version>2.22.0</jackson2Version>
@@ -588,11 +587,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms.core</groupId>
-      <artifactId>org.opennms.core.camel</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.core</groupId>
       <artifactId>org.opennms.core.web</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -666,12 +660,6 @@
           <artifactId>commons-logging</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.camel</groupId>
-      <artifactId>camel-elasticsearch</artifactId>
-      <version>${camelVersion}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.opennms.features.telemetry.protocols.bmp</groupId>

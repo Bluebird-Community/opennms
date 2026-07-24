@@ -255,12 +255,6 @@ This list is not exhaustive and only covers the most commonly used commands.
 |device-config:tftp-server-statistics
 |View or reset TFTP server statistics
 |Enabled By Default
-|opennms:activemq-purge-queue
-|Purge the content of an ActiveMQ queue
-|Enabled By Default
-|opennms:activemq-stats
-|Show statistics for the embedded ActiveMQ broker
-|Enabled By Default
 |opennms:add-detector-to-foreignsource
 |Adds a detector to a foreign source definition, creating the foreign source definition if it does not exist
 |Enabled By Default

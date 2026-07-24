@@ -106,11 +106,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms.core.test-api</groupId>
-      <artifactId>org.opennms.core.test-api.activemq</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.core.test-api</groupId>
       <artifactId>org.opennms.core.test-api.snmp</artifactId>
       <scope>test</scope>
     </dependency>
@@ -122,11 +117,6 @@
     <dependency>
       <groupId>org.opennms.core.test-api</groupId>
       <artifactId>org.opennms.core.test-api.services</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.core.test-api</groupId>
-      <artifactId>org.opennms.core.test-api.camel</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

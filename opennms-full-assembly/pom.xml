@@ -335,7 +335,6 @@
                 <feature>spring-websocket/${springVersion}</feature>
 
                 <!-- All of the OpenNMS features -->
-                <feature>activemq-broker-noweb</feature>
                 <feature>aries-blueprint</feature>
                 <feature>aries-proxy</feature>
                 <feature>blueprint-web</feature>
@@ -401,8 +400,6 @@
                 <feature>jolokia</feature>
                 <feature>json-lib</feature>
                 <feature>lmax-disruptor</feature>
-                <feature>opennms-activemq-pool</feature>
-                <feature>opennms-activemq-shell</feature>
                 <feature>opennms-bootstrap</feature>
                 <feature>opennms-collection-api</feature>
                 <feature>opennms-collection-commands</feature>
@@ -448,7 +445,6 @@
                 <feature>opennms-snmp-commands</feature>
                 <feature>opennms-syslogd</feature>
                 <feature>opennms-syslogd-listener-javanet</feature>
-                <feature>opennms-syslogd-listener-camel-netty</feature>
                 <feature>opennms-trapd</feature>
                 <feature>opennms-util</feature>
                 <feature>jax-rs-connector</feature>
@@ -460,7 +456,6 @@
                 <feature>spring-security-opennms</feature>
                 <feature>twitter4j</feature>
                 <feature>opennms-jaas-login-module</feature>
-                <feature>nrtg</feature>
                 <feature>opennms-graphml</feature>
                 <feature>opennms-graphs</feature>
                 <feature>opennms-graph-provider-persistence-test</feature>
@@ -472,7 +467,6 @@
                      opennms-topology-runtime-base feature removed in phase 4. List it
                      explicitly so the bundles are provisioned into the repo. -->
                 <feature>geolocation</feature>
-                <feature>eif-adapter</feature>
                 <feature>opennms-telemetry-collection</feature>
                 <feature>opennms-telemetry-bmp</feature>
                 <feature>opennms-telemetry-bmp-stats</feature>
@@ -542,7 +536,6 @@
               </descriptors>
               <features>
                 <!-- Experimental features that are not included in OpenNMS -->
-                <feature>opennms-activemq-component</feature>
                 <feature>opennms-discovery</feature>
                 <feature>opennms-events-daemon</feature>
                 <feature>opennms-webapp</feature>

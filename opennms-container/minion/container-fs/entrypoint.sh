@@ -151,8 +151,6 @@ function parseEnvironment() {
             updateConfig "$ipc_name" "${!env_var}" "${MINION_HOME}/etc/org.opennms.core.ipc.kafka.cfg"
             if [[ "$ipc_name" == "bootstrap.servers" ]]; then
                 echo "opennms-core-ipc-kafka"   > ${MINION_HOME}/etc/featuresBoot.d/kafka.boot
-                echo "!minion-jms" > ${MINION_HOME}/etc/featuresBoot.d/disable-activemq.boot
-                echo "!opennms-core-ipc-jms" >> ${MINION_HOME}/etc/featuresBoot.d/disable-activemq.boot
             fi
         fi
     done

@@ -86,7 +86,7 @@ netmgt:
     trapd.listen.port: 1162
 ----
 
-<1> Replace the broker endpoint URL that goes to your {page-component-title} Core instance. If you have ActiveMQ with SSL running, replace `tcp` with `ssl`.
+<1> Replace the broker endpoint URL that goes to your {page-component-title} Core instance.
 <2> Replace `my-location` with a location name that represents the remote location where the Minion is running.
 <3> Optional. You can set a unique human-readable Minion identifier; if not set, a unique identifier is generated.
 <4> Enable the Syslog listener on the Minion on port 1514/udp.

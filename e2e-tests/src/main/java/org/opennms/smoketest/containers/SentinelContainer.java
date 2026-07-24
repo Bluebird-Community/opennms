@@ -207,8 +207,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         featuresOnBoot.add("opennms-health-rest-service");
         if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
             featuresOnBoot.add("sentinel-kafka");
-        } else if (IpcStrategy.JMS.equals(model.getIpcStrategy())) {
-            featuresOnBoot.add("sentinel-jms");
         }
         if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
             featuresOnBoot.add("sentinel-newts");

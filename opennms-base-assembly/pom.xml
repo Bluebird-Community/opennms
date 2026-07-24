@@ -214,10 +214,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
-      <artifactId>opennms-alarm-northbounder-jms</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms</groupId>
       <artifactId>opennms-correlator</artifactId>
     </dependency>
     <dependency>
@@ -326,10 +322,6 @@
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-detector-jmx</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.opennms</groupId>
-        <artifactId>opennms-detector-jms</artifactId>
     </dependency>
     <dependency>
       <groupId>org.opennms</groupId>

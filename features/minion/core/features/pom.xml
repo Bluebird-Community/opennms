@@ -73,11 +73,6 @@
         </dependency>
        <dependency>
             <groupId>org.opennms.features.distributed</groupId>
-            <artifactId>jms</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.distributed</groupId>
             <artifactId>shell</artifactId>
             <version>${project.version}</version>
         </dependency>

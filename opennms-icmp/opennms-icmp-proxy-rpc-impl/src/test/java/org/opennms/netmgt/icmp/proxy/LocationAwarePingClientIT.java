@@ -22,38 +22,29 @@
 package org.opennms.netmgt.icmp.proxy;
 
 import java.net.InetAddress;
-import java.util.Dictionary;
-import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.camel.Component;
-import org.apache.camel.util.KeyValueHolder;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opennms.core.spring.BeanUtils;
 import org.opennms.core.test.OpenNMSJUnit4ClassRunner;
-import org.opennms.core.test.activemq.ActiveMQBroker;
-import org.opennms.core.test.camel.CamelBlueprintTest;
-import org.opennms.distributed.core.api.MinionIdentity;
-import org.opennms.distributed.core.api.SystemType;
-import org.opennms.netmgt.icmp.NullPinger;
-import org.opennms.netmgt.model.OnmsDistPoller;
 import org.opennms.test.JUnitConfigurationEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 
+/**
+ * Exercises the {@link LocationAwarePingClient} against an in-process (broker-free) RPC
+ * client. Requests to a remote (Minion) location over a transport are covered by the
+ * gRPC/Kafka IPC integration tests; here the mock RPC client runs the pinger locally.
+ */
 @RunWith(OpenNMSJUnit4ClassRunner.class)
 @ContextConfiguration(locations={
         "classpath:/META-INF/opennms/applicationContext-soa.xml",
         "classpath:/META-INF/opennms/applicationContext-mockDao.xml",
-        "classpath:/META-INF/opennms/applicationContext-queuingservice-mq-vm.xml",
-        "classpath:/META-INF/opennms/applicationContext-rpc-client-jms.xml",
+        "classpath:/META-INF/opennms/applicationContext-rpc-client-mock.xml",
         "classpath:/META-INF/opennms/applicationContext-rpc-icmp.xml",
         "classpath:/META-INF/opennms/applicationContext-tracer-registry.xml",
         "classpath:/pinger.xml"
@@ -61,59 +52,16 @@ import org.springframework.test.context.ContextConfiguration;
 @JUnitConfigurationEnvironment(
         systemProperties = {"org.opennms.netmgt.icmp.pingerClass=org.opennms.netmgt.icmp.TestPinger"}
 )
-public class LocationAwarePingClientIT extends CamelBlueprintTest {
+public class LocationAwarePingClientIT {
 
     private static final String REMOTE_LOCATION_NAME = "remote";
-
-    @ClassRule
-    public static ActiveMQBroker broker = new ActiveMQBroker();
-
-    @Autowired
-    private OnmsDistPoller identity;
-
-    @Autowired
-    @Qualifier("queuingservice")
-    private Component queuingservice;
 
     @Autowired
     private LocationAwarePingClient locationAwarePingClient;
 
-    @SuppressWarnings("rawtypes")
-    @Override
-    protected void addServicesOnStartup(Map<String, KeyValueHolder<Object, Dictionary>> services) {
-        services.put(MinionIdentity.class.getName(),
-                new KeyValueHolder<>(new MinionIdentity() {
-                    @Override
-                    public String getId() {
-                        return "0";
-                    }
-
-                    @Override
-                    public String getLocation() {
-                        return REMOTE_LOCATION_NAME;
-                    }
-
-                    @Override
-                    public String getType() {
-                        return SystemType.Minion.name();
-                    }
-                }, new Properties()));
-
-        Properties props = new Properties();
-        props.setProperty("alias", "opennms.broker");
-        services.put(Component.class.getName(), new KeyValueHolder<>(queuingservice, props));
-    }
-
-    @Override
-    protected String getBlueprintDescriptor() {
-        return "classpath:/OSGI-INF/blueprint/blueprint-rpc-server.xml";
-    }
-
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         BeanUtils.assertAutowiring(this);
-        Assert.assertNotEquals(REMOTE_LOCATION_NAME, identity.getLocation());
     }
 
     /**
@@ -127,7 +75,8 @@ public class LocationAwarePingClientIT extends CamelBlueprintTest {
     }
 
     /**
-     * Verifies that Pings are successful when executed on remote location (RPC mode)
+     * Verifies that Pings are successful when invoked with a location (executed in-process
+     * by the mock RPC client).
      */
     @Test
     public void canPingViaRemoteLocation() throws InterruptedException, ExecutionException {

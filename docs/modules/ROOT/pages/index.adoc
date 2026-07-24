@@ -15,7 +15,7 @@ Highly customizable and scalable, {page-component-title} easily integrates with 
 
 {page-component-title} bundles OpenNMS's core platform, Minion (remote distributed monitoring), Sentinel (scalability), and Newts (time-series database) technologies with other open source components:
 
-* Apache https://kafka.apache.org/[Kafka] or https://activemq.apache.org/[ActiveMQ] (message brokers)
+* Apache https://kafka.apache.org/[Kafka] (message broker)
 * https://www.postgresql.org/[PostgreSQL] (database)
 * https://www.elastic.co/elasticsearch/[Elasticsearch] (search and analytics engine)
 * Apache https://cassandra.apache.org/[Cassandra] (time-series data storage)

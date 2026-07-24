@@ -60,7 +60,7 @@ public class HealthCheckIT {
             .withMinion()
             .withSentinel()
             .withElasticsearch()
-            .withIpcStrategy(IpcStrategy.JMS)
+            .withIpcStrategy(IpcStrategy.GRPC)
             // This adds extra health checks that our test counts
             .withTelemetryProcessing()
             .build());

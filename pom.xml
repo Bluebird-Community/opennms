@@ -1132,7 +1132,6 @@
                 <exclude>core/test-api/dns/**/DNSServer.java</exclude>
 
                 <!-- APLv2 -->
-                <exclude>**/BlueprintCamelStateService.java</exclude>
                 <exclude>**/CaffeineDnsCache*.java</exclude>
                 <exclude>**/DroolsStreamUtils.java</exclude>
                 <exclude>**/GWTTerminal/war/**/*</exclude>
@@ -1723,7 +1722,6 @@
     <args4jVersion>2.33</args4jVersion>
     <ariesUtilVersion>1.1.3</ariesUtilVersion>
     <asmVersion>9.7</asmVersion>
-    <activemqVersion>5.19.7</activemqVersion>
     <atomikosVersion>3.9.2</atomikosVersion>
     <batikVersion>1.17</batikVersion>
     <bouncyCastleVersion>1.84</bouncyCastleVersion>
@@ -1731,7 +1729,6 @@
     <bsonVersion>3.5.0</bsonVersion>
     <byteBuddyVersion>1.14.9</byteBuddyVersion>
     <caffeineVersion>2.8.0</caffeineVersion>
-    <camelVersion>2.21.5</camelVersion>
     <!-- Match (or beat) Newts version -->
     <cassandraVersion>4.17.0</cassandraVersion>
     <!-- ClickHouse flow-persistence client stack (features/flows/clickhouse + opennms-clickhouse-client feature).
@@ -2501,11 +2498,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms.core</groupId>
-        <artifactId>org.opennms.core.camel</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.core</groupId>
         <artifactId>org.opennms.core.config</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -2648,18 +2640,6 @@
       <dependency>
         <groupId>org.opennms.core.test-api</groupId>
         <artifactId>org.opennms.core.test-api.lib</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.core.test-api</groupId>
-        <artifactId>org.opennms.core.test-api.activemq</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.core.test-api</groupId>
-        <artifactId>org.opennms.core.test-api.camel</artifactId>
         <version>${project.version}</version>
         <scope>test</scope>
       </dependency>
@@ -2935,11 +2915,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms</groupId>
-        <artifactId>opennms-alarm-northbounder-jms</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms</groupId>
         <artifactId>opennms-alarm-northbounder-bsf</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -2967,38 +2942,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms.dependencies</groupId>
-        <artifactId>activemq-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
-        <artifactId>activemq-web-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-client</artifactId>
-        <version>${activemqVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-broker</artifactId>
-        <version>${activemqVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-pool</artifactId>
-        <version>${activemqVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-spring</artifactId>
-        <version>${activemqVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
         <artifactId>atomikos-dependencies</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
@@ -3008,19 +2951,6 @@
         <artifactId>aws-dependencies</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
-        <artifactId>camel-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
-        <artifactId>camel-test-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.opennms.dependencies</groupId>
@@ -3287,11 +3217,6 @@
       <dependency>
         <groupId>org.opennms</groupId>
         <artifactId>opennms-detector-jmx</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms</groupId>
-        <artifactId>opennms-detector-jms</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -3713,11 +3638,6 @@
         <version>${antlr.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.camel</groupId>
-        <artifactId>camel-jms</artifactId>
-        <version>${camelVersion}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-core</artifactId>
         <version>${cxfVersion}</version>
@@ -3771,11 +3691,6 @@
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-ws-mex</artifactId>
         <version>${cxfVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.camel</groupId>
-        <artifactId>camel-spring</artifactId>
-        <version>${camelVersion}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.curator</groupId>

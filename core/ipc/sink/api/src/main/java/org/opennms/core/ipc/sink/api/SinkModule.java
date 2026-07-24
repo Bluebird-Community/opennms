@@ -42,7 +42,7 @@ public interface SinkModule<S extends Message, T extends Message> {
     /**
      * Globally unique identifier.
      *
-     * Used in the JMS queue name in the Camel implementation.
+     * Used to derive the transport-specific queue/topic name (for example, the Kafka topic).
      */
     String getId();
 

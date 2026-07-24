@@ -1,16 +1,3 @@
-.Create a file to prevent installing ActiveMQ features on Minion start-up
-[source, console]
-----
-sudo vi etc/featuresBoot.d/disable-activemq.boot
-----
-
-.Add the following lines to disable ActiveMQ features and save the file
-[source, disable-activemq.boot]
-----
-!minion-jms
-!opennms-core-ipc-jms
-----
-
 .Create a file to install gRPC features on startup
 [source, shell]
 ----

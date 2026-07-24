@@ -1,16 +1,11 @@
 [[setup-message-broker]]
 = Set up Message Broker
-:description: Learn how to set up and configure the following message brokers in OpenNMS: Kafka, ActiveMQ, Embedded ActiveMQ, and gRPC.
+:description: Learn how to set up and configure the following message brokers in OpenNMS: Kafka and gRPC.
 
 Distributing {page-component-title} components like Minions and Sentinel require a messaging infrastructure.
-This section describes how to set up your {page-component-title} Core instance to use an existing messaging infrastructure based on ActiveMQ or Apache Kafka.
-
-{page-component-title} Core comes with an embedded ActiveMQ system, which by default an external network cannot reach.
-To get started quickly, this guide describes how to enable and configure the embedded ActiveMQ instance.
+This section describes how to set up your {page-component-title} Core instance to use an existing messaging infrastructure based on gRPC or Apache Kafka.
 
 CAUTION: We recommend using Apache Kafka in production, as it is scalable to process high workloads.
-         The embedded ActiveMQ instance is for convenience to get started quickly in a test environment.
-         It is not suitable for production workloads.
 
 == Objectives
 
@@ -47,18 +42,6 @@ Kafka::
 +
 --
 include::message-broker/kafka.adoc[]
---
-
-ActiveMQ::
-+
---
-include::message-broker/activemq.adoc[]
---
-
-Embedded ActiveMQ::
-+
---
-include::message-broker/embedded-activemq.adoc[]
 --
 
 gRPC::

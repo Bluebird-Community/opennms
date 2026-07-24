@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
  */
 // @Category(MinionTests.class)
 @org.junit.experimental.categories.Category(org.opennms.smoketest.junit.FlakyTests.class)
-public class TrapIT {
+public abstract class TrapIT {
     private static final Logger LOG = LoggerFactory.getLogger(TrapIT.class);
 
     @Rule
@@ -78,9 +78,7 @@ public class TrapIT {
 
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-    public IpcStrategy getIpcStrategy() {
-        return IpcStrategy.JMS;
-    }
+    public abstract IpcStrategy getIpcStrategy();
 
     @Test
     public void canReceiveTraps() {

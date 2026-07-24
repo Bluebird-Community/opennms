@@ -123,8 +123,8 @@ public class UsageStatisticsIT {
         assertThat((String) usageReport.get("installedOIAPlugins"), not(emptyString()));
         assertThat((long) usageReport.get("onCallRoleCount"), is(0L));
         assertThat((long) usageReport.get("requisitionCount"), is(0L));
-        assertThat((String) usageReport.get("sinkStrategy"), is("camel"));
-        assertThat((String) usageReport.get("rpcStrategy"), is("jms"));
+        assertThat((String) usageReport.get("sinkStrategy"), is("local"));
+        assertThat((String) usageReport.get("rpcStrategy"), is("local"));
         assertThat((String) usageReport.get("tssStrategies"), is("rrd"));
         assertThat((long) usageReport.get("pollsCompleted"), greaterThanOrEqualTo(0L));
         assertThat((long) usageReport.get("eventLogsProcessed"), greaterThan(1L));

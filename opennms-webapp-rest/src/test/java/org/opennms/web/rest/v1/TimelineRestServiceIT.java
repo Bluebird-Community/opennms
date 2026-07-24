@@ -23,7 +23,7 @@ package org.opennms.web.rest.v1;
 
 import javax.xml.bind.JAXB;
 
-import org.apache.camel.StringSource;
+import java.io.StringReader;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,7 +107,7 @@ public class TimelineRestServiceIT extends AbstractSpringJerseyRestTestCase {
         sendPost("/nodes/1/ipinterfaces/10.10.10.10/services", foobarServiceXml, 201, "/nodes/1/ipinterfaces/10.10.10.10/services/test-%2Ffoo%2Fbar");
 
         final String serviceXml = sendRequest(GET, "/nodes/1/ipinterfaces/10.10.10.10/services/test-%2Ffoo%2Fbar", 200);
-        final int serviceId = JAXB.unmarshal(new StringSource(serviceXml), OnmsServiceType.class).getId();
+        final int serviceId = JAXB.unmarshal(new StringReader(serviceXml), OnmsServiceType.class).getId();
         final String xml = sendRequest(GET, "/timeline/html/1/10.10.10.10/" + serviceId + "/1559556000/1559642400/300", 200);
         Assert.assertEquals("<img src=\"/opennms/rest/timeline/image/1/10.10.10.10/" + serviceId + "/1559556000/1559642400/300\" usemap=\"#1-10.10.10.10-" + serviceId + "\"><map name=\"1-10.10.10.10-" + serviceId + "\"></map>", xml);
     }

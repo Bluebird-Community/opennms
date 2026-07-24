@@ -226,7 +226,7 @@
      </div> <!-- card-header -->
      <div class="card-body">
         <div growl></div>
-        <!-- NRTG Starter script 'window'+resourceId+report -->
+        <!-- Popup window helper (used by the forecast graph link) -->
         <script type="text/javascript">
             function popUp(url) {
                 window.open(getBaseHref() + url, '', 'width=1280, height=650, resizable=yes, scrollbars=yes, toolbar=no, location=no, directories=no, status=no, menubar=no' );
@@ -251,10 +251,6 @@
                         <c:param name="reports" value="${graph.name}"/>
                         <c:param name="resourceId" value="${resultSet.resource.id}"/>
                     </c:url>
-                    <c:url var="nrtgGraphUrl" value="graph/nrtg.jsp">
-                        <c:param name="report" value="${graph.name}"/>
-                        <c:param name="resourceId" value="${resultSet.resource.id}"/>
-                    </c:url>
                     <c:url var="forecastGraphUrl" value="graph/forecast.jsp">
                         <c:param name="report" value="${graph.name}"/>
                         <c:param name="resourceId" value="${resultSet.resource.id}"/>
@@ -271,11 +267,6 @@
 		                        <a href="${specificGraphUrl}" style="padding-right: 3px" title="Open ${graph.title}"><button type="button" class="btn btn-secondary btn-sm"><i class="fas fa-binoculars" aria-hidden="true"></i></span></button></a>
 		                    </c:if>
                                     <a href="javascript:popUp('${forecastGraphUrl}')" style="padding-right: 3px" title="Forecast ${graph.title}"><button type="button" class="btn btn-secondary btn-sm"><i class="fas fa-chart-line" aria-hidden="true"></i></span></button></a>
-		                    <c:if test="${fn:contains(resultSet.resource.resourceType.label, 'SNMP') || fn:contains(resultSet.resource.resourceType.label, 'TCA') }">
-		                        <c:if test="${fn:contains(resultSet.resource.label,'(*)') != true}">
-		                            <a href="javascript:popUp('${nrtgGraphUrl}')" title="Start NRT-Graphing for ${graph.title}"><button type="button" class="btn btn-secondary btn-sm" aria-label="Start NRT-Graphing for ${graph.title}"><span class="fas fa-bolt" aria-hidden="true"></span></button></a>
-		                        </c:if>
-		                    </c:if>
                               <div style="display: inline" ng-if="flowsEnabled">
                                 <a ng-href="{{flowGraphUrl}}" target="_blank" style="padding-right: 3px" title="{{ hasFlows ? 'Open flow graphs' : 'No flows were found in current time range'}}">
                                 <span> <button type="button" ng-disabled="!hasFlows" class="btn btn-secondary btn-sm">

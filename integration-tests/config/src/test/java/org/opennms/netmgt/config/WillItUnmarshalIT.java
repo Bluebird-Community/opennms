@@ -52,7 +52,6 @@ import org.opennms.core.xml.JaxbUtils;
 import org.opennms.netmgt.alarmd.northbounder.bsf.BSFNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.drools.DroolsNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.email.EmailNorthbounderConfig;
-import org.opennms.netmgt.alarmd.northbounder.jms.JmsNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.snmptrap.SnmpTrapNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.syslog.SyslogNorthbounderConfig;
 import org.opennms.netmgt.config.ami.AmiConfig;
@@ -207,7 +206,6 @@ public class WillItUnmarshalIT {
         addFile(Source.CONFIG, "groups.xml", Groupinfo.class, true, null);
         addFile(Source.CONFIG, "http-datacollection-config.xml", HttpDatacollectionConfig.class, false, null);
         addFile(Source.CONFIG, "javamail-configuration.xml", JavamailConfiguration.class, false, null);
-        addFile(Source.CONFIG, "jms-northbounder-configuration.xml", JmsNorthbounderConfig.class, true, null);
         addFile(Source.CONFIG, "jmx-config.xml", JmxConfig.class, true, null);
         addFile(Source.CONFIG, "jmx-datacollection-config.xml", JmxDatacollectionConfig.class, true, null);
         addFile(Source.CONFIG, "ksc-performance-reports.xml", ReportsList.class, true, null);
