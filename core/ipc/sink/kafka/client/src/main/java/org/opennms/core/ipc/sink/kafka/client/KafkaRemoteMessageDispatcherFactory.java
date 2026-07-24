@@ -40,7 +40,7 @@ import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.opennms.core.camel.JmsQueueNameFactory;
+import org.opennms.core.ipc.common.kafka.JmsQueueNameFactory;
 import org.opennms.core.ipc.common.kafka.KafkaConfigProvider;
 import org.opennms.core.ipc.common.kafka.KafkaSinkConstants;
 import org.opennms.core.ipc.common.kafka.OsgiKafkaConfigProvider;
