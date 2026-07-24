@@ -124,6 +124,13 @@
       <artifactId>osgi.cmpn</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Provides org.osgi.framework.BundleContext used by the onms-osgi service wiring in
+         applicationContext-openconfig-components.xml; was pulled in transitively before the JMS removal. -->
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>osgi.core</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms.core.ipc.sink</groupId>
       <artifactId>org.opennms.core.ipc.sink.common</artifactId>
@@ -169,6 +176,14 @@
       <dependency>
           <groupId>org.opennms.core.ipc.twin</groupId>
           <artifactId>org.opennms.core.ipc.twin.memory</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+      </dependency>
+      <!-- Provides LocalTwinSubscriberImpl referenced by applicationContext-openconfig-components.xml;
+           previously pulled in transitively by the removed twin.jms.publisher test dependency. -->
+      <dependency>
+          <groupId>org.opennms.core.ipc.twin</groupId>
+          <artifactId>org.opennms.core.ipc.twin.common</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
       </dependency>

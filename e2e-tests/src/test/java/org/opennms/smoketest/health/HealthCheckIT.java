@@ -60,7 +60,9 @@ public class HealthCheckIT {
             .withMinion()
             .withSentinel()
             .withElasticsearch()
-            .withIpcStrategy(IpcStrategy.GRPC)
+            // Sentinel consumes telemetry over the message bus; with ActiveMQ/Camel removed, Kafka is
+            // the broker. Under gRPC the Sentinel boots no sink and its health check never turns green.
+            .withIpcStrategy(IpcStrategy.KAFKA)
             // This adds extra health checks that our test counts
             .withTelemetryProcessing()
             .build());

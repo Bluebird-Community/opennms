@@ -184,9 +184,9 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                 ImmutableMap.<String,String>builder()
                         .put("endpoint", "http://" + OpenNMSContainer.CLICKHOUSE_ALIAS + ":8123")
-                        .put("database", "default")
-                        .put("username", "default")
-                        .put("password", "")
+                        .put("database", ClickHouseContainer.DATABASE)
+                        .put("username", ClickHouseContainer.USERNAME)
+                        .put("password", ClickHouseContainer.PASSWORD)
                         .put("table", "flows")
                         .put("ttlDays", "0")
                         .build());

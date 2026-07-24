@@ -79,6 +79,14 @@
       <artifactId>opennms-dao-mock</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- AbstractMessageDispatcherFactory (wired via TrapListener in the test contexts) references
+         org.osgi.framework.BundleContext. osgi.core used to arrive transitively through the removed
+         Camel/JMS sink test deps; pull it in explicitly. -->
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>osgi.core</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms.core.ipc.twin</groupId>
       <artifactId>org.opennms.core.ipc.twin.memory</artifactId>

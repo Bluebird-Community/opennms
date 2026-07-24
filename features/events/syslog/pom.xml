@@ -88,6 +88,14 @@
       <artifactId>opennms-dao</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- AbstractMessageDispatcherFactory (wired via SinkDispatchingSyslogReceiver in the test
+         contexts) references org.osgi.framework.BundleContext. osgi.core used to arrive
+         transitively through the removed Camel/JMS sink test deps; pull it in explicitly. -->
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>osgi.core</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms.features.distributed</groupId>
       <artifactId>org.opennms.features.distributed.dao-distributed</artifactId>

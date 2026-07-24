@@ -37,6 +37,14 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- The Kafka dispatcher factories extend AbstractMessageDispatcherFactory, which references
+         org.osgi.framework.BundleContext. osgi.core used to arrive transitively through the removed
+         Camel/JMS sink deps; pull it in explicitly. -->
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>osgi.core</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms.core</groupId>
       <artifactId>org.opennms.core.daemon</artifactId>

@@ -25,6 +25,10 @@
 
     <bean id="messageDispatcherFactory" class="org.opennms.core.ipc.sink.mock.MockMessageDispatcherFactory" />
 
+    <!-- Telemetryd autowires a MessageConsumerManager; the removed Camel sink test contexts used to
+         supply one. Use the in-memory mock consumer manager (same module as the mock dispatcher). -->
+    <bean id="messageConsumerManager" class="org.opennms.core.ipc.sink.mock.MockMessageConsumerManager" />
+
 
     <onmsgi:service interface="org.opennms.netmgt.telemetry.api.receiver.ConnectorFactory" ref="connectorFactory" />
 
@@ -38,6 +42,11 @@
     </bean>
 
     <bean id="memoryTwinPublisher" class="org.opennms.core.ipc.twin.memory.MemoryTwinPublisher" primary="true" />
+
+    <!-- LocalTwinSubscriberImpl needs an Identity. In a running container this is supplied by the
+         distributed-identity blueprint; the removed JMS/Camel test contexts used to bring it in, so
+         define it here for the standalone test context. -->
+    <bean id="identity" class="org.opennms.features.distributed.identity.impl.OpenNMSIdentityImpl"/>
 
     <bean id="localTwinSubscriber" class="org.opennms.core.ipc.twin.common.LocalTwinSubscriberImpl">
         <constructor-arg ref="identity"/>

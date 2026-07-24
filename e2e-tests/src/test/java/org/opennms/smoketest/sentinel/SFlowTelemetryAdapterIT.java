@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.function.Function;
 
-import org.opennms.core.utils.SystemInfoUtils;
 import org.opennms.smoketest.stacks.NetworkProtocol;
 import org.opennms.smoketest.telemetry.Packet;
 import org.opennms.smoketest.telemetry.Payload;
@@ -49,7 +48,7 @@ public class SFlowTelemetryAdapterIT extends AbstractAdapterIT {
 
     @Override
     protected Function<String, Boolean> getSentinelReadyVerificationFunction() {
-        return (output) -> output.contains("Route: Sink.Server.Telemetry-SFlow started and consuming from: queuingservice://" + SystemInfoUtils.getInstanceId() + ".Sink.Telemetry-SFlow");
+        return (output) -> output.contains("Starting to consume messages for module: Telemetry-SFlow");
     }
 
     @Override
