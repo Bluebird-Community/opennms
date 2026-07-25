@@ -53,7 +53,15 @@ public class OpenNMSWithoutKarafIT {
         stack.opennms()
                 .withEnv("CORE_SERVICE_KARAF_ENABLED", "false")
                 .withEnv("CORE_SERVICE_KARAFSTARTUPMONITOR_ENABLED", "false")
-                .withEnv("CORE_SERVICE_TELEMETRYD_ENABLED", "false");
+                .withEnv("CORE_SERVICE_TELEMETRYD_ENABLED", "false")
+                // Trapd cannot start without Karaf in this fork. Trapd.onStart() publishes its
+                // listener config through TwinPublisher, which in the core JVM is OsgiTwinPublisher
+                // -- a delegate that blocks (5 min grace period) until a real publisher appears in
+                // the service registry. The only real publisher left here is GrpcTwinPublisher,
+                // registered from an OSGi blueprint and therefore only present when Karaf runs;
+                // upstream's Spring-side JmsTwinPublisher went away with the JMS/Camel IPC removal
+                // (7afeef19c72). Disabled for the same reason Telemetryd is. See #193.
+                .withEnv("CORE_SERVICE_TRAPD_ENABLED", "false");
         return stack;
     }
 
@@ -63,11 +71,12 @@ public class OpenNMSWithoutKarafIT {
 
         assertThat("the info REST service should report daemon statuses", statuses, is(not(anEmptyMap())));
         assertThat(statuses.get("JettyServer"), is("running"));
-        assertThat(statuses.get("Trapd"), is("running"));
         assertThat(statuses.get("PerspectivePoller"), is("running"));
         assertThat(statuses.containsKey("Karaf"), is(false));
         assertThat(statuses.containsKey("KarafStartupMonitor"), is(false));
         assertThat(statuses.containsKey("Telemetryd"), is(false));
+        // see the note in createStack(): Karaf-less Trapd has no TwinPublisher to bind to
+        assertThat(statuses.containsKey("Trapd"), is(false));
         assertThat(statuses.values(), everyItem(is("running")));
     }
 
