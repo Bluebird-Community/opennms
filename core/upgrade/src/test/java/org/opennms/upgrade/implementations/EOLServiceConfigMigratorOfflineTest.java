@@ -97,13 +97,17 @@ public class EOLServiceConfigMigratorOfflineTest {
     @Parameters
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][] {
-            // service config, total, enabled
-            { "target/home/etc/service-configuration-1.8.17.xml",  38, 38, 32 },
-            { "target/home/etc/service-configuration-1.10.14.xml", 38, 38, 32 },
-            { "target/home/etc/service-configuration-1.12.9.xml",  39, 39, 32 },
-            { "target/home/etc/service-configuration-14.0.3.xml",  38, 38, 25 },
-            { "target/home/etc/service-configuration-15.0.2.xml",  38, 38, 25 },
-            { "target/home/etc/service-configuration-16.0.4.xml",  37, 37, 25 }
+            // service config, total before migration, total after migration,
+            // enabled after projecting the legacy overrides onto the current catalog.
+            // The enabled counts are 6 lower than upstream's because this fork's catalog
+            // has 23 services rather than 29: Bsmd, Actiond, Scriptd, EnhancedLinkd,
+            // Statsd and Ackd were removed.
+            { "target/home/etc/service-configuration-1.8.17.xml",  38, 38, 23 },
+            { "target/home/etc/service-configuration-1.10.14.xml", 38, 38, 23 },
+            { "target/home/etc/service-configuration-1.12.9.xml",  39, 39, 23 },
+            { "target/home/etc/service-configuration-14.0.3.xml",  38, 38, 20 },
+            { "target/home/etc/service-configuration-15.0.2.xml",  38, 38, 20 },
+            { "target/home/etc/service-configuration-16.0.4.xml",  37, 37, 20 }
         });
     }
 
@@ -129,6 +133,9 @@ public class EOLServiceConfigMigratorOfflineTest {
         final ServiceConfigFactory factory = new ServiceConfigFactory();
         Assert.assertEquals(m_totalAfter, cfg.getServices().size());
         Assert.assertEquals(m_enabledAfter, factory.getServices().length);
+        Assert.assertTrue("Services added to the current catalog must be present after merging a legacy configuration.",
+                Arrays.stream(factory.getServices())
+                        .anyMatch(service -> "OpenNMS:Name=Karaf".equals(service.getName())));
 
         for (final Service svc : cfg.getServices()) {
             final String serviceName = svc.getName();

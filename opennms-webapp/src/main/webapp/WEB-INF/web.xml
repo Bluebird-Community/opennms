@@ -39,9 +39,7 @@
         <!-- From org.opennms.features.system-report -->
         classpath:/META-INF/opennms/applicationContext-systemReport.xml
 
-        classpath*:/META-INF/opennms/component-measurement.xml
         classpath*:/META-INF/opennms/component-service.xml
-        classpath*:/META-INF/opennms/component-timeformat.xml
 
         <!-- WARMERGE: insert contextConfigLocation -->
     </param-value>
