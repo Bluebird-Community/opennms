@@ -82,8 +82,10 @@ public class ServiceConfigMigratorOfflineTest {
         Assert.assertEquals(38, cfg.getServices().size());
 
         // Checking Service Factory (it should return only the enabled services)
+        // 20, not upstream's 26: this fork's catalog has 23 services rather than 29
+        // (Bsmd, Actiond, Scriptd, EnhancedLinkd, Statsd and Ackd were removed).
         ServiceConfigFactory factory = new ServiceConfigFactory();
-        Assert.assertEquals(26, factory.getServices().length);
+        Assert.assertEquals(20, factory.getServices().length);
         Assert.assertTrue("Services added to the current catalog must be present after merging a legacy configuration.",
                 Arrays.stream(factory.getServices())
                         .anyMatch(service -> "OpenNMS:Name=Karaf".equals(service.getName())));

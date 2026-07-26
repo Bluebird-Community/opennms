@@ -95,13 +95,17 @@ public class ServiceConfig1701MigratorOfflineTest {
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][] {
             // service config, total before migration, total after migration,
-            // enabled after projecting the migrated overrides onto the current catalog
-            { "target/home/etc/service-configuration-1.8.17.xml",  38, 29, 29 },
-            { "target/home/etc/service-configuration-1.10.14.xml", 38, 29, 29 },
-            { "target/home/etc/service-configuration-1.12.9.xml",  39, 29, 29 },
-            { "target/home/etc/service-configuration-14.0.3.xml",  38, 30, 26 },
-            { "target/home/etc/service-configuration-15.0.2.xml",  38, 30, 26 },
-            { "target/home/etc/service-configuration-16.0.4.xml",  37, 30, 26 }
+            // enabled after projecting the migrated overrides onto the current catalog.
+            // The enabled counts are 6 lower than upstream's because this fork's catalog
+            // has 23 services rather than 29: Bsmd, Actiond, Scriptd, EnhancedLinkd,
+            // Statsd and Ackd were removed. The totals come from the legacy input files
+            // and the migrator, not from the catalog, so they are unchanged.
+            { "target/home/etc/service-configuration-1.8.17.xml",  38, 29, 23 },
+            { "target/home/etc/service-configuration-1.10.14.xml", 38, 29, 23 },
+            { "target/home/etc/service-configuration-1.12.9.xml",  39, 29, 23 },
+            { "target/home/etc/service-configuration-14.0.3.xml",  38, 30, 20 },
+            { "target/home/etc/service-configuration-15.0.2.xml",  38, 30, 20 },
+            { "target/home/etc/service-configuration-16.0.4.xml",  37, 30, 20 }
         });
     }
 
