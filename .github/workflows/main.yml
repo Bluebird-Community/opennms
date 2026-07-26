@@ -31,7 +31,7 @@ jobs:
       baseline_ref: ${{ steps.decide.outputs.baseline_ref }}
       trigger_reason: ${{ steps.decide.outputs.trigger_reason }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           fetch-depth: 0
       - name: Install pathspec
@@ -189,7 +189,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up JDK 21
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
@@ -209,7 +209,7 @@ jobs:
           make smoke
       - name: Publish Quick Smoke Test Report
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@3dacff26879cd2a7f2160d101254032a3707fe6f  # v1.12.0
         with:
           check_name: Quick Smoke Test Report
       - name: Collect build logs
@@ -218,22 +218,22 @@ jobs:
           make collect-testresults
       - name: Persist test results and logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: build-with-smoke-test-logs
           path: target/artifacts/mvn.*.log
       - name: Persist tarball Core
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target/opennms-full-assembly-*.tar.gz
       - name: Persist tarball Minion
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target/org.opennms.assemblies.minion-*.tar.gz
       - name: Persist tarball Sentinel
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*.tar.gz
@@ -249,8 +249,8 @@ jobs:
     container:
       image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-21.b27
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target
@@ -261,7 +261,7 @@ jobs:
       - name: Build Core RPM packages
         run: make core-pkg-rpm PKG_RELEASE=${{ github.run_number }}
       - name: Persist Core package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: core-pkgs
           path: |
@@ -278,8 +278,8 @@ jobs:
     container:
       image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-21.b27
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
@@ -290,7 +290,7 @@ jobs:
       - name: Build Minion RPM packages
         run: make minion-pkg-rpm PKG_RELEASE=${{ github.run_number }}
       - name: Persist Minion package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: minion-pkgs
           path: |
@@ -307,8 +307,8 @@ jobs:
     container:
       image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-21.b27
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
@@ -319,7 +319,7 @@ jobs:
       - name: Build Sentinel RPM packages
         run: make sentinel-pkg-rpm PKG_RELEASE=${{ github.run_number }}
       - name: Persist Sentinel package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: sentinel-pkgs
           path: |
@@ -333,21 +333,26 @@ jobs:
       - e2e-tests-minion
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read       # checkout only; the registry uses QUAY_* secrets
+      id-token: write      # cosign keyless signing via GitHub OIDC
+      attestations: write  # actions/attest-build-provenance
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3.7.0
         with:
           cache-image: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3.7.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target
@@ -371,7 +376,8 @@ jobs:
           echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> ${GITHUB_ENV}
           echo "TAG=${VERSION:-$(git rev-parse --short HEAD)}" >> ${GITHUB_ENV}
       - name: Build and push Core container image
-        uses: docker/build-push-action@v6
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
         with:
           context: ./opennms-container/core
           platforms: linux/amd64,linux/arm64
@@ -386,6 +392,22 @@ jobs:
             BUILD_JOB_ID=${{ github.run_id }}
           tags: quay.io/bluebird/${{ env.OCI_REPOSITORY }}:${{ env.TAG }},quay.io/bluebird/${{ env.OCI_REPOSITORY }}:latest
 
+      - name: Install cosign
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1
+      - name: Sign the released image (keyless)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "quay.io/bluebird/${OCI_REPOSITORY}@${DIGEST}"
+      - name: Attest build provenance for the image
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f  # v3.2.0
+        with:
+          subject-name: quay.io/bluebird/${{ env.OCI_REPOSITORY }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: false
+
   minion-oci:
     if: "!contains(github.event.commits[0].message, '[skip minion-oci]') || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')"
     needs:
@@ -394,21 +416,26 @@ jobs:
       - e2e-tests-minion
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read       # checkout only; the registry uses QUAY_* secrets
+      id-token: write      # cosign keyless signing via GitHub OIDC
+      attestations: write  # actions/attest-build-provenance
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3.7.0
         with:
           cache-image: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3.7.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
@@ -438,7 +465,8 @@ jobs:
           echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> ${GITHUB_ENV}
           echo "TAG=${VERSION:-$(git rev-parse --short HEAD)}" >> ${GITHUB_ENV}
       - name: Build and push Minion container image
-        uses: docker/build-push-action@v6
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
         with:
           context: ./opennms-container/minion
           platforms: linux/amd64,linux/arm64
@@ -453,6 +481,22 @@ jobs:
             BUILD_JOB_ID=${{ github.run_id }}
           tags: quay.io/bluebird/${{ env.OCI_REPOSITORY }}:${{ env.TAG }},quay.io/bluebird/${{ env.OCI_REPOSITORY }}:latest
 
+      - name: Install cosign
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1
+      - name: Sign the released image (keyless)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "quay.io/bluebird/${OCI_REPOSITORY}@${DIGEST}"
+      - name: Attest build provenance for the image
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f  # v3.2.0
+        with:
+          subject-name: quay.io/bluebird/${{ env.OCI_REPOSITORY }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: false
+
   sentinel-oci:
     if: "!contains(github.event.commits[0].message, '[skip minion-oci]') || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')"
     needs:
@@ -461,21 +505,26 @@ jobs:
       - e2e-tests-minion
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read       # checkout only; the registry uses QUAY_* secrets
+      id-token: write      # cosign keyless signing via GitHub OIDC
+      attestations: write  # actions/attest-build-provenance
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3.7.0
         with:
           cache-image: false
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3.7.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
@@ -498,7 +547,8 @@ jobs:
           echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> ${GITHUB_ENV}
           echo "TAG=${VERSION:-$(git rev-parse --short HEAD)}" >> ${GITHUB_ENV}
       - name: Build and push Sentinel container image
-        uses: docker/build-push-action@v6
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
         with:
           context: ./opennms-container/sentinel
           platforms: linux/amd64,linux/arm64
@@ -512,6 +562,22 @@ jobs:
             BUILD_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             BUILD_JOB_ID=${{ github.run_id }}
           tags: quay.io/bluebird/${{ env.OCI_REPOSITORY }}:${{ env.TAG }},quay.io/bluebird/${{ env.OCI_REPOSITORY }}:latest
+
+      - name: Install cosign
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1
+      - name: Sign the released image (keyless)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "quay.io/bluebird/${OCI_REPOSITORY}@${DIGEST}"
+      - name: Attest build provenance for the image
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f  # v3.2.0
+        with:
+          subject-name: quay.io/bluebird/${{ env.OCI_REPOSITORY }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: false
 
   unit-tests:
     if: "!contains(github.event.commits[0].message, '[skip unit-tests]')"
@@ -530,7 +596,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           # find-tests.py needs the baseline_ref commit locally to diff against HEAD
           fetch-depth: 0
@@ -554,7 +620,7 @@ jobs:
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@3dacff26879cd2a7f2160d101254032a3707fe6f  # v1.12.0
         with:
           check_name: Unit Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -563,7 +629,7 @@ jobs:
           make collect-testresults
       - name: Persist unit test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: unit-tests-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -588,7 +654,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           # find-tests.py needs the baseline_ref commit locally to diff against HEAD
           fetch-depth: 0
@@ -615,7 +681,7 @@ jobs:
           make integration-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Integration Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@3dacff26879cd2a7f2160d101254032a3707fe6f  # v1.12.0
         with:
           check_name: Integration Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -624,7 +690,7 @@ jobs:
           make collect-testresults
       - name: Persist integration test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: integration-tests-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -649,7 +715,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up JDK 21
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
@@ -669,7 +735,7 @@ jobs:
           make core-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Core Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@3dacff26879cd2a7f2160d101254032a3707fe6f  # v1.12.0
         with:
           check_name: Core E2E Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -678,7 +744,7 @@ jobs:
           make collect-testresults
       - name: Persist Core e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: e2e-tests-core-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -707,7 +773,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up JDK 21
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
@@ -727,7 +793,7 @@ jobs:
           make minion-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Minion Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@3dacff26879cd2a7f2160d101254032a3707fe6f  # v1.12.0
         with:
           check_name: Minion E2E Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -736,7 +802,7 @@ jobs:
           make collect-testresults
       - name: Persist Minion e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: e2e-tests-minion-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -765,7 +831,7 @@ jobs:
         - Linux
         - X64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - name: Set up JDK 21
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
@@ -785,7 +851,7 @@ jobs:
           make sentinel-e2e MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish E2E Sentinel Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+        uses: scacap/action-surefire-report@3dacff26879cd2a7f2160d101254032a3707fe6f  # v1.12.0
         with:
           check_name: Sentinel E2E Test Report (shard ${{ matrix.shard_idx }})
       - name: Collect test results and logs (shard ${{ matrix.shard_idx }})
@@ -794,7 +860,7 @@ jobs:
           make collect-testresults
       - name: Persist Sentinel e2e test results (shard ${{ matrix.shard_idx }})
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: e2e-tests-sentinel-artifacts-${{ matrix.shard_idx }}
           path: |
@@ -823,15 +889,15 @@ jobs:
       - name: Set package repository
         run: |
           echo "PKG_REPOSITORY=${TARGET:-develop}" >> ${GITHUB_ENV}
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: core-pkgs
           path: target/artifacts/packages/core
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: minion-pkgs
           path: target/artifacts/packages/minion
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: sentinel-pkgs
           path: target/artifacts/packages/sentinel
@@ -857,37 +923,76 @@ jobs:
       - sentinel-packages
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 30
     permissions:
-      contents: write
+      contents: write      # create the release and upload assets
+      id-token: write      # cosign keyless signing via GitHub OIDC
+      attestations: write  # actions/attest-build-provenance
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-core
           path: opennms-full-assembly/target
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-minion
           path: opennms-assemblies/minion/target
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: tarball-sentinel
           path: opennms-assemblies/sentinel/target
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: core-pkgs
           path: target/artifacts/packages/core
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: minion-pkgs
           path: target/artifacts/packages/minion
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           name: sentinel-pkgs
           path: target/artifacts/packages/sentinel
+      - name: Collect release artifacts and checksums
+        run: |
+          set -euo pipefail
+          mkdir -p release-artifacts
+          cp opennms-full-assembly/target/*.tar.gz \
+             opennms-assemblies/minion/target/*.tar.gz \
+             opennms-assemblies/sentinel/target/*.tar.gz \
+             target/artifacts/packages/*/*.deb \
+             target/artifacts/packages/*/*.rpm \
+             release-artifacts/
+          cd release-artifacts
+          sha256sum -- * > SHA256SUMS
+          cat SHA256SUMS
+      - name: Install cosign
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1
+      - name: Sign the checksums file (keyless)
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes \
+            --output-signature release-artifacts/SHA256SUMS.sig \
+            --output-certificate release-artifacts/SHA256SUMS.pem \
+            release-artifacts/SHA256SUMS
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610  # v0.24.0
+        with:
+          path: release-artifacts
+          artifact-name: sbom-${{ github.ref_name }}.spdx.json
+          output-file: release-artifacts/sbom-${{ github.ref_name }}.spdx.json
+      - name: Attest build provenance for release artifacts
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f  # v3.2.0
+        with:
+          subject-path: 'release-artifacts/*.tar.gz,release-artifacts/*.deb,release-artifacts/*.rpm'
       - name: Release ${{ github.ref_name }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2.6.2
         with:
           files: |
+            release-artifacts/SHA256SUMS
+            release-artifacts/SHA256SUMS.sig
+            release-artifacts/SHA256SUMS.pem
+            release-artifacts/sbom-${{ github.ref_name }}.spdx.json
             opennms-full-assembly/target/*.tar.gz
             opennms-assemblies/minion/target/*.tar.gz
             opennms-assemblies/sentinel/target/*.tar.gz
