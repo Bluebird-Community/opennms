@@ -953,7 +953,7 @@ jobs:
         with:
           name: sentinel-pkgs
           path: target/artifacts/packages/sentinel
-      - name: Collect release artifacts and checksums
+      - name: Collect release artifacts
         run: |
           set -euo pipefail
           mkdir -p release-artifacts
@@ -963,7 +963,21 @@ jobs:
              target/artifacts/packages/*/*.deb \
              target/artifacts/packages/*/*.rpm \
              release-artifacts/
+      # Runs before the checksum step on purpose: the SBOM is a release asset, so it
+      # has to appear in SHA256SUMS and therefore under the signature. Generating it
+      # afterwards would ship it unverifiable.
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610  # v0.24.0
+        with:
+          path: release-artifacts
+          artifact-name: sbom-${{ github.ref_name }}.spdx.json
+          output-file: release-artifacts/sbom-${{ github.ref_name }}.spdx.json
+      - name: Checksum every release artifact
+        run: |
+          set -euo pipefail
           cd release-artifacts
+          # `*` is expanded before the redirection creates SHA256SUMS, so the file
+          # never checksums itself.
           sha256sum -- * > SHA256SUMS
           cat SHA256SUMS
       - name: Install cosign
@@ -975,12 +989,6 @@ jobs:
             --output-signature release-artifacts/SHA256SUMS.sig \
             --output-certificate release-artifacts/SHA256SUMS.pem \
             release-artifacts/SHA256SUMS
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610  # v0.24.0
-        with:
-          path: release-artifacts
-          artifact-name: sbom-${{ github.ref_name }}.spdx.json
-          output-file: release-artifacts/sbom-${{ github.ref_name }}.spdx.json
       - name: Attest build provenance for release artifacts
         uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f  # v3.2.0
         with:

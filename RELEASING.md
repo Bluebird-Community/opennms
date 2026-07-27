@@ -24,6 +24,12 @@ release workflow dispatch.
 - On `main`, clean working tree, in sync with `origin/main`.
 - The latest CI run for that exact commit is green.
 
+> A green `main` run proves less than it looks. On an ordinary push the `*-packages`, `*-oci`,
+> `publish-packages` and `create-github-release` jobs are **skipped** (see the note under
+> [Container tags](#container-tags)), so nothing in the packaging, image or release path has been
+> exercised. The tag push is the first time that code runs. If you want prior confidence, land a
+> `[full-ci]` commit — or accept that the tag build is where those jobs get their first test.
+
 ### 2. Bump the version
 
 `make release RELEASE_VERSION=X.Y.Z` exists, but its `setversion` macro has a known gap: the `sed`
@@ -99,10 +105,17 @@ Artifacts are attached to the GitHub Release; images land in Quay.
 | Trigger | Repository | Tags |
 |---|---|---|
 | `vX.Y.Z` tag | `quay.io/bluebird/{core,minion,sentinel}` | `X.Y.Z` and `latest` |
-| push to `main` | `quay.io/bluebird/{core,minion,sentinel}-snapshot` | short git SHA and `latest` |
+| **full** build on `main` (trip-wire path or `[full-ci]`) | `quay.io/bluebird/{core,minion,sentinel}-snapshot` | short git SHA and `latest` |
+| ordinary push to `main` | — | **no images are published** |
 
 Release images and snapshot images live in **separate repositories**, so a `main` build can never
 move the `latest` tag of a released image.
+
+> **Ordinary pushes to `main` publish nothing.** The `*-oci`, `*-packages` and `publish-packages`
+> jobs all list the `e2e-tests-*` jobs in `needs:`, and those are gated on `full_build == 'true'`
+> (see `scope-tests-by-changed-modules`). A skipped dependency skips its dependents, so on a normal
+> `main` push the entire packaging, image and publish path is skipped. Only a full build — a
+> trip-wire path change, a `[full-ci]` commit, or a `v*` tag — reaches it.
 
 ## Verifying a release
 
@@ -133,8 +146,13 @@ cosign verify \
 ### Provenance
 
 ```bash
-gh attestation verify opennms-X.Y.Z.tar.gz --repo Bluebird-Community/opennms
+gh attestation verify opennms-full-assembly-X.Y.Z-core.tar.gz --repo Bluebird-Community/opennms
 ```
+
+The assets carry their Maven artifact names, not a bare `opennms-` prefix — the four tarballs are
+`opennms-full-assembly-X.Y.Z-core.tar.gz`, `opennms-full-assembly-X.Y.Z-optional.tar.gz`,
+`org.opennms.assemblies.minion-X.Y.Z-minion.tar.gz` and
+`org.opennms.assemblies.sentinel-X.Y.Z-sentinel.tar.gz`.
 
 Signing is keyless (Sigstore, GitHub OIDC) — there is no long-lived key to manage, and the
 certificate identity above is what binds a signature to this repository's release workflow.
