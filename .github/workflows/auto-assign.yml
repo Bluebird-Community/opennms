@@ -10,7 +10,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: shufo/auto-assign-reviewer-by-files@v1.1.5
+      - uses: shufo/auto-assign-reviewer-by-files@5a54f3e900d93e5fc3729fa68b2d3a2f697f6dd3  # v1.1.5
         with:
           config: ".github/assign-by-files.yml"
           token: ${{ secrets.GITHUB_TOKEN }}
