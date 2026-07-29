@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,33 +91,46 @@ public class QueueFileOffHeapDispatchQueueTest {
                 .collect(Collectors.toList());
 
         AtomicInteger count = new AtomicInteger(0);
-        CompletableFuture.runAsync(() -> {
-            while(count.get() < numEntries) {
-                try {
-                    queue.enqueue(toQueue.get(count.getAndIncrement()), "key");
-                } catch (WriteFailedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-        
         List<String> dequeued = new CopyOnWriteArrayList<>();
-        CompletableFuture.runAsync(() -> {
-            await().pollDelay(Duration.ofMillis(10)).pollInterval(Duration.ofMillis(10)).until(() -> queue.getSize() > 0);
-            while(true) {
-                try {
-                    dequeued.add(queue.dequeue().getValue());
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+
+        // Dedicated threads, not CompletableFuture.runAsync. Both loops below block for the
+        // lifetime of the test -- the consumer on await() and on the blocking dequeue() --
+        // and doing that on ForkJoinPool.commonPool() without a ManagedBlocker can starve
+        // the pool: its parallelism is availableProcessors()-1, and surefire shares one JVM
+        // across a module's tests, so whether a thread is free depends on what ran before.
+        // That made this test pass in 2.4 s in one shard and hang past five minutes in
+        // another on identical runners. Two dedicated threads make it deterministic.
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            executor.execute(() -> {
+                while (count.get() < numEntries) {
+                    try {
+                        queue.enqueue(toQueue.get(count.getAndIncrement()), "key");
+                    } catch (WriteFailedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-            }
-        });
-        
-        // Throughput bound: 11,111 entries through a file-backed queue, so the time needed
-        // scales with the host's cores and disk. await() returns as soon as the condition
-        // holds, so a generous ceiling costs nothing on a fast machine and only bounds how
-        // long a genuine hang runs. One minute times out on a 4-vCPU GitHub-hosted runner.
-        await().atMost(5, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
+            });
+
+            executor.execute(() -> {
+                await().pollDelay(Duration.ofMillis(10)).pollInterval(Duration.ofMillis(10)).until(() -> queue.getSize() > 0);
+                while (true) {
+                    try {
+                        dequeued.add(queue.dequeue().getValue());
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
+            });
+
+            // Throughput bound: 11,111 entries through a file-backed queue, so the time
+            // needed scales with the host's cores and disk. await() returns as soon as its
+            // condition holds, so a generous ceiling costs nothing on a quick machine.
+            await().atMost(5, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
+        } finally {
+            // The consumer loops forever by design; stop it rather than leaking the thread.
+            executor.shutdownNow();
+        }
     }
 
     @Test

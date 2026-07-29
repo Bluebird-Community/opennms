@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -227,39 +228,49 @@ public class DataBlocksOffHeapQueueTest {
 
         CountDownLatch startedQueueing = new CountDownLatch(1);
         AtomicInteger count = new AtomicInteger(0);
-        CompletableFuture.runAsync(() -> {
-            while (count.get() < numEntries) {
-                try {
-                    var value = toQueue.get(count.getAndIncrement());
-                    queue.enqueue(value, value);
-                    startedQueueing.countDown();
-                } catch (WriteFailedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
         List<String> dequeued = new CopyOnWriteArrayList<>();
-        CompletableFuture.runAsync(() -> {
-            try {
-                startedQueueing.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            while (true) {
-                try {
-                    var tmp = queue.dequeue().getValue();
-                    dequeued.add(tmp);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+
+        // Dedicated threads rather than CompletableFuture.runAsync: both loops block for the
+        // lifetime of the test, and blocking on ForkJoinPool.commonPool() without a
+        // ManagedBlocker can starve it. See QueueFileOffHeapDispatchQueueTest for the full
+        // rationale -- the sibling test intermittently hung past five minutes because of it.
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            executor.execute(() -> {
+                while (count.get() < numEntries) {
+                    try {
+                        var value = toQueue.get(count.getAndIncrement());
+                        queue.enqueue(value, value);
+                        startedQueueing.countDown();
+                    } catch (WriteFailedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-            }
-        });
+            });
 
+            executor.execute(() -> {
+                try {
+                    startedQueueing.await();
+                } catch (InterruptedException e) {
+                    return;
+                }
+                while (true) {
+                    try {
+                        var tmp = queue.dequeue().getValue();
+                        dequeued.add(tmp);
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
+            });
 
-        // See checkDeadlock: throughput bound on 11,111 entries, so the ceiling is generous
-        // rather than tuned to one machine. 30s times out on a 4-vCPU GitHub-hosted runner.
-        await().atMost(5, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
+            // See checkDeadlock: throughput bound on 11,111 entries, so the ceiling is
+            // generous rather than tuned to one machine.
+            await().atMost(5, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
+        } finally {
+            // The consumer loops forever by design; stop it rather than leaking the thread.
+            executor.shutdownNow();
+        }
 
         toQueue.removeAll(dequeued);
         assertEquals(new ArrayList<>(), toQueue);
