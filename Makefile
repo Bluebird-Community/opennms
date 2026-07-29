@@ -276,7 +276,13 @@ test-lists: maven-structure-graph
 	$(eval CHANGES_ONLY := $(if $(filter true,$(FULL_BUILD)),false,true))
 	python3 .cicd-assets/find-tests/find-tests.py generate-test-lists --changes-only="$(CHANGES_ONLY)" --output-unit-test-classes="$(ARTIFACTS_DIR)/tests/unit_tests_classnames" --output-integration-test-classes="$(ARTIFACTS_DIR)/tests/integration_tests_classnames" .
 	cat $(ARTIFACTS_DIR)/tests/*_tests_classnames | python3 .cicd-assets/find-tests/find-tests.py generate-test-modules --output="$(ARTIFACTS_DIR)/tests/test_modules" .
-	find e2e-tests -type f -regex ".*\/src\/test\/java\/.*IT.*\.java" | sed -e 's#^.*src/test/java/\(.*\)\.java#\1#' | tr "/" "." > $(ARTIFACTS_DIR)/tests/e2e_tests_classnames
+	# Every e2e shard regenerates this list in its own job and then slices it with
+	# awk "NR%shards==idx", which only partitions correctly when all shards see an
+	# identical ordering. find(1) returns directory order, which is not stable across
+	# checkouts, so sort -u is what makes the slicing shard-safe -- without it the
+	# shards both duplicate and skip tests. Same rationale as find-tests.py's
+	# sorted(set(...)) for the unit/integration lists.
+	find e2e-tests -type f -regex ".*\/src\/test\/java\/.*IT.*\.java" | sed -e 's#^.*src/test/java/\(.*\)\.java#\1#' | tr "/" "." | sort -u > $(ARTIFACTS_DIR)/tests/e2e_tests_classnames
 
 .PHONY: compile
 compile: maven-structure-graph
