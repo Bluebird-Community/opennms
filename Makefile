@@ -152,6 +152,7 @@ help:
 	@echo "  javadocs:              Generate Java docs"
 	@echo "  docs:                  Build Antora docs with a local install Antora, default target"
 	@echo "  install-core:          Install OpenNMS assembly to PKG_CORE_HOME to $(PKG_CORE_HOME)"
+	@echo "  unpack-core:           Extract an already-built Core assembly to $(PKG_CORE_HOME) without rebuilding"
 	@echo "  uninstall-core:        Remove the installed version in PKG_CORE_HOME from $(PKG_CORE_HOME)"
 	@echo "  clean:                 Clean assembly and docs and mostly used to recompile or rebuild from source"
 	@echo "  clean-all:             Clean git repository with untracked files, docs, M2 opennms artifacts and build assemblies"
@@ -657,10 +658,22 @@ docs: deps-docs
 	antora --stacktrace $(SITE_FILE)
 
 .PHONY: install-core
-install-core: quick-compile quick-assemble
+install-core: quick-compile quick-assemble unpack-core
+
+# The extraction half of install-core, without the build prerequisites. Callers that
+# have already built the tarball (CI test jobs run quick-compile + quick-assemble in a
+# preceding step) use this to avoid rebuilding the whole reactor a second time.
+.PHONY: unpack-core
+unpack-core:
+ifeq (,$(wildcard ./target/opennms-$(OPENNMS_VERSION).tar.gz))
+	@echo "Can't unpack the Core assembly, ./target/opennms-$(OPENNMS_VERSION).tar.gz is missing."
+	@echo "Run 'make quick-build' or 'make install-core' first."
+	@exit 1
+else
 	@echo "Install OpenNMS Horizon Core to $(PKG_CORE_HOME)"
 	mkdir -p $(PKG_CORE_HOME)
 	tar xzf ./target/opennms-$(OPENNMS_VERSION).tar.gz -C $(PKG_CORE_HOME)
+endif
 
 .PHONY: uninstall-core
 uninstall-core:
