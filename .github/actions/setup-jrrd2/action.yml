@@ -1,0 +1,50 @@
+name: Setup jrrd2
+description: Install rrdtool and a pinned, checksum-verified jrrd2 JNI library for RRD tests.
+
+# The self-hosted runners have jrrd2 provisioned out of band -- nothing in this
+# repository installs it -- so GitHub-hosted jobs must do it explicitly. Without it,
+# roughly 18 RRD-related test classes across the unit and integration suites fail with
+# "java.lang.UnsatisfiedLinkError: no jrrd2 in java.library.path".
+
+inputs:
+  version:
+    description: jrrd2 version to install.
+    required: false
+    # Only one version is published in the OpenNMS stable Debian repository.
+    default: "2.0.4"
+  sha256:
+    description: SHA-256 of jrrd2_<version>_amd64.deb.
+    required: false
+    default: "e700bbf350f62c473e080faed1dce118d3ddb7550b2e553df909b0a6695d5556"
+
+runs:
+  using: composite
+  steps:
+    - name: Install librrd runtime
+      shell: bash
+      run: |
+        set -euo pipefail
+        # libjrrd2.so links against librrd; rrdtool pulls it in and is itself useful
+        # to any test that shells out to the binary.
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends rrdtool
+    - name: Download and verify jrrd2
+      shell: bash
+      run: |
+        set -euo pipefail
+        version="${{ inputs.version }}"
+        sha256="${{ inputs.sha256 }}"
+        deb="jrrd2_${version}_amd64.deb"
+        url="https://debian.opennms.org/dists/stable/main/binary-amd64/${deb}"
+        tmp="$(mktemp -d)"
+        curl -fsSL --retry 3 -o "${tmp}/${deb}" "${url}"
+        echo "${sha256}  ${tmp}/${deb}" | sha256sum -c -
+        dpkg-deb -x "${tmp}/${deb}" "${tmp}/extracted"
+        # The package ships the library under /usr/lib/jni, which is not on the JVM's
+        # default java.library.path (/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib),
+        # so install it somewhere the JVM already looks rather than exporting a path that
+        # every forked surefire JVM would have to inherit.
+        sudo install -m 0644 "${tmp}/extracted/usr/lib/jni/libjrrd2.so" /usr/lib/libjrrd2.so
+        rm -rf "${tmp}"
+        test -f /usr/lib/libjrrd2.so
+        echo "installed jrrd2 ${version} to /usr/lib/libjrrd2.so"
