@@ -193,10 +193,20 @@ public abstract class OffHeapDataBlock<T> implements DataBlock<T> {
     public synchronized void enableQueue() throws ReadFailedException, InterruptedException {
         try {
             if (!restore) {
-                while (!diskLock.tryLock()) {
+                // Wait for an in-flight flush BEFORE taking diskLock, not after.
+                //
+                // flushToDisk() submits a worker that must acquire diskLock to complete and to
+                // publish its result into future. diskLock is fair, but tryLock() deliberately
+                // ignores fairness and barges, so a reader arriving mid-flush could take
+                // diskLock ahead of that worker and then block here waiting for a future the
+                // worker can no longer finish. The reader waits forever holding the lock the
+                // worker needs: a consumer wedged in Object.wait() inside dequeue() while the
+                // producer kept enqueuing. Draining the future first guarantees the worker has
+                // released diskLock by the time we ask for it.
+                while ((future != null && !future.isDone())) {
                     this.wait(10);
                 }
-                while ((future != null && !future.isDone())) {
+                while (!diskLock.tryLock()) {
                     this.wait(10);
                 }
                 if (queue != null) {
