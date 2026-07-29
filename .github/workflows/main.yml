@@ -599,12 +599,13 @@ jobs:
       matrix:
         shard_idx: [ 0, 1, 2 ] # Test job index for each runner
         shards: [ 3 ]          # 3 parallel test jobs
-    runs-on:
-      group: Default
-      labels:
-        - self-hosted
-        - Linux
-        - X64
+    # GitHub-hosted: this repository is public, so standard runners are 4 vCPU / 16 GB
+    # at no cost, and the account allows far more of them concurrently than the two
+    # self-hosted machines. Per-job wall clock is slower here than on the self-hosted
+    # box; the win is that all shards run at once instead of queueing. Only viable
+    # because build-with-smoke-test now hands off the reactor -- a cold GitHub runner
+    # could not afford the full build these jobs used to do.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
@@ -615,6 +616,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Cache third-party Maven dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          # org/opennms is excluded on purpose. Those artifacts come from the
+          # run-scoped reactor-artifacts handoff restored in the next step, which
+          # cannot carry another commit's bytecode the way a restore-keys hit could.
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/org/opennms
+          key: m2-thirdparty-${{ hashFiles('**/pom.xml') }}
+          # Prefix fallback is safe here: a near-miss only costs a few downloads,
+          # never correctness. The opposite is true for the reactor handoff.
+          restore-keys: |
+            m2-thirdparty-
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
@@ -663,12 +678,10 @@ jobs:
       # Explicit: this job restores the reactor and assembly artifacts it publishes.
       - build-with-smoke-test
       - unit-tests
-    runs-on:
-      group: Default
-      labels:
-        - self-hosted
-        - Linux
-        - X64
+    # GitHub-hosted, see the note on unit-tests. PostgreSQL comes from
+    # .cicd-assets/postgres/compose.yaml via 'make spinup-postgres'; Docker and Compose
+    # are both present on ubuntu-latest and the compose file binds no host paths.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
@@ -679,6 +692,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Cache third-party Maven dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          # See the note on unit-tests: org/opennms is excluded so the reactor handoff
+          # remains the only source of this commit's own artifacts.
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/org/opennms
+          key: m2-thirdparty-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-thirdparty-
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
