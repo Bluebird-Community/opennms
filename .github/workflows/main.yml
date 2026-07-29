@@ -714,6 +714,18 @@ jobs:
           version: 10.33.0
       - name: Set up jrrd2
         uses: ./.github/actions/setup-jrrd2
+      # Many integration tests load a Spring context containing the 'pinger' bean.
+      # NativeDatagramSocket.create tries an unprivileged ICMP datagram socket first and
+      # only falls back to SOCK_RAW, and DaoTestConfigBean pins the JNA pinger for tests.
+      # Ubuntu ships net.ipv4.ping_group_range as "1 0", which allows no group, so the
+      # SOCK_DGRAM attempt fails with EPERM, the SOCK_RAW fallback fails without
+      # CAP_NET_RAW, and every such context fails to load. Widening the range is what the
+      # product's own bin/ensure-user-ping.sh does for non-root installs, and it avoids
+      # granting capabilities to the JVM. unit-tests does not need this -- the full unit
+      # suite passes without it -- so it is deliberately only set here.
+      - name: Allow unprivileged ICMP ping sockets
+        run: |
+          sudo sysctl -w net.ipv4.ping_group_range="0 2147483647"
       - name: Cache third-party Maven dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
