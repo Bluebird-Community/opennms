@@ -660,6 +660,8 @@ jobs:
         shards: [ 8 ]                         # total number of parallel test jobs
     needs:
       - decide-scope
+      # Explicit: this job restores the reactor and assembly artifacts it publishes.
+      - build-with-smoke-test
       - unit-tests
     runs-on:
       group: Default
@@ -726,6 +728,8 @@ jobs:
         shards: [ 8 ]                         # total number of parallel test jobs
     needs:
       - decide-scope
+      # Explicit: this job restores the reactor and assembly artifacts it publishes.
+      - build-with-smoke-test
       - unit-tests
     runs-on:
       group: Default
@@ -740,10 +744,35 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Prepare the build for tests
+      - name: Fetch the reactor artifacts built by build-with-smoke-test
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: reactor-artifacts
+          path: target/artifacts
+      - name: Restore the reactor artifacts into the local Maven repository
         run: |
-          make quick-compile
-          make quick-assemble
+          make restore-reactor-artifacts
+      # The core-e2e / minion-e2e / sentinel-e2e targets build all three container
+      # images, so every e2e job needs all three assembly tarballs. These are the same
+      # artifacts the *-packages and *-oci jobs already consume, restored to the paths
+      # the *-oci targets read. Building the images in-job stays cheap because the
+      # runners keep a warm Docker layer cache; shipping saved images would move more
+      # bytes than the tarballs do.
+      - name: Fetch the Core assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-core
+          path: opennms-full-assembly/target
+      - name: Fetch the Minion assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-minion
+          path: opennms-assemblies/minion/target
+      - name: Fetch the Sentinel assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-sentinel
+          path: opennms-assemblies/sentinel/target
       - name: Clean stale test reports (self-hosted runner defensive)
         run: |
           find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
@@ -784,6 +813,8 @@ jobs:
         shards: [ 1 ]    # No parallel test jobs
     needs:
       - decide-scope
+      # Explicit: this job restores the reactor and assembly artifacts it publishes.
+      - build-with-smoke-test
       - unit-tests
     runs-on:
       group: Default
@@ -798,10 +829,35 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Prepare the build for tests
+      - name: Fetch the reactor artifacts built by build-with-smoke-test
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: reactor-artifacts
+          path: target/artifacts
+      - name: Restore the reactor artifacts into the local Maven repository
         run: |
-          make quick-compile
-          make quick-assemble
+          make restore-reactor-artifacts
+      # The core-e2e / minion-e2e / sentinel-e2e targets build all three container
+      # images, so every e2e job needs all three assembly tarballs. These are the same
+      # artifacts the *-packages and *-oci jobs already consume, restored to the paths
+      # the *-oci targets read. Building the images in-job stays cheap because the
+      # runners keep a warm Docker layer cache; shipping saved images would move more
+      # bytes than the tarballs do.
+      - name: Fetch the Core assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-core
+          path: opennms-full-assembly/target
+      - name: Fetch the Minion assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-minion
+          path: opennms-assemblies/minion/target
+      - name: Fetch the Sentinel assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-sentinel
+          path: opennms-assemblies/sentinel/target
       - name: Clean stale test reports (self-hosted runner defensive)
         run: |
           find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
@@ -842,6 +898,8 @@ jobs:
         shards: [ 1 ]    # No parallel test jobs
     needs:
       - decide-scope
+      # Explicit: this job restores the reactor and assembly artifacts it publishes.
+      - build-with-smoke-test
       - unit-tests
     runs-on:
       group: Default
@@ -856,10 +914,35 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Prepare the build for tests
+      - name: Fetch the reactor artifacts built by build-with-smoke-test
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: reactor-artifacts
+          path: target/artifacts
+      - name: Restore the reactor artifacts into the local Maven repository
         run: |
-          make quick-compile
-          make quick-assemble
+          make restore-reactor-artifacts
+      # The core-e2e / minion-e2e / sentinel-e2e targets build all three container
+      # images, so every e2e job needs all three assembly tarballs. These are the same
+      # artifacts the *-packages and *-oci jobs already consume, restored to the paths
+      # the *-oci targets read. Building the images in-job stays cheap because the
+      # runners keep a warm Docker layer cache; shipping saved images would move more
+      # bytes than the tarballs do.
+      - name: Fetch the Core assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-core
+          path: opennms-full-assembly/target
+      - name: Fetch the Minion assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-minion
+          path: opennms-assemblies/minion/target
+      - name: Fetch the Sentinel assembly tarball
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: tarball-sentinel
+          path: opennms-assemblies/sentinel/target
       - name: Clean stale test reports (self-hosted runner defensive)
         run: |
           find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
