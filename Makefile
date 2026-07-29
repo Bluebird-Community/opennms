@@ -115,6 +115,8 @@ help:
 	@echo "  quick-build:           Runs a quick compile and quick assemble for development"
 	@echo "  quick-compile:         Quick compile to get fast feedback for development"
 	@echo "  quick-assemble:        Quick assemble to run on a build local system"
+	@echo "  package-reactor-artifacts: Package the installed reactor artifacts for hand-off to test jobs"
+	@echo "  restore-reactor-artifacts: Restore a packaged reactor hand-off into the local Maven repository"
 	@echo "  core-pkg-deb:          Build Core Debian packages"
 	@echo "  core-pkg-rpm:          Build Core RPM packages"
 	@echo "  minion-pkg-deb:        Build Minion Debian packages"
@@ -315,6 +317,56 @@ quick-compile: maven-structure-graph
 quick-assemble: deps-build show-info
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dopennms.home=$(PKG_CORE_HOME) -Dinstall.version=$(INSTALL_VERSION) --file opennms-full-assembly/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.quick-assemble.log
 
+# Reactor artifact handoff.
+#
+# CI used to run quick-compile + quick-assemble in every test job, which meant one
+# commit was compiled from scratch 22 times per run (~13 min each). Instead the build
+# job packages the reactor artifacts it just installed and each test job restores them
+# into its local Maven repository, so the test jobs only compile the modules under test.
+#
+# What is included: jars (including test-jars), poms, and the small side artifacts test
+# modules can resolve -- Karaf feature xml, properties and cfg files.
+#
+# What is excluded, and why:
+#   *.tar.gz / *.zip  ~7.5G of OpenNMS assembly archives
+#   *.war             1.4G, dominated by assemblies.webapp-full
+# Every consumer of one of those is an assembly module, and assembly modules are built
+# by the build job and never rebuilt by a test job. Excluding them takes the handoff
+# from ~7.7G to ~200M. Re-verify this if a test module ever grows such a dependency.
+#
+# Sources/javadoc jars are excluded because nothing in the test path resolves them.
+M2_REPO               ?= $(HOME)/.m2/repository
+REACTOR_ARTIFACTS     := $(ARTIFACTS_DIR)/reactor-m2.tar.gz
+# Escape hatch / kill-switch: set to --also-make to restore the old self-contained
+# behaviour of the unit-tests and integration-tests targets.
+REACTOR_ALSO_MAKE     ?=
+
+.PHONY: package-reactor-artifacts
+package-reactor-artifacts:
+	mkdir -p $(ARTIFACTS_DIR)
+	cd $(M2_REPO) && find org/opennms -path "*/$(OPENNMS_VERSION)/*" -type f \
+	  \( -name '*.jar' -o -name '*.pom' -o -name '*.xml' -o -name '*.properties' -o -name '*.cfg' \) \
+	  ! -name '*-sources.jar' ! -name '*-javadoc.jar' \
+	  | tar -czf $(WORKING_DIRECTORY)/$(REACTOR_ARTIFACTS) -T -
+	@echo "Packaged reactor artifacts for $(OPENNMS_VERSION): $$(du -h $(REACTOR_ARTIFACTS) | cut -f1)"
+
+# The handoff is shipped as a run-scoped GitHub artifact, so it cannot carry content
+# from a different commit the way a restore-keys cache hit could. The assertion below
+# is a cheap backstop: fail loudly rather than run tests against an empty repository.
+.PHONY: restore-reactor-artifacts
+restore-reactor-artifacts:
+ifeq (,$(wildcard $(REACTOR_ARTIFACTS)))
+	@echo "Can't restore reactor artifacts, $(REACTOR_ARTIFACTS) is missing."
+	@echo "It is published by the build job; run 'make quick-build package-reactor-artifacts' locally."
+	@exit 1
+else
+	mkdir -p $(M2_REPO)
+	tar -xzf $(REACTOR_ARTIFACTS) -C $(M2_REPO)
+	@test -n "$$(find $(M2_REPO)/org/opennms -path '*/$(OPENNMS_VERSION)/*' -name '*.jar' -print -quit)" \
+	  || { echo "Restored the handoff but found no org.opennms jars for $(OPENNMS_VERSION)"; exit 1; }
+	@echo "Restored reactor artifacts for $(OPENNMS_VERSION) into $(M2_REPO)"
+endif
+
 .PHONY: core-oci
 core-oci:
 ifeq (,$(wildcard ./opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz))
@@ -454,16 +506,21 @@ sentinel-e2e: deps-oci test-lists sentinel-oci minion-oci core-oci
 unit-tests: test-lists spinup-postgres
 	$(eval U_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipTests.txt $(ARTIFACTS_DIR)/tests/unit_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(eval TEST_PROJECTS ?= $(shell cat ${ARTIFACTS_DIR}/tests/test_modules | paste -s -d, -))
-	# Parallel compiling with -T 1C works, but it doesn't for tests
-	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast --also-make --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
+	# Parallel compiling with -T 1C works, but it doesn't for tests.
+	# No --also-make: the reactor artifacts are restored into the local Maven repository
+	# by restore-reactor-artifacts, so upstream modules resolve as installed artifacts
+	# instead of being rebuilt. Set REACTOR_ALSO_MAKE=--also-make for a self-contained
+	# build on a machine that has not run quick-build for this commit.
+	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast $(REACTOR_ALSO_MAKE) --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
 	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=true -DskipSurefire=false -DskipFailsafe=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.u_tests.log
 
 .PHONY: integration-tests
 integration-tests: test-lists spinup-postgres
 	$(eval I_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipIntegrationTests.txt $(ARTIFACTS_DIR)/tests/integration_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(eval TEST_PROJECTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/test_modules | paste -s -d, -))
-	# Parallel compiling with -T 1C works, but it doesn't for tests
-	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast --also-make --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
+	# Parallel compiling with -T 1C works, but it doesn't for tests.
+	# See the unit-tests target above for why --also-make is not used here.
+	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast $(REACTOR_ALSO_MAKE) --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
 	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=false -DskipSurefire=true -DskipFailsafe=false -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" -Dit.test="$(I_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.i_tests.log
 
 .PHONY: code-coverage

@@ -204,6 +204,16 @@ jobs:
       - name: Build and assemble from source without expensive tasks
         run: |
           make
+      - name: Package reactor artifacts for the test jobs
+        run: |
+          make package-reactor-artifacts
+      - name: Persist reactor artifacts
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        with:
+          name: reactor-artifacts
+          path: target/artifacts/reactor-m2.tar.gz
+          # Only consumed by test jobs inside this same run.
+          retention-days: 1
       - name: Run quick smoke test
         run: |
           make smoke
@@ -605,10 +615,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Prepare the build for tests
+      - name: Fetch the reactor artifacts built by build-with-smoke-test
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: reactor-artifacts
+          path: target/artifacts
+      - name: Restore the reactor artifacts into the local Maven repository
         run: |
-          make quick-compile
-          make quick-assemble
+          make restore-reactor-artifacts
       - name: Clean stale test reports (self-hosted runner defensive)
         run: |
           find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
@@ -663,13 +677,18 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Prepare the build for tests
+      - name: Fetch the reactor artifacts built by build-with-smoke-test
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          name: reactor-artifacts
+          path: target/artifacts
+      - name: Restore the reactor artifacts into the local Maven repository
         run: |
-          make quick-compile
-          make quick-assemble
-      - name: Install the Core assembly built by the previous step
-        run: |
-          make unpack-core
+          make restore-reactor-artifacts
+      # The unpack-core step that used to sit here is gone with the in-job build: it
+      # extracted the 2.1G root assembly to /opt/opennms, and nothing on the integration
+      # test path reads that location. The integration tests run inside the reactor with
+      # opennms.home pointed at per-test directories.
       - name: Clean stale test reports (self-hosted runner defensive)
         run: |
           find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
