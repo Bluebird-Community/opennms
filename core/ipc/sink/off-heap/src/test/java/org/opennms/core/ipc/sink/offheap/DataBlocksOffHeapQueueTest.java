@@ -198,7 +198,12 @@ public class DataBlocksOffHeapQueueTest {
             futures.add(deQueueExecutor.submit(new Dequeue(String.valueOf(i), queue, deQueueDataCounter, itemPerThread, enQueueExecutor)));
         }
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+        // Throughput bound: 20 writer and 20 reader threads move a million items through a
+        // file-backed queue, so the time this needs scales with the host's cores and disk.
+        // A generous ceiling costs nothing when the machine is fast -- await() returns as
+        // soon as the condition holds -- and only bounds how long a genuine hang runs for.
+        // 30s was tuned to the self-hosted builders and times out on a 4-vCPU runner.
+        await().atMost(5, TimeUnit.MINUTES).until(() -> {
             System.out.println("deQueueDataCounter: " + deQueueDataCounter.get() + " queue size: " + queue.getSize());
             return (deQueueDataCounter.get() > 0 && deQueueExecutor.getActiveCount() == 0) || deQueueDataCounter.get() == writeThread * itemPerThread;
         }, equalTo(true));
@@ -252,7 +257,9 @@ public class DataBlocksOffHeapQueueTest {
         });
 
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> dequeued, equalTo(toQueue));
+        // See checkDeadlock: throughput bound on 11,111 entries, so the ceiling is generous
+        // rather than tuned to one machine. 30s times out on a 4-vCPU GitHub-hosted runner.
+        await().atMost(5, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
 
         toQueue.removeAll(dequeued);
         assertEquals(new ArrayList<>(), toQueue);

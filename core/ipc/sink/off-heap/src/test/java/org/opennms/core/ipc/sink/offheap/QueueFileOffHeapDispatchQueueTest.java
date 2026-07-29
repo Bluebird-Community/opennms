@@ -111,7 +111,11 @@ public class QueueFileOffHeapDispatchQueueTest {
             }
         });
         
-        await().atMost(1, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
+        // Throughput bound: 11,111 entries through a file-backed queue, so the time needed
+        // scales with the host's cores and disk. await() returns as soon as the condition
+        // holds, so a generous ceiling costs nothing on a fast machine and only bounds how
+        // long a genuine hang runs. One minute times out on a 4-vCPU GitHub-hosted runner.
+        await().atMost(5, TimeUnit.MINUTES).until(() -> dequeued, equalTo(toQueue));
     }
 
     @Test
