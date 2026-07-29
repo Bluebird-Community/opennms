@@ -616,6 +616,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      # make's deps-build gate requires pnpm on PATH. The self-hosted runners have it
+      # provisioned, GitHub-hosted runners do not. Only compile-ui invokes the system
+      # pnpm -- the Maven build gets its own node/pnpm from frontend-maven-plugin -- but
+      # deps-build is a toolchain gate shared by every caller, so satisfy it here rather
+      # than loosening a check the full build legitimately depends on.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271  # v6.0.9
+        with:
+          version: 10.33.0
       - name: Cache third-party Maven dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
@@ -646,6 +655,10 @@ jobs:
           BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
+          # deps-build requires an open-file limit of 20000, which the large reactor
+          # genuinely needs. GitHub-hosted runners start with a 1024 soft limit and a
+          # hard limit far above 20000, so raise it in the shell that runs make.
+          ulimit -n 20000
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
@@ -692,6 +705,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      # See the note on unit-tests: deps-build requires pnpm on PATH.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271  # v6.0.9
+        with:
+          version: 10.33.0
       - name: Cache third-party Maven dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
@@ -723,6 +741,8 @@ jobs:
           BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
+          # See the note on unit-tests: raise the open-file limit for deps-build.
+          ulimit -n 20000
           make integration-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Integration Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
