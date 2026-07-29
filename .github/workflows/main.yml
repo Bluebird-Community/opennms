@@ -599,13 +599,28 @@ jobs:
       matrix:
         shard_idx: [ 0, 1, 2 ] # Test job index for each runner
         shards: [ 3 ]          # 3 parallel test jobs
-    # GitHub-hosted: this repository is public, so standard runners are 4 vCPU / 16 GB
-    # at no cost, and the account allows far more of them concurrently than the two
-    # self-hosted machines. Per-job wall clock is slower here than on the self-hosted
-    # box; the win is that all shards run at once instead of queueing. Only viable
-    # because build-with-smoke-test now hands off the reactor -- a cold GitHub runner
-    # could not afford the full build these jobs used to do.
-    runs-on: ubuntu-latest
+    # Self-hosted on purpose, unlike integration-tests below.
+    #
+    # These three shards are only ~26 min of test time, the smallest slice of the suite,
+    # but they gate integration-tests and every e2e job. Moving them to 4 vCPU runners
+    # exposed a string of latent hardware assumptions in the unit suite -- an off-heap
+    # queue deadlock (fixed), a suspected message-loss window (issue #204) and a Drools
+    # test that races a streaming rule engine -- and each one blocked the whole pipeline
+    # from validating anything downstream. Keeping the gate on the fast machines and
+    # sending the eight integration shards to GitHub-hosted runners instead puts the
+    # capacity where the time actually is (~5 h vs ~26 min) without a red gate.
+    #
+    # No pnpm, jrrd2 or dependency-cache setup here: the self-hosted runners already
+    # provide pnpm and jrrd2, and their ~/.m2 persists between jobs, so restoring a
+    # 1.1 GB third-party cache over an already-warm repository would cost time rather
+    # than save it. The jrrd2 action in particular apt-installs and writes to /usr/lib,
+    # which must not run against a persistent host.
+    runs-on:
+      group: Default
+      labels:
+        - self-hosted
+        - Linux
+        - X64
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
@@ -616,31 +631,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      # make's deps-build gate requires pnpm on PATH. The self-hosted runners have it
-      # provisioned, GitHub-hosted runners do not. Only compile-ui invokes the system
-      # pnpm -- the Maven build gets its own node/pnpm from frontend-maven-plugin -- but
-      # deps-build is a toolchain gate shared by every caller, so satisfy it here rather
-      # than loosening a check the full build legitimately depends on.
-      - name: Set up pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271  # v6.0.9
-        with:
-          version: 10.33.0
-      - name: Set up jrrd2
-        uses: ./.github/actions/setup-jrrd2
-      - name: Cache third-party Maven dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-        with:
-          # org/opennms is excluded on purpose. Those artifacts come from the
-          # run-scoped reactor-artifacts handoff restored in the next step, which
-          # cannot carry another commit's bytecode the way a restore-keys hit could.
-          path: |
-            ~/.m2/repository
-            !~/.m2/repository/org/opennms
-          key: m2-thirdparty-${{ hashFiles('**/pom.xml') }}
-          # Prefix fallback is safe here: a near-miss only costs a few downloads,
-          # never correctness. The opposite is true for the reactor handoff.
-          restore-keys: |
-            m2-thirdparty-
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
@@ -657,10 +647,6 @@ jobs:
           BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
-          # deps-build requires an open-file limit of 20000, which the large reactor
-          # genuinely needs. GitHub-hosted runners start with a 1024 soft limit and a
-          # hard limit far above 20000, so raise it in the shell that runs make.
-          ulimit -n 20000
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
