@@ -81,7 +81,8 @@ public class QueueFileOffHeapDispatchQueueTest {
     }
 
     @Test
-    @Ignore("Fails intermittently because QueueFileOffHeapDispatchQueue appears to lose messages, "
+    @Ignore("See https://github.com/Bluebird-Community/opennms/issues/204. "
+            + "Fails intermittently because QueueFileOffHeapDispatchQueue appears to lose messages, "
             + "not because of anything in the test. enqueue() calls batch.toSerializedBatchAndClear(), "
             + "which empties the batch, then blocks in waitForCapacity(). If dequeue() drains the batch "
             + "itself while the producer is parked there it calls cancelFlush(), so the producer wakes, "
