@@ -10,8 +10,14 @@ ARTIFACTS_DIR         := target/artifacts
 MAVEN_SHARDS          := 1
 MAVEN_SHARD_IDX       := 0
 MAVEN_BIN             := ./mvnw
-MAVEN_ARGS            := --batch-mode -DupdatePolicy=never -Djava.awt.headless=true -Daether.connector.resumeDownloads=false -Daether.connector.basic.threads=1 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DvaadinJavaMaxMemory=2g -DmaxCpus=8 -Dstyle.color=always -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Dmaven.wagon.http.retryHandler.count=3 -Dfailsafe.rerunFailingTestsCount=2 -Dsurefire.rerunFailingTestsCount=2
-export MAVEN_OPTS     := -XX:+UseG1GC -XX:InitialRAMPercentage=75.0 -XX:MaxRAMPercentage=75.0 -XX:ReservedCodeCacheSize=1g -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -XX:-UseGCOverheadLimit -XX:-MaxFDLimit -XX:MaxGCPauseMillis=200
+# Maven CLI flags and JVM options now live where Maven reads them itself:
+#   .mvn/maven.config  build hygiene flags, previously pasted into 16 call sites
+#   .mvn/jvm.config    heap and GC settings, previously an exported MAVEN_OPTS
+# Plain ./mvnw therefore behaves the same way the build does.
+#
+# What stays here is CI test policy rather than build hygiene. The rerun flags mask
+# flaky tests, so they must not silently change what a developer sees locally. See #207.
+MAVEN_ARGS            := -Dfailsafe.rerunFailingTestsCount=2 -Dsurefire.rerunFailingTestsCount=2
 
 GIT_BRANCH            := $(shell git branch | grep \* | cut -d' ' -f2)
 OPENNMS_VERSION       ?= $(shell grep '<version>' pom.xml | head -1 | sed -e 's/.*<version>\(.*\)<\/version>.*/\1/')
@@ -94,85 +100,9 @@ define setversion
 endef
 
 .PHONY: help
-help:
-	@echo ""
-	@echo "Makefile to build artifacts for OpenNMS"
-	@echo ""
-	@echo "Requirements to build:"
-	@echo "  * OpenJDK 21 Development Kit"
-	@echo "  * Maven (downloaded on demand via the bundled mvnw wrapper — no local install needed)"
-	@echo "  * NodeJS 24 with pnpm"
-	@echo "  * Antora"
-	@echo "We are using the command tool to test for the requirements in your search path."
-	@echo ""
-	@echo "Build targets:"
-	@echo "  help:                  Show this help"
-	@echo "  validate:              Fail quickly by checking project structure with mvn:clean"
-	@echo "  maven-structure-graph: Generate a JSON file with the Maven structure used to generate test class list"
-	@echo "  test-lists:            Generate a list with all JUnit and Integration Test class names for splitting jobs"
-	@echo "  compile:               Compile OpenNMS from source code with runs expensive tasks doing"
-	@echo "  assemble:              Assemble the build artifacts with expensive tasks for a production build"
-	@echo "  quick-build:           Runs a quick compile and quick assemble for development"
-	@echo "  quick-compile:         Quick compile to get fast feedback for development"
-	@echo "  quick-assemble:        Quick assemble to run on a build local system"
-	@echo "  package-reactor-artifacts: Package the installed reactor artifacts for hand-off to test jobs"
-	@echo "  restore-reactor-artifacts: Restore a packaged reactor hand-off into the local Maven repository"
-	@echo "  core-pkg-deb:          Build Core Debian packages"
-	@echo "  core-pkg-rpm:          Build Core RPM packages"
-	@echo "  minion-pkg-deb:        Build Minion Debian packages"
-	@echo "  minion-pkg-rpm:        Build Minion RPM packages"
-	@echo "  sentinel-pkg-deb:      Build Sentinel Debian packages"
-	@echo "  sentinel-pkg-rpm:      Build Sentinel RPM packages"
-	@echo "  all-pkgs:              Build all packages"
-	@echo ""
-	@echo "Container Images:"
-	@echo "  core-oci:              Build container image for Horizon Core, tag: local/core:latest"
-	@echo "  minion-oci:            Build container image for Minion, tag local/minion:latest"
-	@echo "  sentinel-oci:          Build container image for Sentinel, tag local/sentinel:latest"
-	@echo "  show-core-oci:         Analyze the OCI image using dive, tag local/horizon:latest"
-	@echo "  show-minion-oci:       Analyze the OCI image using dive, tag local/minion:latest"
-	@echo "  show-sentinel-oci:     Analyze the OCI image using dive, tag local/sentinel:latest"
-	@echo ""
-	@echo "Dependencies and quality scans:"
-	@echo "  core-oci-sbom:         Create software bill of material for the Core container image"
-	@echo "  minion-oci-sbom:       Create software bill of material for the Minion container image"
-	@echo "  sentinel-oci-sbom:     Create software bill of material for the Sentinel container image"
-	@echo "  core-oci-sec-scan:     Create security scan report for the Core container image"
-	@echo "  minion-oci-sec-scan:   Create security scan report for the Core container image"
-	@echo "  sentinel-oci-sec-scan: Create security scan report for the Core container image"
-	@echo "  code-coverage:         Test code coverage with SonarScanner CLI"
-	@echo ""
-	@echo "Test suits:"
-	@echo "  smoke:                 Simple smoke test to verify the application can be started by using the MenuHeaderIT and SinglePortFlowsIT test"
-	@echo "  core-e2e:              Run full end to end test suite against the Core components. Specific tests can be set with: CORE_E2E_TESTS=MyTestIT-1,MyTestIT-2, ..."
-	@echo "  minion-e2e:            Run end to end test suite against the Minion components. Specific tests can be set with: MINION_E2E_TESTS=MyTestIT-1,MyTestIT-2, ..."
-	@echo "  sentinel-e2e:          Run end to end test suite against the Sentinel components. Specific tests can be set with: SENTINEL_E2E_TESTS=MyTestIT-1,MyTestIT-2, ..."
-	@echo "  unit-tests:            Run full unit test suite, you can run specific tests in a projects with:"
-	@echo "                           U_TESTS=org.opennms.netmgt.provision.detector.BgpSessionDetectorTest TEST_PROJECTS=org.opennms:opennms-detector-simple"
-	@echo "  integration-tests:     Run full integration test suit, you can run specific integration tests in a project with:"
-	@echo "                           I_TESTS=org.opennms.netmgt.snmpinterfacepoller.SnmpPollerIT TEST_PROJECTS=org.opennms:opennms-services"
-	@echo "  javadocs:              Generate Java docs"
-	@echo "  docs:                  Build Antora docs with a local install Antora, default target"
-	@echo "  install-core:          Install OpenNMS assembly to PKG_CORE_HOME to $(PKG_CORE_HOME)"
-	@echo "  unpack-core:           Extract an already-built Core assembly to $(PKG_CORE_HOME) without rebuilding"
-	@echo "  uninstall-core:        Remove the installed version in PKG_CORE_HOME from $(PKG_CORE_HOME)"
-	@echo "  clean:                 Clean assembly and docs and mostly used to recompile or rebuild from source"
-	@echo "  clean-all:             Clean git repository with untracked files, docs, M2 opennms artifacts and build assemblies"
-	@echo "  clean-git:             DELETE *all* untracked files from local git repository"
-	@echo "  clean-m2:              Remove just OpenNMS build artifacts from Maven local repository"
-	@echo "  clean-assembly:        Run mvn clean on assemblies, equivalent to clean.pl"
-	@echo "  clean-docs:            Clean all docs build artifacts"
-	@echo "  clean-buildroot:       Clean all package build root directories for Core, Minion, Sentinel in $(BUILD_ROOT)"
-	@echo "  clean-packages:        Clean all Debian and RPM package artifacts in $(ARTIFACTS_DIR)/packages"
-	@echo "  collect-artifacts:     Fetch and collect build artifacts in $(ARTIFACTS_DIR)"
-	@echo "  collect-testresults:   Fetch test results from tests in $(ARTIFACTS_DIR)/tests"
-	@echo "  spinup-postgres:       Spinup a PostgreSQL container to run integration tests used by integration tests"
-	@echo "  destroy-postgres:      Shutdown and destroy the PostgreSQL container"
-	@echo ""
-	@echo "Arguments: "
-	@echo "  SITE_FILE:           Antora site.yml file to build the site"
-	@echo ""
-	@echo ""
+help: ## Show this help
+	@build-tooling/make-help.sh $(MAKEFILE_LIST)
+
 
 .PHONY: deps-build
 deps-build:
@@ -256,17 +186,21 @@ deps-oci-layers:
 
 .PHONY: show-info
 show-info:
-	@echo "MAVEN_OPTS=\"$(MAVEN_OPTS)\""
-	@echo "MAVEN_ARGS=\"$(MAVEN_ARGS)\""
+	@echo "MAVEN_ARGS (test policy only)=\"$(MAVEN_ARGS)\""
+	@echo "--- .mvn/maven.config (CLI flags Maven applies itself) ---"
+	@grep -v '^#' .mvn/maven.config | grep -v '^$$' | sed 's/^/  /'
+	@echo "--- .mvn/jvm.config (Maven JVM options) ---"
+	@sed 's/^/  /' .mvn/jvm.config
 	@$(MAVEN_BIN) --version
 
 .PHONY: validate
-validate: deps-build show-info
+##@ Build
+validate: deps-build show-info ## Fail quickly by checking project structure with mvn:clean
 	$(MAVEN_BIN) clean
 	$(MAVEN_BIN) clean --file opennms-full-assembly/pom.xml -Dbuild.profile=default
 
 .PHONY: maven-structure-graph
-maven-structure-graph: deps-build show-info
+maven-structure-graph: deps-build show-info ## Generate a JSON file with the Maven structure used to generate test class list
 	$(MAVEN_BIN) org.opennms.maven.plugins:structure-maven-plugin:1.0:structure $(MAVEN_ARGS) -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) --fail-at-end -Prun-expensive-tasks -Pbuild-bamboo
 
 .PHONY: test-lists
@@ -274,7 +208,7 @@ maven-structure-graph: deps-build show-info
 # FULL_BUILD=true makes find-tests.py consider all reactor modules (--changes-only=false);
 # maven-structure-graph runs in both cases so generate-test-modules emits a correctly-scoped
 # test_modules list (only modules that contain tests AND are in the root reactor).
-test-lists: maven-structure-graph
+test-lists: maven-structure-graph ## Generate a list with all JUnit and Integration Test class names for splitting jobs
 	mkdir -p $(ARTIFACTS_DIR)/tests
 	$(eval CHANGES_ONLY := $(if $(filter true,$(FULL_BUILD)),false,true))
 	python3 .cicd-assets/find-tests/find-tests.py generate-test-lists --changes-only="$(CHANGES_ONLY)" --output-unit-test-classes="$(ARTIFACTS_DIR)/tests/unit_tests_classnames" --output-integration-test-classes="$(ARTIFACTS_DIR)/tests/integration_tests_classnames" .
@@ -288,23 +222,23 @@ test-lists: maven-structure-graph
 	find e2e-tests -type f -regex ".*\/src\/test\/java\/.*IT.*\.java" | sed -e 's#^.*src/test/java/\(.*\)\.java#\1#' | tr "/" "." | sort -u > $(ARTIFACTS_DIR)/tests/e2e_tests_classnames
 
 .PHONY: compile
-compile: maven-structure-graph
+compile: maven-structure-graph ## Compile OpenNMS from source code with runs expensive tasks doing
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dbuild.skip.tarball=false -Prun-expensive-tasks -Psmoke -Dbuild.type=production -Dbuild.sbom=true 2>&1 | tee $(ARTIFACTS_DIR)/mvn.compile.log
 
 .PHONY: compile-ui
-compile-ui:
+compile-ui: ## Build the Vue UI with pnpm, set SKIP_UI_TESTS=true to skip its tests
 	cd ui && pnpm install && pnpm build && \
 	if [ "$(SKIP_UI_TESTS)" == "false" ]; then pnpm test; else echo "Skip UI Tests"; fi;
 
 .PHONY: assemble
-assemble: deps-build show-info
+assemble: deps-build show-info ## Assemble the build artifacts with expensive tasks for a production build
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dopennms.home=$(PKG_CORE_HOME) -Dinstall.version=$(INSTALL_VERSION) -Pbuild-bamboo -Prun-expensive-tasks -Dbuild.skip.tarball=false -Denable.license=true -Dbuild.type=production -Dbuild.sbom=true --file opennms-full-assembly/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.assemble.log
 
 .PHONY: quick-build
-quick-build: quick-compile quick-assemble
+quick-build: quick-compile quick-assemble ## Runs a quick compile and quick assemble for development
 
 .PHONY: quick-compile
-quick-compile: maven-structure-graph
+quick-compile: maven-structure-graph ## Quick compile to get fast feedback for development
 	# Pre-warm node/pnpm cache so the parallel reactor (-T 1C) below doesn't race
 	# on the shared ~/.m2/repository/com/github/eirslett/pnpm/<v>/pnpm-<v>.tar.gz
 	# download path. Only :org.opennms.ui and :org.opennms.core.web-assets bind
@@ -314,7 +248,7 @@ quick-compile: maven-structure-graph
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dcyclonedx.skip=true 2>&1 | tee $(ARTIFACTS_DIR)/mvn.quick-compile.log
 
 .PHONY: quick-assemble
-quick-assemble: deps-build show-info
+quick-assemble: deps-build show-info ## Quick assemble to run on a build local system
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dopennms.home=$(PKG_CORE_HOME) -Dinstall.version=$(INSTALL_VERSION) --file opennms-full-assembly/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.quick-assemble.log
 
 # Reactor artifact handoff.
@@ -342,7 +276,7 @@ REACTOR_ARTIFACTS     := $(ARTIFACTS_DIR)/reactor-m2.tar.gz
 REACTOR_ALSO_MAKE     ?=
 
 .PHONY: package-reactor-artifacts
-package-reactor-artifacts:
+package-reactor-artifacts: ## Package the installed reactor artifacts for hand-off to test jobs
 	mkdir -p $(ARTIFACTS_DIR)
 	cd $(M2_REPO) && find org/opennms -path "*/$(OPENNMS_VERSION)/*" -type f \
 	  \( -name '*.jar' -o -name '*.pom' -o -name '*.xml' -o -name '*.properties' -o -name '*.cfg' \) \
@@ -354,7 +288,7 @@ package-reactor-artifacts:
 # from a different commit the way a restore-keys cache hit could. The assertion below
 # is a cheap backstop: fail loudly rather than run tests against an empty repository.
 .PHONY: restore-reactor-artifacts
-restore-reactor-artifacts:
+restore-reactor-artifacts: ## Restore a packaged reactor hand-off into the local Maven repository
 ifeq (,$(wildcard $(REACTOR_ARTIFACTS)))
 	@echo "Can't restore reactor artifacts, $(REACTOR_ARTIFACTS) is missing."
 	@echo "It is published by the build job; run 'make quick-build package-reactor-artifacts' locally."
@@ -368,7 +302,8 @@ else
 endif
 
 .PHONY: core-oci
-core-oci:
+##@ Container images
+core-oci: ## Build container image for Horizon Core, tag: local/core:latest
 ifeq (,$(wildcard ./opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz))
 	@echo "Can't build the Core container image, the build artifact"
 	@echo "./opennms-full-assembly/target/opennms-full-assembly-$(OPENNMS_VERSION)-core.tar.gz doesn't exist."
@@ -391,7 +326,7 @@ endif
 		 -t local/core:latest .
 
 .PHONY: minion-oci
-minion-oci:
+minion-oci: ## Build container image for Minion, tag local/minion:latest
 ifeq (,$(wildcard ./opennms-assemblies/minion/target/org.opennms.assemblies.minion-*-minion.tar.gz))
 	@echo "Can't build the Minion container image, the build artifact"
 	@echo "./opennms-assemblies/minion/target/org.opennms.assemblies.minion-$(OPENNMS_VERSION)-minion.tar.gz doesn't exist."
@@ -418,7 +353,7 @@ endif
          -t local/minion:latest .
 
 .PHONY: sentinel-oci
-sentinel-oci:
+sentinel-oci: ## Build container image for Sentinel, tag local/sentinel:latest
 ifeq (,$(wildcard ./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*-sentinel.tar.gz))
 	@echo "Can't build the Sentinel container image, the build artifact"
 	@echo "./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-$(OPENNMS_VERSION)-sentinel.tar.gz doesn't exist."
@@ -441,39 +376,40 @@ endif
          -t local/sentinel:latest .
 
 .PHONY: show-core-oci
-show-core-oci: deps-oci-layers core-oci
+show-core-oci: deps-oci-layers core-oci ## Analyze the OCI image using dive, tag local/horizon:latest
 	CI=true dive local/core:latest
 
 .PHONY: show-minion-oci
-show-minion-oci: deps-oci-layers minion-oci
+show-minion-oci: deps-oci-layers minion-oci ## Analyze the OCI image using dive, tag local/minion:latest
 	CI=true dive local/minion:latest
 
 .PHONY: show-sentinel-oci
-show-sentinel-oci: deps-oci-layers sentinel-oci
+show-sentinel-oci: deps-oci-layers sentinel-oci ## Analyze the OCI image using dive, tag local/sentinel:latest
 	CI=true dive local/sentinel:latest
 
 .PHONY: core-oci-sbom
-core-oci-sbom: deps-oci-sbom core-oci
+##@ Dependencies and scans
+core-oci-sbom: deps-oci-sbom core-oci ## Create software bill of material for the Core container image
 	syft scan local/core:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/core-oci-sbom.xml --quiet
 
 .PHONY: minion-oci-sbom
-minion-oci-sbom: deps-oci-sbom minion-oci
+minion-oci-sbom: deps-oci-sbom minion-oci ## Create software bill of material for the Minion container image
 	syft scan local/minion:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/minion-oci-sbom.xml --quiet
 
 .PHONY: sentinel-oci-sbom
-sentinel-oci-sbom: deps-oci-sbom sentinel-oci
+sentinel-oci-sbom: deps-oci-sbom sentinel-oci ## Create software bill of material for the Sentinel container image
 	syft scan local/sentinel:latest -o cyclonedx=$(ARTIFACTS_DIR)/oci/sentinel-oci-sbom.xml --quiet
 
 .PHONY: core-oci-sec-scan
-core-oci-sec-scan: deps-oci-sec-scan core-oci
+core-oci-sec-scan: deps-oci-sec-scan core-oci ## Create security scan report for the Core container image
 	trivy image local/core:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/core-trivy-report.json
 
 .PHONY: minion-oci-sec-scan
-minion-oci-sec-scan: deps-oci-sec-scan minion-oci
+minion-oci-sec-scan: deps-oci-sec-scan minion-oci ## Create security scan report for the Core container image
 	trivy image local/minion:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/minion-trivy-report.json
 
 .PHONY: sentinel-oci-sec-scan
-sentinel-oci-sec-scan: deps-oci-sec-scan sentinel-oci
+sentinel-oci-sec-scan: deps-oci-sec-scan sentinel-oci ## Create security scan report for the Core container image
 	trivy image local/sentinel:latest $(TRIVY_ARGS) -o $(ARTIFACTS_DIR)/oci/sentinel-trivy-report.json
 
 # Run just the a very limited set of integration tests to verify the application comes up and we have something we can
@@ -482,28 +418,29 @@ sentinel-oci-sec-scan: deps-oci-sec-scan sentinel-oci
 # smoke's recipe runs a hardcoded -Dit.test subset and does not read $(ARTIFACTS_DIR)/tests/*,
 # so it doesn't need test-lists. Skipping the dep avoids paying maven-structure-graph on every
 # commit (build-with-smoke-test runs unconditionally).
-smoke: deps-oci core-oci
+##@ Tests
+smoke: deps-oci core-oci ## Simple smoke test to verify the application can be started by using the MenuHeaderIT and SinglePortFlowsIT test
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="MenuHeaderIT,SinglePortFlowsIT" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.core --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.smoke-quick.log
 
 .PHONY: core-e2e
-core-e2e: deps-oci test-lists core-oci minion-oci sentinel-oci
+core-e2e: deps-oci test-lists core-oci minion-oci sentinel-oci ## Run full end to end test suite against the Core components. Specific tests can be set with: CORE_E2E_TESTS=MyTestIT-1,MyTestIT-2, ...
 	$(eval CORE_E2E_TESTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/e2e_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="$(CORE_E2E_TESTS)" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.core --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.core-smoke.log
 
 .PHONY: minion-e2e
-minion-e2e: deps-oci test-lists minion-oci sentinel-oci core-oci
+minion-e2e: deps-oci test-lists minion-oci sentinel-oci core-oci ## Run end to end test suite against the Minion components. Specific tests can be set with: MINION_E2E_TESTS=MyTestIT-1,MyTestIT-2, ...
 	$(eval MINION_E2E_TESTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/e2e_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="$(MINION_E2E_TESTS)" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.minion --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.minion-smoke.log
 
 .PHONY: sentinel-e2e
-sentinel-e2e: deps-oci test-lists sentinel-oci minion-oci core-oci
+sentinel-e2e: deps-oci test-lists sentinel-oci minion-oci core-oci ## Run end to end test suite against the Sentinel components. Specific tests can be set with: SENTINEL_E2E_TESTS=MyTestIT-1,MyTestIT-2, ...
 	$(eval SENTINEL_E2E_TESTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/e2e_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="$(SENTINEL_E2E_TESTS)" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.sentinel --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.sentinel-smoke.log
 
 # We allow users here to pass a specific unit tests and projects to run.
 # Otherwise we run the full test suite
 .PHONY: unit-tests
-unit-tests: test-lists spinup-postgres
+unit-tests: test-lists spinup-postgres ## Run full unit test suite, you can run specific tests in a projects with:
 	$(eval U_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipTests.txt $(ARTIFACTS_DIR)/tests/unit_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(eval TEST_PROJECTS ?= $(shell cat ${ARTIFACTS_DIR}/tests/test_modules | paste -s -d, -))
 	# Parallel compiling with -T 1C works, but it doesn't for tests.
@@ -515,7 +452,7 @@ unit-tests: test-lists spinup-postgres
 	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=true -DskipSurefire=false -DskipFailsafe=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.u_tests.log
 
 .PHONY: integration-tests
-integration-tests: test-lists spinup-postgres
+integration-tests: test-lists spinup-postgres ## Run full integration test suit, you can run specific integration tests in a project with:
 	$(eval I_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipIntegrationTests.txt $(ARTIFACTS_DIR)/tests/integration_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
 	$(eval TEST_PROJECTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/test_modules | paste -s -d, -))
 	# Parallel compiling with -T 1C works, but it doesn't for tests.
@@ -524,7 +461,7 @@ integration-tests: test-lists spinup-postgres
 	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=false -DskipSurefire=true -DskipFailsafe=false -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" -Dit.test="$(I_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.i_tests.log
 
 .PHONY: code-coverage
-code-coverage: deps-sonar
+code-coverage: deps-sonar ## Test code coverage with SonarScanner CLI
 	mkdir -p $(ARTIFACTS_DIR)/code-coverage
 	# Generate a list with all Jacoco code coverage reports from compile phase
 	find . -type f '!' -path './.git/*' -name jacoco.xml | sort -u > $(ARTIFACTS_DIR)/code-coverage/jacoco.xml
@@ -595,7 +532,7 @@ endif
 	cp "$(BUILD_ROOT)/core/opt/opennms/etc/opennms.service" "$(BUILD_ROOT)/core/usr/lib/systemd/system"
 
 .PHONY: core-pkg-deb
-core-pkg-deb: deps-packages core-pkg-buildroot
+core-pkg-deb: deps-packages core-pkg-buildroot ## Build Core Debian packages
 	@echo "==== Building Debian Core Packages ===="
 	@echo
 	@echo "Version:     " $(OPENNMS_VERSION)
@@ -605,7 +542,7 @@ core-pkg-deb: deps-packages core-pkg-buildroot
 		nfpm package --packager deb --config nfpm/nfpm-core.yaml --target "$(ARTIFACTS_DIR)/packages/core/"
 
 .PHONY: core-pkg-rpm
-core-pkg-rpm: deps-packages core-pkg-buildroot
+core-pkg-rpm: deps-packages core-pkg-buildroot ## Build Core RPM packages
 	@echo "==== Building RPM Core Packages ===="
 	@echo
 	@echo "Version:     " $(OPENNMS_VERSION)
@@ -639,7 +576,7 @@ endif
 	mv "$(BUILD_ROOT)/minion/opt/minion/etc/minion.init" "$(BUILD_ROOT)/minion/opt/minion/bin/minion"
 
 .PHONY: minion-pkg-deb
-minion-pkg-deb: deps-packages minion-pkg-buildroot
+minion-pkg-deb: deps-packages minion-pkg-buildroot ## Build Minion Debian packages
 	@echo "==== Building Debian Minion Packages ===="
 	@echo
 	@echo "Version:     " $(OPENNMS_VERSION)
@@ -649,7 +586,7 @@ minion-pkg-deb: deps-packages minion-pkg-buildroot
 		nfpm package --packager deb --config nfpm/nfpm-minion.yaml --target "$(ARTIFACTS_DIR)/packages/minion/"
 
 .PHONY: minion-pkg-rpm
-minion-pkg-rpm: deps-packages minion-pkg-buildroot
+minion-pkg-rpm: deps-packages minion-pkg-buildroot ## Build Minion RPM packages
 	@echo "==== Building RPM Minion Packages ===="
 	@echo
 	@echo "Version:     " $(OPENNMS_VERSION)
@@ -683,7 +620,7 @@ endif
 	mv "$(BUILD_ROOT)/sentinel/opt/sentinel/etc/sentinel.init" "$(BUILD_ROOT)/sentinel/opt/sentinel/bin/sentinel"
 
 .PHONY: sentinel-pkg-deb
-sentinel-pkg-deb: deps-packages sentinel-pkg-buildroot
+sentinel-pkg-deb: deps-packages sentinel-pkg-buildroot ## Build Sentinel Debian packages
 	@echo "==== Building Debian Sentinel Packages ===="
 	@echo
 	@echo "Version:     " $(OPENNMS_VERSION)
@@ -693,7 +630,7 @@ sentinel-pkg-deb: deps-packages sentinel-pkg-buildroot
 		nfpm package --packager deb --config nfpm/nfpm-sentinel.yaml --target "$(ARTIFACTS_DIR)/packages/sentinel/"
 
 .PHONY: sentinel-pkg-rpm
-sentinel-pkg-rpm: deps-packages sentinel-pkg-buildroot
+sentinel-pkg-rpm: deps-packages sentinel-pkg-buildroot ## Build Sentinel RPM packages
 	@echo "==== Building RPM Sentinel Packages ===="
 	@echo
 	@echo "Version:     " $(OPENNMS_VERSION)
@@ -703,25 +640,25 @@ sentinel-pkg-rpm: deps-packages sentinel-pkg-buildroot
 		nfpm package --packager rpm --config nfpm/nfpm-sentinel.yaml --target "$(ARTIFACTS_DIR)/packages/sentinel/"
 
 .PHON: all-pkgs
-all-pkgs: core-pkg-deb core-pkg-rpm minion-pkg-deb minion-pkg-rpm sentinel-pkg-deb sentinel-pkg-rpm
+all-pkgs: core-pkg-deb core-pkg-rpm minion-pkg-deb minion-pkg-rpm sentinel-pkg-deb sentinel-pkg-rpm ## Build all packages
 
 .PHONY: javadocs
-javadocs: deps-build show-info
+javadocs: deps-build show-info ## Generate Java docs
 	$(MAVEN_BIN) javadoc:aggregate --batch-mode -Prun-expensive-tasks
 
 .PHONY: docs
-docs: deps-docs
+docs: deps-docs ## Build Antora docs with a local install Antora, default target
 	@echo "Build Antora docs..."
 	antora --stacktrace $(SITE_FILE)
 
 .PHONY: install-core
-install-core: quick-compile quick-assemble unpack-core
+install-core: quick-compile quick-assemble unpack-core ## Install OpenNMS assembly to PKG_CORE_HOME to $(PKG_CORE_HOME)
 
 # The extraction half of install-core, without the build prerequisites. Callers that
 # have already built the tarball (CI test jobs run quick-compile + quick-assemble in a
 # preceding step) use this to avoid rebuilding the whole reactor a second time.
 .PHONY: unpack-core
-unpack-core:
+unpack-core: ## Extract an already-built Core assembly to $(PKG_CORE_HOME) without rebuilding
 ifeq (,$(wildcard ./target/opennms-$(OPENNMS_VERSION).tar.gz))
 	@echo "Can't unpack the Core assembly, ./target/opennms-$(OPENNMS_VERSION).tar.gz is missing."
 	@echo "Run 'make quick-build' or 'make install-core' first."
@@ -733,48 +670,48 @@ else
 endif
 
 .PHONY: uninstall-core
-uninstall-core:
+uninstall-core: ## Remove the installed version in PKG_CORE_HOME from $(PKG_CORE_HOME)
 	@echo "Uninstall OpenNMS Horizon Core from $(PKG_CORE_HOME)"
 	rm -rf "$(PKG_CORE_HOME)/*"
 
 .PHONY: clean-all
-clean-all: clean-m2 clean-git
+clean-all: clean-m2 clean-git ## Clean git repository with untracked files, docs, M2 opennms artifacts and build assemblies
 
 .PHONY: clean-git
-clean-git:
+clean-git: ## DELETE *all* untracked files from local git repository
 	git clean -fdx
 
 .PHONY: clean-m2
-clean-m2:
+clean-m2: ## Remove just OpenNMS build artifacts from Maven local repository
 	rm -rf ~/.m2/repository/org/opennms
 
 .PHONY: clean-assembly
-clean-assembly:
+clean-assembly: ## Run mvn clean on assemblies, equivalent to clean.pl
 	$(MAVEN_BIN) -Passemblies clean
 
 .PHONY: clean-docs
-clean-docs:
+clean-docs: ## Clean all docs build artifacts
 	@echo "Delete build and public artifacts ..."
 	@rm -rf build public
 	@echo "Clean Antora cache for git repositories and UI components ..."
 	@rm -rf .cache
 
 .PHONY: clean-buildroot
-clean-buildroot:
+clean-buildroot: ## Clean all package build root directories for Core, Minion, Sentinel in $(BUILD_ROOT)
 	@echo "Delete build root content for package builds ..."
 	@rm -rf $(BUILD_ROOT)
 
 .PHONY: clean-packages
-clean-packages:
+clean-packages: ## Clean all Debian and RPM package artifacts in $(ARTIFACTS_DIR)/packages
 	@echo "Delete RPM and Debian package artifacts ..."
 	@rm -rf $(ARTIFACTS_DIR)/packages
 
 .PHONY: clean
-clean: clean-assembly clean-docs
+clean: clean-assembly clean-docs ## Clean assembly and docs and mostly used to recompile or rebuild from source
 
 .PHONY: collect-artifacts
 # We use find with a regex, which exits gracefully when targets don't exist in case steps failed.
-collect-artifacts:
+collect-artifacts: ## Fetch and collect build artifacts in $(ARTIFACTS_DIR)
 	mkdir -p $(ARTIFACTS_DIR)/{archives,config-schema,oci}
 	find . -type f -regex "^\.\/target\/opennms-.*\.tar\.gz" -exec mv -v {} $(ARTIFACTS_DIR)/archives \; # Fetch -source and assembled archive
 	find . -type f -regex "^\.\/opennms-assemblies\/minion\/target\/org.opennms.assemblies.minion-.*\.tar\.gz" -exec mv -v {} $(ARTIFACTS_DIR)/archives/minion-${OPENNMS_VERSION}.tar.gz \;
@@ -787,7 +724,7 @@ collect-artifacts:
 	find . -type f -regex "^\.\/target\/bom.*" -exec mv -v {} $(ARTIFACTS_DIR) \;
 
 .PHONY: collect-testresults
-collect-testresults:
+collect-testresults: ## Fetch test results from tests in $(ARTIFACTS_DIR)/tests
 	mkdir -p $(ARTIFACTS_DIR)/{surefire-reports,failsafe-reports,recordings}
 	find . -type f -regex ".*\/target\/.*\.mp4" -exec mv -v {} $(ARTIFACTS_DIR)/recordings \;
 	find . -type f -regex ".*\/target\/surefire-reports\/.*\.xml" -exec mv -v {} $(ARTIFACTS_DIR)/surefire-reports/ \;
@@ -798,12 +735,12 @@ collect-testresults:
 	find . -type f -regex "^\.\/target\/structure-graph\.json" -exec mv -v {} $(ARTIFACTS_DIR) \;
 
 .PHONY: spinup-postgres
-spinup-postgres: deps-oci
+spinup-postgres: deps-oci ## Spinup a PostgreSQL container to run integration tests used by integration tests
 	@echo "Spin-up PostgreSQL database for tests using Docker Compose on port 5432/tcp"
 	docker compose -f .cicd-assets/postgres/compose.yaml up -d
 
 .PHONY: destroy-postgres
-destroy-postgres: deps-oci
+destroy-postgres: deps-oci ## Shutdown and destroy the PostgreSQL container
 	@echo "Shutdown and remove PostgreSQL database using Docker Compose"
 	docker compose -f .cicd-assets/postgres/compose.yaml down -v
 
@@ -816,7 +753,7 @@ version: deps-build
 	$(call setversion,$(RELEASE_VERSION))
 
 .PHONY: release
-release: deps-build
+release: deps-build ## Cut a release, set RELEASE_VERSION and PUSH_RELEASE=true to publish
 	@mkdir -p target
 	@echo ""
 	@echo "Release version:                $(RELEASE_VERSION)"
