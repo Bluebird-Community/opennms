@@ -133,10 +133,11 @@
               <coverage>${coverage}</coverage>
             </systemPropertyVariables>
             <!--
-              Configure failsafe to put reports in the surefire unit test directory so that
-              Bamboo and Sonar tally the test results properly.
-
-              https://jira.atlassian.com/browse/BAM-15446
+              Configure failsafe to put reports in the surefire unit test directory so a
+              single collector finds both. Originally a Bamboo and Sonar workaround
+              (https://jira.atlassian.com/browse/BAM-15446); both are gone, but CI still
+              depends on this: the surefire-report action and `make collect-testresults`
+              expect integration test results in the same place as unit test results.
             -->
             <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
             <forkCount>${test.fork.count}</forkCount>

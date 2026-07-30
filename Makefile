@@ -174,11 +174,6 @@ deps-oci-sec-scan:
 	@echo "Check OCI security scan dependency: trivy"
 	command -v trivy
 
-.PHONY: deps-sonar
-deps-sonar:
-	@echo "Check code coverage test dependency: sonar-scanner"
-	command -v sonar-scanner
-
 .PHONY: deps-oci-layers
 deps-oci-layers:
 	@echo "Show OCI container layer usage: dive"
@@ -418,10 +413,6 @@ integration-tests: test-lists spinup-postgres ## Run full integration test suit,
 	# See the unit-tests target above for why --also-make is not used here.
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -T 1C -DskipTests=true -DskipITs=true -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Dbuild.skip.tarball=true -Dmaven.test.skip.exec=true --fail-fast $(REACTOR_ALSO_MAKE) --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.tests.compile.log
 	if [ $(command -v ionice) ]; then ionice; fi; nice $(MAVEN_BIN) install $(MAVEN_ARGS) -DskipTests=false -DskipITs=false -DskipSurefire=true -DskipFailsafe=false -Dbuild.profile=default -Droot.dir=$(WORKING_DIRECTORY) -Dfailsafe.skipAfterFailureCount=1 -P!checkstyle -P!production -Pbuild-bamboo -Pcoverage -Dbuild.skip.tarball=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -DrunPingTests=false --fail-fast -Dorg.opennms.core.test-api.dbCreateThreads=1 -Dorg.opennms.core.test-api.snmp.useMockSnmpStrategy=false -Dtest="$(U_TESTS)" -Dit.test="$(I_TESTS)" --projects "$(TEST_PROJECTS)" 2>&1 | tee $(ARTIFACTS_DIR)/mvn.i_tests.log
-
-.PHONY: code-coverage
-code-coverage: deps-sonar ## Test code coverage with SonarScanner CLI
-	@build-tooling/code-coverage.sh --artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: core-pkg-buildroot
 core-pkg-buildroot:

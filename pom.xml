@@ -475,33 +475,6 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.sonarsource.scanner.maven</groupId>
-        <artifactId>sonar-maven-plugin</artifactId>
-        <version>${sonarVersion}</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>apache-jsp</artifactId>
-            <version>${jettyVersion}</version>
-            <exclusions>
-              <exclusion>
-                <groupId>org.mortbay.jasper</groupId>
-                <artifactId>apache-el</artifactId>
-              </exclusion>
-              <exclusion>
-                <groupId>org.mortbay.jasper</groupId>
-                <artifactId>apache-jsp</artifactId>
-              </exclusion>
-            </exclusions>
-          </dependency>
-          <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>3.0.0</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
         <version>${maven.install.plugin.version}</version>
@@ -1435,10 +1408,11 @@
             <java.locale.providers>CLDR,COMPAT</java.locale.providers>
           </systemPropertyVariables>
           <!--
-            Configure failsafe to put reports in the surefire unit test directory so that
-            Bamboo and Sonar tally the test results properly.
-
-            https://jira.atlassian.com/browse/BAM-15446
+            Configure failsafe to put reports in the surefire unit test directory so a
+            single collector finds both. Originally a Bamboo and Sonar workaround
+            (https://jira.atlassian.com/browse/BAM-15446); both are gone, but CI still
+            depends on this: the surefire-report action and `make collect-testresults`
+            expect integration test results in the same place as unit test results.
           -->
           <forkCount>1</forkCount>
           <!-- We don't reuse forks - any given test should not take longer than the given timeout -->
@@ -1960,7 +1934,6 @@
     <snappyJavaVersion>1.1.10.5</snappyJavaVersion>
     <snmp4jVersion>2.8.15</snmp4jVersion>
     <snmp4jagentVersion>2.7.9</snmp4jagentVersion>
-    <sonarVersion>3.9.1.2184</sonarVersion>
     <spiflyVersion>1.3.6</spiflyVersion>
     <spockVersion>2.3-groovy-4.0</spockVersion>
     <swaggerUIVersion>4.1.3</swaggerUIVersion>
