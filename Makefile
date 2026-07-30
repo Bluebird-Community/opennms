@@ -304,76 +304,35 @@ endif
 .PHONY: core-oci
 ##@ Container images
 core-oci: ## Build container image for Horizon Core, tag: local/core:latest
-ifeq (,$(wildcard ./opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz))
-	@echo "Can't build the Core container image, the build artifact"
-	@echo "./opennms-full-assembly/target/opennms-full-assembly-$(OPENNMS_VERSION)-core.tar.gz doesn't exist."
-	@echo ""
-	@echo "You can create the artifact with:"
-	@echo ""
-	@echo "  make quick-compile && make quick-assemble"
-	@echo ""
-	@exit 1
-endif
-	mkdir -p opennms-container/core/tarball-root && \
-	tar xzf opennms-full-assembly/target/opennms-full-assembly-$(OPENNMS_VERSION)-core.tar.gz -C opennms-container/core/tarball-root && \
-	cd opennms-container/core && \
-	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
-    docker build --platform=$(OCI_PLATFORM) \
-         --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
-		 --build-arg BUILD_DATE=$(BUILD_DATE) \
-		 --build-arg VERSION=$(OPENNMS_VERSION) \
-		 --build-arg REVISION=$(RELEASE_COMMIT) \
-		 -t local/core:latest .
+	@build-tooling/build-oci-image.sh --component core \
+		--version $(OPENNMS_VERSION) \
+		--install-version $(INSTALL_VERSION) \
+		--revision $(RELEASE_COMMIT) \
+		--base-image $(DEPLOY_BASE_IMAGE) \
+		--platform $(OCI_PLATFORM) \
+		--build-date $(BUILD_DATE)
 
 .PHONY: minion-oci
 minion-oci: ## Build container image for Minion, tag local/minion:latest
-ifeq (,$(wildcard ./opennms-assemblies/minion/target/org.opennms.assemblies.minion-*-minion.tar.gz))
-	@echo "Can't build the Minion container image, the build artifact"
-	@echo "./opennms-assemblies/minion/target/org.opennms.assemblies.minion-$(OPENNMS_VERSION)-minion.tar.gz doesn't exist."
-	@echo ""
-	@echo "You can create the artifact with:"
-	@echo ""
-	@echo "  make quick-compile && make quick-assemble"
-	@echo ""
-	@exit 1
-endif
-	mkdir -p opennms-container/minion/tarball-root && \
-	tar xzf opennms-assemblies/minion/target/org.opennms.assemblies.minion-$(OPENNMS_VERSION)-minion.tar.gz --strip-component 1 -C opennms-container/minion/tarball-root && \
-	cd opennms-container/minion && \
-	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
-	cat minion-config-schema.yml.in | sed -e 's,@VERSION@,$(OPENNMS_VERSION),' \
-		-e 's,@REVISION@,$(RELEASE_COMMIT),' \
-		-e 's,@BRANCH@,$(GIT_BRANCH),' \
-		-e 's,@BUILD_NUMBER@,$(RELEASE_BUILD_NUM),' > minion-config-schema.yml && \
-    docker build --platform=$(OCI_PLATFORM) \
-         --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
-         --build-arg BUILD_DATE=$(BUILD_DATE) \
-         --build-arg VERSION=$(OPENNMS_VERSION) \
-         --build-arg REVISION=$(RELEASE_COMMIT) \
-         -t local/minion:latest .
+	@build-tooling/build-oci-image.sh --component minion \
+		--version $(OPENNMS_VERSION) \
+		--install-version $(INSTALL_VERSION) \
+		--revision $(RELEASE_COMMIT) \
+		--base-image $(DEPLOY_BASE_IMAGE) \
+		--platform $(OCI_PLATFORM) \
+		--build-date $(BUILD_DATE) \
+		--branch $(GIT_BRANCH) \
+		--build-number $(RELEASE_BUILD_NUM)
 
 .PHONY: sentinel-oci
 sentinel-oci: ## Build container image for Sentinel, tag local/sentinel:latest
-ifeq (,$(wildcard ./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*-sentinel.tar.gz))
-	@echo "Can't build the Sentinel container image, the build artifact"
-	@echo "./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-$(OPENNMS_VERSION)-sentinel.tar.gz doesn't exist."
-	@echo ""
-	@echo "You can create the artifact with:"
-	@echo ""
-	@echo "  make quick-compile && make quick-assemble"
-	@echo ""
-	@exit 1
-endif
-	mkdir -p opennms-container/sentinel/tarball-root && \
-	tar xzf opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-$(OPENNMS_VERSION)-sentinel.tar.gz --strip-component 1 -C opennms-container/sentinel/tarball-root
-	cd opennms-container/sentinel && \
-	echo "$(INSTALL_VERSION)" > tarball-root/etc/version.info && \
-    docker build --platform=$(OCI_PLATFORM) \
-          --build-arg DEPLOY_BASE_IMAGE=$(DEPLOY_BASE_IMAGE) \
-         --build-arg BUILD_DATE=$(BUILD_DATE) \
-         --build-arg VERSION=$(OPENNMS_VERSION) \
-         --build-arg REVISION=$(RELEASE_COMMIT) \
-         -t local/sentinel:latest .
+	@build-tooling/build-oci-image.sh --component sentinel \
+		--version $(OPENNMS_VERSION) \
+		--install-version $(INSTALL_VERSION) \
+		--revision $(RELEASE_COMMIT) \
+		--base-image $(DEPLOY_BASE_IMAGE) \
+		--platform $(OCI_PLATFORM) \
+		--build-date $(BUILD_DATE)
 
 .PHONY: show-core-oci
 show-core-oci: deps-oci-layers core-oci ## Analyze the OCI image using dive, tag local/horizon:latest
@@ -424,24 +383,24 @@ smoke: deps-oci core-oci ## Simple smoke test to verify the application can be s
 
 .PHONY: core-e2e
 core-e2e: deps-oci test-lists core-oci minion-oci sentinel-oci ## Run full end to end test suite against the Core components. Specific tests can be set with: CORE_E2E_TESTS=MyTestIT-1,MyTestIT-2, ...
-	$(eval CORE_E2E_TESTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/e2e_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
+	$(eval CORE_E2E_TESTS ?= $(shell build-tooling/shard-list.sh --file $(ARTIFACTS_DIR)/tests/e2e_tests_classnames --shards $(MAVEN_SHARDS) --index $(MAVEN_SHARD_IDX)))
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="$(CORE_E2E_TESTS)" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.core --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.core-smoke.log
 
 .PHONY: minion-e2e
 minion-e2e: deps-oci test-lists minion-oci sentinel-oci core-oci ## Run end to end test suite against the Minion components. Specific tests can be set with: MINION_E2E_TESTS=MyTestIT-1,MyTestIT-2, ...
-	$(eval MINION_E2E_TESTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/e2e_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
+	$(eval MINION_E2E_TESTS ?= $(shell build-tooling/shard-list.sh --file $(ARTIFACTS_DIR)/tests/e2e_tests_classnames --shards $(MAVEN_SHARDS) --index $(MAVEN_SHARD_IDX)))
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="$(MINION_E2E_TESTS)" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.minion --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.minion-smoke.log
 
 .PHONY: sentinel-e2e
 sentinel-e2e: deps-oci test-lists sentinel-oci minion-oci core-oci ## Run end to end test suite against the Sentinel components. Specific tests can be set with: SENTINEL_E2E_TESTS=MyTestIT-1,MyTestIT-2, ...
-	$(eval SENTINEL_E2E_TESTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/e2e_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
+	$(eval SENTINEL_E2E_TESTS ?= $(shell build-tooling/shard-list.sh --file $(ARTIFACTS_DIR)/tests/e2e_tests_classnames --shards $(MAVEN_SHARDS) --index $(MAVEN_SHARD_IDX)))
 	$(MAVEN_BIN) install $(MAVEN_ARGS) -N -DskipTests=false -DskipITs=false -DfailIfNoTests=false -Dtest.fork.count=1 -Dit.test="$(SENTINEL_E2E_TESTS)" --fail-fast -Dfailsafe.skipAfterFailureCount=1 -P!smoke.all -Psmoke.sentinel --file e2e-tests/pom.xml 2>&1 | tee $(ARTIFACTS_DIR)/mvn.sentinel-smoke.log
 
 # We allow users here to pass a specific unit tests and projects to run.
 # Otherwise we run the full test suite
 .PHONY: unit-tests
 unit-tests: test-lists spinup-postgres ## Run full unit test suite, you can run specific tests in a projects with:
-	$(eval U_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipTests.txt $(ARTIFACTS_DIR)/tests/unit_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
+	$(eval U_TESTS ?= $(shell build-tooling/shard-list.sh --file $(ARTIFACTS_DIR)/tests/unit_tests_classnames --skip ./.cicd-assets/_skipTests.txt --shards $(MAVEN_SHARDS) --index $(MAVEN_SHARD_IDX)))
 	$(eval TEST_PROJECTS ?= $(shell cat ${ARTIFACTS_DIR}/tests/test_modules | paste -s -d, -))
 	# Parallel compiling with -T 1C works, but it doesn't for tests.
 	# No --also-make: the reactor artifacts are restored into the local Maven repository
@@ -453,7 +412,7 @@ unit-tests: test-lists spinup-postgres ## Run full unit test suite, you can run 
 
 .PHONY: integration-tests
 integration-tests: test-lists spinup-postgres ## Run full integration test suit, you can run specific integration tests in a project with:
-	$(eval I_TESTS ?= $(shell grep -Fxv -f ./.cicd-assets/_skipIntegrationTests.txt $(ARTIFACTS_DIR)/tests/integration_tests_classnames | awk "NR%$(MAVEN_SHARDS)==$(MAVEN_SHARD_IDX)" | paste -s -d, -))
+	$(eval I_TESTS ?= $(shell build-tooling/shard-list.sh --file $(ARTIFACTS_DIR)/tests/integration_tests_classnames --skip ./.cicd-assets/_skipIntegrationTests.txt --shards $(MAVEN_SHARDS) --index $(MAVEN_SHARD_IDX)))
 	$(eval TEST_PROJECTS ?= $(shell cat $(ARTIFACTS_DIR)/tests/test_modules | paste -s -d, -))
 	# Parallel compiling with -T 1C works, but it doesn't for tests.
 	# See the unit-tests target above for why --also-make is not used here.
@@ -462,74 +421,19 @@ integration-tests: test-lists spinup-postgres ## Run full integration test suit,
 
 .PHONY: code-coverage
 code-coverage: deps-sonar ## Test code coverage with SonarScanner CLI
-	mkdir -p $(ARTIFACTS_DIR)/code-coverage
-	# Generate a list with all Jacoco code coverage reports from compile phase
-	find . -type f '!' -path './.git/*' -name jacoco.xml | sort -u > $(ARTIFACTS_DIR)/code-coverage/jacoco.xml
-
-	# Get just the source folders from Java compiled targets and reverse engineer the main and assembly directory structure
-	for src in $(shell find . -type d '!' -path './.git/*' -name target | sed -e 's,/target,/src,') ; do \
-  		echo $$src/main ; \
-  		echo $$src/assembly ; \
-  	done \
-  	| sort -u > $(ARTIFACTS_DIR)/code-coverage/source-folders.txt
-
-	# Generate a list for all Junit report folders
-	find . -type d '!' -path './.git/*' -a \( -name surefire-reports\* -o -name failsafe-reports\* \) | sort -u > $(ARTIFACTS_DIR)/code-coverage/junit-report-folders.txt
-
-	# Get just the test folders from Java compiled targets and reverse engineer the test directory structure
-	for src in $(shell find . -type d '!' -path './.git/*' -name target | sed -e 's,/target,/src,') ; do \
-  		echo $$src/test ; \
-  	done \
-  	| sort -u > $(ARTIFACTS_DIR)/code-coverage/test-folders.txt
-
-	# Get just test class folders from surefire or failsafe directories
-	for test_classes_dir in $(shell cat target/artifacts/code-coverage/junit-report-folders.txt | sed -e 's,/surefire-reports,,' | sed -e 's,/failsafe-reports,,') ; do \
-		find "$$test_classes_dir" -maxdepth 1 -type d -name test-classes ; \
-	done \
-	| sort -u > $(ARTIFACTS_DIR)/code-coverage/test-class-folders.txt
-
-	# Get just class folders from surefire or failsafe directories
-	for classes_dir in $(shell cat target/artifacts/code-coverage/junit-report-folders.txt | sed -e 's,/surefire-reports,,' | sed -e 's,/failsafe-reports,,') ; do \
-		find "$$classes_dir" -maxdepth 1 -type d -name classes ; \
-	done \
-	| sort -u > $(ARTIFACTS_DIR)/code-coverage/class-folders.txt
-
-	bash -c "sonar-scanner -Dsonar.host.url=\"https://sonarcloud.io\" \
-                           -Djava.security.egd=file:/dev/./urandom \
-                           -Dsonar.coverage.jacoco.xmlReportPaths=\"$(shell cat $(ARTIFACTS_DIR)/code-coverage/jacoco.xml | paste -s -d, -)\" \
-                           -Dsonar.junit.reportPaths=\"$(shell cat $(ARTIFACTS_DIR)/code-coverage/junit-report-folders.txt | paste -s -d, -)\" \
-                           -Dsonar.sources=\"$(shell cat $(ARTIFACTS_DIR)/code-coverage/source-folders.txt | paste -s -d, -)\" \
-                           -Dsonar.tests=\"$(shell cat $(ARTIFACTS_DIR)/code-coverage/test-folders.txt | paste -s -d, -)\" \
-                           -Dsonar.java.binaries=\"$(shell $(ARTIFACTS_DIR)/code-coverage/class-folders.txt | paste -s -d, -)\" \
-                           -Dsonar.java.libraries=\"${HOME}/.m2/repository/**/*.jar,**/*.jar\" \
-                           -Dsonar.java.test.binaries=\"$(shell cat $(ARTIFACTS_DIR)/code-coverage/test-class-folders.txt | paste -s -d, -)\" \
-                           -Dsonar.java.test.libraries=\"${HOME}/.m2/repository/**/*.jar,**/*.jar\""
+	@build-tooling/code-coverage.sh --artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: core-pkg-buildroot
 core-pkg-buildroot:
-ifeq (,$(wildcard ./opennms-full-assembly/target/opennms-full-assembly-*-core.tar.gz))
-	@echo "Can't build the Core build root directory structure"
-	@echo "./opennms-full-assembly/target/opennms-full-assembly-$(OPENNMS_VERSION)-core.tar.gz doesn't exist."
-	@echo ""
-	@echo "You can create the artifact with:"
-	@echo ""
-	@echo "  make quick-compile && make quick-assemble"
-	@echo ""
-	@exit 1
-endif
-	mkdir -p "$(BUILD_ROOT)/core/opt/opennms"
-	mkdir -p "$(ARTIFACTS_DIR)/packages/core"
-	tar xzf "./opennms-full-assembly/target/opennms-full-assembly-$(OPENNMS_VERSION)-core.tar.gz" -C "$(BUILD_ROOT)/core/opt/opennms"
-	rm -rf "$(BUILD_ROOT)/core/opt/opennms/logs" \
-           "$(BUILD_ROOT)/core/opt/opennms/share/rrd" \
-           "$(BUILD_ROOT)/core/opt/opennms/share/reports" \
-           "$(BUILD_ROOT)/core/opt/opennms/deploy"
-	mkdir -p "$(BUILD_ROOT)/core$(PKG_CORE_RRD)" \
-             "$(BUILD_ROOT)/core$(PKG_CORE_REPORTS)" \
-             "$(BUILD_ROOT)/core$(PKG_CORE_LOGS)" \
-             "$(BUILD_ROOT)/core$(PKG_CORE_DEPLOY)" \
-             "$(BUILD_ROOT)/core/usr/lib/systemd/system"
-	cp "$(BUILD_ROOT)/core/opt/opennms/etc/opennms.service" "$(BUILD_ROOT)/core/usr/lib/systemd/system"
+	@build-tooling/build-package-root.sh --component core \
+		--version $(OPENNMS_VERSION) \
+		--build-root $(BUILD_ROOT) \
+		--artifacts-dir $(ARTIFACTS_DIR) \
+		--home $(PKG_CORE_HOME) \
+		--logs $(PKG_CORE_LOGS) \
+		--deploy $(PKG_CORE_DEPLOY) \
+		--rrd $(PKG_CORE_RRD) \
+		--reports $(PKG_CORE_REPORTS)
 
 .PHONY: core-pkg-deb
 core-pkg-deb: deps-packages core-pkg-buildroot ## Build Core Debian packages
@@ -553,27 +457,13 @@ core-pkg-rpm: deps-packages core-pkg-buildroot ## Build Core RPM packages
 
 .PHONY: minion-pkg-buildroot
 minion-pkg-buildroot:
-ifeq (,$(wildcard ./opennms-assemblies/minion/target/org.opennms.assemblies.minion-*-minion.tar.gz))
-	@echo "Can't build the Minion build root directory structure"
-	@echo "./opennms-assemblies/minion/target/org.opennms.assemblies.minion-$(OPENNMS_VERSION)-minion.tar.gz doesn't exist."
-	@echo ""
-	@echo "You can create the artifact with:"
-	@echo ""
-	@echo "  make quick-compile && make quick-assemble"
-	@echo ""
-	@exit 1
-endif
-	mkdir -p "$(BUILD_ROOT)/minion/opt/minion"
-	mkdir -p "$(ARTIFACTS_DIR)/packages/minion"
-	tar xzf "./opennms-assemblies/minion/target/org.opennms.assemblies.minion-$(OPENNMS_VERSION)-minion.tar.gz" --strip-component 1 -C "$(BUILD_ROOT)/minion/opt/minion"
-	rm -rf "$(BUILD_ROOT)/minion/opt/minion/data/log" \
-           "$(BUILD_ROOT)/minion/opt/minion/deploy"
-	mkdir -p "$(BUILD_ROOT)/minion$(PKG_MINION)" \
-             "$(BUILD_ROOT)/minion$(PKG_MINION_LOGS)" \
-             "$(BUILD_ROOT)/minion$(PKG_MINION_DEPLOY)" \
-             "$(BUILD_ROOT)/minion/usr/lib/systemd/system"
-	mv "$(BUILD_ROOT)/minion/opt/minion/etc/minion.service" "$(BUILD_ROOT)/minion/usr/lib/systemd/system"
-	mv "$(BUILD_ROOT)/minion/opt/minion/etc/minion.init" "$(BUILD_ROOT)/minion/opt/minion/bin/minion"
+	@build-tooling/build-package-root.sh --component minion \
+		--version $(OPENNMS_VERSION) \
+		--build-root $(BUILD_ROOT) \
+		--artifacts-dir $(ARTIFACTS_DIR) \
+		--home $(PKG_MINION_HOME) \
+		--logs $(PKG_MINION_LOGS) \
+		--deploy $(PKG_MINION_DEPLOY)
 
 .PHONY: minion-pkg-deb
 minion-pkg-deb: deps-packages minion-pkg-buildroot ## Build Minion Debian packages
@@ -597,27 +487,13 @@ minion-pkg-rpm: deps-packages minion-pkg-buildroot ## Build Minion RPM packages
 
 .PHONY: sentinel-pkg-buildroot
 sentinel-pkg-buildroot:
-ifeq (,$(wildcard ./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-*-sentinel.tar.gz))
-	@echo "Can't build the Sentinel build root directory structure"
-	@echo "./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-$(OPENNMS_VERSION)-sentinel.tar.gz doesn't exist."
-	@echo ""
-	@echo "You can create the artifact with:"
-	@echo ""
-	@echo "  make quick-compile && make quick-assemble"
-	@echo ""
-	@exit 1
-endif
-	mkdir -p "$(BUILD_ROOT)/sentinel/opt/sentinel"
-	mkdir -p "$(ARTIFACTS_DIR)/packages/sentinel"
-	tar xzf "./opennms-assemblies/sentinel/target/org.opennms.assemblies.sentinel-$(OPENNMS_VERSION)-sentinel.tar.gz" --strip-component 1 -C "$(BUILD_ROOT)/sentinel/opt/sentinel"
-	rm -rf "$(BUILD_ROOT)/sentinel/opt/sentinel/data/log" \
-           "$(BUILD_ROOT)/sentinel/opt/sentinel/deploy"
-	mkdir -p "$(BUILD_ROOT)/sentinel$(PKG_SENTINEL)" \
-             "$(BUILD_ROOT)/sentinel$(PKG_SENTINEL_LOGS)" \
-             "$(BUILD_ROOT)/sentinel$(PKG_SENTINEL_DEPLOY)" \
-             "$(BUILD_ROOT)/sentinel/usr/lib/systemd/system"
-	mv "$(BUILD_ROOT)/sentinel/opt/sentinel/etc/sentinel.service" "$(BUILD_ROOT)/sentinel/usr/lib/systemd/system"
-	mv "$(BUILD_ROOT)/sentinel/opt/sentinel/etc/sentinel.init" "$(BUILD_ROOT)/sentinel/opt/sentinel/bin/sentinel"
+	@build-tooling/build-package-root.sh --component sentinel \
+		--version $(OPENNMS_VERSION) \
+		--build-root $(BUILD_ROOT) \
+		--artifacts-dir $(ARTIFACTS_DIR) \
+		--home $(PKG_SENTINEL_HOME) \
+		--logs $(PKG_SENTINEL_LOGS) \
+		--deploy $(PKG_SENTINEL_DEPLOY)
 
 .PHONY: sentinel-pkg-deb
 sentinel-pkg-deb: deps-packages sentinel-pkg-buildroot ## Build Sentinel Debian packages
