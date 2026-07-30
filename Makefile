@@ -643,7 +643,7 @@ release: deps-build ## Cut a release, set RELEASE_VERSION and PUSH_RELEASE=true 
 	@if [ "$(GIT_BRANCH)" != "$(RELEASE_BRANCH)" ]; then echo "Releases are made from the $(RELEASE_BRANCH) branch, your branch is $(GIT_BRANCH)."; exit 1; fi
 	@echo "$(OK)"
 	@echo -n "👮‍♀️ Check branch in sync         "
-	@if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then echo "$(RELEASE_BRANCH) branch not in sync with remote origin."; exit 1; fi
+	@if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse '@{u}')" ]; then echo "$(RELEASE_BRANCH) branch not in sync with remote origin."; exit 1; fi
 	@echo "$(OK)"
 	@echo -n "👮‍♀️ Check uncommited changes     "
 	@if git status --porcelain | grep -q .; then echo "There are uncommited changes in your repository."; exit 1; fi
