@@ -266,10 +266,10 @@ jobs:
           path: opennms-full-assembly/target
       - name: Install nfpm
         uses: ./.github/actions/setup-nfpm
-      - name: Build Core Debian packages
-        run: make core-pkg-deb PKG_RELEASE=${{ github.run_number }}
-      - name: Build Core RPM packages
-        run: make core-pkg-rpm PKG_RELEASE=${{ github.run_number }}
+      # One make invocation builds both formats, so the assembly is extracted once.
+      # Two separate calls each re-ran core-pkg-buildroot.
+      - name: Build Core Debian and RPM packages
+        run: make core-pkgs PKG_RELEASE=${{ github.run_number }}
       - name: Persist Core package artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
@@ -295,10 +295,10 @@ jobs:
           path: opennms-assemblies/minion/target
       - name: Install nfpm
         uses: ./.github/actions/setup-nfpm
-      - name: Build Minion Debian packages
-        run: make minion-pkg-deb PKG_RELEASE=${{ github.run_number }}
-      - name: Build Minion RPM packages
-        run: make minion-pkg-rpm PKG_RELEASE=${{ github.run_number }}
+      # One make invocation builds both formats, so the assembly is extracted once.
+      # Two separate calls each re-ran minion-pkg-buildroot.
+      - name: Build Minion Debian and RPM packages
+        run: make minion-pkgs PKG_RELEASE=${{ github.run_number }}
       - name: Persist Minion package artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
@@ -324,10 +324,10 @@ jobs:
           path: opennms-assemblies/sentinel/target
       - name: Install nfpm
         uses: ./.github/actions/setup-nfpm
-      - name: Build Sentinel Debian packages
-        run: make sentinel-pkg-deb PKG_RELEASE=${{ github.run_number }}
-      - name: Build Sentinel RPM packages
-        run: make sentinel-pkg-rpm PKG_RELEASE=${{ github.run_number }}
+      # One make invocation builds both formats, so the assembly is extracted once.
+      # Two separate calls each re-ran sentinel-pkg-buildroot.
+      - name: Build Sentinel Debian and RPM packages
+        run: make sentinel-pkgs PKG_RELEASE=${{ github.run_number }}
       - name: Persist Sentinel package artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:

@@ -48,13 +48,20 @@ if [ "${#GLOBS[@]}" -eq 0 ]; then
 fi
 
 # Target names must start with a letter, which keeps flags such as "make -n" out.
+#
+# YAML comment lines are stripped first. Prose in a comment can otherwise look like an
+# invocation: a comment reading "one make invocation builds both formats" was picked up
+# as a target named "invocation" and reported missing.
+#
 # A read loop rather than mapfile, because macOS still ships bash 3.2 and this has
 # to run locally as well as on CI.
 declare -a TARGETS=()
 while IFS= read -r target; do
   [ -n "$target" ] && TARGETS+=("$target")
 done < <(
-  grep -ohE 'make +[a-z][a-z0-9_.-]*' "${GLOBS[@]}" 2>/dev/null \
+  cat "${GLOBS[@]}" 2>/dev/null \
+    | grep -vE '^[[:space:]]*#' \
+    | grep -ohE 'make +[a-z][a-z0-9_.-]*' \
     | sed -E 's/^make +//' \
     | sort -u
 )

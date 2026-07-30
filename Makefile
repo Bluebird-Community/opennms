@@ -23,11 +23,9 @@ GIT_BRANCH            := $(shell git branch | grep \* | cut -d' ' -f2)
 OPENNMS_VERSION       ?= $(shell grep '<version>' pom.xml | head -1 | sed -e 's/.*<version>\(.*\)<\/version>.*/\1/')
 VERSION               := $(shell echo ${OPENNMS_VERSION} | sed -e 's,-SNAPSHOT,,')
 RELEASE_BRANCH        := $(shell echo ${GIT_BRANCH} | sed -e 's,/,-,g')
-ifndef CIRCLE_BUILD_NUM
-override RELEASE_BUILD_NUM = 0
-endif
-
-RELEASE_BUILD_NUM     ?= ${CIRCLE_BUILD_NUM}
+# Build number stamped into packages. CI overrides it with the workflow run number,
+# see the *-packages jobs in .github/workflows/main.yml. Local builds get 0.
+RELEASE_BUILD_NUM     ?= 0
 RELEASE_COMMIT        := $(shell git rev-parse --short HEAD)
 OPEN_FILES_LIMIT      := 20000
 CURRENT_FILES_LIMIT   := $(shell ulimit -n 2>/dev/null || echo 0)
@@ -428,23 +426,23 @@ core-pkg-buildroot:
 
 .PHONY: core-pkg-deb
 core-pkg-deb: deps-packages core-pkg-buildroot ## Build Core Debian packages
-	@echo "==== Building Debian Core Packages ===="
-	@echo
-	@echo "Version:     " $(OPENNMS_VERSION)
-	@echo "Release:     " $(PKG_RELEASE)
-	@echo
-	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
-		nfpm package --packager deb --config nfpm/nfpm-core.yaml --target "$(ARTIFACTS_DIR)/packages/core/"
+	@build-tooling/build-package.sh --component core \
+		--packager deb \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: core-pkg-rpm
 core-pkg-rpm: deps-packages core-pkg-buildroot ## Build Core RPM packages
-	@echo "==== Building RPM Core Packages ===="
-	@echo
-	@echo "Version:     " $(OPENNMS_VERSION)
-	@echo "Release:     " $(PKG_RELEASE)
-	@echo
-	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
-		nfpm package --packager rpm --config nfpm/nfpm-core.yaml --target "$(ARTIFACTS_DIR)/packages/core/"
+	@build-tooling/build-package.sh --component core \
+		--packager rpm \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: minion-pkg-buildroot
 minion-pkg-buildroot:
@@ -458,23 +456,23 @@ minion-pkg-buildroot:
 
 .PHONY: minion-pkg-deb
 minion-pkg-deb: deps-packages minion-pkg-buildroot ## Build Minion Debian packages
-	@echo "==== Building Debian Minion Packages ===="
-	@echo
-	@echo "Version:     " $(OPENNMS_VERSION)
-	@echo "Release:     " $(DEB_PKG_RELEASE)
-	@echo
-	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
-		nfpm package --packager deb --config nfpm/nfpm-minion.yaml --target "$(ARTIFACTS_DIR)/packages/minion/"
+	@build-tooling/build-package.sh --component minion \
+		--packager deb \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: minion-pkg-rpm
 minion-pkg-rpm: deps-packages minion-pkg-buildroot ## Build Minion RPM packages
-	@echo "==== Building RPM Minion Packages ===="
-	@echo
-	@echo "Version:     " $(OPENNMS_VERSION)
-	@echo "Release:     " $(DEB_PKG_RELEASE)
-	@echo
-	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
-		nfpm package --packager rpm --config nfpm/nfpm-minion.yaml --target "$(ARTIFACTS_DIR)/packages/minion/"
+	@build-tooling/build-package.sh --component minion \
+		--packager rpm \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: sentinel-pkg-buildroot
 sentinel-pkg-buildroot:
@@ -488,26 +486,59 @@ sentinel-pkg-buildroot:
 
 .PHONY: sentinel-pkg-deb
 sentinel-pkg-deb: deps-packages sentinel-pkg-buildroot ## Build Sentinel Debian packages
-	@echo "==== Building Debian Sentinel Packages ===="
-	@echo
-	@echo "Version:     " $(OPENNMS_VERSION)
-	@echo "Release:     " $(DEB_PKG_RELEASE)
-	@echo
-	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
-		nfpm package --packager deb --config nfpm/nfpm-sentinel.yaml --target "$(ARTIFACTS_DIR)/packages/sentinel/"
+	@build-tooling/build-package.sh --component sentinel \
+		--packager deb \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
 
 .PHONY: sentinel-pkg-rpm
 sentinel-pkg-rpm: deps-packages sentinel-pkg-buildroot ## Build Sentinel RPM packages
-	@echo "==== Building RPM Sentinel Packages ===="
-	@echo
-	@echo "Version:     " $(OPENNMS_VERSION)
-	@echo "Release:     " $(DEB_PKG_RELEASE)
-	@echo
-	ARCH="$(ARCH)" OPENNMS_VERSION="$(OPENNMS_VERSION)" PKG_RELEASE="$(PKG_RELEASE)" MAINTAINER_EMAIL="$(MAINTAINER_EMAIL)" \
-		nfpm package --packager rpm --config nfpm/nfpm-sentinel.yaml --target "$(ARTIFACTS_DIR)/packages/sentinel/"
+	@build-tooling/build-package.sh --component sentinel \
+		--packager rpm \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
 
-.PHON: all-pkgs
-all-pkgs: core-pkg-deb core-pkg-rpm minion-pkg-deb minion-pkg-rpm sentinel-pkg-deb sentinel-pkg-rpm ## Build all packages
+.PHONY: core-pkgs
+core-pkgs: deps-packages core-pkg-buildroot ## Build both Core package formats, laying out the build root once
+	@build-tooling/build-package.sh --component core \
+		--packager deb \
+		--packager rpm \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
+
+.PHONY: minion-pkgs
+minion-pkgs: deps-packages minion-pkg-buildroot ## Build both Minion package formats, laying out the build root once
+	@build-tooling/build-package.sh --component minion \
+		--packager deb \
+		--packager rpm \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
+
+.PHONY: sentinel-pkgs
+sentinel-pkgs: deps-packages sentinel-pkg-buildroot ## Build both Sentinel package formats, laying out the build root once
+	@build-tooling/build-package.sh --component sentinel \
+		--packager deb \
+		--packager rpm \
+		--version $(OPENNMS_VERSION) \
+		--release $(PKG_RELEASE) \
+		--arch $(ARCH) \
+		--maintainer-email $(MAINTAINER_EMAIL) \
+		--artifacts-dir $(ARTIFACTS_DIR)
+
+.PHONY: all-pkgs
+all-pkgs: core-pkgs minion-pkgs sentinel-pkgs ## Build all packages
 
 .PHONY: javadocs
 javadocs: deps-build show-info ## Generate Java docs
