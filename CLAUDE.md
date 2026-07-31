@@ -22,7 +22,12 @@ BluebirdOps is an enterprise-grade open-source network monitoring platform. Vers
 
 ## Build Commands
 
-The project uses the Apache Maven Wrapper (`./mvnw`, `.mvn/wrapper/maven-wrapper.properties`) — the first invocation downloads the pinned Maven version (3.9.14 at the time of writing) into `~/.m2/wrapper/dists/` and caches it there. No system Maven install needed. The Perl wrappers `compile.pl` / `assemble.pl` / `clean.pl` also resolve to `./mvnw` via `bin/functions.pl`. The `Makefile` wraps all of this with sensible defaults — prefer make targets for whole-tree work, use `./compile.pl` directly for partial builds on a single module.
+The project uses the Apache Maven Wrapper (`./mvnw`, `.mvn/wrapper/maven-wrapper.properties`).
+The first invocation downloads the pinned Maven version (3.9.14 at the time of writing) into `~/.m2/wrapper/dists/` and caches it there, so no system Maven install is needed.
+Shared Maven flags live in `.mvn/maven.config` and JVM options in `.mvn/jvm.config`, so a bare `./mvnw` behaves the way the build does.
+The `Makefile` is the front door and wraps all of this with sensible defaults.
+Prefer make targets for whole-tree work, and `make mvn ARGS="..."` for partial builds on a single module.
+The Perl wrappers `compile.pl`, `assemble.pl`, `clean.pl` and `bin/functions.pl` were removed; `make mvn` replaces them.
 
 Prerequisites: Java 21, Docker (+ Compose plugin) for tests, Node 24 + pnpm 10.x for the UI.
 
@@ -56,19 +61,19 @@ make core-e2e / minion-e2e / sentinel-e2e                 # end-to-end per artif
 make docs
 ```
 
-### Partial builds with compile.pl
+### Partial builds with `make mvn`
 
 For anything smaller than a whole tree, drive Maven directly. The pattern is `--projects :<artifactId>` with `-am` (build its deps) or `-amd` (build its dependents):
 
 ```bash
 # Build opennms-dao and everything it needs
-./compile.pl -DskipTests=true --projects :opennms-dao -am install
+make mvn ARGS="-DskipTests=true --projects :opennms-dao -am install"
 
 # Rebuild everything that depends on opennms-dao (after changing it)
-./compile.pl -t --projects :opennms-dao -amd install
+make mvn ARGS="-DskipITs=false --projects :opennms-dao -amd install"
 
 # Find all artifacts whose code matches a grep and build them
-./compile.pl -DskipTests=true --projects `tools/development/grep-pom-artifact.sh -i jdom` install
+make mvn ARGS="-DskipTests=true --projects $(tools/development/grep-pom-artifact.sh -i jdom) install"
 ```
 
 `tools/development/pom-artifact.sh` and `grep-pom-artifact.sh` are the helpers that turn a `pom.xml` or grep match into `groupId:artifactId` tuples.
@@ -195,7 +200,7 @@ make integration-tests TEST_PROJECTS=":opennms-dao"
 - REST endpoints use **CXF/JAX-RS** annotations
 - OSGi services registered via **Karaf blueprint** or **SCR annotations**
 - The Maven Enforcer Plugin bans certain dependencies (e.g., `commons-logging` — use `slf4j-api` instead). Fix violations by adding `<exclusions>` and using the approved alternative
-- License validation: `./compile.pl -DskipTests -Denable.license=true -Passemblies -Psmoke install`
+- License validation: `make mvn ARGS="-DskipTests -Denable.license=true -Passemblies -Psmoke install"`
 - Commit messages should follow the Conventional Commits specification
 
 ## Debugging Karaf / smoke-test failures
@@ -223,7 +228,7 @@ GitHub Actions (`.github/workflows/main.yml`). A `decide-scope` job runs first o
 |---|---|
 | Tag push `v*` | Release builds — unconditional full suite. |
 | `[full-ci]` token in a commit message | One-off PRs that need full coverage. For PR events the token is scanned on the PR HEAD commit; for `main` pushes it's scanned in `${before}..${after}`. Include it in the PR title/description if you also want the post-merge push to be full. |
-| Trip-wire path change | Edits to any of: root `pom.xml`, `dependencies/**`, `Makefile`, `compile.pl`, `assemble.pl`, `tools/development/**`, `.github/workflows/**`, `.cicd-assets/**`, `.mvn/**`, `container/features/**`, `pnpm-lock.yaml`, `ui/pnpm-lock.yaml` force a full build automatically. When you add a new cross-cutting path (a new lockfile, a new top-level build script), extend the list in `decide-scope`. |
+| Trip-wire path change | Edits to any of: root `pom.xml`, `dependencies/**`, `Makefile`, `build-tooling/**`, `tools/development/**`, `.github/workflows/**`, `.cicd-assets/**`, `.mvn/**`, `container/features/**`, `pnpm-lock.yaml`, `ui/pnpm-lock.yaml` force a full build automatically. When you add a new cross-cutting path (a new lockfile, a new top-level build script), extend the list in `decide-scope`. |
 
 ### Local `find-tests.py`
 

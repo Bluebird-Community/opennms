@@ -59,8 +59,7 @@ jobs:
           export TRIP_WIRES='/pom.xml
           dependencies/**
           Makefile
-          compile.pl
-          assemble.pl
+          build-tooling/**
           tools/development/**
           .github/workflows/**
           .cicd-assets/**

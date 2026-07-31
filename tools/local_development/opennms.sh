@@ -131,15 +131,21 @@ if [[ "$SKIP_CLEANUP" == "yes" ]]; then
     echo "Skipping cleanup of previous build artifacts."
 else
     echo "Cleaning previous build artifacts..."
-    ./clean.pl
+    make -C "$ROOT" clean-assembly
 fi
 
 if [[ "$ENABLE_TESTS" == "yes" ]]; then
     echo "Compiling & assembling (with tests)..."
-    ./compile.pl && ./assemble.pl
+    # compile.pl and assemble.pl are gone. compile.pl was a bare mvnw run, and
+    # assemble.pl was the same thing against opennms-full-assembly with
+    # -Dbuild.profile=default. Both are expressed directly here.
+    make -C "$ROOT" mvn ARGS="install" \
+      && make -C "$ROOT" mvn ARGS="-Dbuild.profile=default install --file opennms-full-assembly/pom.xml"
 else
     echo "Compiling & assembling (skip tests)..."
-    ./compile.pl -DskipTests=true && ./assemble.pl -DskipTests=true
+    # quick-build is compile plus assemble with tests skipped, which is what the
+    # two -DskipTests=true script calls did.
+    make -C "$ROOT" quick-build
 fi
 
 echo "Preparing symlink for OpenNMS release $RELEASE"

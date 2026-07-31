@@ -268,6 +268,26 @@ REACTOR_ARTIFACTS     := $(ARTIFACTS_DIR)/reactor-m2.tar.gz
 # behaviour of the unit-tests and integration-tests targets.
 REACTOR_ALSO_MAKE     ?=
 
+# Escape hatch for partial builds and anything the named targets do not cover. This is
+# what ./compile.pl provided before it was removed: run the wrapper with your own
+# arguments, with the shared flags from .mvn/maven.config and .mvn/jvm.config already
+# applied.
+#
+#   make mvn ARGS="-DskipTests=true --projects :opennms-dao -am install"
+#   make mvn ARGS="-t --projects :opennms-dao -amd install"
+#   make mvn ARGS="-DskipTests -Denable.license=true -Passemblies -Psmoke install"
+#
+# ARGS is required on purpose. compile.pl defaulted the goal to `install`, which made a
+# bare invocation build the whole reactor by accident.
+.PHONY: mvn
+mvn: ## Run the Maven wrapper with your own arguments, e.g. make mvn ARGS="--projects :opennms-dao -am install"
+	@test -n "$(strip $(ARGS))" || { \
+	  echo "usage: make mvn ARGS=\"<maven arguments>\""; \
+	  echo "   eg: make mvn ARGS=\"-DskipTests=true --projects :opennms-dao -am install\""; \
+	  exit 1; \
+	}
+	$(MAVEN_BIN) $(ARGS)
+
 .PHONY: package-reactor-artifacts
 package-reactor-artifacts: ## Package the installed reactor artifacts for hand-off to test jobs
 	mkdir -p $(ARTIFACTS_DIR)
@@ -584,7 +604,7 @@ clean-m2: ## Remove just OpenNMS build artifacts from Maven local repository
 	rm -rf ~/.m2/repository/org/opennms
 
 .PHONY: clean-assembly
-clean-assembly: ## Run mvn clean on assemblies, equivalent to clean.pl
+clean-assembly: ## Run mvn clean on the assemblies
 	$(MAVEN_BIN) -Passemblies clean
 
 .PHONY: clean-docs

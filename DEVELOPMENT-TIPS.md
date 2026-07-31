@@ -150,7 +150,7 @@ To do so, you need a combination of the `--projects` argument, to tell it what p
 For example, if you just did a clean checkout, and want to work on the code in the `opennms-dao` project, make a note of the artifact ID and then use `-am` like so:
 
 ```bash
-./compile.pl -DskipTests=true --projects :opennms-dao -am install
+make mvn ARGS="-DskipTests=true --projects :opennms-dao -am install"
 ```
 
 The full name of the `opennms-dao` project is `org.opennms:opennms-dao` but as long as the artifact ID is unique, you don't have to bother typing the first part.
@@ -160,7 +160,7 @@ The full name of the `opennms-dao` project is `org.opennms:opennms-dao` but as l
 Alternately, if you've made some changes, and only want to build and/or run tests on the subset of things that depend on your changed project, you can use `-amd` to build anything that depends (even indirectly) on the project you specify:
 
 ```bash
-./compile.pl -t --projects :opennms-dao -amd install
+make mvn ARGS="-DskipITs=false --projects :opennms-dao -amd install"
 ```
 
 #### Build the Bits that Match a Search
@@ -171,7 +171,7 @@ A separate tool wraps it called `tools/development/grep-pom-artifact.sh` which p
 This allows you to do powerful things like, "I just updated the dependency for jdom, rebuild anything that uses jdom to make sure it still passes."
 
 ```bash
-./compile.pl -DskipTests=true --projects `tools/development/grep-pom-artifact.sh -i jdom` install
+make mvn ARGS="-DskipTests=true --projects $(tools/development/grep-pom-artifact.sh -i jdom) install"
 ```
 
 ### Dependency Management
@@ -216,11 +216,11 @@ The build is currently configured to error out if there are dependencies with un
 If the build fails, the easiest thing to do to fix validation is to run:
 
 ```bash
-./compile.pl -DskipTests=true -Denable.license=true -Passemblies -Psmoke install
+make mvn ARGS="-DskipTests=true -Denable.license=true -Passemblies -Psmoke install"
 ```
 
 It will die with an error in the project that needs license validation, and point you to the path of the `THIRD-PARTY.properties` that you need to update to fix it.
-Update that file with the missing licenses, and then re-run your `./compile.pl` command, adding the `-rf <project>` to the end that the failure prompts for continuing your build.
+Update that file with the missing licenses, and then re-run your `make mvn` command, adding the `-rf <project>` to the end that the failure prompts for continuing your build.
 
 It may take a few runs before you catch everything.
 
