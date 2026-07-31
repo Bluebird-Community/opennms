@@ -642,7 +642,13 @@ jobs:
           path: |
             ~/.m2/repository
             !~/.m2/repository/org/opennms
-          key: m2-thirdparty-${{ hashFiles('**/pom.xml') }}
+            ~/.m2/wrapper
+          # ~/.m2/wrapper holds the Maven distribution that mvnw downloads, because the
+          # wrapper is configured distributionType=only-script. It lives outside
+          # ~/.m2/repository, so it was not cached and every job re-fetched Maven from
+          # repo.maven.apache.org. One transient "wget: Failed to fetch" there killed
+          # integration-tests shard 3 of run 30631655616 before Maven even started.
+          key: m2-thirdparty-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
           # Prefix fallback is safe here: a near-miss only costs a few downloads,
           # never correctness. The opposite is true for the reactor handoff.
           restore-keys: |
@@ -740,7 +746,13 @@ jobs:
           path: |
             ~/.m2/repository
             !~/.m2/repository/org/opennms
-          key: m2-thirdparty-${{ hashFiles('**/pom.xml') }}
+            ~/.m2/wrapper
+          # ~/.m2/wrapper holds the Maven distribution that mvnw downloads, because the
+          # wrapper is configured distributionType=only-script. It lives outside
+          # ~/.m2/repository, so it was not cached and every job re-fetched Maven from
+          # repo.maven.apache.org. One transient "wget: Failed to fetch" there killed
+          # integration-tests shard 3 of run 30631655616 before Maven even started.
+          key: m2-thirdparty-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
           restore-keys: |
             m2-thirdparty-
       - name: Fetch the reactor artifacts built by build-with-smoke-test
