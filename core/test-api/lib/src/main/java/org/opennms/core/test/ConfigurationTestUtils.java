@@ -350,8 +350,18 @@ public abstract class ConfigurationTestUtils extends Assert {
         return daemonDirectory;
     }
 
+    /**
+     * Walk up from the given directory to the top of the source tree.
+     *
+     * The marker is the Maven wrapper. It used to be compile.pl, which was removed along
+     * with the other Perl build wrappers; the walk then found nothing, returned null, and
+     * every test relying on this failed with "top-level directory: null". mvnw is a safer
+     * marker because the build cannot run without it, and like compile.pl it exists only
+     * at the top of the tree, so a nested reactor such as e2e-tests still resolves upward
+     * to the real root.
+     */
     private static File findTopProjectDirectory(File currentDirectory) {
-        File buildFile = new File(currentDirectory, "compile.pl");
+        File buildFile = new File(currentDirectory, "mvnw");
         if (buildFile.exists()) {
             File pomFile = new File(currentDirectory, POM_FILE);
             assertTrue("pom.xml in top level directory should exist: " + pomFile.getAbsolutePath(), pomFile.exists());
