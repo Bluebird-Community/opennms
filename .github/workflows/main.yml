@@ -598,28 +598,22 @@ jobs:
       matrix:
         shard_idx: [ 0, 1, 2 ] # Test job index for each runner
         shards: [ 3 ]          # 3 parallel test jobs
-    # Self-hosted on purpose, unlike integration-tests below.
+    # GitHub-hosted. These shards were moved back to self-hosted once, because moving them
+    # surfaced three latent hardware assumptions that each blocked the whole pipeline. All
+    # three are now resolved: the off-heap queue deadlock was a real product bug and is
+    # fixed, the QueueFile message-loss window is tracked as #204 with its test ignored,
+    # and the Drools working-memory race is fixed as #205.
     #
-    # These three shards are only ~26 min of test time, the smallest slice of the suite,
-    # but they gate integration-tests and every e2e job. Moving them to 4 vCPU runners
-    # exposed a string of latent hardware assumptions in the unit suite -- an off-heap
-    # queue deadlock (fixed), a suspected message-loss window (issue #204) and a Drools
-    # test that races a streaming rule engine -- and each one blocked the whole pipeline
-    # from validating anything downstream. Keeping the gate on the fast machines and
-    # sending the eight integration shards to GitHub-hosted runners instead puts the
-    # capacity where the time actually is (~5 h vs ~26 min) without a red gate.
+    # Worth the move because unit-tests gates integration-tests and every e2e job while
+    # being the smallest slice of the suite. On the two self-hosted runners three shards
+    # queue rather than run in parallel, so the gate took 48 minutes of wall clock for
+    # 1.23 h of work, and it held e2e behind it for all of that. Freeing 1.23 h of
+    # self-hosted time also drops the 2-runner floor from 5.04 h to 4.43 h.
     #
-    # No pnpm, jrrd2 or dependency-cache setup here: the self-hosted runners already
-    # provide pnpm and jrrd2, and their ~/.m2 persists between jobs, so restoring a
-    # 1.1 GB third-party cache over an already-warm repository would cost time rather
-    # than save it. The jrrd2 action in particular apt-installs and writes to /usr/lib,
-    # which must not run against a persistent host.
-    runs-on:
-      group: Default
-      labels:
-        - self-hosted
-        - Linux
-        - X64
+    # No ICMP setup here, unlike integration-tests: the full unit suite passed on
+    # GitHub-hosted runners without net.ipv4.ping_group_range in run 30452440928, so it is
+    # verified as unnecessary rather than assumed.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
@@ -630,6 +624,29 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      # make's deps-build gate requires pnpm on PATH, which GitHub-hosted runners lack.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271  # v6.0.9
+        with:
+          version: 10.33.0
+      # Native rrdtool JNI binding. Without it roughly 18 RRD-related classes across the
+      # unit and integration suites fail with UnsatisfiedLinkError.
+      - name: Set up jrrd2
+        uses: ./.github/actions/setup-jrrd2
+      - name: Cache third-party Maven dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          # org/opennms is excluded on purpose. Those artifacts come from the
+          # run-scoped reactor-artifacts handoff restored in the next step, which
+          # cannot carry another commit's bytecode the way a restore-keys hit could.
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/org/opennms
+          key: m2-thirdparty-${{ hashFiles('**/pom.xml') }}
+          # Prefix fallback is safe here: a near-miss only costs a few downloads,
+          # never correctness. The opposite is true for the reactor handoff.
+          restore-keys: |
+            m2-thirdparty-
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
@@ -638,7 +655,7 @@ jobs:
       - name: Restore the reactor artifacts into the local Maven repository
         run: |
           make restore-reactor-artifacts
-      - name: Clean stale test reports (self-hosted runner defensive)
+      - name: Clean stale test reports (defensive)
         run: |
           find . -path ./.git -prune -o -type d \( -name surefire-reports -o -name failsafe-reports \) -exec rm -rf {} + 2>/dev/null || true
       - name: Run unit test suite (shard ${{ matrix.shard_idx }})
@@ -646,6 +663,10 @@ jobs:
           BASELINE_REF: ${{ needs.decide-scope.outputs.baseline_ref }}
           FULL_BUILD: ${{ needs.decide-scope.outputs.full_build }}
         run: |
+          # deps-build requires an open-file limit of 20000, which the large reactor
+          # genuinely needs. GitHub-hosted runners start with a 1024 soft limit and a
+          # hard limit far above 20000, so raise it in the shell that runs make.
+          ulimit -n 20000
           make unit-tests MAVEN_SHARD_IDX=${{ matrix.shard_idx }} MAVEN_SHARDS=${{ matrix.shards }}
       - name: Publish Unit Test Report (shard ${{ matrix.shard_idx }})
         if: success() || failure()
