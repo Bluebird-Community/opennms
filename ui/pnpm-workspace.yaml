@@ -1,6 +1,7 @@
 packages:
   # include packages in subfolders
   - 'src/**'
+  - 'packages/*'
 
 overrides:
   '@antfu/utils': ^0.7.3

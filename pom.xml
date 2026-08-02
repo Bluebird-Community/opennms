@@ -1094,7 +1094,6 @@
                 <exclude>src/main/resources/checkstyle-suppressions.xml</exclude>
                 <exclude>src/main/resources/license-header.txt</exclude>
                 <exclude>src/main/resources/nms_checks.xml</exclude>
-                <exclude>src/site/site.xml</exclude>
                 <exclude>src/test/resources/test-data.sql</exclude>
 
                 <!-- don't need this can o' worms for now -->
@@ -1107,7 +1106,6 @@
                 <!-- APLv2 -->
                 <exclude>**/CaffeineDnsCache*.java</exclude>
                 <exclude>**/DroolsStreamUtils.java</exclude>
-                <exclude>**/GWTTerminal/war/**/*</exclude>
                 <exclude>**/Integer32IgnoreTooManyBytes.java</exclude>
                 <exclude>**/KafkaOffsetProvider.java</exclude>
                 <exclude>**/OnmsOSGiBridgeActivator.java</exclude>
@@ -1725,11 +1723,9 @@
     <commonsCompressVersion>1.26.1</commonsCompressVersion>
     <commonsConfigurationVersion>1.10</commonsConfigurationVersion>
     <commonsCsvVersion>1.5</commonsCsvVersion>
-    <commonsDaemonVersion>1.3.4</commonsDaemonVersion>
     <commonsDbcpVersion>1.4</commonsDbcpVersion>
     <commonsDigesterVersion>2.1</commonsDigesterVersion>
     <commonsExecVersion>1.4.0</commonsExecVersion>
-    <commonsFileuploadVersion>1.6.0</commonsFileuploadVersion>
     <commonsJexlVersion>2.1.1</commonsJexlVersion>
     <commonsJexl3Version>3.3</commonsJexl3Version>
     <commonsJxpathVersion>1.3</commonsJxpathVersion>
@@ -1752,7 +1748,7 @@
     <serviceMixDnsjavaVersion>3.5.3_1</serviceMixDnsjavaVersion>
     <dnsjavaVersion>3.6.1</dnsjavaVersion>
     <dom4jVersion>2.1.4</dom4jVersion>
-    <dropwizardMetricsVersion>4.2.10</dropwizardMetricsVersion>
+    <dropwizardMetricsVersion>4.2.25</dropwizardMetricsVersion>
     <ecjVersion>4.4.2</ecjVersion>
     <eclipselinkVersion>2.5.1</eclipselinkVersion>
     <eddsaVersion>0.3.0</eddsaVersion>
@@ -1775,10 +1771,10 @@
     <groovyVersion>3.0.21</groovyVersion>
     <grpcVersion>1.75.0</grpcVersion>
     <gsonVersion>2.9.1</gsonVersion>
-    <guavaVersion>31.1-jre</guavaVersion>
-    <guavaFailureaccessVersion>1.0.1</guavaFailureaccessVersion>
+    <guavaVersion>33.3.1-jre</guavaVersion>
     <guava32Version>32.1.3-jre</guava32Version>
-    <guavaOsgiVersion>31.1</guavaOsgiVersion>
+    <guavaFailureaccessVersion>1.0.1</guavaFailureaccessVersion>
+    <guavaOsgiVersion>33.3.1</guavaOsgiVersion>
     <guavagRPCVersion>33.3.1-jre</guavagRPCVersion>
     <gwtVersion>2.9.0</gwtVersion>
     <gwtPluginVersion>${gwtVersion}</gwtPluginVersion>
@@ -1814,7 +1810,6 @@
     <javaxMailVersion>1.4.7</javaxMailVersion>
     <jbossLoggingVersion>3.5.3.Final</jbossLoggingVersion>
     <jcifsVersion>2.1.6</jcifsVersion>
-    <jcommonVersion>1.0.24</jcommonVersion>
     <jdom2Version>2.0.6.1</jdom2Version>
     <jettisonVersion>1.5.4</jettisonVersion>
     <jettyVersion>9.4.60.onms1</jettyVersion>
@@ -1878,11 +1873,7 @@
     <kotlinVersion>1.9.10</kotlinVersion>
     <liquibaseVersion>3.6.3</liquibaseVersion>
     <lmaxDisruptorVersion>3.4.4</lmaxDisruptorVersion>
-    <!-- log4j 2.24+ removed ServiceLoaderUtil.loadServices(Class, Lookup, boolean), which
-         Elasticsearch 7.17.x and its log4j-core consumers call at LoggerContext init.
-         Pin to 2.23.1 - last release with that method - until the Elasticsearch 9.x
-         migration lands (see openspec/changes/migrate-elasticsearch-9x/). -->
-    <log4j2Version>2.23.1</log4j2Version>
+    <log4j2Version>2.25.5</log4j2Version>
     <logbackClassicVersion>1.5.32</logbackClassicVersion>
     <mapstructVersion>1.5.2.Final</mapstructVersion>
     <mavenApiVersion>3.9.6</mavenApiVersion>
@@ -1891,13 +1882,13 @@
     <mockitoVersion>3.12.4</mockitoVersion>
     <netty3Version>3.10.6.Final</netty3Version>
     <netty4Version>4.2.16.Final</netty4Version>
-    <newtsVersion>3.0.0</newtsVersion>
-    <newtsOsgiVersion>3.0.0</newtsOsgiVersion>
+    <newtsVersion>3.0.1</newtsVersion>
+    <newtsOsgiVersion>3.0.1</newtsOsgiVersion>
     <paxCdiVersion>1.1.4</paxCdiVersion>
     <paxExamVersion>4.13.5</paxExamVersion>
     <pktsVersion>3.0.10</pktsVersion>
     <protobufVersion>3.25.5</protobufVersion>
-    <postgresqlVersion>42.7.11</postgresqlVersion>
+    <postgresqlVersion>42.7.13</postgresqlVersion>
     <powermockVersion>2.0.9</powermockVersion>
     <okhttpVersion>4.9.3</okhttpVersion>
     <okioVersion>3.6.0</okioVersion>
@@ -1920,7 +1911,6 @@
     <pyroscopeVersion>0.13.1</pyroscopeVersion>
     <lz4JavaVersion>1.10.2</lz4JavaVersion>
     <quartzVersion>2.3.2</quartzVersion>
-    <rancidApiVersion>2.0.0</rancidApiVersion>
     <rateLimitedLoggerVersion>2.0.2</rateLimitedLoggerVersion>
     <resilience4jVersion>0.17.0</resilience4jVersion>
     <rocksdbjniVersion>8.5.4</rocksdbjniVersion>
@@ -1930,7 +1920,6 @@
     <scalaVersion>2.13</scalaVersion>
     <servletApiVersion>3.1.0</servletApiVersion>
     <slf4jVersion>1.7.36</slf4jVersion>
-    <smackVersion>4.0.6</smackVersion>
     <snappyJavaVersion>1.1.10.5</snappyJavaVersion>
     <snmp4jVersion>2.8.15</snmp4jVersion>
     <snmp4jagentVersion>2.7.9</snmp4jagentVersion>
@@ -1956,7 +1945,6 @@
     <xmlgraphicsCommonsVersion>2.9</xmlgraphicsCommonsVersion>
     <xmlsecVersion>2.3.4</xmlsecVersion>
     <xstreamVersion>1.4.21</xstreamVersion>
-    <wsdl4jVersion>1.6.3</wsdl4jVersion>
     <wsmanVersion>1.3.3</wsmanVersion>
     <zookeeperVersion>3.7.2</zookeeperVersion>
     <zstdJniVersion>1.5.2-1</zstdJniVersion>
@@ -2951,18 +2939,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms.dependencies</groupId>
-        <artifactId>geronimo-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
-        <artifactId>gwt-maps-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
         <artifactId>jackson1-dependencies</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
@@ -3397,11 +3373,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms</groupId>
-        <artifactId>opennms-rrd-jrobin</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms</groupId>
         <artifactId>opennms-rrd-rrdtool</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -3515,12 +3486,6 @@
       </dependency>
       <dependency>
         <groupId>org.opennms.dependencies</groupId>
-        <artifactId>smack-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
         <artifactId>dnsjava-dependencies</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
@@ -3553,12 +3518,6 @@
       <dependency>
         <groupId>org.opennms.dependencies</groupId>
         <artifactId>twitter4j-dependencies</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.opennms.dependencies</groupId>
-        <artifactId>tracker-dependencies</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
       </dependency>
@@ -3676,28 +3635,6 @@
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-ws-mex</artifactId>
         <version>${cxfVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-client</artifactId>
-        <version>${curatorVersion}</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>log4j</artifactId>
-            <groupId>log4j</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-framework</artifactId>
-        <version>${curatorVersion}</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>log4j</artifactId>
-            <groupId>log4j</groupId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.curator</groupId>
@@ -3823,6 +3760,8 @@
         <artifactId>caffeine</artifactId>
         <version>${caffeineVersion}</version>
       </dependency>
+      <!-- no direct users, but pins the xstream shipped in lib/ (transitive of
+           drools-xml-support, which declares an older release) -->
       <dependency>
         <groupId>com.thoughtworks.xstream</groupId>
         <artifactId>xstream</artifactId>
@@ -3896,11 +3835,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>commons-daemon</groupId>
-        <artifactId>commons-daemon</artifactId>
-        <version>${commonsDaemonVersion}</version>
-      </dependency>
-      <dependency>
         <groupId>commons-dbcp</groupId>
         <artifactId>commons-dbcp</artifactId>
         <version>${commonsDbcpVersion}</version>
@@ -3920,11 +3854,6 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-exec</artifactId>
         <version>${commonsExecVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-fileupload</groupId>
-        <artifactId>commons-fileupload</artifactId>
-        <version>${commonsFileuploadVersion}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -4075,23 +4004,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>commons-validator</groupId>
-        <artifactId>commons-validator-core</artifactId>
-        <version>${commonsValidatorVersion}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.dbunit</groupId>
-        <artifactId>dbunit</artifactId>
-        <version>2.4.8</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>org.dom4j</groupId>
         <artifactId>dom4j</artifactId>
         <version>${dom4jVersion}</version>
@@ -4219,17 +4131,6 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>net.sf.ehcache</groupId>
-        <artifactId>ehcache</artifactId>
-        <version>1.8.0</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.jfree</groupId>
-        <artifactId>jcommon</artifactId>
-        <version>${jcommonVersion}</version>
-      </dependency>
-      <dependency>
         <groupId>org.jfree</groupId>
         <artifactId>jfreechart</artifactId>
         <version>${jfreechartVersion}</version>
@@ -4244,6 +4145,8 @@
         <artifactId>kotlin-osgi-bundle</artifactId>
         <version>${kotlinVersion}</version>
       </dependency>
+      <!-- no direct users, but pins the kotlin-stdlib shipped in lib/ (transitive of
+           okhttp, which declares an older release) -->
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib</artifactId>
@@ -4431,11 +4334,6 @@
         <version>1.0</version>
       </dependency>
       <!-- this should match what's in Karaf's lib/jdk9plus directory -->
-      <dependency>
-        <groupId>com.sun.activation</groupId>
-        <artifactId>javax.activation</artifactId>
-        <version>1.2.0</version>
-      </dependency>
       <dependency>
         <groupId>javax.activation</groupId>
         <artifactId>activation</artifactId>
@@ -4720,12 +4618,6 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>net.sourceforge.jwebunit</groupId>
-        <artifactId>jwebunit-htmlunit-plugin</artifactId>
-        <version>2.5</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>org.apache.karaf.shell</groupId>
         <artifactId>org.apache.karaf.shell.core</artifactId>
         <version>${karafVersion}</version>
@@ -4756,11 +4648,6 @@
         <groupId>mx4j</groupId>
         <artifactId>mx4j-tools</artifactId>
         <version>3.0.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.nokogiri</groupId>
-        <artifactId>nekohtml</artifactId>
-        <version>1.9.22.noko2</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml</groupId>
@@ -5126,11 +5013,6 @@
         <version>${velocityVersion}</version>
       </dependency>
       <dependency>
-        <groupId>wsdl4j</groupId>
-        <artifactId>wsdl4j</artifactId>
-        <version>${wsdl4jVersion}</version>
-      </dependency>
-      <dependency>
         <groupId>xalan</groupId>
         <artifactId>xalan</artifactId>
         <version>${xalanVersion}</version>
@@ -5267,6 +5149,9 @@
         <version>${jqwikVersion}</version>
         <scope>test</scope>
       </dependency>
+      <!-- no direct users, but these align the JUnit Platform on test classpaths:
+           transitives declare jupiter-api 5.6.x, which skews platform-commons
+           against the pinned vintage-engine and breaks the surefire provider -->
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
