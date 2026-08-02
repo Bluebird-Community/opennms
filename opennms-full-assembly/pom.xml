@@ -396,7 +396,6 @@
                 <feature>jaxb</feature>
                 <feature>jolokia</feature>
                 <feature>json-lib</feature>
-                <feature>lmax-disruptor</feature>
                 <feature>opennms-bootstrap</feature>
                 <feature>opennms-collection-api</feature>
                 <feature>opennms-collection-commands</feature>
