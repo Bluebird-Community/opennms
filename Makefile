@@ -19,7 +19,11 @@ MAVEN_BIN             := ./mvnw
 # flaky tests, so they must not silently change what a developer sees locally. See #207.
 MAVEN_ARGS            := -Dfailsafe.rerunFailingTestsCount=2 -Dsurefire.rerunFailingTestsCount=2
 
-GIT_BRANCH            := $(shell git branch | grep \* | cut -d' ' -f2)
+# Tag pushes check out a detached HEAD, where "git branch" prints
+# "* (HEAD detached at v38.1.0)" and any word-splitting of it yields "(HEAD" --
+# an unquoted paren that breaks every recipe passing this on. Ask git for the
+# symbolic ref, fall back to the exact tag, then to the short SHA.
+GIT_BRANCH            := $(shell git symbolic-ref --quiet --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
 OPENNMS_VERSION       ?= $(shell grep '<version>' pom.xml | head -1 | sed -e 's/.*<version>\(.*\)<\/version>.*/\1/')
 VERSION               := $(shell echo ${OPENNMS_VERSION} | sed -e 's,-SNAPSHOT,,')
 RELEASE_BRANCH        := $(shell echo ${GIT_BRANCH} | sed -e 's,/,-,g')
@@ -334,8 +338,8 @@ minion-oci: ## Build container image for Minion, tag local/minion:latest
 		--base-image $(DEPLOY_BASE_IMAGE) \
 		--platform $(OCI_PLATFORM) \
 		--build-date $(BUILD_DATE) \
-		--branch $(GIT_BRANCH) \
-		--build-number $(RELEASE_BUILD_NUM)
+		--branch "$(GIT_BRANCH)" \
+		--build-number "$(RELEASE_BUILD_NUM)"
 
 .PHONY: sentinel-oci
 sentinel-oci: ## Build container image for Sentinel, tag local/sentinel:latest
