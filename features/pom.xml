@@ -43,7 +43,6 @@
     <module>kafka</module>
 
     <!-- Executor factories -->
-    <module>executor-factory</module>
 
     <!-- OpenNMS Collection API and implementations -->
     <module>collection</module>

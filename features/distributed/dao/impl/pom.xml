@@ -104,7 +104,6 @@
                             org.opennms.netmgt.config.collectd,
                             org.opennms.netmgt.config.datacollection,
                             org.opennms.netmgt.config.javamail,
-                            org.opennms.netmgt.config.microblog,
                             org.opennms.netmgt.config.provisiond,
                             org.opennms.netmgt.config.siteStatusViews,
                             org.opennms.netmgt.config.surveillanceViews,

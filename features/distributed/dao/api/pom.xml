@@ -59,7 +59,6 @@
                             org.opennms.netmgt.topologies.service.api,
                             org.opennms.netmgt.config.api,
                             org.opennms.netmgt.config.javamail,
-                            org.opennms.netmgt.config.microblog,
                             org.opennms.netmgt.config.provisiond,
                             org.opennms.netmgt.config.siteStatusViews,
                             org.opennms.netmgt.config.surveillanceViews,
