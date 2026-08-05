@@ -44,6 +44,8 @@
               <!-- Declare the Attach API as an optional dependency -->
               com.sun.tools.attach;resolution:=optional,
               org.opennms.features.scv.jceks;resolution:=optional,
+              <!-- HA coordinator is loaded via reflection; optional so non-HA installs resolve cleanly -->
+              org.opennms.netmgt.ha;resolution:=optional,
               *
             </Import-Package>
             <Export-Package>org.opennms.netmgt.daemon.*;org.opennms.netmgt.vmmgr.*;version="${project.version}"</Export-Package>

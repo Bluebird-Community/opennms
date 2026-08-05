@@ -141,5 +141,6 @@
 
     <module>grpc</module>
     <module>elastic</module>
+    <module>ha-management</module>
   </modules>
 </project>
