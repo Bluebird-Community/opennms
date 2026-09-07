@@ -1190,3 +1190,36 @@ jobs:
             target/artifacts/packages/minion/*.rpm
             target/artifacts/packages/sentinel/*.deb
             target/artifacts/packages/sentinel/*.rpm
+
+  # Hand the finished release to Packyard (pkg.onms.eu). The Packyard workflow
+  # pulls the release assets and the quay.io images itself and verifies them
+  # against this workflow's cosign identity, so the only secret needed here is
+  # a token that can start that one workflow. Skips with a warning while the
+  # secret is not configured, so a release never fails on it.
+  promote-to-packyard:
+    needs:
+      - create-github-release
+      - core-oci
+      - minion-oci
+      - sentinel-oci
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Trigger Packyard promotion
+        env:
+          GH_TOKEN: ${{ secrets.PACKYARD_DISPATCH_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          SOURCE_REPO: ${{ github.repository }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::warning::PACKYARD_DISPATCH_TOKEN is not set; skipping the Packyard promotion for ${TAG}"
+            exit 0
+          fi
+          gh workflow run promote-release.yml -R no42-org/packyard \
+            -f source_repo="${SOURCE_REPO}" \
+            -f tag="${TAG}" \
+            -f component=bluebird \
+            -f series=38
+          echo "Dispatched promote-release for ${TAG}; watch it at https://github.com/no42-org/packyard/actions/workflows/promote-release.yml"
