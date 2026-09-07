@@ -91,5 +91,6 @@
 *** xref:rest/situation-feedback.adoc[]
 
 * xref:oia/introduction.adoc[]
+** xref:oia/mcp-server.adoc[]
 
 * xref:ticketing/inmemory-plugin.adoc[]

@@ -26,7 +26,6 @@
   <bean id="configTester" class="org.opennms.netmgt.config.tester.ConfigTester">
     <property name="configs">
       <map>
-        <entry key="ami-config.xml" value="amiPeerFactory"/>
         <entry key="bsf-northbounder-configuration.xml" value="bsfNorthbounderConfigDao"/>
         <entry key="categories.xml" value="categoryFactory"/>
         <entry key="collectd-configuration.xml" value="collectdConfigFactory"/>
@@ -96,12 +95,6 @@
     </property>
   </bean>
 
-  <bean id="amiPeerFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"><value>org.opennms.netmgt.config.AmiPeerFactory.init</value></property>
-  </bean>
-
-  <bean id="amiPeerFactory" class="org.opennms.netmgt.config.AmiPeerFactory" depends-on="amiPeerFactory-init" factory-method="getInstance"/>
-  
   <bean name="bsfNorthbounderConfigDao" class="org.opennms.netmgt.alarmd.northbounder.bsf.BSFNorthbounderConfigDao">
     <property name="configResource" value="file:${opennms.home}/etc/bsf-northbounder-configuration.xml" />
   </bean>

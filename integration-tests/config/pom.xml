@@ -81,6 +81,13 @@
       <artifactId>org.opennms.core.test-api.xml</artifactId>
     </dependency>
 
+    <!-- Daemon classes named by service-configuration.xml, which
+         ServiceConfigurationPublicConstructorIT instantiates by name -->
+    <dependency>
+      <groupId>org.opennms</groupId>
+      <artifactId>opennms-services</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-jetty</artifactId>

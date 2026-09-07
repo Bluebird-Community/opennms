@@ -175,6 +175,15 @@
       <type>pom</type>
       <scope>test</scope>
     </dependency>
+    <!-- Groovy engine for scriptd and BSFNotificationStrategy; runtime scope so
+         Groovy notification scripts do not depend on another module keeping
+         groovy on the classpath -->
+    <dependency>
+      <groupId>org.opennms.dependencies</groupId>
+      <artifactId>groovy-dependencies</artifactId>
+      <type>pom</type>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-rrd-api</artifactId>
@@ -291,6 +300,10 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
@@ -317,11 +330,6 @@
       <groupId>org.opennms</groupId>
       <artifactId>org.opennms.config-dao.poll-outages.impl</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache-extras.beanshell</groupId>
-      <artifactId>bsh</artifactId>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>jakarta.mail</groupId>
