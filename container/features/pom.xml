@@ -250,6 +250,7 @@
                           <feature>opennms-timeseries-api</feature>
                           <feature>opennms-timeseries-api</feature>
                           <feature>opennms-grpc-exporter</feature>
+                          <feature>opennms-kafka-producer</feature>
 
                           <!-- minion features -->
                           <feature>dominion-grpc-client</feature>

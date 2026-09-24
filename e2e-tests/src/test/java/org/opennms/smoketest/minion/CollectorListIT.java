@@ -67,9 +67,7 @@ public class CollectorListIT {
             "org.opennms.protocols.xml.collector.XmlCollector")
             .build();
 
-    private ImmutableSet<String> expectedMinionCollectors = ImmutableSet.<String> builder()
-            .addAll(commonCollectors)
-            .build();
+    private ImmutableSet<String> expectedMinionCollectors = commonCollectors;
 
     private ImmutableSet<String> expectedOpenNMSCollectors = ImmutableSet.<String> builder().add(
             "org.opennms.netmgt.collectd.SnmpCollector")

@@ -107,7 +107,8 @@ public class MonitorsListCommandIT {
             "org.opennms.netmgt.poller.monitors.NetScalerGroupHealthMonitor",
             "org.opennms.netmgt.poller.monitors.WebMonitor", 
             "org.opennms.netmgt.poller.monitors.CiscoIpSlaMonitor",
-            "org.opennms.netmgt.poller.monitors.WsManMonitor")
+            "org.opennms.netmgt.poller.monitors.WsManMonitor",
+            "org.opennms.netmgt.poller.monitors.WsManShellMonitor")
             .build();
 
     @Test

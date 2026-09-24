@@ -1,6 +1,6 @@
-[[releasenotes-36]]
+[[releasenotes-37]]
 
-= What's New in OpenNMS {page-component-title} 36
+= What's New in OpenNMS {page-component-title} 37
 
 == System requirements and Dependencies
 
@@ -28,6 +28,23 @@ and Eclipse Gemini Blueprint has been replaced by an OpenNMS Spring OSGi extende
 Most installations require no action, but there are behavior and compatibility changes for installations with
 custom Spring Security configuration (SSO, LDAP), custom Camel routes, or plugins that use the OpenNMS persistence APIs.
 See xref:spring-hibernate-upgrade.adoc[Spring, Hibernate, and Camel Platform Upgrade] for details.
+
+=== Trends removed
+The Trends page has been removed from the Dashboards menu and from the product. `etc/trend-configuration.xml` is no longer read and can be deleted.
+
+=== Charts removed
+The Charts page, its JFreeChart rendering and the `features/charts` module have been removed from the Dashboards menu and from the product. `etc/chart-configuration.xml` and its configuration model go with it; the file is no longer read.
+
+=== Heatmap removed
+The Heatmap page has been removed from the Dashboards menu and from the product, together with the `/rest/heatmap` endpoint and the `org.opennms.heatmap.*` system properties, which are no longer read.
+The `getHeatMapItemsForEntity` methods are gone from the internal `AlarmDao` and `OutageDao` interfaces; they were not part of the Integration API.
+A `org.opennms.web.console.centerUrl` that still names the heatmap or trend box is skipped when the legacy home page renders.
+
+=== Statsd removed
+The Metrics Statistics (statsd) page and the Statsd daemon have been removed, together with `etc/statsd-configuration.xml` and the `CORE_SERVICE_STATSD_ENABLED` variable.
+A Statsd entry left in an existing `etc/service-configuration.xml` is ignored with a warning at startup and can be deleted, as can `etc/statsd-configuration.xml`.
+The "TOP 20 nodes by I/O Wait" database report and the response-time offenders section of the Response Time Summary report, which only Statsd could feed, are removed as well.
+Existing rows in the `statisticsreport` tables are left in place and continue to be purged by Vacuumd.
 
 === SNMP datacollection config moved to DB with new UI
 The contents of `etc/datacollection-config.xml` and `etc/datacollection/\*.xml` are migrated into the database during the upgrade process, and the original files are moved to `etc_archive/`.
@@ -101,6 +118,31 @@ See xref:operation:deep-dive/events/event-configuration.adoc#migrating-event-fil
 
 To keep the previous behavior, see xref:operation:deep-dive/admin/configuration/startup.adoc[Startup Configuration], or xref:reference:configuration/core-docker.adoc[Core Docker] for container deployments.
 
+=== WSMan WinRS support, WsManShellMonitor, and WsManShellDetector
+The OpenNMS WSMan library has added support for WinRS remote shell commands.
+A corresponding monitor and detector have been added to leverage these new capabilities.
+
+=== WSMan kerberos mesage encryption
+The OpenNMS WSMan library has added support for kerberos message encryption over unencrypted channels.
+The existing configuration has been extended to take advantage of this new feature.
+This should greatly reduce friction when deploying WS-Man / WinRM-based monitoring on Windows.
+
+=== Custom Performance Graphs preview
+A preview interface has been added to eventually replace the previous Ad-Hoc Graphing workflow with a more modern UI that takes advantage of current OpenNMS REST APIs for nodes, resources, and metric measurements.
+
+=== Notifd modernization
+The `notifd` daemon has had much of its underlying software infrastructure modernized, including mail libraries, to improve support for modern protocols.
+
+=== Kafka producer JSON payloads for metrics
+The Kafka producer feature now supports producing metric payloads to Kafka as JSON format.
+
+=== OpenAPI docs improvements
+There are extensive improvements to how our OpenAPI docs are generated and rendered.
+This includes more reliable rendering with reduced load times as well as expected payloads and responses for many more API endpoints.
+
+=== Karaf shell pubkey auth
+Support has been added for configuring Karaf shell authentication using ssh public keys.
+
 == Breaking changes
 
 === Jakarta Mail migration and OAuth2 (XOAUTH2) SMTP support
@@ -167,6 +209,15 @@ IMPORTANT: If you previously configured the plugin via `$\{OPENNMS_HOME}/etc/org
 The Karaf feature is now `opennms-plugins-prometheus-remotewrite` (previously `opennms-plugins-cortex-tss`), and the KAR file is `opennms-prometheus-remotewrite-plugin` (previously `opennms-cortex-tss-plugin`).
 See xref:deployment:time-series-storage/timeseries/prometheus-remotewrite.adoc[the Prometheus RemoteWrite plugin documentation] for details.
 
+=== Newts and Cassandra time series storage deprecated
+
+Newts, the time series store backed by Apache Cassandra, should be considered deprecated.
+{page-component-title} {page-component-version} still ships with Newts support for existing Newts users: if you are already running on Newts, you can continue to do so through this release.
+
+After {page-component-title} {page-component-version} reaches end of support, OpenNMS will no longer provide official support for the Cassandra backend, and Newts will not be carried forward into subsequent releases.
+If you are using Newts, we suggest planning a move to the xref:deployment:time-series-storage/timeseries/prometheus-remotewrite.adoc[Prometheus RemoteWrite plugin], which stores metrics in any Prometheus `remote_write`-compatible time series database.
+Note that there is no tool to copy existing Newts data into another store, so after a switch the historical metrics remain in Cassandra until its retention period expires.
+
 === Jasper Reports engine
 We have updated the Jasper Reports engine to version 7.0.7. Custom reports created using version 6.x must be updated to work with the new version.
 
@@ -197,4 +248,19 @@ NOTE: Update any of your own documentation, runbooks, training material, or UI a
 The last release of the BeanShell interpreter was in 2016.
 As such, we are deprecating support for BeanShell and will remove it in Horizon 37.
 Groovy support remains available everywhere BeanShell was implemented.
+
+=== RT Ticketer plugin (plugin-ticketer-rt) removed
+The deprecated RT Ticketer plugin was removed in this release.
+
+=== CIFS plugin (plugin-protocol-cifs) removed
+The deprecated CIFS plugin was removed in this release.
+
+=== NSClient plugin (plugin-protocol-nsclient) removed
+The deprecated NSClient plugin was removed in this release.
+
+=== JMS-Northbounder plugin (plugin-northbounder-jms) removed
+The deprecated JMS-Northbounder plugin was removed in this release.
+
+=== Juniper TCA Collector plugin (plugin-collector-juniper-tca) removed
+The deprecated Juniper TCA Collector plugin was removed in this release.
 

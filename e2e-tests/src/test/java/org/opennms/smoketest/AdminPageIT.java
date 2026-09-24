@@ -76,7 +76,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         new String[] { "Manage Event Configurations", "//div[@id='app']//div[@class='event-config']//div[@class='heading']/h1[text()='Manage Event Configurations']" },
 
         // Service Monitoring
-        new String[] { "Configure Scheduled Outages", "//form//input[@value='New Name']" },
+        new String[] { "Configure Scheduled Outages", "//div[@id='app']//div[@class='card-title' and text()='Scheduled Outages']" },
         new String[] { "Manage and Unmanage Interfaces and Services", "//span[text()='Manage and Unmanage Interfaces and Services']" },
 
         // Performance Measurement

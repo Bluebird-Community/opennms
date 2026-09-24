@@ -201,6 +201,63 @@ const router = createRouter({
       }
     },
     {
+      path: '/admin/wsman-config',
+      name: 'Manage WS-Man',
+      component: () => import('@/containers/ManageWsman.vue'),
+      beforeEnter: (to, from) => {
+        const checkRoles = () => {
+          if (!adminRole.value) {
+            showSnackBar({ msg: 'Must be admin to manage WS-Man configuration.' })
+            router.push(from.path)
+          }
+        }
+
+        if (rolesAreLoaded.value) {
+          checkRoles()
+        } else {
+          whenever(rolesAreLoaded, () => checkRoles())
+        }
+      }
+    },
+    {
+      path: '/scheduled-outages',
+      name: 'Scheduled Outages',
+      component: () => import('@/containers/ScheduledOutages.vue'),
+      beforeEnter: (to, from) => {
+        const checkRoles = () => {
+          if (!adminRole.value) {
+            showSnackBar({ msg: 'Must be admin to manage scheduled outages.' })
+            router.push(from.path)
+          }
+        }
+
+        if (rolesAreLoaded.value) {
+          checkRoles()
+        } else {
+          whenever(rolesAreLoaded, () => checkRoles())
+        }
+      }
+    },
+    {
+      path: '/scheduled-outages/edit',
+      name: 'Edit Scheduled Outage',
+      component: () => import('@/containers/ScheduledOutageEditor.vue'),
+      beforeEnter: (to, from) => {
+        const checkRoles = () => {
+          if (!adminRole.value) {
+            showSnackBar({ msg: 'Must be admin to manage scheduled outages.' })
+            router.push(from.path)
+          }
+        }
+
+        if (rolesAreLoaded.value) {
+          checkRoles()
+        } else {
+          whenever(rolesAreLoaded, () => checkRoles())
+        }
+      }
+    },
+    {
       path: '/map',
       name: 'Map',
       component: () => import('@/containers/Map.vue'),
@@ -216,6 +273,18 @@ const router = createRouter({
           component: () => import('@/components/Map/MapNodesGrid.vue')
         }
       ]
+    },
+    {
+      // Topology type lives in the path (custom today; enlinkd-l2/bsm/... later);
+      // the specific view is a `?view=<name>` query so it's bookmarkable.
+      // Bare /topology redirects to the custom catalog.
+      path: '/topology',
+      redirect: '/topology/custom'
+    },
+    {
+      path: '/topology/:source',
+      name: 'Topology',
+      component: () => import('@/containers/Topology.vue')
     },
     {
       path: '/nodes',

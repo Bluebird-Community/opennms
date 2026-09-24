@@ -62,12 +62,6 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         WebElement foundElement = null;
 
         // Dashboards Menu
-        clickMenuItem("Dashboards", "Heatmap");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/a[starts-with(text(), 'Alarm Heatmap')]")));
-
-        clickMenuItem("Dashboards", "Trends");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Trend']")));
-
         clickMenuItem("Dashboards", "Graph Collections");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Customized Reports']")));
         frontPage();
@@ -140,6 +134,10 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
 
         clickMenuItem("Manage Inventory", "Delete Nodes");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Delete Nodes']")));
+
+        // a /ui (Vue) page: assert its page title rather than a JSP breadcrumb
+        clickMenuItem("Manage Inventory", "Manage WS-Man");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h1[@class='page-title' and normalize-space(text())='Manage WS-Man']")));
         frontPage();
 
         // User Management Menu
@@ -199,8 +197,8 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Manage SNMP Data Collection per Interface']")));
 
         clickMenuItem("Administration", "Scheduled Outages");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Scheduled Outages')]")));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/h4[text()='Scheduled Outages']")));
+        // now the Vue page (ui/index.html)
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@id='app']//div[@class='card-title' and text()='Scheduled Outages']")));
 
         clickMenuItem("Administration", "Product Update Enrollment");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Product Update Enrollment')]")));

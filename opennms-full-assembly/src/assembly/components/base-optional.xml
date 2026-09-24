@@ -19,9 +19,6 @@
           <!-- contrib -->
           <include>contrib/**/*</include>
 
-          <!-- northbounders -->
-          <include>lib/*alarm-northbounder-jms*</include>
-
           <!-- provisioning adapters -->
           <include>etc/*snmp-asset-adapter*</include>
           <include>lib/*snmp-asset-provisioning-adapter*</include>
@@ -31,7 +28,6 @@
           <include>etc/*wsman-asset-adapter*</include>
           <!-- not included in base assembly tar -->
           <!-- <include>lib/*wsman-asset-provisioning-adapter*</include> -->
-
         </includes>
       </unpackOptions>
     </dependencySet>
