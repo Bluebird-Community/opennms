@@ -20,6 +20,7 @@
   <service enabled="\${env:CORE_SERVICE_EVENTTRANSLATOR_ENABLED|true}"><name>OpenNMS:Name=EventTranslator</name></service>
   <service enabled="\${env:CORE_SERVICE_PASSIVESTATUSD_ENABLED|true}"><name>OpenNMS:Name=PassiveStatusd</name></service>
   <service enabled="\${env:CORE_SERVICE_PROVISIOND_ENABLED|true}"><name>OpenNMS:Name=Provisiond</name></service>
+  <service enabled="\${env:CORE_SERVICE_KARAF_ENABLED|true}"><name>OpenNMS:Name=Karaf</name></service>
   <service enabled="\${env:CORE_SERVICE_JETTYSERVER_ENABLED|true}"><name>OpenNMS:Name=JettyServer</name></service>
   <service enabled="\${env:CORE_SERVICE_KARAFSTARTUPMONITOR_ENABLED|true}"><name>OpenNMS:Name=KarafStartupMonitor</name></service>
   <service enabled="\${env:CORE_SERVICE_SYSLOGD_ENABLED|false}"><name>OpenNMS:Name=Syslogd</name></service>

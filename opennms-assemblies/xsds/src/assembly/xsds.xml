@@ -35,7 +35,6 @@
         <include>org.opennms:opennms-webapp:jar:xsds:${project.version}</include>
         <include>org.opennms:opennms-alarm-api:jar:xsds:${project.version}</include>
         <include>org.opennms:opennms-alarm-northbounder-email:jar:xsds:${project.version}</include>
-        <include>org.opennms:opennms-alarm-northbounder-jms:jar:xsds:${project.version}</include>
         <include>org.opennms:opennms-alarm-northbounder-snmptrap:jar:xsds:${project.version}</include>
         <include>org.opennms:opennms-alarm-northbounder-syslog:jar:xsds:${project.version}</include>
 

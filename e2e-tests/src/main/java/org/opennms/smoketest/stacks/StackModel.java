@@ -86,7 +86,7 @@ public class StackModel {
         private boolean telemetryProcessingEnabled = false;
         private boolean simulateRestricedOpenShiftEnvironment = false;
 
-        private IpcStrategy ipcStrategy = IpcStrategy.JMS;
+        private IpcStrategy ipcStrategy = IpcStrategy.GRPC;
         private TimeSeriesStrategy timeSeriesStrategy = TimeSeriesStrategy.RRD;
         
         private BlobStoreStrategy blobStoreStrategy = BlobStoreStrategy.NOOP;

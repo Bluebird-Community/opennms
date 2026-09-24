@@ -6,7 +6,7 @@
 When your flows data collection volume increases to the point that {page-component-title} is too busy processing flows, you can add one or more Sentinels to do the processing instead.
 Sentinel can do the following:
 
-* Consume flow messages from Minions through a message broker (ActiveMQ or Apache Kafka)
+* Consume flow messages from Minions through an Apache Kafka message broker
 * Persist network flow messages to Elasticsearch
 * Generate and send events to the {page-component-title} core instance via message broker
 
@@ -20,7 +20,7 @@ Make sure you have the following:
 * xref:operation:deep-dive/flows/basic.adoc#flows-basic[Basic flows environment] set up
 * xref:deployment:sentinel/runtime/install.adoc#install-sentinel[Sentinel installed] on your system
 * PostgreSQL, Elasticsearch, and REST endpoint to {page-component-title} core instance running and reachable from the Sentinel node(s)
-* Message broker (ActiveMQ or Apache Kafka) running and reachable from the Sentinel node(s)
+* Apache Kafka message broker running and reachable from the Sentinel node(s)
 * Credentials for authentication configured for the message broker, Elasticsearch, and the PostgreSQL database
 
 NOTE: You must set configuration in the `etc` directory relative to the {page-component-title} Sentinel home directory `$\{SENTINEL_HOME}`.
@@ -84,20 +84,7 @@ If you set the `indexPrefix` property, all Sentinel instances on the same {page-
 
 == Set up message broker
 
-[{tabs}]
-====
-Kafka::
-+
---
 include::message-broker/kafka.adoc[]
---
-
-ActiveMQ::
-+
---
-include::message-broker/activemq.adoc[]
---
-====
 
 == Enable flow processing protocols
 

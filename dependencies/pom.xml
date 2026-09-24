@@ -3,18 +3,15 @@
   <parent>
     <artifactId>opennms</artifactId>
     <groupId>org.opennms</groupId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dependencies</artifactId>
   <packaging>pom</packaging>
   <name>OpenNMS :: Dependencies</name>
   <modules>
-    <module>activemq</module>
-    <module>activemq-web</module>
+    <module>angus-mail-shaded</module>
     <module>atomikos</module>
-    <module>camel</module>
-    <module>camel-test</module>
     <module>cassandra-test</module>
     <module>cxf</module>
     <module>dnsjava</module>
@@ -26,7 +23,6 @@
     <module>jackson1</module>
     <module>jackson2</module>
     <module>jasypt</module>
-    <module>javamail</module>
     <module>jaxb</module>
     <module>jcifs</module>
     <module>jinterop</module>
@@ -48,7 +44,6 @@
     <module>pax-exam</module>
     <module>quartz</module>
     <module>servlet</module>
-    <module>smack</module>
     <module>snmp4j</module>
     <module>snmp4j-agent</module>
     <module>snmp</module>
@@ -58,7 +53,6 @@
     <module>spring-security</module>
     <module>spring-test</module>
     <module>spring-web</module>
-    <module>twitter4j</module>
     <module>jcifs-shaded</module>
   </modules>
 </project>

@@ -18,11 +18,16 @@ gh pr create ...  # defaults to OpenNMS/opennms
 
 ## Project Overview
 
-BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 36.0.2-SNAPSHOT, licensed under AGPL v3. Java 21 required (enforced range `[21,22)` — bumped from 17 via NMS-19396).
+BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 38.0.2-SNAPSHOT, licensed under AGPL v3. Java 21 required (enforced range `[21,22)` — bumped from 17 via NMS-19396).
 
 ## Build Commands
 
-The project uses the Apache Maven Wrapper (`./mvnw`, `.mvn/wrapper/maven-wrapper.properties`) — the first invocation downloads the pinned Maven version (3.9.14 at the time of writing) into `~/.m2/wrapper/dists/` and caches it there. No system Maven install needed. The Perl wrappers `compile.pl` / `assemble.pl` / `clean.pl` also resolve to `./mvnw` via `bin/functions.pl`. The `Makefile` wraps all of this with sensible defaults — prefer make targets for whole-tree work, use `./compile.pl` directly for partial builds on a single module.
+The project uses the Apache Maven Wrapper (`./mvnw`, `.mvn/wrapper/maven-wrapper.properties`).
+The first invocation downloads the pinned Maven version (3.9.14 at the time of writing) into `~/.m2/wrapper/dists/` and caches it there, so no system Maven install is needed.
+Shared Maven flags live in `.mvn/maven.config` and JVM options in `.mvn/jvm.config`, so a bare `./mvnw` behaves the way the build does.
+The `Makefile` is the front door and wraps all of this with sensible defaults.
+Prefer make targets for whole-tree work, and `make mvn ARGS="..."` for partial builds on a single module.
+The Perl wrappers `compile.pl`, `assemble.pl`, `clean.pl` and `bin/functions.pl` were removed; `make mvn` replaces them.
 
 Prerequisites: Java 21, Docker (+ Compose plugin) for tests, Node 24 + pnpm 10.x for the UI.
 
@@ -56,19 +61,19 @@ make core-e2e / minion-e2e / sentinel-e2e                 # end-to-end per artif
 make docs
 ```
 
-### Partial builds with compile.pl
+### Partial builds with `make mvn`
 
 For anything smaller than a whole tree, drive Maven directly. The pattern is `--projects :<artifactId>` with `-am` (build its deps) or `-amd` (build its dependents):
 
 ```bash
 # Build opennms-dao and everything it needs
-./compile.pl -DskipTests=true --projects :opennms-dao -am install
+make mvn ARGS="-DskipTests=true --projects :opennms-dao -am install"
 
 # Rebuild everything that depends on opennms-dao (after changing it)
-./compile.pl -t --projects :opennms-dao -amd install
+make mvn ARGS="-DskipITs=false --projects :opennms-dao -amd install"
 
 # Find all artifacts whose code matches a grep and build them
-./compile.pl -DskipTests=true --projects `tools/development/grep-pom-artifact.sh -i jdom` install
+make mvn ARGS="-DskipTests=true --projects $(tools/development/grep-pom-artifact.sh -i jdom) install"
 ```
 
 `tools/development/pom-artifact.sh` and `grep-pom-artifact.sh` are the helpers that turn a `pom.xml` or grep match into `groupId:artifactId` tuples.
@@ -100,7 +105,7 @@ The codebase has two structural patterns:
 
 **Modern structure:**
 - `core/` — Core platform (38 modules: api, cache, config, daemon, db, grpc, ipc, jmx, snmp, web, etc.)
-- `features/` — 87+ feature modules (alarms, collection, discovery, events, flows, kafka, poller, provisioning, rest, telemetry, topology-map, vaadin UI components, etc.)
+- `features/` — 67 feature modules (alarms, collection, discovery, events, flows, graph, kafka, poller, provisioning, rest, telemetry, etc.)
 - `dependencies/` — Centralized dependency management (66 sub-modules)
 - `container/` — Karaf OSGi container assembly and features
 - `protocols/` — Protocol implementations (CIFS, NSClient, RADIUS, Selenium, XML)
@@ -139,23 +144,22 @@ OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *abo
 | Language | Java 21 |
 | Build | Apache Maven Wrapper (`./mvnw`, downloads Maven 3.9.14 on demand), Perl wrapper scripts |
 | OSGi Container | Apache Karaf 4.4.9 |
-| Web Framework | Spring 4.2.x (OpenNMS-patched fork), Spring Security 4.2.x (patched) |
-| ORM | Hibernate 3.6.11 (OpenNMS build) |
-| REST | Apache CXF 3.6.8 |
-| Messaging | Apache ActiveMQ 5.16.8, Apache Kafka 3.6.2 |
-| Integration | Apache Camel 2.21.5 |
+| Web Framework | Spring 5.3.x, Spring Security 5.8.x (stock ServiceMix OSGi bundles — the old OpenNMS-patched 4.x fork is gone) |
+| ORM | Hibernate 5.6.15.Final (stock) |
+| REST | Apache CXF 3.6.11 |
+| Messaging | Apache Kafka 3.6.2 |
 | Time-Series | Newts 3.0.0 (Cassandra-backed), RRDtool via JRRD2 |
 | Servlet Container | Jetty 9.4.x (embedded) |
 | Database | PostgreSQL (Liquibase 3.6.3 for schema) |
-| Frontend | Vue 3 + TypeScript + Vite + Pinia, Feather Design System |
-| Serialization | Jackson 2.16.2, Protobuf 3.25.5, JAXB 2.3.3, gRPC 1.75.0 |
+| Frontend | Vue 3 + TypeScript + Vite + Pinia, PrimeVue |
+| Serialization | Jackson 2.22.0, Protobuf 3.25.5, JAXB 2.3.3, gRPC 1.75.0 |
 
 ### Frontend (ui/)
 
 The modern UI is a Vue 3 SPA in `ui/` built with:
-- **Package manager:** pnpm (enforced, version 10.24.0)
+- **Package manager:** pnpm (enforced, version 10.33.0)
 - **Build tool:** Vite — **two separate Vite apps** share `src/` but build independently: `src/main/` (full SPA at `/opennms/ui`) and `src/menu/` (embeds in legacy JSP at `/opennms-menu`)
-- **Component library:** Feather Design System (`@featherds/*`)
+- **Component library:** PrimeVue (`primevue`, `@primevue/themes`, `primeicons`) — Feather (`@featherds/*`) was removed entirely via NMS-19981; a few `--feather-*` CSS custom-property *names* survive as local tokens in `src/styles/`, but nothing imports the Feather packages
 - **State:** Pinia (**setup store pattern**, not Options API)
 - **Components:** `<script setup lang="ts">` Composition API only
 - **Auto-imports:** `ref`/`computed`/`watch`/`useRouter`/VueUse via `unplugin-auto-import` — don't import these manually; custom composables (`useSnackbar`, `useSpinner`, `useRole`) must still be imported
@@ -196,7 +200,7 @@ make integration-tests TEST_PROJECTS=":opennms-dao"
 - REST endpoints use **CXF/JAX-RS** annotations
 - OSGi services registered via **Karaf blueprint** or **SCR annotations**
 - The Maven Enforcer Plugin bans certain dependencies (e.g., `commons-logging` — use `slf4j-api` instead). Fix violations by adding `<exclusions>` and using the approved alternative
-- License validation: `./compile.pl -DskipTests -Denable.license=true -Passemblies -Psmoke install`
+- License validation: `make mvn ARGS="-DskipTests -Denable.license=true -Passemblies -Psmoke install"`
 - Commit messages should follow the Conventional Commits specification
 
 ## Debugging Karaf / smoke-test failures
@@ -224,7 +228,7 @@ GitHub Actions (`.github/workflows/main.yml`). A `decide-scope` job runs first o
 |---|---|
 | Tag push `v*` | Release builds — unconditional full suite. |
 | `[full-ci]` token in a commit message | One-off PRs that need full coverage. For PR events the token is scanned on the PR HEAD commit; for `main` pushes it's scanned in `${before}..${after}`. Include it in the PR title/description if you also want the post-merge push to be full. |
-| Trip-wire path change | Edits to any of: root `pom.xml`, `dependencies/**`, `Makefile`, `compile.pl`, `assemble.pl`, `tools/development/**`, `.github/workflows/**`, `.cicd-assets/**`, `.mvn/**`, `container/features/**`, `pnpm-lock.yaml`, `ui/pnpm-lock.yaml` force a full build automatically. When you add a new cross-cutting path (a new lockfile, a new top-level build script), extend the list in `decide-scope`. |
+| Trip-wire path change | Edits to any of: root `pom.xml`, `dependencies/**`, `Makefile`, `build-tooling/**`, `tools/development/**`, `.github/workflows/**`, `.cicd-assets/**`, `.mvn/**`, `container/features/**`, `pnpm-lock.yaml`, `ui/pnpm-lock.yaml` force a full build automatically. When you add a new cross-cutting path (a new lockfile, a new top-level build script), extend the list in `decide-scope`. |
 
 ### Local `find-tests.py`
 

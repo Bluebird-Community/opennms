@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * monitoring to send out appropriate events. Can also be used by capsd,
  * discovery etc.
  * 
- * @deprecated Use ActiveMQ JMS instead of a custom TCP protocol.
+ * @deprecated Legacy custom TCP event protocol; use the event sink/IPC path instead.
  *
  * @author <A HREF="mailto:sowmya@opennms.org">Sowmya Kumaraswamy </A>
  * @author <A HREF="http://www.opennms.org/">OpenNMS </A>

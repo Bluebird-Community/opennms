@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.opennms.features.minion</groupId>
         <artifactId>minion-parent</artifactId>
-        <version>38.0.2-SNAPSHOT</version>
+        <version>38.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>repository</artifactId>
@@ -35,12 +35,10 @@
                             <!-- To ensure that all JAR files for a feature
                                 are included in the repository tar.gz file, add the feature to this list. -->
                             <features>
-                                <feature>opennms-core-ipc-jms</feature>
                                 <feature>opennms-core-ipc-kafka</feature>
                                 <feature>opennms-core-ipc-twin-shell</feature>
                                 <feature>opennms-core-ipc-sink-offheap</feature>
                                 <feature>opennms-syslogd-listener-javanet</feature>
-                                <feature>opennms-syslogd-listener-camel-netty</feature>
                                 <feature>opennms-trapd-listener</feature>
                                 <feature>opennms-send-event-command</feature>
                                 <feature>opennms-events-sink-dispatcher</feature>
@@ -113,6 +111,17 @@
                                   <dirset dir="${project.build.directory}/maven-repo/org/eclipse/jetty" />
                                   <fileset dir="${project.build.directory}/maven-repo/org/ops4j/pax/web" />
                                   <dirset dir="${project.build.directory}/maven-repo/org/ops4j/pax/web" />
+                                </delete>
+                                <!--
+                                    OPENNMS: features-add-to-repository stages the jline version
+                                    pinned by Karaf's own feature repository (3.21.0, affected by
+                                    CVE-2026-56740). Drop every jline except the one the container
+                                    boots (see jlineVersion); that one is resolved from the
+                                    container's system/ directory at runtime.
+                                -->
+                                <delete includeemptydirs="true">
+                                  <fileset dir="${project.build.directory}/maven-repo/org/jline/jline"
+                                           excludes="${jlineVersion}/**" erroronmissingdir="false" />
                                 </delete>
                             </target>
                         </configuration>
@@ -188,11 +197,6 @@
         </dependency>
         <dependency>
             <groupId>org.opennms.features.distributed</groupId>
-            <artifactId>jms</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.features.distributed</groupId>
             <artifactId>core-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -261,10 +265,6 @@
         </dependency>
         <dependency>
             <groupId>org.opennms</groupId>
-            <artifactId>opennms-detector-jms</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms</groupId>
             <artifactId>opennms-detector-jdbc</artifactId>
         </dependency>
         <dependency>
@@ -317,17 +317,7 @@
         </dependency>
         <dependency>
             <groupId>org.opennms.core.ipc.rpc</groupId>
-            <artifactId>org.opennms.core.ipc.rpc.jms-impl</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.core.ipc.rpc</groupId>
             <artifactId>org.opennms.core.ipc.rpc.kafka</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.core.ipc.sink.camel</groupId>
-            <artifactId>org.opennms.core.ipc.sink.camel.client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -391,11 +381,6 @@
         <dependency>
             <groupId>org.opennms.core.ipc.twin.grpc</groupId>
             <artifactId>org.opennms.core.ipc.twin.grpc.subscriber</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.core.ipc.twin.jms</groupId>
-            <artifactId>org.opennms.core.ipc.twin.jms.subscriber</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -13,12 +13,12 @@
 **** xref:configuration/minion-confd/jmx-exporter.adoc[]
 **** xref:configuration/minion-confd/test-confd.adoc[]
 ** xref:configuration/sentinel-features.adoc[]
-** xref:configuration/tuning-activemq.adoc[]
 ** xref:configuration/tuning-kafka.adoc[]
 ** xref:configuration/ttl-rpc.adoc[]
 ** xref:configuration/selinux.adoc[]
 ** xref:configuration/receive-snmp-traps.adoc[]
 ** xref:configuration/system-properties.adoc[]
+** xref:configuration/wsman-kerberos.adoc[]
 
 
 
@@ -33,7 +33,6 @@
 ** xref:performance-data-collection/collectors/xml-examples.adoc[]
 
 * xref:service-assurance/introduction.adoc[]
-** xref:service-assurance/monitors/ActiveMQMonitor.adoc[]
 ** xref:service-assurance/monitors/BgpSessionMonitor.adoc[]
 ** xref:service-assurance/monitors/BSFMonitor.adoc[]
 ** xref:service-assurance/monitors/CiscoIpSlaMonitor.adoc[]
@@ -85,6 +84,7 @@
 ** xref:service-assurance/monitors/WebMonitor.adoc[]
 ** xref:service-assurance/monitors/Win32ServiceMonitor.adoc[]
 ** xref:service-assurance/monitors/WsManMonitor.adoc[]
+** xref:service-assurance/monitors/WsManShellMonitor.adoc[]
 
 * xref:telemetryd/introduction.adoc[]
 ** xref:telemetryd/listeners/introduction.adoc[]
@@ -133,7 +133,6 @@
 *** xref:provisioning/policies/snmp-interface.adoc[]
 *** xref:provisioning/policies/examples.adoc[]
 ** xref:provisioning/detectors.adoc[]
-*** xref:provisioning/detectors/ActiveMQDetector.adoc[ActiveMQ]
 *** xref:provisioning/detectors/BgpSessionDetector.adoc[BGP Session]
 *** xref:provisioning/detectors/BsfDetector.adoc[Bean Script]
 *** xref:provisioning/detectors/DnsDetector.adoc[DNS]
@@ -153,8 +152,10 @@
 *** xref:provisioning/detectors/Win32ServiceDetector.adoc[Win32 Service]
 *** xref:provisioning/detectors/WsmanDetector.adoc[WS-MAN]
 *** xref:provisioning/detectors/WsmanWqlDetector.adoc[WS-MAN WQL]
+*** xref:provisioning/detectors/WsmanShellDetector.adoc[WS-MAN Shell]
 
 * xref:daemons/introduction.adoc[]
+** xref:daemons/dependencies.adoc[]
 ** xref:daemons/daemon-config-files/alarmd.adoc[]
 ** xref:daemons/daemon-config-files/collectd.adoc[]
 ** xref:daemons/daemon-config-files/discovery.adoc[]

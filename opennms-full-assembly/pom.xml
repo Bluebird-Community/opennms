@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.opennms</groupId>
     <artifactId>opennms</artifactId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>opennms-full-assembly</artifactId>
@@ -54,6 +54,41 @@
         <build.assembly.type>full</build.assembly.type>
         <build.assembly.format>dir</build.assembly.format>
       </properties>
+    </profile>
+    <profile>
+      <id>build-meridian</id>
+      <activation>
+        <property>
+          <name>build.meridian</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>features-add-to-repository-ha</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>features-add-to-repository</goal>
+                </goals>
+                <configuration>
+                  <descriptors>
+                    <descriptor>mvn:org.opennms.karaf/opennms/${project.version}/xml/features</descriptor>
+                  </descriptors>
+                  <features>
+                    <feature>opennms-ha-shell</feature>
+                    <feature>opennms-ha-rest</feature>
+                  </features>
+                  <repository>${project.build.directory}/opennms-repo</repository>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
   <build>
@@ -321,21 +356,17 @@
                 <feature>spring-jms/4.1.9.RELEASE_1</feature>
                 <feature>spring/4.2.9.RELEASE_1</feature>
                 <feature>spring/4.3.30.RELEASE_1</feature>
-                <feature>spring/${springVersion}</feature>
-                <feature>spring-aspects/${springVersion}</feature>
-                <feature>spring-instrument/${springVersion}</feature>
-                <feature>spring-jdbc/${springVersion}</feature>
-                <feature>spring-jms/${springVersion}</feature>
-                <feature>spring-orm/${springVersion}</feature>
-                <feature>spring-oxm/${springVersion}</feature>
-                <feature>spring-test/${springVersion}</feature>
-                <feature>spring-tx/${springVersion}</feature>
-                <feature>spring-web/${springVersion}</feature>
-                <feature>spring-web-portlet/${springVersion}</feature>
-                <feature>spring-websocket/${springVersion}</feature>
+                <feature>spring/${springOsgiVersion}</feature>
+                <feature>spring-aspects/${springOsgiVersion}</feature>
+                <feature>spring-instrument/${springOsgiVersion}</feature>
+                <feature>spring-jdbc/${springOsgiVersion}</feature>
+                <feature>spring-jms/${springOsgiVersion}</feature>
+                <feature>spring-orm/${springOsgiVersion}</feature>
+                <feature>spring-oxm/${springOsgiVersion}</feature>
+                <feature>spring-test/${springOsgiVersion}</feature>
+                <feature>spring-tx/${springOsgiVersion}</feature>
 
                 <!-- All of the OpenNMS features -->
-                <feature>activemq-broker-noweb</feature>
                 <feature>aries-blueprint</feature>
                 <feature>aries-proxy</feature>
                 <feature>blueprint-web</feature>
@@ -395,14 +426,11 @@
                 <feature>dropwizard-metrics</feature>
                 <feature>fop</feature>
                 <feature>guava</feature>
-                <feature>hibernate36</feature>
-                <feature>hibernate-validator4</feature>
+                <feature>hibernate5</feature>
+                <feature>hibernate-validator6</feature>
                 <feature>jaxb</feature>
                 <feature>jolokia</feature>
                 <feature>json-lib</feature>
-                <feature>lmax-disruptor</feature>
-                <feature>opennms-activemq-pool</feature>
-                <feature>opennms-activemq-shell</feature>
                 <feature>opennms-bootstrap</feature>
                 <feature>opennms-collection-api</feature>
                 <feature>opennms-collection-commands</feature>
@@ -448,7 +476,6 @@
                 <feature>opennms-snmp-commands</feature>
                 <feature>opennms-syslogd</feature>
                 <feature>opennms-syslogd-listener-javanet</feature>
-                <feature>opennms-syslogd-listener-camel-netty</feature>
                 <feature>opennms-trapd</feature>
                 <feature>opennms-util</feature>
                 <feature>jax-rs-connector</feature>
@@ -456,11 +483,7 @@
                 <feature>opennms-osgi-core-rest</feature>
                 <feature>org.json</feature>
                 <feature>postgresql</feature>
-                <feature>smack</feature>
-                <feature>spring-security-opennms</feature>
-                <feature>twitter4j</feature>
                 <feature>opennms-jaas-login-module</feature>
-                <feature>nrtg</feature>
                 <feature>opennms-graphml</feature>
                 <feature>opennms-graphs</feature>
                 <feature>opennms-graph-provider-persistence-test</feature>
@@ -472,7 +495,6 @@
                      opennms-topology-runtime-base feature removed in phase 4. List it
                      explicitly so the bundles are provisioned into the repo. -->
                 <feature>geolocation</feature>
-                <feature>eif-adapter</feature>
                 <feature>opennms-telemetry-collection</feature>
                 <feature>opennms-telemetry-bmp</feature>
                 <feature>opennms-telemetry-bmp-stats</feature>
@@ -542,10 +564,8 @@
               </descriptors>
               <features>
                 <!-- Experimental features that are not included in OpenNMS -->
-                <feature>opennms-activemq-component</feature>
                 <feature>opennms-discovery</feature>
                 <feature>opennms-events-daemon</feature>
-                <feature>opennms-webapp</feature>
               </features>
               <repository>${project.build.directory}/experimental-repo</repository>
             </configuration>
@@ -678,6 +698,25 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
+          <!-- NMS-20061: Karaf's own feature repo pins jline 3.21.0 (CVE-2026-56740);
+               force jlineVersion (see root pom.xml) instead of reverting this. -->
+          <execution>
+            <id>remove-superseded-jline</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete includeemptydirs="true">
+                  <fileset dir="${project.build.directory}/opennms-repo/org/jline/jline"
+                           excludes="${jlineVersion}/**" erroronmissingdir="false"/>
+                  <fileset dir="${project.build.directory}/experimental-repo/org/jline/jline"
+                           excludes="${jlineVersion}/**" erroronmissingdir="false"/>
+                </delete>
+              </target>
+            </configuration>
+          </execution>
           <execution>
             <phase>verify</phase>
             <goals>

@@ -101,11 +101,8 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                 .withEnv("OPENNMS_DBNAME", "opennms")
                 .withEnv("OPENNMS_DBUSER", "opennms")
                 .withEnv("OPENNMS_DBPASS", "opennms")
-                .withEnv("OPENNMS_BROKER_URL", "failover:tcp://" + OpenNMSContainer.ALIAS + ":61616")
                 .withEnv("OPENNMS_HTTP_USER", "admin")
                 .withEnv("OPENNMS_HTTP_PASS", "admin")
-                .withEnv("OPENNMS_BROKER_USER", "admin")
-                .withEnv("OPENNMS_BROKER_PASS", "admin")
                 .withEnv("JACOCO_AGENT_ENABLED", "1")
                 .withEnv("JAVA_OPTS", "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom -Dorg.opennms.rrd.storeByForeignSource=true")
                 .withNetwork(Network.SHARED)
@@ -184,9 +181,9 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                 ImmutableMap.<String,String>builder()
                         .put("endpoint", "http://" + OpenNMSContainer.CLICKHOUSE_ALIAS + ":8123")
-                        .put("database", "default")
-                        .put("username", "default")
-                        .put("password", "")
+                        .put("database", ClickHouseContainer.DATABASE)
+                        .put("username", ClickHouseContainer.USERNAME)
+                        .put("password", ClickHouseContainer.PASSWORD)
                         .put("table", "flows")
                         .put("ttlDays", "0")
                         .build());
@@ -207,8 +204,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         featuresOnBoot.add("opennms-health-rest-service");
         if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
             featuresOnBoot.add("sentinel-kafka");
-        } else if (IpcStrategy.JMS.equals(model.getIpcStrategy())) {
-            featuresOnBoot.add("sentinel-jms");
         }
         if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
             featuresOnBoot.add("sentinel-newts");
@@ -289,12 +284,22 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         protected void waitUntilReady() {
             LOG.info("Waiting for Sentinel health check...");
             RestHealthClient client = new RestHealthClient(container.getWebUrl(), Optional.of(ALIAS));
-            await("waiting for good health check probe")
-                    .atMost(5, MINUTES)
-                    .pollInterval(10, SECONDS)
-                    .failFast("container is no longer running", () -> !container.isRunning())
-                    .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
-                    .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
+            try {
+                await("waiting for good health check probe")
+                        .atMost(5, MINUTES)
+                        .pollInterval(10, SECONDS)
+                        .failFast("container is no longer running", () -> !container.isRunning())
+                        .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
+                        .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
+            } catch (RuntimeException startupFailure) {
+                // The Sentinel never became healthy. testcontainers tears the container down the
+                // instant this exception propagates, so the later afterTest()/retainLogsfNeeded()
+                // finds no running container and copyFileFromContainer()/getLogs() fail with
+                // "container is not running" -- i.e. the startup failure is undiagnosable in CI.
+                // Grab karaf.log + console now, while the container is still alive.
+                container.captureStartupFailureLogs();
+                throw startupFailure;
+            }
             LOG.info("Health check passed.");
 
             container.assertNoKarafDestroy(Paths.get("/opt", ALIAS, "data", "log", "karaf.log"));
@@ -334,6 +339,39 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         LOG.info("Console log: {}", targetLogFolder.resolve(DevDebugUtils.CONTAINER_STDOUT_STDERR).toUri());
         if (threadDump.get() != null) {
             LOG.info("Thread dump: {}", threadDump.get().toUri());
+        }
+    }
+
+    /**
+     * Copy the Sentinel's karaf.log and console output to target/logs while the container is still
+     * running. Called from the wait strategy when the startup health check fails: at that point
+     * the container is still up, whereas by the time afterTest()/retainLogsfNeeded() runs
+     * testcontainers has already removed the failed container, so it captures nothing. The
+     * resulting logs are collected as CI artifacts under target/logs/startup-failures.
+     */
+    private void captureStartupFailureLogs() {
+        final String id = getContainerId();
+        final String shortId = (id == null || id.isEmpty()) ? "unknown" : id.substring(0, Math.min(12, id.length()));
+        final Path targetLogFolder = Paths.get("target", "logs", "startup-failures", ALIAS + "-" + shortId);
+        LOG.warn("Sentinel health check never passed; capturing karaf.log + console before testcontainers removes the container. Logs: {}",
+                targetLogFolder.toUri());
+        try {
+            DevDebugUtils.copyLogs(this,
+                    targetLogFolder,
+                    Paths.get("/opt", ALIAS, "data", "log"),
+                    Arrays.asList("karaf.log"));
+        } catch (Exception e) {
+            LOG.warn("Failed to capture Sentinel startup-failure logs", e);
+        }
+        // karaf.log only records the "Oh no, something is wrong" summary, not which check failed.
+        // Grab the per-check detail from /rest/health while the container is still reachable.
+        try {
+            final String healthDetail = new RestHealthClient(getWebUrl(), Optional.of(ALIAS)).getHealthDetail();
+            Files.createDirectories(targetLogFolder);
+            Files.write(targetLogFolder.resolve("health-detail.json"),
+                    healthDetail.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            LOG.warn("Failed to capture Sentinel health detail", e);
         }
     }
 

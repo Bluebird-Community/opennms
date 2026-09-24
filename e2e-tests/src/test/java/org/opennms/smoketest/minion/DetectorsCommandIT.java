@@ -66,7 +66,6 @@ public class DetectorsCommandIT {
     public static final OpenNMSStack stack = OpenNMSStack.MINION;
 
     private ImmutableMap<String, String> expectedDetectors = ImmutableMap.<String, String> builder()
-            .put("ActiveMQ", "org.opennms.netmgt.provision.detector.jms.ActiveMQDetector")
             .put("BGP_Session", "org.opennms.netmgt.provision.detector.snmp.BgpSessionDetector")
             .put("BSF", "org.opennms.netmgt.provision.detector.bsf.BSFDetector")
             .put("CITRIX", "org.opennms.netmgt.provision.detector.simple.CitrixDetector")
@@ -108,6 +107,7 @@ public class DetectorsCommandIT {
             .put("WEB", "org.opennms.netmgt.provision.detector.web.WebDetector")
             .put("WS-Man", "org.opennms.netmgt.provision.detector.wsman.WsManDetector")
             .put("WSManWQL", "org.opennms.netmgt.provision.detector.wsman.WsManWQLDetector")
+            .put("WsManShell", "org.opennms.netmgt.provision.detector.wsman.WsManShellDetector")
             .put("Win32Service", "org.opennms.netmgt.provision.detector.snmp.Win32ServiceDetector").build();
 
     @Test

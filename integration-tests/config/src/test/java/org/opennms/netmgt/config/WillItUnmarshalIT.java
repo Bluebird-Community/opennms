@@ -52,10 +52,8 @@ import org.opennms.core.xml.JaxbUtils;
 import org.opennms.netmgt.alarmd.northbounder.bsf.BSFNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.drools.DroolsNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.email.EmailNorthbounderConfig;
-import org.opennms.netmgt.alarmd.northbounder.jms.JmsNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.snmptrap.SnmpTrapNorthbounderConfig;
 import org.opennms.netmgt.alarmd.northbounder.syslog.SyslogNorthbounderConfig;
-import org.opennms.netmgt.config.ami.AmiConfig;
 import org.opennms.netmgt.config.categories.Catinfo;
 import org.opennms.netmgt.config.collectd.CollectdConfiguration;
 import org.opennms.netmgt.config.tokenauth.TokenAuthConfiguration;
@@ -77,7 +75,6 @@ import org.opennms.netmgt.config.jdbc.JdbcDataCollectionConfig;
 import org.opennms.netmgt.config.jmx.JmxConfig;
 import org.opennms.netmgt.config.kscReports.ReportsList;
 import org.opennms.netmgt.config.mailtransporttest.MailTransportTest;
-import org.opennms.netmgt.config.microblog.MicroblogConfiguration;
 import org.opennms.netmgt.config.notifd.NotifdConfiguration;
 import org.opennms.netmgt.config.notificationCommands.NotificationCommands;
 import org.opennms.netmgt.config.notifications.Notifications;
@@ -99,7 +96,6 @@ import org.opennms.netmgt.config.threshd.ThreshdConfiguration;
 import org.opennms.netmgt.config.threshd.ThresholdingConfig;
 import org.opennms.netmgt.config.translator.EventTranslatorConfiguration;
 import org.opennms.netmgt.config.trapd.TrapdConfiguration;
-import org.opennms.netmgt.config.trend.TrendConfiguration;
 import org.opennms.netmgt.config.users.Userinfo;
 import org.opennms.netmgt.config.vacuumd.VacuumdConfiguration;
 import org.opennms.netmgt.config.viewsdisplay.Viewinfo;
@@ -188,7 +184,6 @@ public class WillItUnmarshalIT {
 
         addFile(Source.SPRING, "eventconf-bad-element.xml", Events.class, false, "Invalid content was found starting with element 'bad-element'.");
 
-        addFile(Source.CONFIG, "ami-config.xml", AmiConfig.class, true, null);
         addFile(Source.CONFIG, "bsf-northbounder-configuration.xml", BSFNorthbounderConfig.class, true, null);
         addFile(Source.CONFIG, "categories.xml", Catinfo.class, false, null);
         addFile(Source.CONFIG, "collectd-configuration.xml", CollectdConfiguration.class, true, null);
@@ -207,11 +202,9 @@ public class WillItUnmarshalIT {
         addFile(Source.CONFIG, "groups.xml", Groupinfo.class, true, null);
         addFile(Source.CONFIG, "http-datacollection-config.xml", HttpDatacollectionConfig.class, false, null);
         addFile(Source.CONFIG, "javamail-configuration.xml", JavamailConfiguration.class, false, null);
-        addFile(Source.CONFIG, "jms-northbounder-configuration.xml", JmsNorthbounderConfig.class, true, null);
         addFile(Source.CONFIG, "jmx-config.xml", JmxConfig.class, true, null);
         addFile(Source.CONFIG, "jmx-datacollection-config.xml", JmxDatacollectionConfig.class, true, null);
         addFile(Source.CONFIG, "ksc-performance-reports.xml", ReportsList.class, true, null);
-        addFile(Source.CONFIG, "microblog-configuration.xml", MicroblogConfiguration.class, false, null);
         addFile(Source.CONFIG, "notifd-configuration.xml", NotifdConfiguration.class, true, null);
         addFile(Source.CONFIG, "notificationCommands.xml", NotificationCommands.class, true, null);
         addFile(Source.CONFIG, "notifications.xml", Notifications.class, true, null);
@@ -238,7 +231,6 @@ public class WillItUnmarshalIT {
         addFile(Source.CONFIG, "thresholds.xml", ThresholdingConfig.class, true, null);
         addFile(Source.CONFIG, "translator-configuration.xml", EventTranslatorConfiguration.class, false, null);
         addFile(Source.CONFIG, "trapd-configuration.xml", TrapdConfiguration.class, true, null);
-        addFile(Source.CONFIG, "trend-configuration.xml", TrendConfiguration.class, true, null);
         addFile(Source.CONFIG, "users.xml", Userinfo.class, true, null);
         addFile(Source.CONFIG, "vacuumd-configuration.xml", VacuumdConfiguration.class, false, null);
         addFile(Source.CONFIG, "viewsdisplay.xml", Viewinfo.class, false, null);

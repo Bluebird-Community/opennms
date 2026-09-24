@@ -85,8 +85,9 @@ public class UsageStatisticsIT {
 
         final Map<String, Boolean> services = (Map<String, Boolean>) usageReport.get("services");
 
-        assertEquals(22, services.size());
-        assertEquals(20, services.entrySet().stream().filter(Map.Entry::getValue).count());
+        // 23 services in the e2e overlay (Karaf added by NMS-20044); Correlator and SnmpPoller are disabled
+        assertEquals(23, services.size());
+        assertEquals(21, services.entrySet().stream().filter(Map.Entry::getValue).count());
         assertEquals(2, services.entrySet().stream().filter(e -> !e.getValue()).count());
 
         assertThat((String) usageReport.get("systemId"), matchesPattern("^\\S+-\\S+-\\S+-\\S+-\\S+$"));
@@ -123,8 +124,10 @@ public class UsageStatisticsIT {
         assertThat((String) usageReport.get("installedOIAPlugins"), not(emptyString()));
         assertThat((long) usageReport.get("onCallRoleCount"), is(0L));
         assertThat((long) usageReport.get("requisitionCount"), is(0L));
-        assertThat((String) usageReport.get("sinkStrategy"), is("camel"));
-        assertThat((String) usageReport.get("rpcStrategy"), is("jms"));
+        // The MINIMAL stack runs under IpcStrategy.GRPC, which OpenNMSContainer maps to
+        // org.opennms.core.ipc.strategy=osgi, so the core reports the osgi sink/rpc strategy.
+        assertThat((String) usageReport.get("sinkStrategy"), is("osgi"));
+        assertThat((String) usageReport.get("rpcStrategy"), is("osgi"));
         assertThat((String) usageReport.get("tssStrategies"), is("rrd"));
         assertThat((long) usageReport.get("pollsCompleted"), greaterThanOrEqualTo(0L));
         assertThat((long) usageReport.get("eventLogsProcessed"), greaterThan(1L));

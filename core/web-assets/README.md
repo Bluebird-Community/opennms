@@ -42,7 +42,7 @@ It also contains a Java service to look up resources by name. (Automatically res
 To build the project, you can just use Maven as normal, eg:
 
 ```
-$ ../../compile.pl clean install
+$ ../../mvnw clean install
 ```
 
 ## Building by "Hand"

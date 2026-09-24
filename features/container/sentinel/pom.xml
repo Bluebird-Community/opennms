@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.opennms.features</groupId>
         <artifactId>container-parent</artifactId>
-        <version>38.0.2-SNAPSHOT</version>
+        <version>38.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -218,6 +218,10 @@
                             <file>${project.build.directory}/assembly/etc/org.ops4j.pax.logging.cfg</file>
                             <regex>false</regex>
                             <replacements>
+                                <replacement>
+                                    <token>log4j2.out.pattern</token>
+                                    <value>log4j2.outPattern</value>
+                                </replacement>
                                 <!-- change default audit logging -->
                                 <replacement>
                                     <token>log4j2.appender.audit.layout.pattern = %m%n</token>
@@ -294,7 +298,6 @@
                         <repository>mvn:org.opennms.karaf/opennms/${project.version}/xml/spring-legacy</repository>
                         <repository>mvn:org.opennms.karaf/opennms/${project.version}/xml/features</repository>
                         <repository>mvn:org.opennms.karaf/opennms/${project.version}/xml/sentinel</repository>
-                        <repository>mvn:org.opennms.karaf/opennms/${project.version}/xml/camel</repository>
                         <repository>mvn:io.hawt/hawtio-karaf/${hawtio.version}/xml/features</repository>
                         <repository>mvn:org.ops4j.pax.cdi/pax-cdi-features/${paxCdiVersion}/xml/features</repository>
                         <repository>mvn:org.apache.karaf.features/framework/${karafVersion}/xml/features</repository>
@@ -339,26 +342,17 @@
                     <installedFeatures>
                         <!-- OPENNMS: Add Spring features that we need in the base container -->
                         <!-- These versions match the versions shipped with Apache Karaf 4.1.5 -->
-                        <feature>spring/4.0.9.RELEASE_1</feature>
-                        <feature>spring/4.1.9.RELEASE_1</feature>
-                        <feature>spring/4.2.9.RELEASE_1</feature>
-                        <feature>spring/4.3.30.RELEASE_1</feature>
 
-                        <feature>spring-jms/4.1.9.RELEASE_1</feature>
-                        <feature>spring/${springVersion}</feature>
-                        <feature>spring-jms/${springVersion}</feature>
+                        <feature>spring/${springOsgiVersion}</feature>
+                        <feature>spring-jms/${springOsgiVersion}</feature>
 
                         <!-- OpenNMS features -->
-                        <feature>opennms-core-ipc-rpc-jms</feature>
                         <feature>opennms-core-tracing-jaeger</feature>
                         <feature>opennms-events-sink-dispatcher</feature>
-                        <feature>opennms-core-ipc-sink-camel</feature>
                         <feature>opennms-core-ipc-sink-kafka</feature>
-                        <feature>opennms-core-ipc-sink-camel-server</feature>
                         <feature>opennms-core-ipc-sink-kafka-server</feature>
                         <feature>opennms-send-event-command</feature>
                         <feature>opennms-syslogd-listener-javanet</feature>
-                        <feature>opennms-syslogd-listener-camel-netty</feature>
                         <feature>opennms-persistence</feature>
                         <feature>opennms-spring-extender</feature>
                         <feature>opennms-blobstore-shell</feature>
@@ -374,7 +368,6 @@
                         <!-- Sentinel specific features -->
                         <feature>sentinel-core</feature>
                         <feature>sentinel-persistence</feature>
-                        <feature>sentinel-jms</feature>
                         <feature>sentinel-telemetry</feature>
                         <feature>sentinel-telemetry-bmp</feature>
                         <feature>sentinel-telemetry-graphite</feature>

@@ -30,6 +30,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,12 +57,14 @@ import org.opennms.netmgt.provision.persist.requisition.RequisitionNode;
 import org.opennms.smoketest.containers.OpenNMSContainer;
 import org.opennms.smoketest.junit.SentinelTests;
 import org.opennms.smoketest.stacks.MinionProfile;
+import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.OpenNMSStack;
 import org.opennms.smoketest.stacks.StackModel;
 import org.opennms.smoketest.utils.DaoUtils;
 import org.opennms.smoketest.utils.HibernateDaoFactory;
 import org.opennms.smoketest.utils.KarafShell;
 import org.opennms.smoketest.utils.RestClient;
+import org.opennms.smoketest.utils.TestContainerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +119,10 @@ public abstract class AbstractAdapterIT {
 
     @ClassRule
     public static final OpenNMSStack stack = OpenNMSStack.withModel(StackModel.newBuilder()
+            // Sentinel consumes telemetry over the message bus; with ActiveMQ/Camel removed, Kafka is
+            // the broker. Under the default gRPC strategy the Sentinel boots no sink and its health
+            // check never turns green.
+            .withIpcStrategy(IpcStrategy.KAFKA)
             .withMinion()
             .withSentinel()
             .withTelemetryProcessing()
@@ -141,8 +149,17 @@ public abstract class AbstractAdapterIT {
             createRequisition(requisitionToCreate, opennmsHttpAddress, stack.postgres().getDaoFactory());
         }
 
-        // Wait until a route for procession is actually started
-        new KarafShell(sentinelSshAddress).verifyLog(getSentinelReadyVerificationFunction());
+        // Wait until the adapter's sink consumer has started. We read the persistent karaf.log file
+        // rather than `log:display`: the readiness line is logged once during startup and scrolls out
+        // of Karaf's bounded log:display ring buffer before this check runs (deterministically for
+        // early-registered modules such as NXOS), whereas the on-disk log retains it.
+        final Path sentinelKarafLog = Paths.get("/opt", "sentinel", "data", "log", "karaf.log");
+        final Function<String, Boolean> sentinelReady = getSentinelReadyVerificationFunction();
+        await("waiting for the sentinel adapter sink consumer to start")
+                .atMost(5, MINUTES)
+                .pollInterval(10, SECONDS)
+                .ignoreExceptions()
+                .until(() -> sentinelReady.apply(TestContainerUtils.getFileFromContainerAsString(stack.sentinel(), sentinelKarafLog)));
 
         // If a new requisition was created, also probably new nodes are available.
         // However, sentinel may not know about it yet, so we manually sync the InterfaceToNodeCache in order to

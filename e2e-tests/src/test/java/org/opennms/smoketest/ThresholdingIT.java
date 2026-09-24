@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletResponse;
+import org.apache.http.HttpStatus;
 import javax.ws.rs.core.Response;
 
 import org.hibernate.Hibernate;
@@ -245,7 +245,7 @@ public class ThresholdingIT {
 
         // Create the node
         Response response = restClient.addNode(node);
-        assertThat(response.getStatus(), equalTo(HttpServletResponse.SC_CREATED));
+        assertThat(response.getStatus(), equalTo(HttpStatus.SC_CREATED));
 
         // Create the category
         try {
@@ -264,7 +264,7 @@ public class ThresholdingIT {
         iface.setIpAddress(InetAddressUtils.getInetAddress("192.168.1.1"));
         iface.setIpHostName("192.168.1.1");
         response = restClient.addInterface(TEST_NODE_CRITERIA, iface);
-        assertThat(response.getStatus(), equalTo(HttpServletResponse.SC_CREATED));
+        assertThat(response.getStatus(), equalTo(HttpStatus.SC_CREATED));
 
         // Add a service on interface (192.168.1.1)
         OnmsMonitoredService svc = new OnmsMonitoredService();
@@ -274,7 +274,7 @@ public class ThresholdingIT {
         svc.setStatus("A");
         svc.setIpInterface(iface);
         response = restClient.addService(TEST_NODE_CRITERIA, "192.168.1.1", svc);
-        assertThat(response.getStatus(), equalTo(HttpServletResponse.SC_CREATED));
+        assertThat(response.getStatus(), equalTo(HttpStatus.SC_CREATED));
 
         // Return the effective node
         return restClient.getNode(TEST_NODE_CRITERIA);

@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.opennms</groupId>
     <artifactId>opennms</artifactId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.opennms.features</artifactId>
@@ -19,9 +19,6 @@
 
     <!-- Custom topology views + the image assets they reference -->
     <module>topology-views</module>
-
-    <!-- ActiveMQ broker -->
-    <module>activemq</module>
 
     <module>api-layer</module>
 
@@ -46,7 +43,6 @@
     <module>kafka</module>
 
     <!-- Executor factories -->
-    <module>executor-factory</module>
 
     <!-- OpenNMS Collection API and implementations -->
     <module>collection</module>
@@ -74,8 +70,6 @@
     <!-- SNMP MIB Parser and Event/Collection Configuration -->
     <module>mib-compiler</module>
 
-    <!-- Near Real Time Graphing -->
-    <module>nrtg</module>
 
     <!-- webapps -->
     <module>root-webapp</module>
@@ -130,8 +124,6 @@
     <!-- Correlation Feedback -->
     <module>situation-feedback</module>
 
-    <!-- Event Integration Facility Adapter -->
-    <module>eif-adapter</module>
 
     <module>jest</module>
     <module>dnsresolver</module>
@@ -149,5 +141,6 @@
 
     <module>grpc</module>
     <module>elastic</module>
+    <module>ha-management</module>
   </modules>
 </project>

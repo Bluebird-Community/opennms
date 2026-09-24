@@ -3,7 +3,7 @@ version: '37'
 title: Horizon
 asciidoc:
   attributes:
-    full-display-version: '38.0.1'
+    full-display-version: '38.1.0'
     package-prefix: opennms
     experimental: true
     source-language: asciidoc@
@@ -16,11 +16,11 @@ asciidoc:
     compatible-oia: '2.0.0'
     compatible-cassandra: '4.17.0'
     compatible-elasticsearch: '8.18.3'
-    compatible-javajdk: '17'
+    compatible-javajdk: '21'
     compatible-kafka: '1.x - 4.x'
     compatible-postgresql: '14.x - 18.x'
     compatible-rrdtool: '1.8.x'
-    latest-meridian-stable: '2025'
+    latest-meridian-stable: '2026'
     postgresql-version: '15'
     jmx-prom-exporter-version: '1.4.0'
 nav:

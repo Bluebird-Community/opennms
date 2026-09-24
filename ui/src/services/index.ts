@@ -28,6 +28,7 @@ import {
   getNodeSnmpInterfaces,
   getNodeAvailabilityPercentage
 } from './nodeService'
+import { getNodeOutageTimeline } from './nodeAvailabilityTimelineService'
 import { getCategories } from './categoryService'
 import { getMonitoringLocations } from './monitoringLocationService'
 import { getServiceTypes } from './serviceTypes'
@@ -50,13 +51,15 @@ import { getAlarms, modifyAlarm } from './alarmService'
 import { getEvents } from './eventService'
 import { getNodeIfServices } from './ifService'
 import { getIpInterfaces, getNodeIpInterfaceQuery } from './ipInterfaceService'
+import { getSnmpInterfaces, getNodeSnmpInterfaceQuery } from './snmpInterfaceService'
+import { getFlowGraphUrl } from './flowService'
 import { search } from './searchService'
 import { performLogout } from './logoutService'
 import { getLogs, getLog } from './logsService'
 import { getWhoAmI } from './whoAmIService'
 import { getInfo } from './infoService'
 import { getOpenApiV1, getOpenApi } from './helpService'
-import { getResources, getResourceForNode } from './resourceService'
+import { getResources, getResourceForNode, getResourceById } from './resourceService'
 import { getPlugins } from './pluginService'
 import {
   getUsageStatistics,
@@ -64,9 +67,57 @@ import {
   getUsageStatisticsStatus,
   setUsageStatisticsStatus
 } from './usageStatisticsService'
+import { getSystemReportPlugins, getSystemReportFormatters, generateSystemReport } from './systemReportService'
+import { getRequisitionNames, getWsmanConfig, getWsmanDataCollection, getWsmanReadiness, getWsmanStatus, resetWsmanDataCollection, runWsmanReadinessAction, syncWsmanDefinition, updateWsmanConfig, updateWsmanDataCollectionFile } from './wsmanAdminService'
+import {
+  createManagedUser,
+  deleteManagedUser,
+  getAvailableUserRoles,
+  getManagedUsers,
+  renameManagedUser,
+  setManagedUserPassword,
+  updateManagedUser
+} from './userAdminService'
+import {
+  addDestinationPath,
+  addEventNotification,
+  applyPathOutage,
+  deleteDestinationPath,
+  deleteEventNotification,
+  deletePathOutage,
+  getDestinationPaths,
+  getEventNotifications,
+  getNotificationCommands,
+  getNotificationConfigStatus,
+  getNotificationGroups,
+  getNotificationServices,
+  getNotificationUsers,
+  getOnCallRoles,
+  getPathOutages,
+  previewPathOutageRule,
+  searchEventConfUeis,
+  setEventNotificationStatus,
+  setNotificationConfigStatus,
+  testDestinationPath,
+  updateDestinationPath,
+  updateEventNotification,
+  validateNotificationRule
+} from './notificationConfigService'
+import { acknowledgeNotice, browseNotices } from './noticesService'
+import {
+  createManagedGroup,
+  deleteManagedGroup,
+  getGroupMemberCandidates,
+  getManagedGroups,
+  renameManagedGroup,
+  updateManagedGroup
+} from './groupAdminService'
 
 export default {
   search,
+  getSystemReportPlugins,
+  getSystemReportFormatters,
+  generateSystemReport,
   getInfo,
   getNodes,
   getAlarms,
@@ -77,10 +128,14 @@ export default {
   getNodeIfServices,
   getIpInterfaces,
   getNodeIpInterfaceQuery,
+  getSnmpInterfaces,
+  getFlowGraphUrl,
+  getNodeSnmpInterfaceQuery,
   getGraphNodesNodes,
   getNodeIpInterfaces,
   getNodeSnmpInterfaces,
   getNodeAvailabilityPercentage,
+  getNodeOutageTimeline,
   getCategories,
   getMonitoringLocations,
   getLog,
@@ -105,6 +160,7 @@ export default {
   getPreFabGraphs,
   getDefinitionData,
   getResourceForNode,
+  getResourceById,
   getGraphDefinitionsByResourceId,
   getPlugins,
   getServiceTypes,
@@ -117,5 +173,53 @@ export default {
   getUsageStatisticsMetadata,
   getUsageStatisticsStatus,
   setUsageStatisticsStatus,
-  performLogout
+  performLogout,
+  createManagedUser,
+  deleteManagedUser,
+  getAvailableUserRoles,
+  getManagedUsers,
+  renameManagedUser,
+  setManagedUserPassword,
+  updateManagedUser,
+  acknowledgeNotice,
+  addDestinationPath,
+  addEventNotification,
+  applyPathOutage,
+  browseNotices,
+  deleteDestinationPath,
+  deleteEventNotification,
+  deletePathOutage,
+  getPathOutages,
+  previewPathOutageRule,
+  getDestinationPaths,
+  getEventNotifications,
+  getNotificationCommands,
+  getNotificationConfigStatus,
+  getNotificationGroups,
+  getNotificationServices,
+  getNotificationUsers,
+  getOnCallRoles,
+  searchEventConfUeis,
+  setEventNotificationStatus,
+  setNotificationConfigStatus,
+  testDestinationPath,
+  updateDestinationPath,
+  updateEventNotification,
+  validateNotificationRule,
+  createManagedGroup,
+  deleteManagedGroup,
+  getGroupMemberCandidates,
+  getManagedGroups,
+  renameManagedGroup,
+  updateManagedGroup,
+  getWsmanConfig,
+  getWsmanDataCollection,
+  getWsmanStatus,
+  getRequisitionNames,
+  getWsmanReadiness,
+  runWsmanReadinessAction,
+  resetWsmanDataCollection,
+  syncWsmanDefinition,
+  updateWsmanConfig,
+  updateWsmanDataCollectionFile
 }

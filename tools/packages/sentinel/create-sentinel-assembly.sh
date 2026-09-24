@@ -52,7 +52,7 @@ esac
 
 # always build the root POM, just to be sure inherited properties/plugin/dependencies are right
 echo "=== Building root POM ==="
-"${TOPDIR}/compile.pl" \
+"${TOPDIR}/mvnw" \
 	$OPTS_SKIP_TESTS \
 	$OPTS_SKIP_TARBALL \
 	$OPTS_ENABLE_SNAPSHOTS \
@@ -62,13 +62,18 @@ echo "=== Building root POM ==="
 	--threads ${CCI_MAXCPU:-2} \
 	install
 
-COMPILE="./compile.pl"
+COMPILE="./mvnw"
 
 echo ""
 if [ $SKIP_COMPILE -eq 1 ]; then
 	echo "=== Compiling Assemblies ==="
 	OPTS_PROFILES="${OPTS_PROFILES} -PskipCompile"
-	COMPILE="./assemble.pl"
+	# assemble.pl used to do this: run against opennms-full-assembly with the default
+	# build profile. Note this branch also passes --projects
+	# org.opennms.assemblies:org.opennms.assemblies.sentinel below, which is not a module
+	# of that reactor, so this path looks untested. Translated faithfully rather than
+	# repaired, since changing it is out of scope here.
+	COMPILE="./mvnw --file opennms-full-assembly/pom.xml -Dbuild.profile=default"
 else
 	echo "=== Compiling Projects + Assemblies ==="
 fi

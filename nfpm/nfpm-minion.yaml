@@ -16,8 +16,28 @@ depends:
   - jicmp6
 
 contents:
-  - src: target/artifacts/buildroot/minion/opt/minion
-    dst: /opt/minion
+  # Each top-level child of /opt/minion mapped once (etc as config, the rest as
+  # regular files); nfpm rejects overlapping content entries as a collision and
+  # has no per-entry exclude. Keep in sync with the buildroot tree.
+  - src: target/artifacts/buildroot/minion/opt/minion/agent
+    dst: /opt/minion/agent
+  - src: target/artifacts/buildroot/minion/opt/minion/bin
+    dst: /opt/minion/bin
+  - src: target/artifacts/buildroot/minion/opt/minion/COPYING
+    dst: /opt/minion/COPYING
+  - src: target/artifacts/buildroot/minion/opt/minion/data
+    dst: /opt/minion/data
+  - src: target/artifacts/buildroot/minion/opt/minion/debian
+    dst: /opt/minion/debian
+  - src: target/artifacts/buildroot/minion/opt/minion/lib
+    dst: /opt/minion/lib
+  - src: target/artifacts/buildroot/minion/opt/minion/repositories
+    dst: /opt/minion/repositories
+  - src: target/artifacts/buildroot/minion/opt/minion/system
+    dst: /opt/minion/system
+  - src: target/artifacts/buildroot/minion/opt/minion/etc
+    dst: /opt/minion/etc
+    type: config
   - src: target/artifacts/buildroot/minion/usr/lib/systemd/system
     dst: /usr/lib/systemd/system
   - dst: /var/log/minion
@@ -26,9 +46,6 @@ contents:
   - dst: /var/lib/minion/deploy
     type: dir
     file_info: { mode: 0755 }
-  - src: target/artifacts/buildroot/minion/opt/minion/etc
-    dst: /opt/minion/etc
-    type: config
 
 overrides:
   deb:

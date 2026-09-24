@@ -29,7 +29,7 @@ Highly customizable and scalable, BluebirdOps integrates with your business appl
 
 * **Scalability**
 
-  Scale through Sentinels for flow persistence, Minions for Flow, BMP, SNMP trap, and Syslog ingest, and embedded ActiveMQ to Kafka message brokers.
+  Scale through Sentinels for flow persistence, Minions for Flow, BMP, SNMP trap, and Syslog ingest, and gRPC or Kafka message brokers.
 
 * **Enterprise reporting and  visualization**
 

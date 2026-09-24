@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.opennms.core</groupId>
     <artifactId>org.opennms.core.ipc</artifactId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opennms.core.ipc</groupId>
@@ -12,10 +12,9 @@
   <name>OpenNMS :: Core :: IPC :: RPC</name>
   <modules>
     <module>api</module>
-    <module>camel</module>
     <module>common</module>
-    <module>jms-impl</module>
     <module>kafka</module>
+    <module>local</module>
     <module>mock-impl</module>
     <module>shell-commands</module>
     <module>utils</module>

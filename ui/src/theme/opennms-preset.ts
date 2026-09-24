@@ -30,17 +30,11 @@ import Aura from '@primevue/themes/aura'
  * dark mode out-of-the-box, so individual components do not need per-component
  * `:deep(.p-*)` overrides.
  *
- * The surface / content / text / form-field / overlay token values below are the
- * literal FeatherDS theme colors (from @featherds/styles/themes/open-light.css and
- * open-dark.css). They are intentionally NOT expressed as `var(--feather-*)`:
- * PrimeVue declares its `--p-*` variables on `:root` (html), whereas FeatherDS
- * declares `--feather-*` on the `body.open-light` / `body.open-dark` class. A
- * `var(--feather-*)` referenced from a `:root` declaration cannot resolve (the
- * variable is defined on a descendant), so the token would compute to empty.
- * Literal values avoid that and let PrimeVue's `darkModeSelector` switch schemes.
- *
- * When FeatherDS is removed (migration Phase 6) these values become the canonical
- * OpenNMS palette — no further change required here.
+ * The surface / content / text / form-field / overlay token values below are
+ * literal colors (originally the FeatherDS palette). They are expressed as
+ * literals — not variable references — so PrimeVue can substitute them on
+ * `:root` and let its `darkModeSelector` switch light/dark schemes. These
+ * values are now the canonical OpenNMS palette (FeatherDS has been removed).
  */
 
 // FeatherDS primary brand color, referenced for form-field focus rings etc.
@@ -170,6 +164,19 @@ const OpenNMSPreset = definePreset(Aura, {
     }
   },
   components: {
+    // Aura's dark ToggleButton (which SelectButton is built on) colors the
+    // checked option's label/icon with {surface.0} — white in stock Aura dark,
+    // but our dark surface.0 is the OpenNMS navy, leaving the active option
+    // dark-on-dark. Point the checked state at the text tokens, the same
+    // correction the semantic text/content/formField overrides make.
+    togglebutton: {
+      colorScheme: {
+        dark: {
+          root: { checkedColor: '{text.color}' },
+          icon: { checkedColor: '{text.color}' }
+        }
+      }
+    },
     // IftaLabel (in-field top-aligned label). Aura's label font is 0.75rem which
     // reads too small next to the input value; bump to 1rem and add a little more
     // input top padding so the value clears the larger label.
@@ -185,11 +192,24 @@ const OpenNMSPreset = definePreset(Aura, {
       colorScheme: {
         light: {
           root: { borderColor: 'rgba(10, 12, 27, 0.12)' },
-          headerCell: { background: '#f4f7fc', color: 'rgba(10, 12, 27, 0.7)' }
+          // selected* pins the sorted-column header to the normal header look;
+          // Aura defaults headerCell.selectedBackground to {highlight.background}
+          // (a light primary.50 tint), which reads wrong on the dark header.
+          headerCell: {
+            background: '#f4f7fc',
+            color: 'rgba(10, 12, 27, 0.7)',
+            selectedBackground: '#f4f7fc',
+            selectedColor: 'rgba(10, 12, 27, 0.7)'
+          }
         },
         dark: {
           root: { borderColor: 'rgba(255, 255, 255, 0.24)' },
-          headerCell: { background: '#0a0c1b', color: 'rgba(255, 255, 255, 0.78)' }
+          headerCell: {
+            background: '#0a0c1b',
+            color: 'rgba(255, 255, 255, 0.78)',
+            selectedBackground: '#0a0c1b',
+            selectedColor: 'rgba(255, 255, 255, 0.78)'
+          }
         }
       }
     },

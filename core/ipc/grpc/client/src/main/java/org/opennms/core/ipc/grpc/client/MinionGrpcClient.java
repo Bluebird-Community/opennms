@@ -176,6 +176,7 @@ public class MinionGrpcClient extends AbstractMessageDispatcherFactory<String> {
         if (tracerRegistry != null) {
             tracerRegistry.init(minionIdentity.getLocation() + "@" + minionIdentity.getId());
         }
+        onInit();
         LOG.info("Minion at location {} with systemId {} started", minionIdentity.getLocation(), minionIdentity.getId());
 
     }
@@ -244,6 +245,7 @@ public class MinionGrpcClient extends AbstractMessageDispatcherFactory<String> {
     }
 
     public void shutdown() {
+        onDestroy();
         requestHandlerExecutor.shutdown();
         blockingSinkMessageScheduler.shutdown();
         registerdModules.clear();

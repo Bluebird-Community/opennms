@@ -21,30 +21,21 @@
  */
 package org.opennms.netmgt.snmp.proxy.common;
 
+import static org.junit.Assert.assertEquals;
+
 import java.net.UnknownHostException;
-import java.util.Dictionary;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.camel.Component;
-import org.apache.camel.util.KeyValueHolder;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opennms.core.test.OpenNMSJUnit4ClassRunner;
-import org.opennms.core.test.activemq.ActiveMQBroker;
-import org.opennms.core.test.camel.CamelBlueprintTest;
 import org.opennms.core.test.snmp.JUnitSnmpAgentExecutionListener;
 import org.opennms.core.test.snmp.annotations.JUnitSnmpAgent;
 import org.opennms.core.utils.InetAddressUtils;
-import org.opennms.distributed.core.api.MinionIdentity;
-import org.opennms.distributed.core.api.SystemType;
 import org.opennms.netmgt.config.SnmpPeerFactory;
-import org.opennms.netmgt.model.OnmsDistPoller;
 import org.opennms.netmgt.provision.service.snmp.IpAddrTable;
 import org.opennms.netmgt.snmp.SnmpAgentConfig;
 import org.opennms.netmgt.snmp.SnmpInstId;
@@ -57,36 +48,28 @@ import org.opennms.netmgt.snmp.proxy.common.testutils.ExpectedResults;
 import org.opennms.netmgt.snmp.proxy.common.testutils.IPAddressGatheringTracker;
 import org.opennms.test.JUnitConfigurationEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 
+/**
+ * Exercises the {@link LocationAwareSnmpClient} against an in-process (broker-free) RPC
+ * client. Requests to a remote (Minion) location over a transport are covered by the
+ * gRPC/Kafka IPC integration tests; here the mock RPC client executes the SNMP proxy
+ * module locally, so the client's results are compared against direct SnmpUtils calls.
+ */
 @RunWith(OpenNMSJUnit4ClassRunner.class)
 @ContextConfiguration(locations={
         "classpath:/META-INF/opennms/applicationContext-soa.xml",
         "classpath:/META-INF/opennms/applicationContext-mockDao.xml",
         "classpath:/META-INF/opennms/applicationContext-proxy-snmp.xml",
-        "classpath:/META-INF/opennms/applicationContext-queuingservice-mq-vm.xml",
-        "classpath:/META-INF/opennms/applicationContext-rpc-client-jms.xml",
+        "classpath:/META-INF/opennms/applicationContext-rpc-client-mock.xml",
         "classpath:/META-INF/opennms/applicationContext-rpc-snmp.xml",
         "classpath:/META-INF/opennms/applicationContext-tracer-registry.xml"
 })
 @JUnitConfigurationEnvironment
 @TestExecutionListeners(JUnitSnmpAgentExecutionListener.class)
 @JUnitSnmpAgent(host="192.0.2.205", resource="classpath:/loadSnmpDataTest.properties")
-public class LocationAwareSnmpClientIT extends CamelBlueprintTest {
-
-    private static final String REMOTE_LOCATION_NAME = "remote";
-
-    @ClassRule
-    public static ActiveMQBroker broker = new ActiveMQBroker();
-
-    @Autowired
-    private OnmsDistPoller identity;
-
-    @Autowired
-    @Qualifier("queuingservice")
-    private Component queuingservice;
+public class LocationAwareSnmpClientIT {
 
     @Autowired
     private SnmpPeerFactory snmpPeerFactory;
@@ -96,39 +79,8 @@ public class LocationAwareSnmpClientIT extends CamelBlueprintTest {
     @Autowired
     private LocationAwareSnmpClient locationAwareSnmpClient;
 
-    @SuppressWarnings("rawtypes")
-    @Override
-    protected void addServicesOnStartup(Map<String, KeyValueHolder<Object, Dictionary>> services) {
-        services.put(MinionIdentity.class.getName(),
-                new KeyValueHolder<Object, Dictionary>(new MinionIdentity() {
-                    @Override
-                    public String getId() {
-                        return "0";
-                    }
-                    @Override
-                    public String getLocation() {
-                        return REMOTE_LOCATION_NAME;
-                    }
-                    @Override
-                    public String getType() {
-                        return SystemType.Minion.name();
-                    }
-                }, new Properties()));
-
-        Properties props = new Properties();
-        props.setProperty("alias", "opennms.broker");
-        services.put(Component.class.getName(), new KeyValueHolder<Object, Dictionary>(queuingservice, props));
-    }
-
-    @Override
-    protected String getBlueprintDescriptor() {
-        return "classpath:OSGI-INF/blueprint/blueprint-rpc-server.xml";
-    }
-
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-
         SnmpPeerFactory.setInstance(snmpPeerFactory);
         agentConfig = snmpPeerFactory.getAgentConfig(InetAddressUtils.addr("192.0.2.205"));
         agentConfig.setVersion(SnmpAgentConfig.VERSION2C);
@@ -217,22 +169,5 @@ public class LocationAwareSnmpClientIT extends CamelBlueprintTest {
         result = locationAwareSnmpClient.get(agentConfig,
                 SnmpObjId.get(".1.3.6.1.2.1.4.34.1.5.1.4.127.0.0.1")).execute().get();
         assertEquals(SnmpObjId.get(".1.3.6.1.2.1.4.32.1.5.1.1.4.127.0.0.0.8"), result.toSnmpObjId());
-    }
-
-    /**
-     * Verifies that the IP Address tables can be walked when using a remote location.
-     *
-     * This should invoke the route in the Camel context initialize in this blueprint.
-     */
-    @Test(timeout=60000)
-    public void canWalkIpAddressTableViaAnotherLocation() throws Exception {
-        assertNotEquals(REMOTE_LOCATION_NAME, identity.getLocation());
-
-        final IPAddressGatheringTracker tracker = new IPAddressGatheringTracker();
-        locationAwareSnmpClient.walk(agentConfig, tracker)
-            .withDescription(tracker.getDescription())
-            .withLocation(REMOTE_LOCATION_NAME)
-            .execute().get();
-        ExpectedResults.compareToKnownIpAddressList(tracker.getIpAddresses());
     }
 }

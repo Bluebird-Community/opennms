@@ -44,7 +44,16 @@ RUN groupadd \
 
 COPY --chown=10001:0 --from=core-tarball /opt/opennms /opt/opennms
 
-RUN install -d -m 775 -o 10001 -g 0 \
+# The core-tarball stage already does `chmod g=u /opt/opennms`, but the COPY above
+# creates the destination directory itself with Docker's default 0755 and silently
+# drops that mode -- only the *contents* keep theirs. /opt/opennms is also WORKDIR,
+# and Atomikos writes its transaction-log lock into the working directory, so with
+# a non-group-writable /opt/opennms an arbitrary UID (OpenShift assigns one, with
+# gid 0) fails with "Log already in use?", which cascades into RuntimeInfoImpl,
+# the api-layer blueprint, Karaf health, and finally a fail-fast startup abort.
+# Re-apply group write here, in the stage that actually ships.
+RUN chmod g=u /opt/opennms && \
+    install -d -m 775 -o 10001 -g 0 \
             /opt/opennms-etc-overlay \
             /opt/opennms-jetty-webinf-overlay \
             /opt/opennms-overlay \

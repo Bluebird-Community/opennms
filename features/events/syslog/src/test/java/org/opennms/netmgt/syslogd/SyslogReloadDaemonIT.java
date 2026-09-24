@@ -100,7 +100,7 @@ public class SyslogReloadDaemonIT implements InitializingBean {
 
     private SyslogSinkModule m_syslogSinkModule;
     
-    private SyslogReceiverCamelNettyImpl m_receiver;
+    private SyslogReceiverJavaNetImpl m_receiver;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -137,7 +137,7 @@ public class SyslogReloadDaemonIT implements InitializingBean {
         m_syslogSinkModule = m_syslogSinkConsumer.getModule();
         m_messageDispatcherFactory.setConsumer(m_syslogSinkConsumer);
 
-        m_receiver = new SyslogReceiverCamelNettyImpl(m_config);
+        m_receiver = new SyslogReceiverJavaNetImpl(m_config);
         m_receiver.setDistPollerDao(m_distPollerDao);
         m_receiver.setMessageDispatcherFactory(m_messageDispatcherFactory);
         m_syslogd.setSyslogReceiver(m_receiver);

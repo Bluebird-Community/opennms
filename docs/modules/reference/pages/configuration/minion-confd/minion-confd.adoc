@@ -21,7 +21,6 @@ The following sections describe the keys in `minion-config.yaml` that configure 
 
 [source, yaml]
 ----
-broker-url: "<broker url>"
 id: "<id>"
 location: "<location>"
 ----
@@ -30,7 +29,7 @@ Writes specified configuration to `$\{MINION_HOME}/etc/org.opennms.minion.contro
 
 === User/Password
 
-It is not possible to supply the http or broker username or password via the `minion-config.yaml` file.
+It is not possible to supply the http username or password via the `minion-config.yaml` file.
 
 === Instance ID
 
@@ -43,7 +42,7 @@ Writes specified configuration to `$\{MINION_HOME}/etc/instance-id.properties`.
 
 === Kafka
 
-When using Kafka instead of the embedded Active MQ, settings for Kafka IPC (Twin) will take precedence over any RPC- and Sink-specific settings.
+When using Kafka instead of gRPC, settings for Kafka IPC (Twin) will take precedence over any RPC- and Sink-specific settings.
 
 [source, yaml]
 ----

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opennms</groupId>
   <artifactId>e2e-tests</artifactId>
-  <version>38.0.2-SNAPSHOT</version>
+  <version>38.1.1-SNAPSHOT</version>
   <name>BluebirdOps E2E Tests</name>
   <url>https://github.com/Bluebird-Community/opennms</url>
   <description>Smoke Test APIs for OpenNMS</description>
@@ -48,11 +48,10 @@
     <skip.surefire.tests>false</skip.surefire.tests>
     <skipITs>true</skipITs>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <camelVersion>2.21.5</camelVersion>
     <groovyVersion>3.0.21</groovyVersion>
     <frontendPluginVersion>1.15.1</frontendPluginVersion>
-    <jackson2Version>2.22.0</jackson2Version>
-    <!-- Since Jackson 2.20 jackson-annotations is released decoupled from the rest (no patch digit: 2.20, 2.21, 2.22) -->
+    <jackson2Version>2.22.1</jackson2Version>
+    <!-- jackson-annotations dropped its patch component as of 2.20, so it needs its own property -->
     <jackson2AnnotationsVersion>2.22</jackson2AnnotationsVersion>
     <jersey.version>2.46</jersey.version>
     <jestVersion>5.3.4</jestVersion>
@@ -67,7 +66,7 @@
     <testcontainers.version>1.21.4</testcontainers.version>
     <netty4Version>4.1.100.Final</netty4Version>
     <jna.version>5.8.0</jna.version>
-    <okhttpVersion>4.9.2</okhttpVersion>
+    <okhttpVersion>4.9.3</okhttpVersion>
     <test.fork.count>0</test.fork.count>
     <!-- Limit ITs to 30 minutes by default -->
     <test.fork.timeout>1800</test.fork.timeout>
@@ -134,10 +133,11 @@
               <coverage>${coverage}</coverage>
             </systemPropertyVariables>
             <!--
-              Configure failsafe to put reports in the surefire unit test directory so that
-              Bamboo and Sonar tally the test results properly.
-
-              https://jira.atlassian.com/browse/BAM-15446
+              Configure failsafe to put reports in the surefire unit test directory so a
+              single collector finds both. Originally a Bamboo and Sonar workaround
+              (https://jira.atlassian.com/browse/BAM-15446); both are gone, but CI still
+              depends on this: the surefire-report action and `make collect-testresults`
+              expect integration test results in the same place as unit test results.
             -->
             <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
             <forkCount>${test.fork.count}</forkCount>
@@ -588,11 +588,6 @@
     </dependency>
     <dependency>
       <groupId>org.opennms.core</groupId>
-      <artifactId>org.opennms.core.camel</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.core</groupId>
       <artifactId>org.opennms.core.web</artifactId>
       <version>${project.version}</version>
       <exclusions>
@@ -666,12 +661,6 @@
           <artifactId>commons-logging</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.camel</groupId>
-      <artifactId>camel-elasticsearch</artifactId>
-      <version>${camelVersion}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.opennms.features.telemetry.protocols.bmp</groupId>
@@ -794,6 +783,12 @@
       <version>${selenium.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.opennms.tests</groupId>
+      <artifactId>org.opennms.tests.mock-wsman-agent</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
       <version>4.2.0</version>
@@ -821,7 +816,7 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.15.3</version>
+      <version>1.23.1</version>
     </dependency>
     <dependency>
       <groupId>com.github.mwiede</groupId>

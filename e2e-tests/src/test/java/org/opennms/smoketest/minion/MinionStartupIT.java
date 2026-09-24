@@ -44,7 +44,8 @@ public class MinionStartupIT {
     final static Map<String, String> configuration = new TreeMap<>();
 
     static {
-        configuration.put("OPENNMS_BROKER_URL", "failover:tcp://" + OpenNMSContainer.ALIAS + ":61616");
+        configuration.put("GRPC_IPC_HOST", OpenNMSContainer.ALIAS);
+        configuration.put("GRPC_IPC_PORT", "8990");
         configuration.put("MINION_LOCATION", "Fulda");
         configuration.put("MINION_ID", "Minion-Fulda");
     }

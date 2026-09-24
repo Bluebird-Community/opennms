@@ -16,48 +16,43 @@
               <template #item="{ element, index }">
                 <div class="file">
                   <div class="file-icon">
-                    <FeatherIcon :icon="Text" />
+                    <OnmsIcon :icon="Text" />
                     <span>
                       {{ ellipsify(element.file.name, 39) }}
                     </span>
                   </div>
                   <div class="actions">
-                    <FeatherIcon
+                    <OnmsIconButton
                       v-if="element.isDuplicate"
                       :icon="Warning"
-                      v-tooltip="'File is a duplicate of another file that has been already uploaded.'"
+                      title="Rename or overwrite duplicate file"
+                      tooltip="File is a duplicate of another file that has been already uploaded."
                       class="warning-icon"
                       @click="openFileRenameDialog(index)"
                     />
-                    <FeatherIcon
+                    <OnmsIcon
                       v-if="element.isValid && !element.isDuplicate"
                       :icon="CheckCircle"
-                      v-tooltip="'File is valid'"
+                      v-onms-tooltip="'File is valid'"
                       class="success-icon"
                     />
-                    <FeatherIcon
+                    <OnmsIcon
                       v-if="!element.isValid"
                       :icon="Error"
-                      v-tooltip="element.errors.map((error: string) => `${error}. `).join('\n')"
+                      v-onms-tooltip="element.errors.map((error: string) => `${error}. `).join('\n')"
                       class="error-icon"
                     />
-                    <Button
-                      text
+                    <OnmsIconButton
                       title="Reorder"
-                    >
-                      <FeatherIcon
-                        class="close-icon drag-handle"
-                        :icon="Apps"
-                      />
-                    </Button>
-                    <Button
-                      text
+                      class="close-icon drag-handle"
+                      :icon="Apps"
+                    />
+                    <OnmsIconButton
                       title="Remove"
                       data-test="remove-files-button"
+                      :icon="Delete"
                       @click="removeFile(index)"
-                    >
-                      <FeatherIcon :icon="Delete" />
-                    </Button>
+                    />
                   </div>
                 </div>
               </template>
@@ -84,19 +79,19 @@
             @change="handleFolderUpload"
             ref="eventFolderInput"
           />
-          <Button
-            outlined
+          <OnmsButton
+            variant="outlined"
             label="Choose files to upload"
             @click="openFileDialog"
             :disabled="isLoading"
           />
-          <Button
-            outlined
+          <OnmsButton
+            variant="outlined"
             label="Choose folder to upload"
             @click="openFolderDialog"
             :disabled="isLoading"
           />
-          <Button
+          <OnmsButton
             label="Upload Files"
             :disabled="shouldUploadDisabled"
             :loading="isLoading"
@@ -115,14 +110,14 @@
           <li>Ensure that the XML files are well-formed and adhere to the expected schema.</li>
           <li>
             Files that are valid and ready for upload will be flagged with icon
-            <FeatherIcon
+            <OnmsIcon
               :icon="CheckCircle"
               class="success-icon-text"
             />.
           </li>
           <li>
             Files with duplicate names (excluding the .xml extension) will be flagged with icon
-            <FeatherIcon
+            <OnmsIcon
               :icon="Warning"
               class="warning-icon-text"
             />
@@ -130,7 +125,7 @@
           </li>
           <li>
             Invalid files will be flagged with icon
-            <FeatherIcon
+            <OnmsIcon
               :icon="Error"
               class="error-icon-text"
             />
@@ -160,14 +155,13 @@ import { ellipsify } from '@/lib/utils'
 import { uploadEventConfigFiles } from '@/services/eventConfigService'
 import { useEventConfigStore } from '@/stores/eventConfigStore'
 import { EventConfigFilesUploadResponse, UploadEventFileType } from '@/types/eventConfig'
-import { FeatherIcon } from '@featherds/icon'
-import CheckCircle from '@featherds/icon/action/CheckCircle'
-import Delete from '@featherds/icon/action/Delete'
-import Text from '@featherds/icon/file/Text'
-import Apps from '@featherds/icon/navigation/Apps'
-import Error from '@featherds/icon/notification/Error'
-import Warning from '@featherds/icon/notification/Warning'
-import Button from 'primevue/button'
+import { OnmsIcon, OnmsIconButton, OnmsButton } from '@opennms/onms-ui'
+import CheckCircle from '@opennms/onms-ui/icons/action/CheckCircle.vue'
+import Delete from '@opennms/onms-ui/icons/action/Delete.vue'
+import Text from '@opennms/onms-ui/icons/file/Text.vue'
+import Apps from '@opennms/onms-ui/icons/navigation/Apps.vue'
+import Error from '@opennms/onms-ui/icons/notification/Error.vue'
+import Warning from '@opennms/onms-ui/icons/notification/Warning.vue'
 import Draggable from 'vuedraggable'
 import EventConfigFilesUploadReportDialog from './Dialog/EventConfigFilesUploadReportDialog.vue'
 import UploadedFileRenameDialog from './Dialog/UploadedFileRenameDialog.vue'
@@ -430,21 +424,21 @@ watch(
 
     .info-section {
       .success-icon-text {
-        color: var(--feather-success);
+        color: var(--onms-success);
         vertical-align: middle;
         height: 2em;
         width: 2em;
       }
 
       .error-icon-text {
-        color: var(--feather-error);
+        color: var(--onms-error);
         vertical-align: middle;
         height: 2em;
         width: 2em;
       }
 
       .warning-icon-text {
-        color: var(--feather-major);
+        color: var(--onms-major);
         vertical-align: middle;
         height: 2em;
         width: 2em;
@@ -481,7 +475,7 @@ watch(
           }
 
           .invalid-text {
-            color: var(--feather-error);
+            color: var(--onms-error);
           }
         }
 
@@ -494,25 +488,27 @@ watch(
             margin: 0px;
           }
 
+          // Status indicators: plain icons, so these land on the <svg>.
           .success-icon {
-            color: var(--feather-success);
+            color: var(--onms-success);
             cursor: pointer;
             height: 2em;
             width: 2em;
           }
 
           .error-icon {
-            color: var(--feather-error);
+            color: var(--onms-error);
             cursor: pointer;
             height: 2em;
             width: 2em;
           }
 
+          // The duplicate indicator IS actionable (it opens the rename dialog), so
+          // it is an icon button and this lands on the <button>. Colour only: the
+          // glyph inherits it via `fill: currentColor`, and the component sizes it
+          // to match the reorder/remove buttons beside it.
           .warning-icon {
-            color: var(--feather-major);
-            cursor: pointer;
-            height: 2em;
-            width: 2em;
+            color: var(--onms-major);
           }
         }
       }

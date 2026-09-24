@@ -39,7 +39,7 @@ import okhttp3.MediaType;
 import okhttp3.Response;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.common.Strings;
+import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

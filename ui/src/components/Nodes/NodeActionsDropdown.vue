@@ -1,33 +1,26 @@
 <template>
-  <Button
-    text
+  <OnmsIconButton
     title="Node Actions"
     aria-label="Node Actions"
     aria-haspopup="true"
     :aria-controls="menuId"
     data-test="node-actions-button"
+    :icon="menuIcon"
     @click="toggle"
-  >
-    <FeatherIcon
-      :icon="menuIcon"
-      class="node-actions-icon"
-    />
-  </Button>
-  <Menu
+  />
+  <OnmsMenu
     :id="menuId"
     ref="menu"
-    :model="items"
-    popup
+    :items="items"
   />
 </template>
 
 <script setup lang="ts">
-import Button from 'primevue/button'
-import Menu from 'primevue/menu'
-import type { MenuItem } from 'primevue/menuitem'
-import { FeatherIcon } from '@featherds/icon'
-import MoreVert from '@featherds/icon/navigation/MoreVert'
+import MoreVert from '@opennms/onms-ui/icons/navigation/MoreVert.vue'
+import { OnmsIconButton, OnmsMenu, OnmsMenuItem } from '@opennms/onms-ui'
 import { markRaw, computed, ref, PropType } from 'vue'
+import { createLinkItemsList } from './nodeActionLinks'
+import useRole from '@/composables/useRole'
 import { Node } from '@/types'
 
 const props = defineProps({
@@ -39,84 +32,51 @@ const props = defineProps({
     required: true,
     type: Object as PropType<Node>
   },
+  // Supplied by the call site from its interface data; without it the Update SNMP action is
+  // omitted rather than pointed at an address that is not the node's.
+  snmpPrimaryIpAddress: {
+    required: false,
+    type: String,
+    default: undefined
+  },
   triggerNodeInfo: {
-    required: true,
-    type: Function as PropType<(node: Node) => void>
+    required: false,
+    type: Function as PropType<(node: Node) => void>,
+    default: undefined
   }
 })
+
+const { adminRole } = useRole()
 
 const menuIcon = markRaw(MoreVert)
 const menu = ref()
 const menuId = computed(() => `node-actions-menu-${props.node.id}`)
 
-const linkItems = [
-  { name: 'events', label: 'Events' },
-  { name: 'alarms', label: 'Alarms' },
-  { name: 'view-outages', label: 'Outages' },
-  { name: 'assets', label: 'Assets' },
-  { name: 'metadata', label: 'Metadata' },
-  { name: 'hardware', label: 'Hardware Inventory' },
-  { name: 'availability', label: 'Availability' },
-  { name: 'graphs', label: 'Resource Graphs' },
-  { name: 'rescan', label: 'Node Rescan' },
-  { name: 'admin', label: 'Admin / Node Management' },
-  { name: 'updateSnmp', label: 'Update SNMP Information' },
-  { name: 'schedule-outage', label: 'Schedule an Outage' }
-]
+// Info... opens a dialog describing the node. Optional: a call site that omits the handler gets
+// the navigation links alone. Both current call sites supply it -- the node list, and the node
+// details page, which used to show the same attributes in a panel of its own.
+const items = computed<OnmsMenuItem[]>(() => {
+  const infoItem = props.triggerNodeInfo
+    ? [{ label: 'Info...', command: () => props.triggerNodeInfo?.(props.node) }]
+    : []
 
-const items = computed<MenuItem[]>(() => [
-  { label: 'Info...', command: () => props.triggerNodeInfo(props.node) },
-  ...linkItems.map(li => ({
-    label: li.label,
-    command: () => onNodeLink(li.name, props.node)
-  }))
-])
+  // createLinkItemsList drops any link the node cannot supply the data for, such as Site
+  // Status for a node with no building.
+  return [
+    ...infoItem,
+    ...createLinkItemsList(props.node, {
+      snmpPrimaryIpAddress: props.snmpPrimaryIpAddress,
+      isAdmin: adminRole.value
+    }).map(li => ({
+      label: li.label,
+      command: () => window.location.assign(`${props.baseHref}${li.link}`)
+    }))
+  ]
+})
 
 const toggle = (event: Event) => {
   menu.value?.toggle(event)
 }
 
-const onNodeLink = (name: string, node: Node) => {
-  const link = mapLink(name, node)
-  window.location.assign(`${props.baseHref}${link}`)
-}
-
-const mapLink = (name: string, node: Node) => {
-  switch (name) {
-    case 'events':
-      return `event/list?filter=node%3D${node.id}`
-    case 'alarms':
-      return `alarm/list.htm?filter=node%3D${node.id}`
-    case 'view-outages':
-      return `outage/list.htm?filter=node%3D${node.id}`
-    case 'assets':
-      return `asset/modify.jsp?node=${node.id}`
-    case 'metadata':
-      return `element/node-metadata.jsp?node=${node.id}`
-    case 'hardware':
-      return `hardware/list.jsp?node=${node.id}`
-    case 'availability':
-      return `element/availability.jsp?node=${node.id}`
-    case 'graphs':
-      return `graph/chooseresource.jsp?node=${node.id}&reports=all`
-    case 'rescan':
-      return `element/rescan.jsp?node=${node.id}`
-    case 'admin':
-      return `admin/nodemanagement/index.jsp?node=${node.id}`
-    case 'updateSnmp':
-      // TODO: Get IP Address
-      return `admin/updateSnmp.jsp?node=${node.id}&ipaddr=0.0.0.0`
-    case 'schedule-outage':
-      return `admin/sched-outages/editoutage.jsp?newName=${node.label}&addNew=true&nodeID=${node.id}`
-    default: return ''
-  }
-}
-
 defineExpose({ items })
 </script>
-
-<style lang="scss" scoped>
-.node-actions-icon {
-  font-size: 1.1rem;
-}
-</style>

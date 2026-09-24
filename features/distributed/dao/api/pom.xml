@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.opennms.features.distributed</groupId>
         <artifactId>org.opennms.features.distributed.dao</artifactId>
-        <version>38.0.2-SNAPSHOT</version>
+        <version>38.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opennms.features.distributed</groupId>
@@ -59,7 +59,6 @@
                             org.opennms.netmgt.topologies.service.api,
                             org.opennms.netmgt.config.api,
                             org.opennms.netmgt.config.javamail,
-                            org.opennms.netmgt.config.microblog,
                             org.opennms.netmgt.config.provisiond,
                             org.opennms.netmgt.config.siteStatusViews,
                             org.opennms.netmgt.config.surveillanceViews,

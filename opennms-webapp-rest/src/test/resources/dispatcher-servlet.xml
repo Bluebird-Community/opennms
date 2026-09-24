@@ -37,9 +37,9 @@
         <property name="order" value="0"/>
     </bean>
 
-    <!-- These HandlerMapping beans ensure that @RequestMapping-annotated classes and methods are resolvable -->
-    <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
-    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
+    <!-- @RequestMapping classes/methods are handled by <mvc:annotation-driven/> below
+         (RequestMappingHandlerMapping/Adapter). The old DefaultAnnotationHandlerMapping +
+         AnnotationMethodHandlerAdapter were removed in Spring 5.0. -->
 
     <bean id="defaultViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
@@ -192,11 +192,7 @@
         <property name="alarmRepository" ref="alarmRepository"/>
     </bean>
 
-    <bean name="/trend/trend.htm" class="org.opennms.web.controller.trend.TrendController">
-    </bean>
 
-    <bean name="/trend/trend-box.htm" class="org.opennms.web.controller.trend.TrendBoxController">
-    </bean>
 
     <bean name="/application/summary-box.htm" class="org.opennms.web.controller.application.ApplicationBoxController">
         <property name="successView" value="application/summary-box"/>
@@ -317,11 +313,6 @@
                     <property name="entries">
                         <list>
                             <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
-                                <property name="name" value="Nodes"/>
-                                <property name="url" value="element/nodeList.htm"/>
-                                <property name="locationMatch" value="nodelist"/>
-                            </bean>
-                            <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
                                 <property name="name" value="Assets"/>
                                 <property name="url" value="asset/index.jsp"/>
                                 <property name="locationMatch" value="asset"/>
@@ -392,16 +383,6 @@
                                 <property name="name" value="Surveillance"/>
                                 <property name="url" value="surveillance-view.jsp"/>
                                 <property name="locationMatch" value="surveillance-view"/>
-                            </bean>
-                            <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
-                                <property name="name" value="Heatmap"/>
-                                <property name="url" value="heatmap/index.jsp"/>
-                                <property name="locationMatch" value="heatmap"/>
-                            </bean>
-                            <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
-                                <property name="name" value="Trend"/>
-                                <property name="url" value="trend/index.jsp"/>
-                                <property name="locationMatch" value="trend"/>
                             </bean>
                             <bean class="org.opennms.web.navigate.LocationBasedNavBarEntry">
                                 <property name="name" value="Application"/>

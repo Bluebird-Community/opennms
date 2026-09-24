@@ -45,6 +45,28 @@ public class DroolsReloadFactsTest {
 
     static File DROOLS_SRC = new File("src/test/opennms-home/etc/drools-engine.d/droolsFusion/DroolsFusion.drl");
 
+    /** Facts the DroolsFusion.drl rules put in working memory for one nodeLostService event. */
+    private static final int EXPECTED_FACTS = 4;
+
+    /**
+     * Wait until working memory actually holds the facts we are about to assert on.
+     *
+     * The engine runs in stream mode, so initialize() starts a thread running
+     * fireUntilHalt() that rewrites working memory in the background: measured locally at
+     * 5 objects immediately after a restore and 9 once the rules have re-fired against the
+     * restored facts. saveFacts() snapshots whatever happens to be there at that instant,
+     * so without this wait the assertion samples a moving target. CI observed 2.
+     *
+     * Polling getObjects() on a session that is being fired can throw, so transient
+     * exceptions are ignored rather than failing the test.
+     */
+    private static void awaitFactsSettled(DroolsCorrelationEngine engine) {
+        await().ignoreExceptions()
+               .atMost(30, TimeUnit.SECONDS)
+               .until(() -> engine.getKieSessionObjects().size(),
+                      Matchers.greaterThanOrEqualTo(EXPECTED_FACTS));
+    }
+
     @Test
     public void verifySaveFacts() throws Exception {
 
@@ -64,20 +86,23 @@ public class DroolsReloadFactsTest {
         droolsCorrelationEngine.correlate(event);
         // Expect node up event.
         await().atMost(15, TimeUnit.SECONDS).until(() -> eventIpcManager.getEventAnticipator().getUnanticipatedEvents().size(), Matchers.greaterThanOrEqualTo(1));
-        // save facts.
+        // The node up event only tells us the first rule fired. Wait for the facts
+        // themselves before snapshotting them, because saveFacts() is a one-shot read: it
+        // shuts the session down, so it cannot be polled.
+        awaitFactsSettled(droolsCorrelationEngine);
         droolsCorrelationEngine.saveFacts();
-        // Verify that it should have atleast 4 objects from the rule
         Map<byte[], Class<?>> factObjects = droolsCorrelationEngine.getFactObjects();
-        assertThat(factObjects.size(), Matchers.greaterThanOrEqualTo(4));
-        // Now initialize again.
+        assertThat(factObjects.size(), Matchers.greaterThanOrEqualTo(EXPECTED_FACTS));
+        // Now initialize again. This restores the saved facts and restarts fireUntilHalt().
         droolsCorrelationEngine.initialize();
-        // Now that facts are loaded and there shouldn't be any facts in factObjects.
+        // initialize() clears factObjects after re-inserting them, so this is deterministic.
         factObjects = droolsCorrelationEngine.getFactObjects();
         assertThat(factObjects.size(), Matchers.is(0));
-        // Save facts from engine and Verify that all saved facts are loaded properly.
+        // Save facts from engine and verify that all saved facts are loaded properly.
+        awaitFactsSettled(droolsCorrelationEngine);
         droolsCorrelationEngine.saveFacts();
         factObjects = droolsCorrelationEngine.getFactObjects();
-        assertThat(factObjects.size(), Matchers.greaterThanOrEqualTo(4));
+        assertThat(factObjects.size(), Matchers.greaterThanOrEqualTo(EXPECTED_FACTS));
 
     }
 }

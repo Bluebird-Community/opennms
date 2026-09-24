@@ -5,7 +5,7 @@
   <parent>
     <artifactId>org.opennms.features.telemetry.protocols.openconfig</artifactId>
     <groupId>org.opennms.features.telemetry.protocols</groupId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -35,6 +35,10 @@
       <groupId>org.opennms.core.ipc.rpc</groupId>
       <artifactId>org.opennms.core.ipc.rpc.utils</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
     </dependency>
     <dependency>
       <groupId>org.opennms.features.openconfig</groupId>

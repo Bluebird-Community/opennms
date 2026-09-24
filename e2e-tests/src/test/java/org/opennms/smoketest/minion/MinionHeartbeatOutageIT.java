@@ -192,6 +192,6 @@ public class MinionHeartbeatOutageIT {
     }
 
     public IpcStrategy getIpcStrategy() {
-        return IpcStrategy.JMS;
+        return IpcStrategy.GRPC;
     }
 }

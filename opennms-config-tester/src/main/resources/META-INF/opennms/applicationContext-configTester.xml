@@ -26,7 +26,6 @@
   <bean id="configTester" class="org.opennms.netmgt.config.tester.ConfigTester">
     <property name="configs">
       <map>
-        <entry key="ami-config.xml" value="amiPeerFactory"/>
         <entry key="bsf-northbounder-configuration.xml" value="bsfNorthbounderConfigDao"/>
         <entry key="categories.xml" value="categoryFactory"/>
         <entry key="collectd-configuration.xml" value="collectdConfigFactory"/>
@@ -49,13 +48,10 @@
         <entry key="jmx-datacollection-config.xml" value="jmxDataCollectionConfigDao"/>
         <entry key="xml-datacollection-config.xml" value="xmlDataCollectionConfigDao"/>
         <entry key="ksc-performance-reports.xml" value="kscReportFactory"/>
-        <entry key="microblog-configuration.xml" value="microblogConfigurationDao"/>
         <!--  <entry key="modemConfig.properties" value="unknown"/> -->
         <entry key="notifd-configuration.xml" value="notifdConfigFactory"/>
         <entry key="notificationCommands.xml" value="notificationCommandFactory"/>
         <entry key="notifications.xml" value="notificationFactory"/>
-        <!-- <entry key="nsclient-config.xml" value="nsClientPeerFactory"/> -->
-        <!-- <entry key="nsclient-datacollection-config.xml" value="nsClientDataCollectionConfigFactory"/> -->
         <entry key="opennms-datasources.xml" value="dataSourceTester"/>
         <entry key="opennms.properties" value="unknown"/>
         <entry key="poll-outages.xml" value="pollOutagesDao"/>
@@ -97,12 +93,6 @@
     </property>
   </bean>
 
-  <bean id="amiPeerFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"><value>org.opennms.netmgt.config.AmiPeerFactory.init</value></property>
-  </bean>
-
-  <bean id="amiPeerFactory" class="org.opennms.netmgt.config.AmiPeerFactory" depends-on="amiPeerFactory-init" factory-method="getInstance"/>
-  
   <bean name="bsfNorthbounderConfigDao" class="org.opennms.netmgt.alarmd.northbounder.bsf.BSFNorthbounderConfigDao">
     <property name="configResource" value="file:${opennms.home}/etc/bsf-northbounder-configuration.xml" />
   </bean>
@@ -228,10 +218,6 @@
     <property name="userManager" ref="userManager" />
   </bean>
   
-  <bean id="microblogConfigurationDao" class="org.opennms.netmgt.dao.jaxb.DefaultMicroblogConfigurationDao">
-    <property name="configResource" value="file:${opennms.home}/etc/microblog-configuration.xml"/>
-  </bean>
-
   <bean id="notifdConfigFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"><value>org.opennms.netmgt.config.NotifdConfigFactory.init</value></property>
   </bean>
@@ -250,20 +236,6 @@
 
   <bean id="notificationFactory" class="org.opennms.netmgt.config.NotificationFactory" depends-on="notificationFactory-init" factory-method="getInstance"/>
   
-  <!--
-  <bean id="nsClientPeerFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"><value>org.opennms.netmgt.protocols.nsclient.config.NSClientPeerFactory.init</value></property>
-  </bean>
-
-  <bean id="nsClientPeerFactory" class="org.opennms.netmgt.protocols.nsclient.config.NSClientPeerFactory" depends-on="nsClientPeerFactory-init" factory-method="getInstance"/>
-
-  <bean id="nsClientDataCollectionConfigFactory-init" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"><value>org.opennms.netmgt.protocols.nsclient.config.NSClientDataCollectionConfigFactory.init</value></property>
-  </bean>
-
-  <bean id="nsClientDataCollectionConfigFactory" class="org.opennms.netmgt.protocols.nsclient.config.NSClientDataCollectionConfigFactory" depends-on="nsClientDataCollectionConfigFactory-init" factory-method="getInstance"/>
-  -->
-    
   <bean id="dataSourceTester" class="org.opennms.core.db.DataSourceConfigurationFactory">
     <constructor-arg value="${opennms.home}/etc/opennms-datasources.xml"/>
   </bean>

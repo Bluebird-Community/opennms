@@ -88,7 +88,6 @@ useEnvCredentials(){
   echo "WARNING: Credentials can be exposed via docker inspect and log files. Please consider to use a keystore file."
   echo "         You can initialize a keystore file with the -s option."
   ${MINION_HOME}/bin/scvcli set opennms.http ${OPENNMS_HTTP_USER} ${OPENNMS_HTTP_PASS}
-  ${MINION_HOME}/bin/scvcli set opennms.broker ${OPENNMS_BROKER_USER} ${OPENNMS_BROKER_PASS}
 }
 
 setCredentials() {
@@ -99,12 +98,7 @@ setCredentials() {
   read -r -s -p "Enter OpenNMS HTTP password: " OPENNMS_HTTP_PASS
   echo ""
 
-  read -r -p "Enter OpenNMS Broker username: " OPENNMS_BROKER_USER
-  read -r -s -p "Enter OpenNMS Broker password: " OPENNMS_BROKER_PASS
-  echo ""
-
   ${MINION_HOME}/bin/scvcli set opennms.http ${OPENNMS_HTTP_USER} ${OPENNMS_HTTP_PASS}
-  ${MINION_HOME}/bin/scvcli set opennms.broker ${OPENNMS_BROKER_USER} ${OPENNMS_BROKER_PASS}
 
   rsync --out-format="%n %C" ${MINION_HOME}/etc/scv.jce /keystore/.
 }
@@ -151,8 +145,14 @@ function parseEnvironment() {
             updateConfig "$ipc_name" "${!env_var}" "${MINION_HOME}/etc/org.opennms.core.ipc.kafka.cfg"
             if [[ "$ipc_name" == "bootstrap.servers" ]]; then
                 echo "opennms-core-ipc-kafka"   > ${MINION_HOME}/etc/featuresBoot.d/kafka.boot
-                echo "!minion-jms" > ${MINION_HOME}/etc/featuresBoot.d/disable-activemq.boot
-                echo "!opennms-core-ipc-jms" >> ${MINION_HOME}/etc/featuresBoot.d/disable-activemq.boot
+            fi
+        fi
+
+        if [[ $env_var =~ ^GRPC_IPC_ ]]; then
+            ipc_name=$(echo "$env_var" | cut -d_ -f3- | tr '[:upper:]' '[:lower:]' | tr _ .)
+            updateConfig "$ipc_name" "${!env_var}" "${MINION_HOME}/etc/org.opennms.core.ipc.grpc.client.cfg"
+            if [[ "$ipc_name" == "host" ]]; then
+                echo "opennms-core-ipc-grpc-client" > ${MINION_HOME}/etc/featuresBoot.d/grpc.boot
             fi
         fi
     done
@@ -183,7 +183,6 @@ initConfig() {
         # Set Minion location and connection to OpenNMS instance
         echo "location = ${MINION_LOCATION}" > ${MINION_CONFIG}
         echo "id = ${MINION_ID}" >> ${MINION_CONFIG}
-        echo "broker-url = ${OPENNMS_BROKER_URL}" >> ${MINION_CONFIG}
 
         parseEnvironment
 

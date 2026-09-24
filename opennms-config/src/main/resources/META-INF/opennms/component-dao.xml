@@ -11,11 +11,6 @@
 	     and the TokenProvider implementation that backs ${token:<name>}. -->
 	<import resource="classpath:/META-INF/opennms/applicationContext-token-auth.xml"/>
 
-	<bean name="ami-config.xml" class="org.opennms.core.config.impl.JaxbResourceConfiguration">
-		<constructor-arg value="org.opennms.netmgt.config.ami.AmiConfig" />
-		<constructor-arg value="file:${opennms.home}/etc/ami-config.xml" />
-	</bean>
-
 	<bean name="collectd-configuration.xml" class="org.opennms.core.config.impl.JaxbResourceConfiguration">
 		<constructor-arg value="org.opennms.netmgt.config.collectd.CollectdConfiguration" />
 		<constructor-arg value="file:${opennms.home}/etc/collectd-configuration.xml" />

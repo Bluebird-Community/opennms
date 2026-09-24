@@ -5,8 +5,6 @@
 
 == A
 
-ActiveMQ:: Java-based, open-source message broker supported by the Apache community (see xref:deployment:core/setup-message-broker.adoc[]).
-
 alarms:: Indicators for problems occurring on entities that {page-component-title} monitors (see xref:operation:deep-dive/alarms/introduction.adoc[]).
 
 https://docs.opennms.com/alec/latest/[Architecture for Learning Enabled Correlation (ALEC)]:: An OpenNMS framework that uses artificial intelligence and machine learning to provide alarm triage.
@@ -131,9 +129,8 @@ https://www.opennms.com/meridian/[Meridian]:: A subscription-based, optimized, a
 It is distributed via annual release with monthly security patches.
 
 message broker:: An asynchronous service that enables communication between an application's distributed components.
-When using Minions and Sentinels, a message broker is required for communication between servers.
-{page-component-title} has an embedded ActiveMQ server available for smaller deployments.
-You can swap the broker with a dedicated ActiveMQ, gRPC, or Kafka cluster to provide scalability and load balancing.
+When using Minions and Sentinels, a transport is required for communication between servers.
+Minions communicate with the {page-component-title} core instance over gRPC (the default) or an Apache Kafka cluster; Sentinels use Apache Kafka.
 
 Minion:: A distributed component that enables {page-component-title} to monitor devices and services in locations that it normally cannot reach.
 Minions communicate with these remote devices while {page-component-title} performs coordination and task delegation (see xref:development:minion/introduction.adoc[]).

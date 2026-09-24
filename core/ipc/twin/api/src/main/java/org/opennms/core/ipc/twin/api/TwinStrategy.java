@@ -31,8 +31,6 @@ public class TwinStrategy {
 
     public static final String LOG_PREFIX = "ipc";
 
-    private static final String JMS_TWIN_STRATEGY_NAME = "jms";
-
     private static final String KAFKA_TWIN_STRATEGY_NAME = "kafka";
 
     private static final String GRPC_TWIN_STRATEGY_NAME = "grpc";
@@ -40,7 +38,6 @@ public class TwinStrategy {
     private static final String OSGI_TWIN_STRATEGY_NAME = "osgi";
 
     public static enum Strategy {
-        JMS(JMS_TWIN_STRATEGY_NAME, "JMS implementation using Camel"),
         KAFKA(KAFKA_TWIN_STRATEGY_NAME, "Kafka implementation using the Kafka consumer/producer APIs"),
         GRPC(GRPC_TWIN_STRATEGY_NAME, "GRPC implementation using gRPC APIs"),
         OSGI(OSGI_TWIN_STRATEGY_NAME, "OSGI Delegate implementation");
@@ -68,7 +65,7 @@ public class TwinStrategy {
     public static Strategy getTwinStrategy() {
         String effectiveStrategyName = System.getProperty(IPC_STRATEGY);
         if (Strings.isNullOrEmpty(effectiveStrategyName)) {
-            effectiveStrategyName = System.getProperty(TWIN_STRATEGY_PROPERTY, JMS_TWIN_STRATEGY_NAME);
+            effectiveStrategyName = System.getProperty(TWIN_STRATEGY_PROPERTY, GRPC_TWIN_STRATEGY_NAME);
         }
         for (Strategy strategy : Strategy.values()) {
             if (strategy.getName().equalsIgnoreCase(effectiveStrategyName)) {

@@ -30,14 +30,14 @@ else
 fi
 
 # Generate the list of tests to run, based on the files that have been changed
-python3 .circleci/scripts/find-tests/find-tests.py generate-test-lists \
+python3 .cicd-assets/find-tests/find-tests.py generate-test-lists \
       --output-unit-test-classes=target/surefire_classnames \
       --output-integration-test-classes=target/failsafe_classnames \
       .
 
 # Determine the Maven modules related to the tests we want to run
 # (We could technically do this in one step, but we keep it separate to mimic what CI is doing )
-cat target/*_classnames | python3 .circleci/scripts/find-tests/find-tests.py generate-test-modules \
+cat target/*_classnames | python3 .cicd-assets/find-tests/find-tests.py generate-test-modules \
       --output=target/test_projects \
       .
 

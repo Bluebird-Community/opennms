@@ -270,9 +270,19 @@ public class OpennmsGrpcServer extends AbstractMessageConsumerManager implements
                 TracingInfoCarrier tracingInfoCarrier = new TracingInfoCarrier();
                 getTracer().inject(span.context(), Format.Builtin.TEXT_MAP, tracingInfoCarrier);
                 // Tracer adds it's own metadata.
-                tracingInfoCarrier.getTracingInfoMap().forEach(builder::putTracingInfo);
+                tracingInfoCarrier.getTracingInfoMap().forEach((key, value) -> {
+                            if (!Strings.isNullOrEmpty(key) && !Strings.isNullOrEmpty(value)) {
+                                builder.putTracingInfo(key, value);
+                            }
+                        }
+                );
                 //Add custom tags from RpcRequest.
-                request.getTracingInfo().forEach(builder::putTracingInfo);
+                request.getTracingInfo().forEach((key, value) -> {
+                            if (!Strings.isNullOrEmpty(key) && !Strings.isNullOrEmpty(value)) {
+                                builder.putTracingInfo(key, value);
+                            }
+                        }
+                );
             }
         };
     }

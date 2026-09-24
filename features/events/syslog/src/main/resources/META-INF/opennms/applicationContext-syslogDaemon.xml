@@ -38,12 +38,12 @@
         destroy-method="stop" />
 
   <!-- Listen for Syslog message and dispatch them to the Sink API -->
-  <bean id="syslogReceiverCamelNetty" class="org.opennms.netmgt.syslogd.SyslogReceiverCamelNettyImpl" destroy-method="stop">
+  <bean id="syslogReceiverJavaNet" class="org.opennms.netmgt.syslogd.SyslogReceiverJavaNetImpl" destroy-method="stop">
     <constructor-arg  ref="syslogdConfigFactory" />
   </bean>
 
   <bean id="daemon" class="org.opennms.netmgt.syslogd.Syslogd">
-    <property name="syslogReceiver" ref="syslogReceiverCamelNetty" />
+    <property name="syslogReceiver" ref="syslogReceiverJavaNet" />
   </bean>
   
   <bean id="daemonListener" class="org.opennms.netmgt.events.api.AnnotationBasedEventListenerAdapter">

@@ -7,35 +7,28 @@
       <div class="action-container">
         <div class="search-container">
           <FormField>
-            <IconField>
-              <InputText
-                :id="searchId"
-                :modelValue="store.eventsSearchTerm"
-                @update:modelValue="onChangeSearchTerm"
-                data-test="search-input"
-                placeholder="Search by Event UEI or Event Label"
-                :aria-label="'Search by Event UEI or Event Label'"
-              />
-              <InputIcon>
-                <FeatherIcon :icon="Search" />
-              </InputIcon>
-            </IconField>
+            <OnmsSearchInput
+              :input-id="searchId"
+              :modelValue="store.eventsSearchTerm"
+              @update:modelValue="onChangeSearchTerm"
+              data-test="search-input"
+              placeholder="Search by Event UEI or Event Label"
+              :aria-label="'Search by Event UEI or Event Label'"
+            />
           </FormField>
         </div>
         <div class="refresh">
-          <Button
-            text
+          <OnmsIconButton
             title="Refresh"
             data-test="refresh-button"
+            :icon="Refresh"
             @click="store.refreshEventConfigEvents()"
-          >
-            <FeatherIcon :icon="Refresh" />
-          </Button>
+          />
         </div>
       </div>
     </div>
 
-    <DataTable
+    <OnmsTable
       v-if="store.events.length"
       :value="store.events"
       lazy
@@ -53,69 +46,77 @@
       class="data-table"
       data-test="event-config-event-table"
     >
-      <Column
+      <OnmsColumn
         expander
         style="width: 3rem"
       />
-      <Column
+      <OnmsColumn
+        field="eventOrder"
+        sortable
+        style="width: 6rem"
+      >
+        <template #header>
+          <span
+            title="Order in which the events of this source are evaluated: 1 is evaluated first."
+            data-test="order-header"
+          >Order</span>
+        </template>
+      </OnmsColumn>
+      <OnmsColumn
         field="uei"
         header="Event UEI"
         sortable
       />
-      <Column
+      <OnmsColumn
         field="eventLabel"
         header="Event Label"
         sortable
       />
-      <Column
+      <OnmsColumn
         field="severity"
         header="Severity"
         sortable
       >
         <template #body="{ data }">
-          <Tag
+          <OnmsTag
             :class="`${data.severity.toLowerCase()}-color severity`"
             :value="data.severity"
           />
         </template>
-      </Column>
-      <Column
+      </OnmsColumn>
+      <OnmsColumn
         field="enabled"
         header="Status"
         sortable
       >
         <template #body="{ data }">
-          <Tag
+          <OnmsTag
             :class="data.enabled ? 'enabled-tag' : 'disabled-tag'"
             :value="data.enabled ? 'Enabled' : 'Disabled'"
             data-test="status-tag"
           />
         </template>
-      </Column>
-      <Column header="Actions">
+      </OnmsColumn>
+      <OnmsColumn header="Actions">
         <template #body="{ data }">
           <div class="action-container">
-            <Button
-              text
+            <OnmsIconButton
               :title="`Edit ${data.eventLabel}`"
               data-test="edit-button"
+              :icon="Edit"
               @click="onEditEvent(data)"
-            >
-              <FeatherIcon :icon="Edit" />
-            </Button>
-            <Button
-              text
+            />
+            <OnmsIconButton
               aria-haspopup="true"
               aria-controls="event-row-menu"
               title="More Options"
               data-test="row-menu-button"
+              :icon="MenuIcon"
               @click="toggleRowMenu($event, data)"
-            >
-              <FeatherIcon :icon="MenuIcon" />
-            </Button>
+            />
           </div>
         </template>
-      </Column>
+      </OnmsColumn>
       <template #expansion="{ data }">
         <div class="expanded-content">
           <h6>Description:</h6>
@@ -125,13 +126,12 @@
           ></p>
         </div>
       </template>
-    </DataTable>
+    </OnmsTable>
 
-    <Menu
+    <OnmsMenu
       id="event-row-menu"
       ref="rowMenu"
-      :model="rowMenuItems"
-      popup
+      :items="rowMenuItems"
     />
 
     <div v-if="!store.events.length">
@@ -154,21 +154,20 @@ import { useEventConfigDetailStore } from '@/stores/eventConfigDetailStore'
 import { useEventModificationStore } from '@/stores/eventModificationStore'
 import { CreateEditMode } from '@/types'
 import { EventConfigEvent } from '@/types/eventConfig'
-import { FeatherIcon } from '@featherds/icon'
-import Edit from '@featherds/icon/action/Edit'
-import Search from '@featherds/icon/action/Search'
-import MenuIcon from '@featherds/icon/navigation/MoreHoriz'
-import Refresh from '@featherds/icon/navigation/Refresh'
-import Button from 'primevue/button'
-import Column from 'primevue/column'
-import DataTable from 'primevue/datatable'
-import type { DataTablePageEvent, DataTableSortEvent } from 'primevue/datatable'
-import IconField from 'primevue/iconfield'
-import InputIcon from 'primevue/inputicon'
-import InputText from 'primevue/inputtext'
-import type { MenuItem } from 'primevue/menuitem'
-import Menu from 'primevue/menu'
-import Tag from 'primevue/tag'
+import {
+  OnmsColumn,
+  OnmsIconButton,
+  OnmsMenu,
+  OnmsMenuItem,
+  OnmsSearchInput,
+  OnmsTable,
+  OnmsTag,
+  type OnmsTablePageEvent,
+  type OnmsTableSortEvent
+} from '@opennms/onms-ui'
+import Edit from '@opennms/onms-ui/icons/action/Edit.vue'
+import MenuIcon from '@opennms/onms-ui/icons/navigation/MoreHoriz.vue'
+import Refresh from '@opennms/onms-ui/icons/navigation/Refresh.vue'
 import { debounce } from 'lodash'
 import EmptyList from '../Common/EmptyList.vue'
 import FormField from '@/components/Common/FormField.vue'
@@ -187,12 +186,12 @@ const expandedRows = ref<Record<string | number, boolean>>({})
 
 const rowMenu = ref()
 const rowMenuTarget = ref<EventConfigEvent | null>(null)
-const rowMenuItems = computed<MenuItem[]>(() => {
+const rowMenuItems = computed<OnmsMenuItem[]>(() => {
   const target = rowMenuTarget.value
   if (!target) {
     return []
   }
-  const items: MenuItem[] = [
+  const items: OnmsMenuItem[] = [
     {
       label: target.enabled ? 'Disable Event' : 'Enable Event',
       command: () => store.showChangeEventConfigEventStatusDialog(target)
@@ -212,15 +211,15 @@ const toggleRowMenu = (event: Event, eventConfig: EventConfigEvent) => {
   rowMenu.value?.toggle(event)
 }
 
-const onSort = (event: DataTableSortEvent) => {
+const onSort = (event: OnmsTableSortEvent) => {
   if (event.sortField) {
     store.onEventsSortChange(String(event.sortField), event.sortOrder === 1 ? 'asc' : 'desc')
   } else {
-    store.onEventsSortChange('createdTime', 'desc')
+    store.onEventsSortChange('eventOrder', 'asc')
   }
 }
 
-const onPage = (event: DataTablePageEvent) => {
+const onPage = (event: OnmsTablePageEvent) => {
   if (event.rows !== store.eventsPagination.pageSize) {
     store.onEventsPageSizeChange(event.rows)
   } else {
@@ -250,7 +249,7 @@ const onChangeSearchTerm = (value: string | undefined) => {
 </script>
 
 <style lang="scss" scoped>
-@use '@featherds/styles/mixins/typography';
+@use '@/styles/onms-typography' as *;
 @use '@/styles/_severities';
 
 .event-config-event-table {
@@ -267,7 +266,7 @@ const onChangeSearchTerm = (value: string | undefined) => {
       align-items: center;
 
       .title {
-        @include typography.headline3;
+        @include onms-headline3;
       }
     }
 
@@ -291,7 +290,7 @@ const onChangeSearchTerm = (value: string | undefined) => {
   }
 
   .severity {
-    @include typography.caption;
+    @include onms-caption;
   }
 
   .enabled-tag {

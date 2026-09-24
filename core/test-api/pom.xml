@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.opennms</groupId>
     <artifactId>org.opennms.core</artifactId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opennms.core</groupId>
@@ -11,9 +11,7 @@
   <name>OpenNMS :: Core :: Test APIs</name>
   <packaging>pom</packaging>
   <modules>
-    <module>activemq</module>
     <module>alarms</module>
-    <module>camel</module>
     <module>collection</module>
     <module>db</module>
     <module>dns</module>

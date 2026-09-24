@@ -44,13 +44,6 @@
           "roles": null
         },
         {
-          "id": "legacyNodes",
-          "name": "Nodes (Legacy)",
-          "url": "element/nodeList.htm",
-          "locationMatch": "nodelist",
-          "roles": null
-        },
-        {
           "id": "assets",
           "name": "Assets",
           "url": "asset/index.jsp",
@@ -138,20 +131,6 @@
           "roles": null
         },
         {
-          "id": "heatmap",
-          "name": "Heatmap",
-          "url": "heatmap/index.jsp",
-          "locationMatch": "heatmap",
-          "roles": null
-        },
-        {
-          "id": "trend",
-          "name": "Trend",
-          "url": "trend/index.jsp",
-          "locationMatch": "trend",
-          "roles": null
-        },
-        {
           "id": "applications",
           "name": "Application",
           "url": "application/index.jsp",
@@ -173,13 +152,6 @@
           "name": "Reports Main",
           "url": "report/index.jsp",
           "locationMatch": "entries",
-          "roles": null
-        },
-        {
-          "id": "charts",
-          "name": "Charts",
-          "url": "charts/index.jsp",
-          "locationMatch": "chart",
           "roles": null
         },
         {

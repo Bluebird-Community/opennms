@@ -150,7 +150,7 @@ To do so, you need a combination of the `--projects` argument, to tell it what p
 For example, if you just did a clean checkout, and want to work on the code in the `opennms-dao` project, make a note of the artifact ID and then use `-am` like so:
 
 ```bash
-./compile.pl -DskipTests=true --projects :opennms-dao -am install
+make mvn ARGS="-DskipTests=true --projects :opennms-dao -am install"
 ```
 
 The full name of the `opennms-dao` project is `org.opennms:opennms-dao` but as long as the artifact ID is unique, you don't have to bother typing the first part.
@@ -160,7 +160,7 @@ The full name of the `opennms-dao` project is `org.opennms:opennms-dao` but as l
 Alternately, if you've made some changes, and only want to build and/or run tests on the subset of things that depend on your changed project, you can use `-amd` to build anything that depends (even indirectly) on the project you specify:
 
 ```bash
-./compile.pl -t --projects :opennms-dao -amd install
+make mvn ARGS="-DskipITs=false --projects :opennms-dao -amd install"
 ```
 
 #### Build the Bits that Match a Search
@@ -171,7 +171,7 @@ A separate tool wraps it called `tools/development/grep-pom-artifact.sh` which p
 This allows you to do powerful things like, "I just updated the dependency for jdom, rebuild anything that uses jdom to make sure it still passes."
 
 ```bash
-./compile.pl -DskipTests=true --projects `tools/development/grep-pom-artifact.sh -i jdom` install
+make mvn ARGS="-DskipTests=true --projects $(tools/development/grep-pom-artifact.sh -i jdom) install"
 ```
 
 ### Dependency Management
@@ -216,11 +216,11 @@ The build is currently configured to error out if there are dependencies with un
 If the build fails, the easiest thing to do to fix validation is to run:
 
 ```bash
-./compile.pl -DskipTests=true -Denable.license=true -Passemblies -Psmoke install
+make mvn ARGS="-DskipTests=true -Denable.license=true -Passemblies -Psmoke install"
 ```
 
 It will die with an error in the project that needs license validation, and point you to the path of the `THIRD-PARTY.properties` that you need to update to fix it.
-Update that file with the missing licenses, and then re-run your `./compile.pl` command, adding the `-rf <project>` to the end that the failure prompts for continuing your build.
+Update that file with the missing licenses, and then re-run your `make mvn` command, adding the `-rf <project>` to the end that the failure prompts for continuing your build.
 
 It may take a few runs before you catch everything.
 
@@ -344,23 +344,17 @@ If you keep reading back, _that_ bundle was pulled in by a feature called `openn
 Now you can look for the `opennms-dnsresolver-netty` feature in [the `features/container/src/main/resources/` directory](container/src/main/resources/) and fix its dependencies.
 In this particular bit of code, I had some things that wanted version 3+, and some that wanted 2.x, so I reverted our updates to `dnsjava` to version `2.1.9` for our build.
 
-### Future Refactoring: Spring, ActiveMQ, Camel, Oh My!
+### Future Refactoring: Spring, Hibernate, Karaf
 
 There are a bunch of long-term refactoring goals that still need work, to address potential security and other issues.
 
 Our worst Spring and other security issues are handled by us having special backports of security fixes to OpenNMS-specific forks of those jars.
-This helps us in the short-term, but ultimately we need to uplift the core to be using the latest Spring, Hibernate, Karaf, ActiveMQ, and Camel.
+This helps us in the short-term, but ultimately we need to uplift the core to be using the latest Spring, Hibernate, and Karaf.
 
-The unfortunate thing is that a lot of these are cross-dependent, so you can only update them in increments.
-For example, Camel 2.x is the last version that supports Spring 4, if we wanted to move forward, we'd also need to update Spring.
-ActiveMQ is similarly tied to both Spring and Camel.
+Historically these uplifts were badly entangled with Apache Camel and ActiveMQ: Camel 2.x was the last version that supported Spring 4, and ActiveMQ was similarly tied to both Spring and Camel, so any attempt to move Spring forward dragged them along.
+That entanglement is now gone — Apache Camel, ActiveMQ (including the embedded broker), and the JMS IPC transport have been removed entirely, leaving gRPC (the default for Minion) and Kafka as the only IPC transports. Removing the Camel-2/Spring-4 anchor is what unblocks the Spring uplift.
 
-We have taken a number of shots at updating these incrementally, and that work is partially complete, most notably the recent update to Camel.
-We aren't at the _latest_ Camel 2.x, but the only remaining known CVEs exercise Camel code we don't use.
-
-We will need to continue to work on these uplifts, a little at a time.
-First, moving from Spring 4.2.x to 4.3.x (the last attempt had some strange failures, but might be better with some of the recent Karaf work).
-Then, updating ActiveMQ and Camel.
+We will need to continue to work on these uplifts, a little at a time, starting with moving from Spring 4.2.x to 4.3.x (the last attempt had some strange failures, but might be better with some of the recent Karaf work).
 
 Another large thing that will eventually hit us is when it's time to move to the latest servlet and related APIs.
 Whole packages have been moved around (to `jakarta.*`) and a lot of things need to change at once.

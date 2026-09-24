@@ -240,11 +240,6 @@
          <parameter key="port" value="${requisition:port|detector:port|3389}" />
          <parameter key="timeout" value="${requisition:poller-timeout|requisition:timeout|detector:timeout|3000}" />
       </service>
-      <service name="ActiveMQ" interval="300000" user-defined="false" status="on">
-         <parameter key="retry" value="${requisition:poller-retry|requisition:retry|detector:retry|1}" />
-         <parameter key="timeout" value="${requisition:poller-timeout|requisition:timeout|detector:timeout|3000}" />
-         <parameter key="brokerURL" value="${requisition:brokerURL|detector:brokerURL|tcp://localhost:61616}" />
-      </service>
       <service name="MinaSSH" interval="300000" user-defined="false" status="on">
          <parameter key="retry" value="${requisition:poller-retry|requisition:retry|detector:retry|1}" />
          <parameter key="port" value="${requisition:port|detector:port|22}" />
@@ -352,7 +347,6 @@
    <monitor service="JMX-Minion" class-name="org.opennms.netmgt.poller.monitors.Jsr160Monitor" />
    <monitor service="JMX-Kafka" class-name="org.opennms.netmgt.poller.monitors.Jsr160Monitor" />
    <monitor service="MS-RDP" class-name="org.opennms.netmgt.poller.monitors.TcpMonitor" />
-   <monitor service="ActiveMQ" class-name="org.opennms.netmgt.poller.monitors.ActiveMQMonitor" />
    <monitor service="PTP" class-name="org.opennms.netmgt.poller.monitors.PtpMonitor" />
    <monitor service="MinaSSH" class-name="org.opennms.netmgt.poller.monitors.MinaSshMonitor" />
 </poller-configuration>

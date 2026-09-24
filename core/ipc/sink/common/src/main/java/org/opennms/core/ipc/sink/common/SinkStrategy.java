@@ -29,19 +29,19 @@ public class SinkStrategy {
 
     public static final String SINK_STRATEGY_PROPERTY = "org.opennms.core.ipc.sink.strategy";
 
-    private static final String CAMEL_SINK_STRATEGY_NAME = "camel";
-
     private static final String KAFKA_SINK_STRATEGY_NAME = "kafka";
 
     private static final String GRPC_SINK_STRATEGY_NAME = "grpc";
 
     private static final String OSGI_SINK_STRATEGY_NAME = "osgi";
 
+    private static final String LOCAL_SINK_STRATEGY_NAME = "local";
+
     public static enum Strategy {
-        CAMEL(CAMEL_SINK_STRATEGY_NAME, "JMS implementation using Camel"),
         KAFKA(KAFKA_SINK_STRATEGY_NAME, "Kafka implementation using the Kafka consumer/producer APIs"),
         GRPC(GRPC_SINK_STRATEGY_NAME, "GRPC implementation using gRPC APIs"),
-        OSGI(OSGI_SINK_STRATEGY_NAME, "OSGI Delegate implementation");
+        OSGI(OSGI_SINK_STRATEGY_NAME, "OSGI Delegate implementation"),
+        LOCAL(LOCAL_SINK_STRATEGY_NAME, "In-process (broker-free) implementation");
 
         private final String m_name;
         private final String m_descr;
@@ -66,7 +66,7 @@ public class SinkStrategy {
     public static Strategy getSinkStrategy() {
         String effectiveStrategyName = System.getProperty(IPC_STRATEGY);
         if (Strings.isNullOrEmpty(effectiveStrategyName)) {
-            effectiveStrategyName = System.getProperty(SINK_STRATEGY_PROPERTY, CAMEL_SINK_STRATEGY_NAME);
+            effectiveStrategyName = System.getProperty(SINK_STRATEGY_PROPERTY, LOCAL_SINK_STRATEGY_NAME);
         }
         for (Strategy strategy : Strategy.values()) {
             if (strategy.getName().equalsIgnoreCase(effectiveStrategyName)) {

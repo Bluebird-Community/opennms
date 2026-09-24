@@ -36,6 +36,15 @@ public class Init implements Command {
 
     private static final ServiceLoader<Schema> s_schemas = ServiceLoader.load(Schema.class);
 
+    /**
+     * The driver defaults to a 2 second request timeout, which is far too tight for the schema
+     * changes issued here: a cold Cassandra node regularly needs longer to apply DDL and reach
+     * schema agreement. Only applied when no driver settings file is given, and only when the
+     * property is not already set, so explicit configuration always wins.
+     */
+    private static final String REQUEST_TIMEOUT_PROPERTY = "datastax-java-driver.basic.request.timeout";
+    private static final String DEFAULT_REQUEST_TIMEOUT = "60 seconds";
+
     @Option(name="-h", aliases={ "--help" }, help=true)
     boolean showHelp = false;
 
@@ -63,7 +72,10 @@ public class Init implements Command {
         boolean ssl = Boolean.getBoolean("org.opennms.newts.config.ssl");
         String driverSettingsFile = System.getProperty("org.opennms.newts.config.driver-settings-file");
 
-        if (!Strings.isNullOrEmpty(driverSettingsFile)) {
+        if (Strings.isNullOrEmpty(driverSettingsFile)) {
+            if (Strings.isNullOrEmpty(System.getProperty(REQUEST_TIMEOUT_PROPERTY))) {
+                System.setProperty(REQUEST_TIMEOUT_PROPERTY, DEFAULT_REQUEST_TIMEOUT);
+            }
             System.out.printf("Initializing the '%s' keyspace on %s:%d%n", keyspace, hostname, port);
         } else {
             System.out.printf("Initializing the '%s' keyspace with driver settings from: %s%n", keyspace, driverSettingsFile);

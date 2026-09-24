@@ -96,10 +96,6 @@ public class SyslogdImplementationsIT implements InitializingBean {
     @Qualifier("syslogReceiverJavaNet")
     private SyslogReceiver m_java;
 
-    @Autowired
-    @Qualifier("syslogReceiverCamelNetty")
-    private SyslogReceiver m_netty;
-
     @Override
     public void afterPropertiesSet() throws Exception {
         BeanUtils.assertAutowiring(this);
@@ -135,12 +131,6 @@ public class SyslogdImplementationsIT implements InitializingBean {
                 IOUtils.closeQuietly(stream);
             }
         }
-    }
-
-    @Test(timeout=3*60*1000)
-    @Transactional
-    public void testCamelNettyReceiver() throws Exception {
-        doTestSyslogd(m_netty);
     }
 
     @Test(timeout=3*60*1000)

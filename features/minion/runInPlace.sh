@@ -47,7 +47,7 @@ cleanup_and_build() {
   $cmd_prefix rm -rf "${CONTAINERDIR}"/target/minion-karaf-*
 
   # Rebuild - we've already verified that we're in the right folder
-  (cd ../..; compile.pl -DskipNodeJSBuild=true -DskipTests --projects "${BUILD_PREREQUISITES}" install)
+  (cd ../..; ./mvnw -DskipNodeJSBuild=true -DskipTests --projects "${BUILD_PREREQUISITES}" install)
 }
 
 set_instance_specific_configuration() {

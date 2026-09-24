@@ -3,7 +3,7 @@
   <parent>
     <artifactId>opennms</artifactId>
     <groupId>org.opennms</groupId>
-    <version>38.0.2-SNAPSHOT</version>
+    <version>38.1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>opennms-base-assembly</artifactId>
@@ -157,6 +157,38 @@
   </build>
 
   <profiles>
+    <!-- Ships ha-api and ha-daemon into lib/ so the reflective Starter/Manager
+         hooks find the coordinator on the system classpath, plus the etc
+         template. ha-rest/ha-shell are OSGi bundles staged via
+         opennms-full-assembly and deliberately not duplicated here. -->
+    <profile>
+      <id>build-meridian</id>
+      <activation>
+        <property>
+          <name>build.meridian</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.opennms.features.ha-management</groupId>
+          <artifactId>org.opennms.features.ha-management.ha-api</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.opennms.features.ha-management</groupId>
+          <artifactId>org.opennms.features.ha-management.ha-daemon</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <resources>
+          <resource>
+            <filtering>true</filtering>
+            <directory>src/main/filtered-meridian</directory>
+          </resource>
+        </resources>
+      </build>
+    </profile>
     <profile>
       <activation>
         <os><family>!windows</family></os>
@@ -211,10 +243,6 @@
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-alarm-northbounder-drools</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms</groupId>
-      <artifactId>opennms-alarm-northbounder-jms</artifactId>
     </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
@@ -326,10 +354,6 @@
     <dependency>
       <groupId>org.opennms</groupId>
       <artifactId>opennms-detector-jmx</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.opennms</groupId>
-        <artifactId>opennms-detector-jms</artifactId>
     </dependency>
     <dependency>
       <groupId>org.opennms</groupId>
@@ -515,6 +539,11 @@
     <dependency>
       <groupId>org.opennms.core</groupId>
       <artifactId>org.opennms.core.soa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.opennms.container</groupId>
+      <artifactId>org.opennms.container.daemon</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <!-- webapp dependencies -->
     <dependency>
@@ -724,7 +753,7 @@
     </dependency>
     <dependency>
       <groupId>org.opennms.core.ipc.rpc</groupId>
-      <artifactId>org.opennms.core.ipc.rpc.jms-impl</artifactId>
+      <artifactId>org.opennms.core.ipc.rpc.local</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -733,13 +762,8 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.opennms.core.ipc.sink.camel</groupId>
-      <artifactId>org.opennms.core.ipc.sink.camel.client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.core.ipc.sink.camel</groupId>
-      <artifactId>org.opennms.core.ipc.sink.camel.server</artifactId>
+      <groupId>org.opennms.core.ipc.sink</groupId>
+      <artifactId>org.opennms.core.ipc.sink.local</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -765,11 +789,6 @@
     <dependency>
       <groupId>org.opennms.core.ipc.twin.grpc</groupId>
       <artifactId>org.opennms.core.ipc.twin.grpc.publisher</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.core.ipc.twin.jms</groupId>
-      <artifactId>org.opennms.core.ipc.twin.jms.publisher</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -857,13 +876,6 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-    </dependency>
-    <!-- this is a runtime dependency we need at install time -->
-    <dependency>
-      <groupId>org.opennms.dependencies</groupId>
-      <artifactId>javamail-dependencies</artifactId>
-      <scope>runtime</scope>
-      <type>pom</type>
     </dependency>
     <!-- We depend on our JDBC database driver here instead of in the above
          OpenNMS dependencies that use the database because the database is

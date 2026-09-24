@@ -72,7 +72,11 @@ sysctls:
 [source, minion-config.yaml]
 ----
 ---
-broker-url: 'failover:tcp://core-instance-ip:61616'<1>
+ipc:
+  grpc:<1>
+    host: 'core-instance-ip'
+    port: 8990
+
 id: 'my-minion'<2>
 location: 'my-location'<3>
 
@@ -86,9 +90,9 @@ netmgt:
     trapd.listen.port: 1162
 ----
 
-<1> Replace the broker endpoint URL that goes to your {page-component-title} Core instance. If you have ActiveMQ with SSL running, replace `tcp` with `ssl`.
-<2> Replace `my-location` with a location name that represents the remote location where the Minion is running.
-<3> Optional. You can set a unique human-readable Minion identifier; if not set, a unique identifier is generated.
+<1> Replace `core-instance-ip` with the host of the gRPC endpoint on your {page-component-title} Core instance.
+<2> Optional. You can set a unique human-readable Minion identifier; if not set, a unique identifier is generated.
+<3> Replace `my-location` with a location name that represents the remote location where the Minion is running.
 <4> Enable the Syslog listener on the Minion on port 1514/udp.
 <5> Enable the SNMP trap listener on the Minion on port 1162/udp.
 
