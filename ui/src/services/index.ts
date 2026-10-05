@@ -103,7 +103,7 @@ import {
   updateEventNotification,
   validateNotificationRule
 } from './notificationConfigService'
-import { acknowledgeNotice, browseNotices } from './noticesService'
+import { acknowledgeNotification, browseNotifications } from './notificationService'
 import {
   createManagedGroup,
   deleteManagedGroup,
@@ -181,11 +181,11 @@ export default {
   renameManagedUser,
   setManagedUserPassword,
   updateManagedUser,
-  acknowledgeNotice,
+  acknowledgeNotification,
   addDestinationPath,
   addEventNotification,
   applyPathOutage,
-  browseNotices,
+  browseNotifications,
   deleteDestinationPath,
   deleteEventNotification,
   deletePathOutage,

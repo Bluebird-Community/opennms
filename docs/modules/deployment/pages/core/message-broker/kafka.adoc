@@ -12,7 +12,7 @@ org.opennms.core.ipc.sink.initialSleepTime=60000<2>
 org.opennms.core.ipc.kafka.bootstrap.servers=my-kafka-ip-1:9092,my-kafka-ip-2:9092<3>
 ----
 
-<1> Use Kafka for remote producer calls (RPC).
+<1> Use Kafka for remote procedure calls (RPC).
 <2> Ensure that messages are not consumed from Kafka for Sink until the system has fully initialized. Default is 60 seconds.
 <3> Connect to the following Kafka nodes and adjust the IPs or FQDNs with the Kafka port (9092) accordingly.
 
