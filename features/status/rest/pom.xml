@@ -84,6 +84,17 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- mibRestService needs the MIB parser; webapp-rest declares it provided -->
+        <dependency>
+            <groupId>org.opennms.features.mib-compiler</groupId>
+            <artifactId>org.opennms.features.mib-compiler.parser</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jsmiparser</groupId>
+            <artifactId>jsmiparser-api</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.opennms.features.distributed</groupId>
             <artifactId>org.opennms.features.distributed.kv-store.json.postgres</artifactId>
