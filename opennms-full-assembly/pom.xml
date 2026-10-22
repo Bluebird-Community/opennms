@@ -860,6 +860,10 @@
       <classifier>etc</classifier>
     </dependency>
     <dependency>
+      <groupId>com.github.mwiede</groupId>
+      <artifactId>jsch</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.hawt</groupId>
       <artifactId>hawtio-default</artifactId>
       <version>${hawtio.version}</version>
