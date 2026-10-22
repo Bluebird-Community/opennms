@@ -35,9 +35,7 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,17 +45,9 @@ import org.junit.runners.Parameterized.Parameters;
 import org.opennms.core.test.MockLogAppender;
 import org.opennms.netmgt.events.api.EventConstants;
 import org.opennms.netmgt.events.api.LegacyDatetimeFormatter;
-import org.opennms.test.LocaleProviderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * NOTE: if you run this test in Eclipse, it doesn't properly inherit the
- * <code>java.locale.providers=CLDR,COMPAT</code> property from the
- * top-level <code>pom.xml</code> file. You will need to set it manually
- * by specifying <code>java.locale.providers=CLDR,COMPAT</code> in your JUnit
- * run configuration.
- */
 @RunWith(Parameterized.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class EventConstantsTest {
@@ -234,20 +224,6 @@ public class EventConstantsTest {
     private Locale m_defaultLocale;
     private TimeZone m_defaultTimeZone;
 
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-        LocaleProviderUtils.compat();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        try {
-            LocaleProviderUtils.reset();
-        } catch (Exception e) {
-            LOG.debug("reset() returned exception: ", e);
-        }
-    }
-
     @Before
     public void setUp() {
         MockLogAppender.setupLogging();
@@ -262,6 +238,8 @@ public class EventConstantsTest {
         LegacyDatetimeFormatter.FORMATTER_FULL.remove();
         LegacyDatetimeFormatter.FORMATTER_LONG.remove();
         LegacyDatetimeFormatter.FORMATTER_LONG_GMT.remove();
+        LegacyDatetimeFormatter.FORMATTER_COMPAT.remove();
+        LegacyDatetimeFormatter.FORMATTER_COMPAT_US.remove();
         LegacyDatetimeFormatter.FORMATTER_CUSTOM.remove();
         LegacyDatetimeFormatter.FORMATTER_DEFAULT.remove();
     }

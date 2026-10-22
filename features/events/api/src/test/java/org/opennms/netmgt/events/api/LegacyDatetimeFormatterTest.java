@@ -28,31 +28,11 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opennms.test.LocaleProviderUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LegacyDatetimeFormatterTest {
-    private static final Logger LOG = LoggerFactory.getLogger(LegacyDatetimeFormatterTest.class);
     private TimeZone oldZone;
-
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-        LocaleProviderUtils.compat();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        try {
-            LocaleProviderUtils.reset();
-        } catch (Exception e) {
-            LOG.debug("reset() returned exception: ", e);
-        }
-    }
 
     @Before
     public void setUp() {

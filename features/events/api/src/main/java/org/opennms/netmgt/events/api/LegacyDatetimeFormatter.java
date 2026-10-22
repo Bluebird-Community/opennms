@@ -22,12 +22,16 @@
 package org.opennms.netmgt.events.api;
 
 import java.text.DateFormat;
+import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -36,8 +40,8 @@ import java.util.TimeZone;
 
 /**
  * A datetime formatter that attempts to mimic, as closely as possible, formatting in pre-2019 OpenNMS releases.
- * This will not work <em>exactly</em> the same unless you change the <code>-Djava.locale.provider=<code>
- * property during startup to be <code>COMPAT</code> by default.
+ * Those releases formatted with the JRE <code>COMPAT</code> locale provider, which JDK 23 removed.
+ * {@link #FORMATTER_COMPAT} rebuilds that format from CLDR data so old timestamps still parse.
  */
 public class LegacyDatetimeFormatter implements EventDatetimeFormatter {
     public static final ThreadLocal<DateFormat> FORMATTER_FULL = ThreadLocal.withInitial(() -> {
@@ -93,7 +97,31 @@ public class LegacyDatetimeFormatter implements EventDatetimeFormatter {
         return formatter;
     });
 
-    private static final List<ThreadLocal<DateFormat>> preferredOrder = Arrays.asList(FORMATTER_LONG, FORMATTER_CUSTOM, FORMATTER_CUSTOM_LOCALE, FORMATTER_FULL, FORMATTER_DEFAULT);
+    public static final ThreadLocal<DateFormat> FORMATTER_COMPAT = ThreadLocal.withInitial(() -> compatFormatter(Locale.getDefault()));
+
+    /**
+     * <code>COMPAT</code> had no data for most regional English locales (e.g. en_DE) and fell back to US
+     * English, so most legacy timestamps are in this form regardless of the host locale.
+     */
+    public static final ThreadLocal<DateFormat> FORMATTER_COMPAT_US = ThreadLocal.withInitial(() -> compatFormatter(Locale.US));
+
+    private static final List<ThreadLocal<DateFormat>> preferredOrder = Arrays.asList(FORMATTER_LONG, FORMATTER_COMPAT, FORMATTER_COMPAT_US, FORMATTER_CUSTOM, FORMATTER_CUSTOM_LOCALE, FORMATTER_FULL, FORMATTER_DEFAULT);
+
+    /**
+     * The <code>COMPAT</code> provider rendered DateFormat.FULL + DateFormat.LONG as the full date, a space,
+     * then <code>h:mm:ss a z</code> or <code>HH:mm:ss z</code>. CLDR joins date and time differently
+     * (e.g. "at", narrow no-break spaces), so take only the date part from CLDR and add the old time part.
+     * Zone names come from {@link Locale#US} because CLDR lacks short names like "EST" in many locales.
+     */
+    private static DateFormat compatFormatter(final Locale locale) {
+        final String datePattern = DateTimeFormatterBuilder.getLocalizedDateTimePattern(FormatStyle.FULL, null, IsoChronology.INSTANCE, locale);
+        final String timePattern = DateTimeFormatterBuilder.getLocalizedDateTimePattern(null, FormatStyle.LONG, IsoChronology.INSTANCE, locale);
+        final DateFormatSymbols symbols = DateFormatSymbols.getInstance(locale);
+        symbols.setZoneStrings(DateFormatSymbols.getInstance(Locale.US).getZoneStrings());
+        final DateFormat formatter = new SimpleDateFormat(datePattern.replace('\u202f', ' ').replace('\u00a0', ' ') + (timePattern.replaceAll("'[^']*'", "").contains("a") ? " h:mm:ss a z" : " HH:mm:ss z"), symbols);
+        formatter.setLenient(true);
+        return formatter;
+    }
 
     @Override
     public Date parse(final String dateString) throws ParseException {
