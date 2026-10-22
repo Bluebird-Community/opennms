@@ -47,7 +47,7 @@ public class JniRrdStrategyTest {
         String rrdLib = System.getProperty("opennms.library.jrrd");
         if (rrdLib != null && !rrdLib.equals("${opennms.library.jrrd}")) {
             File libFile = new File(rrdLib);
-            if (libFile.exists()) {
+            if (libFile.isFile()) {
                 m_strategy = new JniRrdStrategy();
             } else {
                 System.err.println("System property 'opennms.library.jrrd' points to non-existent file: skipping tests");
@@ -67,7 +67,7 @@ public class JniRrdStrategyTest {
             String rrdtoolBin = System.getProperty("install.rrdtool.bin");
             if (rrdtoolBin != null) {
                 File rrdtoolFile = new File(rrdtoolBin);
-                if (!rrdtoolFile.exists()) {
+                if (!rrdtoolFile.isFile()) {
                     System.err.println(rrdtoolBin + " does not exist");
                     return;
                 }
