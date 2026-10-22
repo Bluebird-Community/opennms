@@ -4,10 +4,18 @@
 
 == System requirements and Dependencies
 
-* Java 21: OpenNMS {page-component-title} requires JDK 21.
+* Java 21 through 25: OpenNMS {page-component-title} runs on JDK 21 and JDK 25. JDK 25 is recommended. Packages and container images now default to JDK 25.
+* Building from source requires JDK 25. The build still emits Java 21 bytecode.
 * PostgreSQL 14 or higher: This version of OpenNMS {page-component-title} requires a supported version of PostgreSQL.
 
 == New features and important changes
+
+=== Locale provider changed from COMPAT to CLDR
+JDK 23 removed the `COMPAT` locale provider that OpenNMS selected with `-Djava.locale.providers=CLDR,COMPAT`.
+OpenNMS now sets `-Djava.locale.providers=CLDR` on every JDK, so JDK 21 and JDK 25 behave the same.
+Event times are still written in ISO 8601.
+Legacy event time strings in the old `COMPAT` format, such as `Thursday, March 10, 2011 10:40:37 PM GMT`, still parse.
+If you set `java.locale.providers` yourself, for example in `opennms.conf` or `EXTRA_JAVA_OPTS`, remove `COMPAT` from it.
 
 === Spring, Hibernate, and Camel platform upgrade
 The core application frameworks have been upgraded to currently supported versions:

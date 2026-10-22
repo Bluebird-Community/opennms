@@ -73,7 +73,7 @@ Components marked with an asterisk are required:
 | {compatible-elasticsearch}
 
 | Java Development Kit *
-| {compatible-javajdk}
+| {compatible-javajdk} (recommended), {compatible-javajdk-min}
 
 | Kafka
 | {compatible-kafka}

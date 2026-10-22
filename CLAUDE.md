@@ -18,7 +18,7 @@ gh pr create ...  # defaults to OpenNMS/opennms
 
 ## Project Overview
 
-BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 38.0.2-SNAPSHOT, licensed under AGPL v3. Java 21 required (enforced range `[21,22)` — bumped from 17 via NMS-19396).
+BluebirdOps is an enterprise-grade open-source network monitoring platform. Version 38.1.1-SNAPSHOT, licensed under AGPL v3. Building requires JDK 25 (enforced range `[25,26)`). The compiler emits Java 21 bytecode (`<release>21</release>`), and the runtime accepts JDK 21 through 25. An `enforceBytecodeVersion` rule fails the build if a shipped dependency carries class files newer than Java 21.
 
 ## Build Commands
 
@@ -29,7 +29,7 @@ The `Makefile` is the front door and wraps all of this with sensible defaults.
 Prefer make targets for whole-tree work, and `make mvn ARGS="..."` for partial builds on a single module.
 The Perl wrappers `compile.pl`, `assemble.pl`, `clean.pl` and `bin/functions.pl` were removed; `make mvn` replaces them.
 
-Prerequisites: Java 21, Docker (+ Compose plugin) for tests, Node 24 + pnpm 10.x for the UI.
+Prerequisites: JDK 25, Docker (+ Compose plugin) for tests, Node 24 + pnpm 10.x for the UI.
 
 Naming: unit tests end in `*Test`, integration tests end in `*IT`, end-to-end tests live in `e2e-tests/`.
 
@@ -127,7 +127,7 @@ The codebase has two structural patterns:
 
 ### Runtime Architecture
 
-OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *above* the legacy webapp in the Spring context hierarchy, so the core is pre-initialized before Karaf extends it. The goal is to remove Karaf OSGi in the future.
+OpenNMS embeds Apache Karaf (4.4.11) as an OSGi container. Karaf is embedded *above* the legacy webapp in the Spring context hierarchy, so the core is pre-initialized before Karaf extends it. The goal is to remove Karaf OSGi in the future.
 
 **Karaf feature files** are in `container/features/src/main/resources/`:
 - `features.xml` — Main features
@@ -141,9 +141,9 @@ OpenNMS embeds Apache Karaf (4.4.9) as an OSGi container. Karaf is embedded *abo
 
 | Layer | Technology |
 |-------|-----------|
-| Language | Java 21 |
+| Language | Java (built with JDK 25, `--release 21`; runs on JDK 21–25) |
 | Build | Apache Maven Wrapper (`./mvnw`, downloads Maven 3.9.14 on demand), Perl wrapper scripts |
-| OSGi Container | Apache Karaf 4.4.9 |
+| OSGi Container | Apache Karaf 4.4.11 |
 | Web Framework | Spring 5.3.x, Spring Security 5.8.x (stock ServiceMix OSGi bundles — the old OpenNMS-patched 4.x fork is gone) |
 | ORM | Hibernate 5.6.15.Final (stock) |
 | REST | Apache CXF 3.6.11 |
@@ -175,7 +175,7 @@ Build output goes to `src/main/dist/` and `src/menu/dist-menu/`. See `ui/copilot
 - **Mocking:** Mockito 3.12.4, PowerMock 2.0.9
 - **BDD:** Spock 2.3 (Groovy)
 - **Integration tests:** Testcontainers 1.19.7, Maven Failsafe plugin
-- **Coverage:** JaCoCo 0.8.9
+- **Coverage:** JaCoCo 0.8.15
 - **UI tests:** Vitest
 
 Run all unit tests for a module:

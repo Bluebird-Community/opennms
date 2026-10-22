@@ -52,11 +52,11 @@ yum -y upgrade opennms
 yum-config-manager --disable opennms-repo-stable-*
 ----
 
-. Upgrade Java 21 to the latest release:
+. Install or upgrade Java 25 (on RHEL 8, which has no OpenJDK 25 package, upgrade Java 21 with `java-21-openjdk*` instead):
 +
 [source, console]
 ----
-yum -y install java-21-openjdk java-21-openjdk-devel
+yum -y install java-25-openjdk java-25-openjdk-devel
 ----
 
 . Use the `runjava` command to set the JVM that {page-component-title} will use:

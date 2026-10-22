@@ -54,11 +54,11 @@ sudo apt-mark hold libopennms-java \
               opennms-db
 ----
 
-. Upgrade Java 21 to the latest release:
+. Install or upgrade Java 25 (on Debian 12, which has no OpenJDK 25 package, upgrade Java 21 with `openjdk-21-*` instead):
 +
 [source, console]
 ----
-apt install openjdk-21-jdk-headless openjdk-21-jre-headless
+apt install openjdk-25-jdk-headless openjdk-25-jre-headless
 ----
 
 . Use the `runjava` command to set the JVM that {page-component-title} will use:
