@@ -17,6 +17,12 @@ Event times are still written in ISO 8601.
 Legacy event time strings in the old `COMPAT` format, such as `Thursday, March 10, 2011 10:40:37 PM GMT`, still parse.
 If you set `java.locale.providers` yourself, for example in `opennms.conf` or `EXTRA_JAVA_OPTS`, remove `COMPAT` from it.
 
+=== XML parser limits pinned to the JDK 21 defaults
+JDK 24 and later ship much stricter XML parser limits in `$JAVA_HOME/conf/jaxp.properties`, for example a 100,000 character limit on general entities.
+Larger configuration files such as event definitions fail to load under those limits.
+OpenNMS now sets the `jdk.xml.*` limits to the JDK 21 built-in defaults on every JDK, so parsing behaves the same on JDK 21 and JDK 25.
+To use stricter limits, override the `-Djdk.xml.*` properties in `opennms.conf` or `EXTRA_JAVA_OPTS`.
+
 === Spring, Hibernate, and Camel platform upgrade
 The core application frameworks have been upgraded to currently supported versions:
 Spring Framework 5.3, Spring Security 5.8, Hibernate 5.6, Hibernate Validator 6.2, and Apache Camel 3.22.

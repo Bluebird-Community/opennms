@@ -57,6 +57,10 @@ EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStack
 # JDK 24+ warns on JNI loads (jicmp, jrrd2, JNA) unless native access is granted
 EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS --enable-native-access=ALL-UNNAMED"
 
+# JDK 24+ ships far stricter XML parser limits in conf/jaxp.properties; pin the JDK 21 built-in defaults
+EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS -Djdk.xml.entityExpansionLimit=64000 -Djdk.xml.totalEntitySizeLimit=50000000 -Djdk.xml.maxGeneralEntitySizeLimit=0"
+EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS -Djdk.xml.maxParameterEntitySizeLimit=1000000 -Djdk.xml.entityReplacementLimit=3000000 -Djdk.xml.elementAttributeLimit=10000 -Djdk.xml.maxElementDepth=0"
+
 # work around a karaf zip bug
 EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS -Djdk.util.zip.disableZip64ExtraFieldValidation=true"
 

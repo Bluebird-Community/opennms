@@ -83,6 +83,11 @@ IFS="$OIFS"
 # JDK 24+ warns on JNI loads (jicmp, jrrd2, JNA) unless native access is granted
 printf -- '--enable-native-access=ALL-UNNAMED '
 
+# JDK 24+ ships far stricter XML parser limits in conf/jaxp.properties and rejects our larger
+# configs (e.g. eventconf); pin the JDK 21 built-in defaults so JDK 21 and 25 parse the same
+printf -- '-Djdk.xml.entityExpansionLimit=64000 -Djdk.xml.totalEntitySizeLimit=50000000 -Djdk.xml.maxGeneralEntitySizeLimit=0 '
+printf -- '-Djdk.xml.maxParameterEntitySizeLimit=1000000 -Djdk.xml.entityReplacementLimit=3000000 -Djdk.xml.elementAttributeLimit=10000 -Djdk.xml.maxElementDepth=0 '
+
 for READ in "${JAVA_READS[@]}"; do
     printf -- '--add-reads %s ' "${READ}"
 done
