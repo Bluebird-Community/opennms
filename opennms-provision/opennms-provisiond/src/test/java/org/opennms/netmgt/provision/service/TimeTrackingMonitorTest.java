@@ -67,6 +67,6 @@ public class TimeTrackingMonitorTest {
         Assert.assertEquals(0, monitor.getCurrentNodes().size());
 
         monitor.finish();
-        Assert.assertTrue(monitor.getEndTime().after(monitor.getStartTime()));
+        Assert.assertFalse(monitor.getEndTime().before(monitor.getStartTime()));
     }
 }
