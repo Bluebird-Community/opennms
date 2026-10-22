@@ -210,7 +210,7 @@ start() {
   -Dgroovy.use.classvalue=true
   -Djava.io.tmpdir=${OPENNMS_HOME}/tmp
   -Dactivemq.data=${OPENNMS_HOME}/var/activemq
-  -Djava.locale.providers=CLDR,COMPAT
+  -Djava.locale.providers=CLDR
   -XX:+StartAttachListener"
   exec ${JAVA_HOME}/bin/java ${OPENNMS_JAVA_OPTS} ${JAVA_OPTS} -jar ${OPENNMS_HOME}/lib/opennms_bootstrap.jar start
 }

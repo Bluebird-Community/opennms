@@ -189,11 +189,11 @@ jobs:
         - X64
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       - name: Cleaning project for quick validation
         run: |
           make validate
@@ -619,11 +619,11 @@ jobs:
         with:
           # find-tests.py needs the baseline_ref commit locally to diff against HEAD
           fetch-depth: 0
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       # make's deps-build gate requires pnpm on PATH, which GitHub-hosted runners lack.
       - name: Set up pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271  # v6.0.9
@@ -714,11 +714,11 @@ jobs:
         with:
           # find-tests.py needs the baseline_ref commit locally to diff against HEAD
           fetch-depth: 0
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       # See the note on unit-tests: deps-build requires pnpm on PATH.
       - name: Set up pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271  # v6.0.9
@@ -817,11 +817,11 @@ jobs:
         - X64
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
@@ -902,11 +902,11 @@ jobs:
         - X64
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
@@ -987,11 +987,11 @@ jobs:
         - X64
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
       - name: Fetch the reactor artifacts built by build-with-smoke-test
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:

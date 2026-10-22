@@ -50,10 +50,10 @@ contents:
 overrides:
   deb:
     recommends:
-      - openjdk-21-jre-headless
+      - openjdk-25-jre-headless | openjdk-21-jre-headless
   rpm:
     recommends:
-      - java-21-openjdk-headless
+      - (java-25-openjdk-headless or java-21-openjdk-headless)
 
 scripts:
   postinstall: packages/pkg-postinst-minion.sh

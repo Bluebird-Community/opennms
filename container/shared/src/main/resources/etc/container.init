@@ -9,8 +9,8 @@ RUNAS="@RUNAS@"
 STOP_RETRIES=10
 STOP_WAIT=5
 PIDFILE="@PIDFILE@"
-JAVA_MIN_VERSION=17.0
-JAVA_MAX_VERSION=21.999
+JAVA_MIN_VERSION=21.0
+JAVA_MAX_VERSION=25.999
 
 export NAME DESC PATH
 
@@ -53,6 +53,9 @@ unset JAVA_OPTS
 
 # always dump heap if we OOM
 EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
+
+# JDK 24+ warns on JNI loads (jicmp, jrrd2, JNA) unless native access is granted
+EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS --enable-native-access=ALL-UNNAMED"
 
 # work around a karaf zip bug
 EXTRA_JAVA_OPTS="$EXTRA_JAVA_OPTS -Djdk.util.zip.disableZip64ExtraFieldValidation=true"

@@ -80,6 +80,9 @@ IFS=","
 printf -- '--add-modules=%s ' "${JAVA_MODULES[*]}"
 IFS="$OIFS"
 
+# JDK 24+ warns on JNI loads (jicmp, jrrd2, JNA) unless native access is granted
+printf -- '--enable-native-access=ALL-UNNAMED '
+
 for READ in "${JAVA_READS[@]}"; do
     printf -- '--add-reads %s ' "${READ}"
 done

@@ -61,7 +61,7 @@ if [[ "${PYROSCOPE_ENABLED,,}" == "true" ]]; then
   export JAVA_OPTS="${JAVA_OPTS} -javaagent:/opt/pyroscope/pyroscope.jar"
 fi
 
-export JAVA_OPTS="$JAVA_OPTS -Djava.locale.providers=CLDR,COMPAT"
+export JAVA_OPTS="$JAVA_OPTS -Djava.locale.providers=CLDR"
 export JAVA_OPTS="$JAVA_OPTS $("${MINION_HOME}/bin/_module_opts.sh")"
 export JAVA_OPTS="$JAVA_OPTS -Dopennms.home=${MINION_HOME}"
 export JAVA_OPTS="$JAVA_OPTS -Djdk.util.zip.disableZip64ExtraFieldValidation=true"
