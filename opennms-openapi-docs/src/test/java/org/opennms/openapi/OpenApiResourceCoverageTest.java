@@ -170,6 +170,6 @@ public class OpenApiResourceCoverageTest {
     }
 
     private static boolean isRepoRoot(final Path dir) {
-        return Files.isRegularFile(dir.resolve("compile.pl")) && Files.isRegularFile(dir.resolve("pom.xml"));
+        return Files.isRegularFile(dir.resolve("mvnw")) && Files.isRegularFile(dir.resolve("pom.xml"));
     }
 }
