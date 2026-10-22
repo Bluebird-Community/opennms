@@ -23,14 +23,26 @@
 import {
   getNodes,
   getNodeById,
-  getNodeOutages,
+  getNodeAlarmStatus,
+  getNodeCriticalPath,
   getNodeIpInterfaces,
   getNodeSnmpInterfaces,
   getNodeAvailabilityPercentage
 } from './nodeService'
 import { getNodeOutageTimeline } from './nodeAvailabilityTimelineService'
+import { getNodeOutages, getOutages } from './outageService'
+import { nodeExistsInRequisition } from './requisitionService'
 import { getCategories } from './categoryService'
 import { getMonitoringLocations } from './monitoringLocationService'
+import {
+  createMonitoringLocation,
+  deleteMonitoringLocation,
+  getApplicationsUsingPerspective,
+  getNodeCountByLocation,
+  getPerspectiveOutageCount,
+  listMonitoringLocations,
+  updateMonitoringLocation
+} from './monitoringLocationAdminService'
 import { getServiceTypes } from './serviceTypes'
 import { getProvisionDService, putProvisionDService } from './configurationService'
 import {
@@ -49,7 +61,7 @@ import { getAliases, getAllCredentials, getCredentialsByAlias, addCredentials, u
 
 import { getAlarms, modifyAlarm } from './alarmService'
 import { getEvents } from './eventService'
-import { getNodeIfServices } from './ifService'
+import { getNodeIfServices, getNodeServicesByName } from './ifService'
 import { getIpInterfaces, getNodeIpInterfaceQuery } from './ipInterfaceService'
 import { getSnmpInterfaces, getNodeSnmpInterfaceQuery } from './snmpInterfaceService'
 import { getFlowGraphUrl } from './flowService'
@@ -67,6 +79,7 @@ import {
   getUsageStatisticsStatus,
   setUsageStatisticsStatus
 } from './usageStatisticsService'
+import { deleteMinion, getCoreVersion, getMinion, getMinionNodeIds, listMinions } from './minionAdminService'
 import { getSystemReportPlugins, getSystemReportFormatters, generateSystemReport } from './systemReportService'
 import { getRequisitionNames, getWsmanConfig, getWsmanDataCollection, getWsmanReadiness, getWsmanStatus, resetWsmanDataCollection, runWsmanReadinessAction, syncWsmanDefinition, updateWsmanConfig, updateWsmanDataCollectionFile } from './wsmanAdminService'
 import {
@@ -105,6 +118,18 @@ import {
 } from './notificationConfigService'
 import { acknowledgeNotification, browseNotifications } from './notificationService'
 import {
+  addGraphToCollection,
+  createGraphCollection,
+  deleteGraphCollection,
+  getGraphCollection,
+  getGraphCollectionTimespans,
+  getGraphCollections,
+  getResolvedGraphCollection,
+  getResolvedSyntheticGraphCollection,
+  reloadGraphCollections,
+  updateGraphCollection
+} from './graphCollectionsService'
+import {
   createManagedGroup,
   deleteManagedGroup,
   getGroupMemberCandidates,
@@ -114,6 +139,11 @@ import {
 } from './groupAdminService'
 
 export default {
+  getMinionNodeIds,
+  getCoreVersion,
+  listMinions,
+  deleteMinion,
+  getMinion,
   search,
   getSystemReportPlugins,
   getSystemReportFormatters,
@@ -124,8 +154,13 @@ export default {
   getEvents,
   modifyAlarm,
   getNodeById,
+  getNodeAlarmStatus,
+  getNodeCriticalPath,
   getNodeOutages,
+  getOutages,
+  nodeExistsInRequisition,
   getNodeIfServices,
+  getNodeServicesByName,
   getIpInterfaces,
   getNodeIpInterfaceQuery,
   getSnmpInterfaces,
@@ -138,6 +173,13 @@ export default {
   getNodeOutageTimeline,
   getCategories,
   getMonitoringLocations,
+  createMonitoringLocation,
+  deleteMonitoringLocation,
+  getApplicationsUsingPerspective,
+  getNodeCountByLocation,
+  getPerspectiveOutageCount,
+  listMonitoringLocations,
+  updateMonitoringLocation,
   getLog,
   getLogs,
   getFile,
@@ -221,5 +263,15 @@ export default {
   resetWsmanDataCollection,
   syncWsmanDefinition,
   updateWsmanConfig,
-  updateWsmanDataCollectionFile
+  updateWsmanDataCollectionFile,
+  addGraphToCollection,
+  createGraphCollection,
+  deleteGraphCollection,
+  getGraphCollection,
+  getGraphCollectionTimespans,
+  getGraphCollections,
+  getResolvedGraphCollection,
+  getResolvedSyntheticGraphCollection,
+  reloadGraphCollections,
+  updateGraphCollection
 }

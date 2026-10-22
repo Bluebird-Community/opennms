@@ -20,27 +20,49 @@
 /// License.
 ///
 
-import { assert, beforeAll, describe, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import useRole from '@/composables/useRole'
 import { useAuthStore } from '@/stores/authStore'
 import { WhoAmIResponse } from '@/types'
 
-const mockWhoAmI = {
-  roles: ['ROLE_ADMIN']
-} as WhoAmIResponse
+const setRoles = (roles: string[], loaded = true) => {
+  const authStore = useAuthStore()
+  authStore.whoAmI = { roles } as WhoAmIResponse
+  authStore.loaded = loaded
+}
 
 describe('useRole test', () => {
-  beforeAll(() => {
+  test('returns role access correctly', () => {
     createTestingPinia()
+    setRoles(['ROLE_PROVISION'])
+
+    const { adminRole, provisionRole, rolesAreLoaded } = useRole()
+    expect(adminRole.value).toBe(false)
+    expect(provisionRole.value).toBe(true)
+    expect(rolesAreLoaded.value).toBe(true)
   })
 
-  test('returns role access correctly', () => {
-    const authStore = useAuthStore()
-    authStore.whoAmI = mockWhoAmI
+  // Each test gets its own pinia; useRole must read the active one, not the first one it ever saw.
+  test('reads the active pinia, not one from an earlier test', () => {
+    createTestingPinia()
+    setRoles(['ROLE_ADMIN'], false)
 
-    const { adminRole, filesystemEditorRole } = useRole()
-    assert.equal(adminRole.value, true)
-    assert.equal(filesystemEditorRole.value, false)
+    const { adminRole, filesystemEditorRole, rolesAreLoaded } = useRole()
+    expect(adminRole.value).toBe(true)
+    expect(filesystemEditorRole.value).toBe(false)
+    expect(rolesAreLoaded.value).toBe(false)
+  })
+
+  test('reacts when the roles load', () => {
+    createTestingPinia()
+
+    const { adminRole, rolesAreLoaded } = useRole()
+    expect(adminRole.value).toBe(false)
+    expect(rolesAreLoaded.value).toBe(false)
+
+    setRoles(['ROLE_ADMIN'])
+    expect(adminRole.value).toBe(true)
+    expect(rolesAreLoaded.value).toBe(true)
   })
 })

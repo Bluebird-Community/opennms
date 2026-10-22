@@ -85,6 +85,7 @@ vi.mock('@/services/topologyService', () => ({
   deleteView: vi.fn().mockResolvedValue(true),
   getNodeSeverities: vi.fn().mockResolvedValue({}),
   getNodeIconIds: vi.fn().mockResolvedValue({}),
+  getNodeIconsAndLocations: vi.fn().mockResolvedValue({ locations: {}, failed: [] }),
   // Returns DiscoveredGraph | false, never null: false is the failure value.
   loadDiscoveredGraph: vi.fn().mockResolvedValue(false),
   listGraphContainers: vi.fn().mockResolvedValue([]),
@@ -140,8 +141,9 @@ const mountPage = async (source = 'custom') => {
 }
 
 const click = async (label: string, scope: ParentNode = document) => {
+  // An icon button has no text; its icon carries the name (OnmsIconButton's title).
   const button = Array.from(scope.querySelectorAll('button'))
-    .find(b => b.textContent?.trim() === label)
+    .find(b => b.textContent?.trim() === label || b.querySelector('svg')?.getAttribute('aria-label') === label)
   expect(button, `no "${label}" button rendered`).toBeTruthy()
   ;(button as HTMLElement).click()
   await flushPromises()
@@ -696,9 +698,14 @@ describe('Topology unsaved changes', () => {
     await untilDirty(wrapper, true)
     expect(wrapper.find('.unsaved-badge').text()).toBe('Unsaved changes')
     expect(wrapper.find('.topology-page').classes()).toContain('is-dirty')
+    // The Save button itself turns red while there is unsaved work.
+    const saveButton = () => Array.from(document.querySelectorAll('button'))
+      .find(b => b.querySelector('svg')?.getAttribute('aria-label') === 'Save')!
+    expect(saveButton().classList).toContain('p-button-danger')
 
     await click('Save')
     await untilDirty(wrapper, false)
+    expect(saveButton().classList).not.toContain('p-button-danger')
   })
 
   it('asks before switching to another view while dirty, and stays when declined', async () => {

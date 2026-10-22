@@ -50,6 +50,7 @@ import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.awaitility.core.ConditionTimeoutException;
 import org.opennms.smoketest.stacks.InternetProtocol;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.NetworkProtocol;
@@ -513,12 +514,18 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
             // in order to give all the health checks a chance to load.
             LOG.info("Waiting for OpenNMS health check...");
             RestHealthClient client = new RestHealthClient(container.getWebUrl(), Optional.of(ALIAS));
-            await("waiting for good health check probe")
-                    .atMost(5, MINUTES)
-                    .pollInterval(10, SECONDS)
-                    .failFast("container is no longer running", () -> !container.isRunning())
-                    .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
-                    .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
+            try {
+                await("waiting for good health check probe")
+                        .atMost(5, MINUTES)
+                        .pollInterval(10, SECONDS)
+                        .failFast("container is no longer running", () -> !container.isRunning())
+                        .ignoreExceptionsMatching((e) -> { return e.getCause() != null && e.getCause() instanceof SocketException; })
+                        .until(client::getProbeHealthResponse, containsString(client.getProbeSuccessMessage()));
+            } catch (ConditionTimeoutException e) {
+                // The probe only says "Oh no, something is wrong"; log which check failed and why.
+                LOG.error("OpenNMS health check never passed. Health detail:\n{}", client.getHealthDetail());
+                throw e;
+            }
             LOG.info("Health check passed.");
 
             container.assertNoKarafDestroy(Paths.get("/opt", ALIAS, "logs", "karaf.log"));

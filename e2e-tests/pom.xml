@@ -48,9 +48,9 @@
     <skip.surefire.tests>false</skip.surefire.tests>
     <skipITs>true</skipITs>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <groovyVersion>3.0.21</groovyVersion>
+    <groovyVersion>3.0.25</groovyVersion>
     <frontendPluginVersion>1.15.1</frontendPluginVersion>
-    <jackson2Version>2.22.1</jackson2Version>
+    <jackson2Version>2.22.3</jackson2Version>
     <!-- jackson-annotations dropped its patch component as of 2.20, so it needs its own property -->
     <jackson2AnnotationsVersion>2.22</jackson2AnnotationsVersion>
     <jersey.version>2.46</jersey.version>

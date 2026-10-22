@@ -26,15 +26,14 @@ import Home from '@/containers/Home.vue'
 import FileEditor from '@/containers/FileEditor.vue'
 import Graphs from '@/components/Resources/Graphs.vue'
 import Resources from '@/components/Resources/Resources.vue'
-import useRole from '@/composables/useRole'
 import useSpinner from '@/composables/useSpinner'
-import { useMenuStore } from '@/stores/menuStore'
 import { ActiveTabs, SnmpLookupEditMode, useSnmpConfigStore } from '@/stores/snmpConfigStore'
-import { computed } from 'vue'
-import { requireRole } from './guards'
+import { requireCondition, requireRole } from './guards'
+import useRole from '@/composables/useRole'
 
-const { adminRole, filesystemEditorRole, snmpRole } = useRole()
-const menuStore = computed(() => useMenuStore())
+// any logged-in user may change graph collections except a read-only one, as on the legacy pages
+const READONLY_GRAPH_COLLECTIONS = 'Read-only users cannot change graph collections.'
+
 const { startSpinner, stopSpinner } = useSpinner()
 
 // for backward compatibility with legacy OpenNMS plugins
@@ -96,25 +95,40 @@ const router = createRouter({
       path: '/file-editor',
       name: 'FileEditor',
       component: FileEditor,
-      beforeEnter: requireRole(filesystemEditorRole, 'No role access to file editor.')
+      beforeEnter: requireRole('filesystemEditorRole', 'No role access to file editor.')
+    },
+    {
+      path: '/distributed-monitoring',
+      name: 'Manage Minions and Locations',
+      component: () => import('@/containers/DistributedMonitoring.vue'),
+      beforeEnter: requireRole('adminRole', 'Must be admin to manage distributed monitoring.')
+    },
+    // the former Manage Minions / Manage Monitoring Locations pages (NMS-20364)
+    {
+      path: '/admin/minions',
+      redirect: { path: '/distributed-monitoring', query: { tab: 'minions' }}
+    },
+    {
+      path: '/admin/monitoring-locations',
+      redirect: { path: '/distributed-monitoring', query: { tab: 'locations' }}
     },
     {
       path: '/configuration',
       name: 'Configuration',
       component: () => import('@/containers/ProvisionDConfig.vue'),
-      beforeEnter: requireRole(adminRole, 'No role access to external requisitions.')
+      beforeEnter: requireRole('adminRole', 'No role access to external requisitions.')
     },
     {
       path: '/logs',
       name: 'Logs',
       component: () => import('@/containers/Logs.vue'),
-      beforeEnter: requireRole(adminRole, 'No role access to logs.')
+      beforeEnter: requireRole('adminRole', 'No role access to logs.')
     },
     {
       path: '/admin/users',
       name: 'Manage Users',
       component: () => import('@/containers/ManageUsers.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to manage users.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to manage users.')
     },
     {
       path: '/notifications',
@@ -125,31 +139,31 @@ const router = createRouter({
       path: '/notifications-config',
       name: 'Notifications Configuration',
       component: () => import('@/containers/NotificationsConfig.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to configure notifications.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to configure notifications.')
     },
     {
       path: '/admin/groups',
       name: 'Manage Groups',
       component: () => import('@/containers/ManageGroups.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to manage groups.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to manage groups.')
     },
     {
       path: '/admin/wsman-config',
       name: 'Manage WS-Man',
       component: () => import('@/containers/ManageWsman.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to manage WS-Man configuration.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to manage WS-Man configuration.')
     },
     {
       path: '/scheduled-outages',
       name: 'Scheduled Outages',
       component: () => import('@/containers/ScheduledOutages.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to manage scheduled outages.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to manage scheduled outages.')
     },
     {
       path: '/scheduled-outages/edit',
       name: 'Edit Scheduled Outage',
       component: () => import('@/containers/ScheduledOutageEditor.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to manage scheduled outages.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to manage scheduled outages.')
     },
     {
       path: '/map',
@@ -229,6 +243,51 @@ const router = createRouter({
       ]
     },
     {
+      path: '/graph-collections',
+      name: 'GraphCollections',
+      component: () => import('@/containers/GraphCollections.vue')
+    },
+    {
+      path: '/graph-collections/new',
+      name: 'GraphCollectionNew',
+      component: () => import('@/containers/GraphCollectionEditor.vue'),
+      beforeEnter: requireCondition(() => useRole().rolesAreLoaded.value, () => !useRole().readOnlyRole.value, READONLY_GRAPH_COLLECTIONS)
+    },
+    {
+      path: '/graph-collections/:id(\\d+)/edit',
+      name: 'GraphCollectionEdit',
+      component: () => import('@/containers/GraphCollectionEditor.vue'),
+      props: true,
+      beforeEnter: requireCondition(() => useRole().rolesAreLoaded.value, () => !useRole().readOnlyRole.value, READONLY_GRAPH_COLLECTIONS)
+    },
+    {
+      // A collection built on the fly for a node (by id, by foreignSource:foreignId, or by domain),
+      // one graph per SNMP interface; nothing is stored. The static segment outranks :id below.
+      path: '/graph-collections/node/:nodeId([1-9]\\d*)',
+      name: 'GraphCollectionNode',
+      component: () => import('@/containers/GraphCollectionView.vue'),
+      props: route => ({ kind: 'node', source: route.params.nodeId })
+    },
+    {
+      path: '/graph-collections/nodeSource/:nodeSource',
+      name: 'GraphCollectionNodeSource',
+      component: () => import('@/containers/GraphCollectionView.vue'),
+      props: route => ({ kind: 'nodeSource', source: route.params.nodeSource })
+    },
+    {
+      path: '/graph-collections/domain/:domain',
+      name: 'GraphCollectionDomain',
+      component: () => import('@/containers/GraphCollectionView.vue'),
+      props: route => ({ kind: 'domain', source: route.params.domain })
+    },
+    {
+      // ids start at 0 in ksc-performance-reports.xml, so 0 is a real collection here
+      path: '/graph-collections/:id(\\d+)',
+      name: 'GraphCollectionView',
+      component: () => import('@/containers/GraphCollectionView.vue'),
+      props: true
+    },
+    {
       path: '/open-api',
       name: 'OpenAPI',
       component: () => import('@/containers/OpenAPI.vue')
@@ -237,31 +296,31 @@ const router = createRouter({
       path: '/scv',
       name: 'SCV',
       component: () => import('@/containers/SecureCredentialsVault.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to access SCV.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to access SCV.')
     },
     {
       path: '/system-report',
       name: 'Generate System Report',
       component: () => import('@/containers/SystemReport.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to generate a system report.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to generate a system report.')
     },
     {
       path: '/snmp-config',
       name: 'SNMP Config',
       component: () => import('@/containers/SnmpConfiguration.vue'),
-      beforeEnter: requireRole(snmpRole, snmpRoleMsg)
+      beforeEnter: requireRole('snmpRole', snmpRoleMsg)
     },
     {
       path: '/snmp-config/lookup',
       name: 'SNMP Config Lookup',
       component: () => import('@/containers/SnmpConfiguration.vue'),
-      beforeEnter: [requireRole(snmpRole, snmpRoleMsg), enterSnmpLookupMode]
+      beforeEnter: [requireRole('snmpRole', snmpRoleMsg), enterSnmpLookupMode]
     },
     {
       path: '/usage-statistics',
       name: 'Usage Statistics',
       component: () => import('@/containers/UsageStatistics.vue'),
-      beforeEnter: requireRole(adminRole, 'Must be admin to access Usage Statistics.')
+      beforeEnter: requireRole('adminRole', 'Must be admin to access Usage Statistics.')
     },
     {
       path: '/event-config',
@@ -298,6 +357,18 @@ const router = createRouter({
       path: '/trapd-config',
       name: 'Trapd Configuration',
       component: () => import('@/containers/TrapdConfiguration.vue')
+    },
+    {
+      path: '/mib-compiler',
+      name: 'MIB Compiler',
+      component: () => import('@/containers/MibCompiler.vue'),
+      beforeEnter: requireRole('adminRole', 'No role access to the MIB compiler.')
+    },
+    {
+      path: '/mib-compiler/edit',
+      name: 'Edit MIB File',
+      component: () => import('@/containers/EditMibFile.vue'),
+      beforeEnter: requireRole('adminRole', 'No role access to the MIB compiler.')
     },
     {
       path: '/:pathMatch(.*)*', // catch other paths and redirect

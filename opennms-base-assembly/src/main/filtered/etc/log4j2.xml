@@ -284,7 +284,6 @@
       <DynamicThresholdFilter key="prefix" defaultThreshold="DEBUG">
         <!-- always leave instrumentation logging at INFO -->
         <KeyValuePair key="instrumentation"      value="INFO" />
-        <KeyValuePair key="access-point-monitor" value="DEBUG" />
         <KeyValuePair key="alarmd"               value="DEBUG" />
         <KeyValuePair key="archiver"             value="DEBUG" />
         <KeyValuePair key="collectd"             value="DEBUG" />

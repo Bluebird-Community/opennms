@@ -62,8 +62,9 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         WebElement foundElement = null;
 
         // Dashboards Menu
+        // the Vue Graph Collections page (ui/index.html#/graph-collections)
         clickMenuItem("Dashboards", "Graph Collections");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Customized Reports']")));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@id='app']//div[contains(@class, 'card-title') and normalize-space(text())='Graph Collections']")));
         frontPage();
 
         // Inventory Menu
@@ -108,15 +109,13 @@ public class MenuHeaderIT extends OpenNMSSeleniumIT {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@id='app']//h2[text()='Custom Performance Graphs']")));
 
         // Distributed Monitoring
-        clickMenuItem("Distributed Monitoring", "Manage Minions");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Manage Minions')]")));
+        // the Minions and Monitoring Locations tabs share one /ui (Vue) page
+        clickMenuItem("Distributed Monitoring", "Manage Minions and Locations");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@id='app']//h1[@class='page-title' and normalize-space(text())='Manage Minions and Locations']")));
 
         clickMenuItem("Distributed Monitoring", "Manage Applications");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Applications')]")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='card-header']/span[text()='Applications']")));
-
-        clickMenuItem("Distributed Monitoring", "Manage Monitoring Locations");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ol[@class='breadcrumb']/li[contains(text()[normalize-space()], 'Monitoring Locations')]")));
 
         // Manage Inventory Menu
         clickMenuItem("Manage Inventory", "Provisioning Requisitions");
