@@ -152,6 +152,13 @@ public class DataCollectionConfigParser {
      * Read all XML files from datacollection directory and parse them to create a list of DatacollectionGroup objects.
      */
     protected void parseExternalResources() {
+        // A blank directory means "no external resources". Since JDK 24, new File("") is the
+        // current directory and exists, so it has to be rejected before it reaches File.
+        if (configDirectory == null || configDirectory.isBlank()) {
+            LOG.info("parseExternalResources: no configuration directory set.");
+            return;
+        }
+
         // Check configuration files repository
         File folder = new File(configDirectory);
         if (!folder.exists() || !folder.isDirectory()) {
