@@ -51,10 +51,6 @@ import org.opennms.features.scv.utils.ScvUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
-
 /**
  * <p>This {@link Controller} class is used to interact with a Manager
  * MBean running inside an OpenNMS JMX service. This class can invoke operations
@@ -365,65 +361,14 @@ public class Controller {
             return m_jmxUrl;
         }
 
-        VirtualMachine vm = null;
-
-        final StringBuilder vmNames = new StringBuilder();
-        boolean first = true;
-
-        // Use the Attach API to enumerate all of the JVMs that are running as the same
-        // user on this machine
-        VirtualMachineDescriptor foundVm = null;
-        for (VirtualMachineDescriptor vmDescr : VirtualMachine.list()) {
-            if (!first) {
-                vmNames.append(", ");
-            }
-            vmNames.append("\"" + vmDescr.displayName() + "\"");
-            first = false;
-
-            if (vmDescr.displayName().contains(OPENNMS_JVM_DISPLAY_NAME_SUBSTRING)) {
-                foundVm = vmDescr;
-            }
-        }
-
-        if (foundVm == null) {
-            LOG.debug("Could not find OpenNMS JVM (\"" + OPENNMS_JVM_DISPLAY_NAME_SUBSTRING + "\") among JVMs (" + vmNames + ")");
-        } else {
-            try {
-                vm = VirtualMachine.attach(foundVm);
-                LOG.debug("Attached to OpenNMS JVM: " + foundVm.id() + " (" + foundVm.displayName() + ")");
-            } catch (AttachNotSupportedException e) {
-                // This exception is unexpected so log a warning
-                LOG.warn("Cannot attach to OpenNMS JVM", e);
-            } catch (IOException e) {
-                // This exception is unexpected so log a warning
-                LOG.warn("IOException when attaching to OpenNMS JVM", e);
-            }
-        }
-
-        if (vm == null) {
-            if (m_pid == null) {
-                LOG.debug("No PID specified for OpenNMS JVM");
-            } else {
-                try {
-                    vm = VirtualMachine.attach(m_pid);
-                    LOG.debug("Attached to OpenNMS JVM with PID: " + m_pid);
-                } catch (AttachNotSupportedException e) {
-                    // This exception is unexpected so log a warning
-                    LOG.warn("Cannot attach to OpenNMS JVM at PID: " + m_pid, e);
-                } catch (IOException e) {
-                    // This exception will occur if the PID cannot be found
-                    // because the process has been terminated
-                    LOG.debug("IOException when attaching to OpenNMS JVM at PID: " + m_pid + ": " + e.getMessage());
-                }
-            }
-        }
-
-        if (vm == null) {
+        // AttachJmxUrl holds every com.sun.tools.attach reference, so this class still
+        // loads on a JRE without jdk.attach; it is only touched after the check above.
+        final String url = AttachJmxUrl.find(OPENNMS_JVM_DISPLAY_NAME_SUBSTRING, m_pid);
+        if (url == null) {
             LOG.debug("Could not attach to JVM, falling back to JMX over RMI");
             return m_jmxUrl;
-        } else {
-            return getJmxUriFromVirtualMachine(vm);
         }
+        return url;
     }
 
     /**
@@ -435,37 +380,6 @@ public class Controller {
         m_jmxUrl = jmxUrl;
     }
  
-    private static String getJmxUriFromVirtualMachine(VirtualMachine vm) {
-        String connectorAddress = null;
-        try {
-            // Get the local JMX connector URI
-            connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
-        } catch (IOException e) {
-            throw new IllegalStateException("IOException when fetching JMX URI from JVM with ID: " + vm.id(), e);
-        }
-
-        // If there is no local JMX connector URI, we need to launch the
-        // JMX agent via this VirtualMachine attachment.
-        if (connectorAddress == null) {
-            LOG.info("Starting local management agent in JVM with ID: " + vm.id());
-
-            try {
-                vm.startLocalManagementAgent();
-            } catch (IOException e) {
-                throw new IllegalStateException("IOException when starting local JMX management agent in JVM with ID: " + vm.id(), e);
-            }
-
-            // Agent is started, get the connector address
-            try {
-                connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
-            } catch (IOException e) {
-                throw new IllegalStateException("IOException when fetching JMX URI from JVM with ID: " + vm.id(), e);
-            }
-        }
-
-        return connectorAddress;
-    }
-
     public String getPid() {
         return m_pid;
     }

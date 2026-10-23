@@ -233,7 +233,8 @@ runConfd() {
     mkdir -p "$dirToCreate"
   done < "$CONFD_CONFIG_DIR"/directories
 
-  "$CONFD_BIN" -onetime -config-file "$CONFD_CONFIG_FILE"
+  # confd 0.41+ takes the backend as a command and ignores backend/file in confd.toml
+  "$CONFD_BIN" --onetime --config-file "$CONFD_CONFIG_FILE" file --file "$CONFD_KEY_STORE"
 }
 
 # Order of precedence is (later overwrites former):

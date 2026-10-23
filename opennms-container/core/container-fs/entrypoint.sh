@@ -120,7 +120,8 @@ configTester() {
 
 processConfdTemplates() {
   echo "Processing confd templates using /etc/confd/confd.toml"
-  confd -onetime
+  # confd 0.41+ takes the backend as a command; the backend key in confd.toml is ignored
+  confd --onetime env
 }
 
 # Initialize database and configure Karaf
