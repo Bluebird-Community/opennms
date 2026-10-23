@@ -22,6 +22,7 @@
 package org.opennms.netmgt.vmmgr;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
@@ -31,6 +32,7 @@ import java.util.Properties;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
+import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -316,9 +318,16 @@ public class Controller {
     }
 
     public Object doInvokeOperation(String operation) throws MalformedURLException, IOException, InstanceNotFoundException, MalformedObjectNameException, MBeanException, ReflectionException, NullPointerException {
+        final ObjectName manager = ObjectName.getInstance("OpenNMS:Name=Manager");
+        // Inside the OpenNMS JVM (e.g. the info REST service) the Manager MBean is local, so
+        // neither the Attach API (absent on a JRE) nor JMX over RMI is needed.
+        final MBeanServer localServer = ManagementFactory.getPlatformMBeanServer();
+        if (localServer.isRegistered(manager)) {
+            return localServer.invoke(manager, operation, new Object[0], new String[0]);
+        }
         try (JMXConnector connector = JMXConnectorFactory.connect(new JMXServiceURL(getJmxUrl()))) {
             MBeanServerConnection connection = connector.getMBeanServerConnection();
-            return connection.invoke(ObjectName.getInstance("OpenNMS:Name=Manager"), operation, new Object[0], new String[0]);
+            return connection.invoke(manager, operation, new Object[0], new String[0]);
         }
     }
 

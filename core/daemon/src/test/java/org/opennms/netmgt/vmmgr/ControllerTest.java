@@ -34,7 +34,13 @@ import org.opennms.features.scv.api.Credentials;
 import org.opennms.features.scv.jceks.JCEKSSecureCredentialsVault;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
+import java.util.List;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.management.StandardMBean;
 
 public class ControllerTest {
     @Rule
@@ -59,6 +65,27 @@ public class ControllerTest {
     @After
     public void runTest() throws Throwable {
         MockLogAppender.assertNoWarningsOrGreater();
+    }
+
+    public interface FakeManager {
+        List<String> status();
+    }
+
+    @Test
+    public void testInvokeOperationOnLocalManagerMBean() throws Exception {
+        // Inside the OpenNMS JVM (e.g. the info REST service) the Manager MBean is in the platform
+        // MBean server; Controller must use it directly instead of attach or JMX over RMI.
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName name = ObjectName.getInstance("OpenNMS:Name=Manager");
+        final FakeManager manager = () -> List.of("Status: OpenNMS:Name=Eventd = RUNNING");
+        server.registerMBean(new StandardMBean(manager, FakeManager.class), name);
+        try {
+            final Controller controller = new Controller();
+            controller.setJmxRmiUrl("service:jmx:rmi:///jndi/rmi://127.0.0.1:1/jmxrmi");
+            Assert.assertEquals(List.of("Status: OpenNMS:Name=Eventd = RUNNING"), controller.doInvokeOperation("status"));
+        } finally {
+            server.unregisterMBean(name);
+        }
     }
 
     @Test
