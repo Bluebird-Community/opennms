@@ -74,6 +74,21 @@ JAVA_PATCHES=(
     "java.xml=${KARAF_HOME}/lib/endorsed/org.apache.karaf.specs.java.xml-${karafVersion}.jar"
 )
 
+# A JRE (e.g. the Temurin JRE in deploy-base) lacks jdk.attach and jdk.jdi, and an unknown
+# module in --add-modules stops the JVM, so pass only modules the target JVM has.
+# Unknown modules in --add-exports/--add-opens/--add-reads only print a warning.
+JAVA_FOR_MODULES="${JAVA:-${JAVA_HOME:+${JAVA_HOME}/bin/}java}"
+AVAILABLE_MODULES="$("$JAVA_FOR_MODULES" --list-modules 2>/dev/null | sed -e 's/@.*//')"
+if [ -n "$AVAILABLE_MODULES" ]; then
+    PRESENT_MODULES=()
+    for MODULE in "${JAVA_MODULES[@]}"; do
+        if printf '%s\n' "$AVAILABLE_MODULES" | grep -qx "$MODULE"; then
+            PRESENT_MODULES+=("$MODULE")
+        fi
+    done
+    JAVA_MODULES=("${PRESENT_MODULES[@]}")
+fi
+
 # Java 9+, add required modules
 OIFS="$IFS"
 IFS=","

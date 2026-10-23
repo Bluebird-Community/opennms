@@ -256,7 +256,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-21.b27
+      image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-25.b41
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
@@ -285,7 +285,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-21.b27
+      image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-25.b41
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
@@ -314,7 +314,7 @@ jobs:
       - e2e-tests-sentinel
     runs-on: ubuntu-latest
     container:
-      image: quay.io/bluebird/java-builder:ubuntu.0.2.0.jdk-21.b27
+      image: quay.io/bluebird/java-builder:ubuntu.0.3.0.jdk-25.b41
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0

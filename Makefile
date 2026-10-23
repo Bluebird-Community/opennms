@@ -68,7 +68,7 @@ MAINTAINER_EMAIL      ?= maintainer@bluebirdops.org
 ARCH                  ?= amd64
 
 INSTALL_VERSION       := ${OPENNMS_VERSION}-${RELEASE_COMMIT}
-DEPLOY_BASE_IMAGE     := quay.io/bluebird/deploy-base:5.0.0.b46
+DEPLOY_BASE_IMAGE     := quay.io/bluebird/deploy-base:6.0.0.b49
 BUILD_DATE            := $(shell date '+%Y%m%d')
 OCI_PLATFORM          := linux/$(shell uname -m)
 OCI_REGISTRY          ?= quay.io
