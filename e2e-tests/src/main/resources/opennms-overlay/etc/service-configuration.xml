@@ -9,7 +9,7 @@
   <service><name>OpenNMS:Name=Notifd</name></service>
   <service><name>OpenNMS:Name=Rtcd</name></service>
   <service><name>OpenNMS:Name=Pollerd</name></service>
-  <service enabled="false"><name>OpenNMS:Name=SnmpPoller</name></service>
+  <service enabled="${env:CORE_SERVICE_SNMPPOLLER_ENABLED|false}"><name>OpenNMS:Name=SnmpPoller</name></service>
   <service><name>OpenNMS:Name=Collectd</name></service>
   <service><name>OpenNMS:Name=Discovery</name></service>
   <service><name>OpenNMS:Name=Vacuumd</name></service>

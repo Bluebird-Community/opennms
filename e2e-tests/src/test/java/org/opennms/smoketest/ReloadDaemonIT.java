@@ -47,7 +47,15 @@ public class ReloadDaemonIT {
     private static final Logger LOG = LoggerFactory.getLogger(ReloadDaemonIT.class);
 
     @ClassRule
-    public static final OpenNMSStack stack = OpenNMSStack.MINIMAL;
+    public static final OpenNMSStack stack = createStack();
+
+    private static OpenNMSStack createStack() {
+        final OpenNMSStack stack = OpenNMSStack.minimal();
+        // SnmpPoller is in DaemonReloadEnum but disabled by default; a daemon that is not
+        // running never answers reloadDaemonConfig, so enable it to reload every listed daemon.
+        stack.opennms().withEnv("CORE_SERVICE_SNMPPOLLER_ENABLED", "true");
+        return stack;
+    }
 
     @Test
     public void reloadDaemonTest() throws Exception {
