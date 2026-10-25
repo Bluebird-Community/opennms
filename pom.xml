@@ -1244,6 +1244,8 @@
          </execution>
          <execution>
            <id>enforce-bytecode-version</id>
+           <!-- not validate: the rule resolves sibling jars, which only exist once the reactor has built them -->
+           <phase>verify</phase>
            <goals>
              <goal>enforce</goal>
            </goals>
