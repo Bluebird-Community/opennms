@@ -76,6 +76,7 @@ core/web-assets/.eslintcache
 *.versionsBackup
 
 # AI tool working directories
+.agent/
 .agents/
 .claude/
 _bmad/
