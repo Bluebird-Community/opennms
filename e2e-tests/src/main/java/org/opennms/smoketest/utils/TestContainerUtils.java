@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -71,6 +72,22 @@ public class TestContainerUtils {
         // say this is equal to the cpu-period set above, then the container can use 1 CPU at 100%
         // if this is 2x the cpu-period. then the container can use 2 CPUs at 100%, and so on...
         hostConfig.withCpuQuota(hostConfig.getCpuPeriod() * NUM_CPUS_PER_CONTAINER);
+    }
+
+    /**
+     * Keeps the kernel's ephemeral port range below the fixed telemetry listener ports (50000-50002).
+     * Linux hands out 32768-60999 by default, so a UDP client socket the container opens while starting
+     * up (SNMP, DNS) can land on a listener port before the listener binds it. The listener then fails
+     * with "Address already in use" and the container never passes its health check.
+     *
+     * @param cmd reference to the create container command, obtain with withCreateContainerCmdModifier
+     */
+    public static void setEphemeralPortRangeBelowListeners(CreateContainerCmd cmd) {
+        HostConfig hostConfig = cmd.getHostConfig();
+        if (hostConfig == null) {
+            hostConfig = new HostConfig();
+        }
+        hostConfig.withSysctls(Map.of("net.ipv4.ip_local_port_range", "32768 49999"));
     }
 
     /**

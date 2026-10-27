@@ -182,6 +182,7 @@ public class OpenNMSContainer extends GenericContainer<OpenNMSContainer> impleme
         withExposedPorts(exposedPorts)
                 .withCreateContainerCmdModifier(createCmd -> {
                     TestContainerUtils.setGlobalMemAndCpuLimits(createCmd);
+                    TestContainerUtils.setEphemeralPortRangeBelowListeners(createCmd);
                     // The framework doesn't support exposing UDP ports directly, so we use this hook to map some of the exposed ports to UDP
                     TestContainerUtils.exposePortsAsUdp(createCmd, exposedUdpPorts);
                     // Use the generated UID and known GID when simulating OpenShift

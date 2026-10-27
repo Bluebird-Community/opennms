@@ -116,6 +116,7 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
         withExposedPorts(tcpPorts)
                 .withCreateContainerCmdModifier(createCmd -> {
                     TestContainerUtils.setGlobalMemAndCpuLimits(createCmd);
+                    TestContainerUtils.setEphemeralPortRangeBelowListeners(createCmd);
                     TestContainerUtils.exposePortsAsUdp(createCmd, udpPorts);
                 })
                 .withEnv("OPENNMS_HTTP_USER", "admin")
