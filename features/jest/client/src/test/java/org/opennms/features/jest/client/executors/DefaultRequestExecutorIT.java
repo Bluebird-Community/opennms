@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
@@ -58,7 +57,6 @@ public class DefaultRequestExecutorIT {
     @Test
     public void verifyKeepsTryingIndefinetly() throws ExecutionException {
         final ExecutorService executorService = Executors.newFixedThreadPool(1);
-        final AtomicLong startTime = new AtomicLong(0);
 
         // Create client manually, as we want to spy on it
         final JestClientFactory factory = new JestClientFactory();
@@ -69,7 +67,6 @@ public class DefaultRequestExecutorIT {
         // action to run, we need this to interrupt it after n-seconds
         final Runnable runMe = () -> {
             try {
-                startTime.set(System.currentTimeMillis());
                 try {
                     final Map<String, String> object = new HashMap<>();
                     object.put("name", "Ulf");
@@ -84,6 +81,8 @@ public class DefaultRequestExecutorIT {
                 throw Throwables.propagate(e);
             }
         };
+        // Take the start time before submitting, so the 10 second wait below is fully contained in the measured interval
+        final long startTime = System.nanoTime();
         final Future<?> future = executorService.submit(runMe);
         try {
             // Interrupt Thread after 10 seconds
@@ -95,7 +94,7 @@ public class DefaultRequestExecutorIT {
             // Verify re-trying
             // Cooldown is 1 second, therefore the invocation should be ~10 times, but may be less, therefore we do not check
             // Verify that we actually cooled down between retries
-            long executionTime = System.currentTimeMillis() - startTime.get();
+            long executionTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
             long expectedExecutionTime = 10 * 1000;
             Assert.assertThat(executionTime, CoreMatchers.allOf(
                     Matchers.greaterThanOrEqualTo(expectedExecutionTime)));
