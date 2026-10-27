@@ -24,12 +24,14 @@ import NotificationsConfigTabs from '@/components/Notifications/NotificationsCon
 import { useNotificationConfigStore } from '@/stores/notificationConfigStore'
 import { OnmsTabs } from '@opennms/onms-ui'
 import { createTestingPinia } from '@pinia/testing'
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises, mount, VueWrapper } from '@vue/test-utils'
 import PrimeVue from 'primevue/config'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useRoute } from 'vue-router'
 
 vi.mock('vue-router', () => ({ useRoute: vi.fn() }))
+
+let wrapper: VueWrapper<any> | undefined
 
 const mountTabs = async (query: Record<string, string>) => {
   vi.mocked(useRoute).mockReturnValue({ query } as never)
@@ -40,7 +42,7 @@ const mountTabs = async (query: Record<string, string>) => {
   store.getDestinationPaths = ok
   store.getPathOutages = ok
 
-  const wrapper = mount(NotificationsConfigTabs, {
+  wrapper = mount(NotificationsConfigTabs, {
     global: {
       plugins: [pinia, PrimeVue],
       stubs: { EventNotificationsTab: true, DestinationPathsTab: true, PathOutagesTab: true }
@@ -53,6 +55,15 @@ const mountTabs = async (query: Record<string, string>) => {
 
 // Only the opening tab is covered here: which one a link can ask for.
 describe('NotificationsConfigTabs.vue opening tab', () => {
+  afterEach(() => {
+    // Unmount so PrimeVue TabList's template refs are cleared before its
+    // orphaned mounted() setTimeout(updateInkBar, 150) fires. Without this the
+    // timer outlives the test file and runs against the torn-down happy-dom
+    // environment, throwing "HTMLElement is not defined" (flaky on CI).
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
   it('opens on Event Notifications by default', async () => {
     const { wrapper } = await mountTabs({})
 
