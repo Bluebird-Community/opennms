@@ -72,7 +72,6 @@ public class PollableServiceConfigMetricsTest {
                 .withAdaptor(any())
                 .withAdaptor(any())
                 .withAdaptor(any())
-                .withAdaptor(any())
                 .withPatternVariables(any())
                 .execute())
                 .thenReturn(CompletableFuture.completedFuture(response))
