@@ -22,7 +22,6 @@
       "id": "inventoryMenu",
       "name": "Inventory",
       "url": "#",
-      "locationMatch": null,
       "icon": "network/Inventory",
       "roles": null,
       "items": [
@@ -30,7 +29,6 @@
           "id": "nodes",
           "name": "Nodes",
           "url": "ui/index.html#/nodes",
-          "locationMatch": "configurationManagement",
           "roles": null
         }
       ]
@@ -40,7 +38,6 @@
       "name": "Geographical Map",
       "url": "ui/index.html#/map",
       "action": "link",
-      "locationMatch": "geographical",
       "icon": "action/Location",
       "roles": null,
       "items": null
@@ -52,7 +49,6 @@
       "id": "administrationMenu",
       "name": "Administration",
       "url": "#",
-      "locationMatch": null,
       "icon": "network/Configuration",
       "roles": null,
       "items": [
@@ -60,7 +56,6 @@
           "id": "configureOpenNms",
           "name": "Configure OpenNMS",
           "url": "admin/index.jsp",
-          "locationMatch": null,
           "icon": "network/Configuration",
           "roles": ["ROLE_ADMIN"]
         },
@@ -68,7 +63,6 @@
           "id": "flowClassification",
           "name": "Flow Classification",
           "url": "admin/classification/index.jsp",
-          "locationMatch": null,
           "roles": ["ROLE_ADMIN", "ROLE_FLOW_MANAGER"]
         }
       ]
@@ -77,7 +71,6 @@
       "id": "integrationsMenu",
       "name": "Integrations",
       "url": "#",
-      "locationMatch": null,
       "icon": "network/ApiEndpoints",
       "roles": null,
       "items": [
@@ -85,21 +78,18 @@
           "id": "snmpAgentConfiguration",
           "name": "SNMP Agent Configuration",
           "url": "ui/index.html#/snmp-config",
-          "locationMatch": "",
           "roles": null
         },
         {
           "id": "externalRequisitions",
           "name": "External Requisitions",
           "url": "ui/index.html#/configuration",
-          "locationMatch": "configurationManagement",
           "roles": ["ROLE_ADMIN"]
         },
         {
           "id": "geocodingServices",
           "name": "Geocoding Services",
           "url": "admin/geoservice/index.jsp",
-          "locationMatch": "",
           "roles": null
         }
       ]
@@ -112,7 +102,6 @@
       "id": "toolsMenu",
       "name": "Tools",
       "url": "#",
-      "locationMatch": null,
       "icon": "network/Build",
       "roles": null,
       "items": [
@@ -120,21 +109,18 @@
           "id": "snmpMibCompiler",
           "name": "SNMP MIB Compiler",
           "url": "admin/mibCompiler.jsp",
-          "locationMatch": "",
           "roles": null
         },
         {
           "id": "fileEditor",
           "name": "File Editor",
           "url": "ui/index.html#/file-editor",
-          "locationMatch": "configurationManagement",
           "roles": ["ROLE_FILESYSTEM_EDITOR"]
         },
         {
           "id": "scv",
           "name": "Secure Credentials Vault",
           "url": "ui/index.html#/scv",
-          "locationMatch": "configurationManagement",
           "roles": ["ROLE_ADMIN"]
         }
       ]
@@ -143,7 +129,6 @@
       "id": "internalLogsMenu",
       "name": "Internal Logs",
       "url": "#",
-      "locationMatch": null,
       "icon": "network/LogsAlt",
       "roles": ["ROLE_ADMIN"],
       "items": [
@@ -151,14 +136,12 @@
           "id": "logViewer",
           "name": "Log Viewer",
           "url": "ui/index.html#/logs",
-          "locationMatch": "configurationManagement",
           "roles": ["ROLE_ADMIN"]
         },
         {
           "id": "instrumentationLogReader",
           "name": "Instrumentation Log Reader",
           "url": "admin/nodemanagement/instrumentationLogReader.jsp",
-          "locationMatch": "configurationManagement",
           "roles": ["ROLE_ADMIN"]
         }
       ]
@@ -167,7 +150,6 @@
       "id": "supportMenu",
       "name": "Support",
       "url": "#",
-      "locationMatch": null,
       "icon": "action/ContactSupport",
       "roles": null,
       "items": [
@@ -177,7 +159,6 @@
           "url": "https://www.opennms.com/support",
           "isExternalLink": true,
           "linkTarget": "_blank",
-          "locationMatch": null,
           "roles": null
         },
         {
@@ -186,7 +167,6 @@
           "url": "https://chat.opennms.org",
           "isExternalLink": true,
           "linkTarget": "_blank",
-          "locationMatch": null,
           "roles": null
         }
       ]
@@ -196,7 +176,6 @@
     "id": "helpMenu",
     "name": "Help",
     "url": "#",
-    "locationMatch": null,
     "roles": null,
     "items": [
     ]
@@ -205,21 +184,18 @@
     "id": "selfServiceMenu",
     "name": "admin",
     "url": "account/selfService/index.jsp",
-    "locationMatch": null,
     "roles": null,
     "items": [
       {
         "id": "changePassword",
         "name": "Change Password",
         "url": "account/selfService/newPasswordEntry",
-        "locationMatch": null,
         "roles": null
       },
       {
         "id": "logout",
         "name": "Log Out",
         "url": "j_spring_security_logout",
-        "locationMatch": null,
         "action": "logout",
         "roles": null
       }
@@ -229,35 +205,30 @@
     "id": "userNotificationMenu",
     "name": null,
     "url": null,
-    "locationMatch": null,
     "roles": null,
     "items": [
       {
         "id": "userNotificationConfiguration",
         "name": null,
         "url": "admin/notification/index.jsp",
-        "locationMatch": null,
         "roles": null
       },
       {
         "id": "userNotificationUser",
         "name": null,
         "url": "notification/browse?acktype=unack&filter=user==$USER",
-        "locationMatch": null,
         "roles": null
       },
       {
         "id": "userNotificationTeam",
         "name": null,
         "url": "notification/browse?acktype=unack",
-        "locationMatch": null,
         "roles": null
       },
       {
         "id": "userNotificationOnCall",
         "name": "On-Call Schedule",
         "url": "roles",
-        "locationMatch": null,
         "roles": null
       }
     ]
@@ -266,14 +237,12 @@
     "id": "provisionMenu",
     "name": "Quick-Add Node",
     "url": "admin/ng-requisitions/quick-add-node.jsp#/",
-    "locationMatch": null,
     "roles": ["ROLE_ADMIN", "ROLE_PROVISION"]
   },
   "configurationMenu": {
     "id": "configurationMenu",
     "name": "Configure OpenNMS",
     "url": "admin/index.jsp",
-    "locationMatch": null,
     "roles": ["ROLE_ADMIN"]
   }
 }

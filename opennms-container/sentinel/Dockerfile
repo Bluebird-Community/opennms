@@ -5,10 +5,6 @@ FROM ${DEPLOY_BASE_IMAGE} AS sentinel-tarball
 
 ADD --chown=10001:0 ./tarball-root/ /opt/sentinel/
 
-# Install confd.io configuration files and scripts and ensure they are executable
-COPY ./container-fs/confd/ /opt/sentinel/confd/
-RUN chmod +x /opt/sentinel/confd/scripts/*
-
 RUN chmod -R g-w /opt/sentinel && \
     chmod -R g=u \
         /opt/sentinel/etc \
@@ -52,6 +48,10 @@ COPY container-fs/health.sh /
 
 # Install a default JMX Prometheus configuration
 COPY container-fs/prom-jmx-default-config.yaml /opt/prom-jmx-exporter/config.yaml
+
+# Container-specific etc files (config files and featuresBoot templates). Kept outside the
+# /opt/sentinel/etc volume so they are available on upgrades; the entrypoint installs them from here.
+COPY --chown=10001:0 container-fs/etc/ /opt/sentinel/container-fs/etc/
 
 VOLUME [ "/opt/sentinel/deploy", "/opt/sentinel/etc", "/opt/sentinel/data" ]
 

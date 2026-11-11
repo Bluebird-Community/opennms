@@ -41,9 +41,7 @@ public class ServiceCatalogParityTest {
 
     private static final List<Path> SHIPPED_CONFIGURATIONS = List.of(
             REPO_ROOT.resolve("opennms-base-assembly/src/main/filtered/etc/service-configuration.xml"),
-            REPO_ROOT.resolve("opennms-base-assembly/src/main/filtered/etc/examples/service-configuration.xml.default"),
-            // no confd templates in this fork; smoke-test was renamed to e2e-tests
-            REPO_ROOT.resolve("e2e-tests/src/main/resources/opennms-overlay/etc/service-configuration.xml"));
+            REPO_ROOT.resolve("opennms-base-assembly/src/main/filtered/etc/examples/service-configuration.xml.default"));
 
     @Test
     public void shippedConfigurationsMatchDefaultServiceNamesAndOrder() throws IOException {

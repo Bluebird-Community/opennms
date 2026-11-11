@@ -1,6 +1,9 @@
 [[minion-docker]]
 = Minion Docker
-:description: Learn about startup arguments and environment variables for the Docker with the OpenNMS {page-component-title} Minion.
+:description: Learn about startup arguments and environment variables for the Minion container in OpenNMS {page-component-title}.
+
+The Minion container image reads its configuration from environment variables at startup.
+For settings not covered by environment variables, you can overlay individual configuration files directly (see <<minion-etc-overlay>>).
 
 == Startup arguments
 
@@ -8,78 +11,172 @@
 |===
 | Argument | Description
 | `-h`     | Display help with available arguments.
-| `-c`     | Start Minion and use environment credentials to register Minion on {page-component-title}.
+| `-c`     | Start Minion using environment variables for credentials. WARNING: credentials may be exposed via `docker inspect` and logs; use `-s` for production deployments.
 | `-s`     | One-time command to initialize an encrypted keystore file with credentials in `/keystore/scv.jce`.
 | `-f`     | Initialize and start Minion in foreground.
 |===
 
-== Environment variables
+== Controller configuration
 
-.Generic Minion settings
 [options="header, autowidth"]
 |===
-| Environment variable | Description                                     | Required | Default value
-| `MINION_ID`          | Unique Minion identifier                      | optional | generated UUID
-| `MINION_LOCATION`    | Name of the location associated with the Minion | required | –
+| Variable | Description | Default value
+| `MINION_ID`         | Unique identifier for this Minion instance. | `MINION-01`
+| `MINION_LOCATION`   | Location name associated with this Minion instance. | `MINION`
 |===
 
-.Settings when using gRPC
+NOTE: You cannot supply credentials via environment variables without exposing them in `docker inspect` output and container logs.
+To store credentials securely, initialize a keystore file using the `-s` flag and mount it to `$\{MINION_HOME}/etc/scv.jce`.
 
-If you want to use gRPC, the environment variable names are converted with a prefix convention:
+.Credentials (use only in non-production environments)
+[options="header, autowidth"]
+|===
+| Variable | Description | Default value
+| `OPENNMS_HTTP_USER`   | Username for the OpenNMS HTTP API.       | `minion`
+| `OPENNMS_HTTP_PASS`   | Password for the OpenNMS HTTP API.       | `minion`
+|===
 
-* Prefix `GRPC_IPC_` will be written to `org.opennms.core.ipc.grpc.client.cfg`
+== IPC strategy
 
-* Everything behind will be converted to lower case and `_` is replaced with `.`
+Set `MINION_IPC` to choose the inter-process communication transport.
+Minion supports Kafka and gRPC.
+Any other value stops the container at startup.
 
-Setting `GRPC_IPC_HOST` also enables the `opennms-core-ipc-grpc-client` feature at boot.
+[options="header, autowidth"]
+|===
+| Value | Description
+| `kafka` | Use Apache Kafka. Requires additional Kafka variables (see <<minion-docker-kafka>>).
+| `grpc`  | Use gRPC. Requires additional gRPC variables (see <<minion-docker-grpc>>).
+| (unset) | Pick the transport from the other variables. `IPC_GRPC_HOST` or `GRPC_IPC_HOST` selects gRPC. Otherwise `KAFKA_IPC_BOOTSTRAP_SERVERS` selects Kafka. With none of them set, Minion uses gRPC with the defaults below.
+|===
 
-As an example:
+[[minion-docker-kafka]]
+=== Kafka configuration
 
-[source, shell]
+Environment variables prefixed with `KAFKA_IPC_` are written to `$\{MINION_HOME}/etc/org.opennms.core.ipc.kafka.cfg`.
+The prefix is stripped, the remainder is lowercased, and underscores are converted to dots before being written as property keys.
+The file is regenerated on every startup, so changes to `KAFKA_IPC_*` variables take effect after a restart even when `etc` is persisted.
+Manual edits to this file are overwritten; use an etc overlay to customize it instead.
+
+[options="header, autowidth"]
+|===
+| Variable | Description | Example value
+| `KAFKA_IPC_BOOTSTRAP_SERVERS` | Comma-separated list of Kafka broker addresses. | `kafka-1:9092,kafka-2:9092`
+| `KAFKA_IPC_*` | Any additional Kafka client property. | `KAFKA_IPC_COMPRESSION_TYPE=gzip`
+|===
+
+For example, setting `KAFKA_IPC_BOOTSTRAP_SERVERS=192.168.1.1:9092` produces the following in `org.opennms.core.ipc.kafka.cfg`:
+
+[source, properties]
 ----
-environment:
-  - GRPC_IPC_HOST=192.168.1.1
-  - GRPC_IPC_PORT=8990
-----
-
-This creates the file `org.opennms.core.ipc.grpc.client.cfg` with the content:
-
-[source, shell]
-----
-host=192.168.1.1
-port=8990
-----
-
-.Settings when using Apache Kafka
-
-If you want to use Apache Kafka, the environment variable names are converted with a prefix convention:
-
-* Prefix `KAFKA_IPC_` will be written to `org.opennms.core.ipc.kafka.cfg`
-
-* Everything behind will be converted to lower case and `_` is replaced with `.`
-
-Setting `KAFKA_IPC_BOOTSTRAP_SERVERS` also enables the `opennms-core-ipc-kafka` feature at boot.
-
-As an example:
-
-[source, shell]
-----
-environment:
-  - KAFKA_IPC_BOOTSTRAP_SERVERS=192.168.1.1,192.168.1.2
-----
-
-This creates the file `org.opennms.core.ipc.kafka.cfg` with the content:
-
-[source, shell]
-----
-bootstrap.servers=192.168.1.1,192.168.1.2
+bootstrap.servers=192.168.1.1:9092
 ----
 
+[[minion-docker-grpc]]
+=== gRPC configuration
+
+Environment variables prefixed with `IPC_GRPC_` are written to `$\{MINION_HOME}/etc/org.opennms.core.ipc.grpc.client.cfg`.
+The prefix is stripped, the remainder is lowercased, and underscores are converted to dots before being written as property keys.
+The file is regenerated on every startup, so manual edits are overwritten; use an etc overlay to customize it instead.
+
+[options="header, autowidth"]
+|===
+| Variable | Description | Default value
+| `IPC_GRPC_HOST` | Hostname of the gRPC server. | `horizon`
+| `IPC_GRPC_PORT` | Port of the gRPC server.     | `8990`
+| `IPC_GRPC_*`    | Any additional gRPC client property, for example `IPC_GRPC_TLS_ENABLED=true`. | –
+|===
+
+The older `GRPC_IPC_` prefix is still accepted.
+When both prefixes set the same property, `IPC_GRPC_*` wins.
+
+== Optional features
+
+[options="header, autowidth"]
+|===
+| Variable | Description | Default value
+| `JAEGER_ENABLED`       | Set to `true` to enable the Jaeger tracing agent feature.        | `false`
+| `DOMINION_SCV_ENABLED` | Set to `true` to enable the Dominion secure credentials vault.   | `false`
+|===
+
+== JVM memory
+
+[options="header, autowidth"]
+|===
+| Variable | Description | Default value
+| `JAVA_MIN_MEM` | Minimum JVM heap size. | `2g`
+| `JAVA_MAX_MEM` | Maximum JVM heap size. | `2g`
+|===
+
+== Prometheus JMX exporter
+
+For full details on the JMX exporter and customizing its configuration file, see xref:configuration/minion-monitoring/jmx-exporter.adoc[].
+
+[options="header, autowidth"]
+|===
+| Variable | Description | Default value
+| `PROM_JMX_EXPORTER_ENABLED` | Set to `true` to enable the Prometheus JMX exporter. | `false`
+| `PROM_JMX_EXPORTER_PORT`    | Port on which the JMX exporter listens.              | `9299`
+| `PROM_JMX_EXPORTER_CONFIG`  | Path to the exporter configuration file inside the container. | `/opt/prom-jmx-exporter/config.yaml`
+|===
+
+[[minion-docker-listeners]]
+== Listeners and network settings
+
+[options="header, autowidth"]
+|===
+| Variable | Description | Default value
+| `OPENNMS_INSTANCE_ID`                  | Instance ID used as prefix for queue and topic names. | `OpenNMS`
+| `MINION_SYSLOG_LISTEN_INTERFACE`       | Interface the Syslog listener binds to. | `0.0.0.0`
+| `MINION_SYSLOG_LISTEN_PORT`            | Port the Syslog listener binds to. | `1514`
+| `MINION_TRAPD_LISTEN_INTERFACE`        | Interface the SNMP trap listener binds to. | `0.0.0.0`
+| `MINION_TRAPD_LISTEN_PORT`             | Port the SNMP trap listener binds to. | `1162`
+| `MINION_TRAPD_USE_ADDRESS_FROM_VARBIND` | Use the agent address from the trap varbind instead of the packet source address. | `false`
+| `FLOWS_LISTENER_ENABLED`               | Set to `true` to enable the single-port flows listener. | `false`
+| `JTI_LISTENER_ENABLED`                 | Set to `true` to enable the Junos Telemetry Interface listener on port 50001/udp. | `false`
+| `NXOS_LISTENER_ENABLED`                | Set to `true` to enable the Cisco NX-OS telemetry listener on port 50002/udp. | `false`
+| `KARAF_SSH_HOST`, `KARAF_SSH_PORT`     | Address and port of the Karaf shell SSH server. | `0.0.0.0`, `8201`
+| `JETTY_HOST`, `JETTY_PORT`             | Address and port of the embedded web server. | `0.0.0.0`, `8181`
+| `KARAF_MGMT_RMI_REGISTRY_HOST`, `KARAF_MGMT_RMI_REGISTRY_PORT` | Address and port of the JMX RMI registry. | `0.0.0.0`, `1299`
+| `KARAF_MGMT_RMI_SERVER_HOST`, `KARAF_MGMT_RMI_SERVER_PORT` | Address and port of the JMX RMI server. | `0.0.0.0`, `45444`
+| `DOMINION_GRPC_HOST`, `DOMINION_GRPC_PORT`, `DOMINION_GRPC_CLIENT_SECRET` | Dominion gRPC endpoint and client secret, used when `DOMINION_SCV_ENABLED=true`. | `horizon`, `8990`, (empty)
+|===
+
+[[minion-etc-overlay]]
 == Directory conventions
 
 [options="header, autowidth"]
 |===
 | Mountpoint                | Description
-| `/opt/minion-etc-overlay` | Lets you overwrite files relative to `/opt/minion/etc`.
-| `/keystore`               | Directory with credentials for encrypted keystore file
+| `/opt/minion-etc-overlay` | Files copied into `$\{MINION_HOME}/etc/` at startup, after environment variable processing. Direct file overlays take precedence over the corresponding environment variable settings.
+| `/keystore`               | Directory for the encrypted keystore file initialized with the `-s` flag.
+|===
+
+[[minion-legacy-config-migration]]
+== Migrating from `minion-config.yaml`
+
+Earlier Minion images rendered configuration from a `$\{MINION_HOME}/minion-config.yaml` file.
+This file is no longer supported, and the container refuses to start if it is present.
+To migrate, move each setting to its environment variable or overlay file, then remove the file:
+
+[options="header, autowidth"]
+|===
+| `minion-config.yaml` key | Replacement
+| `id`, `location` | `MINION_ID`, `MINION_LOCATION`
+| `org.opennms.instance.id` | `OPENNMS_INSTANCE_ID`
+| `ipc.kafka.*` | `MINION_IPC=kafka` and `KAFKA_IPC_*` (see <<minion-docker-kafka>>)
+| `ipc.rpc.kafka.*`, `ipc.sink.kafka.*`, `ipc.twin.kafka.*` | No longer supported; use `KAFKA_IPC_*` for all Kafka communication
+| `ipc.grpc.*` | `MINION_IPC=grpc` and `IPC_GRPC_*` (see <<minion-docker-grpc>>)
+| `dominion.grpc.*` | `DOMINION_GRPC_HOST`, `DOMINION_GRPC_PORT`, `DOMINION_GRPC_CLIENT_SECRET`
+| `server-certs` | Overlay `minion-server-certs.env` with one certificate ID per line, and mount each certificate at `/opt/minion/server-certs/<id>`
+| `ipc.sink.offheap.*` | Overlay `org.opennms.core.ipc.sink.offheap.cfg`
+| `netmgt.syslog.*`, `netmgt.traps.*` | `MINION_SYSLOG_*` and `MINION_TRAPD_*` (see <<minion-docker-listeners>>); overlay `org.opennms.netmgt.syslog.cfg` or `org.opennms.netmgt.trapd.cfg` for other keys
+| `telemetry.flows.single-port-listener` | `FLOWS_LISTENER_ENABLED=true`; overlay `org.opennms.features.telemetry.listeners-single-port-flows.cfg` to change its parameters
+| `telemetry.flows.listeners.*` | `JTI_LISTENER_ENABLED`, `NXOS_LISTENER_ENABLED`, or overlay one `org.opennms.features.telemetry.listeners-<name>.cfg` file per listener
+| `system.properties.*` | Pass each property as `-D<name>=<value>` in `JAVA_OPTS`
+| `system.properties.JAEGER_*` | `JAEGER_ENABLED=true`; set `JAEGER_ENDPOINT` or `JAEGER_AGENT_HOST` as environment variables, and `JAEGER_SAMPLER_TYPE` and `JAEGER_SAMPLER_PARAM` as `-D` options in `JAVA_OPTS`
+| `scv.provider: dominion` | `DOMINION_SCV_ENABLED=true` and `DOMINION_GRPC_*`
+| `karaf.shell.*`, `karaf.management.*`, `jetty.web.*` | `KARAF_SSH_*`, `KARAF_MGMT_RMI_*`, `JETTY_*`
+| `process-env.java-opts` | `JAVA_OPTS`, `JAVA_MIN_MEM`, `JAVA_MAX_MEM`
+| `java.agent.prom-jmx-exporter.*` | Mount your own exporter configuration file and set `PROM_JMX_EXPORTER_CONFIG`
 |===

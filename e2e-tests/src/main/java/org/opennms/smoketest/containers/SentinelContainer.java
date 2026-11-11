@@ -48,6 +48,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
+import org.opennms.smoketest.stacks.BlobStoreStrategy;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.JsonStoreStrategy;
 import org.opennms.smoketest.stacks.SentinelProfile;
@@ -98,20 +99,32 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
                 // User/pass are hardcoded in PostgreSQLContainer but are not exposed
                 .withEnv("POSTGRES_USER", "test")
                 .withEnv("POSTGRES_PASSWORD", "test")
-                .withEnv("OPENNMS_DBNAME", "opennms")
-                .withEnv("OPENNMS_DBUSER", "opennms")
-                .withEnv("OPENNMS_DBPASS", "opennms")
                 .withEnv("OPENNMS_HTTP_USER", "admin")
                 .withEnv("OPENNMS_HTTP_PASS", "admin")
                 .withEnv("JACOCO_AGENT_ENABLED", "1")
                 .withEnv("JAVA_OPTS", "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom -Dorg.opennms.rrd.storeByForeignSource=true")
+                // Configured through the entrypoint (not the overlay) so the container's own
+                // feature and config handling is exercised
+                .withEnv("SENTINEL_FLOWS_ENABLED", Boolean.toString(isFlowsEnabledViaEnv()))
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases(ALIAS)
                 .withCommand("-f")
                 .waitingFor(new WaitForSentinel(this))
-                .withCreateContainerCmdModifier(TestContainerUtils::setGlobalMemAndCpuLimits)
+                .withCreateContainerCmdModifier(createCmd -> {
+                    TestContainerUtils.setGlobalMemAndCpuLimits(createCmd);
+                    // Karaf RMI server
+                    TestContainerUtils.reserveEphemeralPorts(createCmd, "46444");
+                })
                 .addFileSystemBind(overlay.toString(),
                         "/opt/sentinel-overlay", BindMode.READ_ONLY, SelinuxContext.SINGLE);
+
+        // Sentinel supports Kafka IPC only; without it the entrypoint installs no IPC feature
+        if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
+            withEnv("SENTINEL_IPC", "kafka");
+            withEnv("KAFKA_IPC_BOOTSTRAP_SERVERS", OpenNMSContainer.KAFKA_ALIAS + ":9092");
+            withEnv("KAFKA_IPC_ACKS", "1");
+            withEnv("KAFKA_IPC_COMPRESSION_TYPE", model.getKafkaCompressionStrategy().getCodec());
+        }
 
         if (profile.isJvmDebuggingEnabled()) {
             withEnv("KARAF_DEBUG", "true");
@@ -164,20 +177,6 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         Files.createDirectories(bootD);
         writeFeaturesBoot(bootD.resolve("stest.boot"), getFeaturesOnBoot());
 
-        writeProps(etc.resolve("org.opennms.core.ipc.sink.kafka.consumer.cfg"),
-                ImmutableMap.<String,String>builder()
-                        .put("bootstrap.servers", OpenNMSContainer.KAFKA_ALIAS + ":9092")
-                        .put("acks", "1")
-                        .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
-                        .build());
-
-        writeProps(etc.resolve("org.opennms.core.ipc.sink.kafka.cfg"),
-                ImmutableMap.<String,String>builder()
-                        .put("bootstrap.servers", OpenNMSContainer.KAFKA_ALIAS + ":9092")
-                        .put("acks", "1")
-                        .put("compression.type", model.getKafkaCompressionStrategy().getCodec())
-                        .build());
-
         writeProps(etc.resolve("org.opennms.features.flows.persistence.clickhouse.cfg"),
                 ImmutableMap.<String,String>builder()
                         .put("endpoint", "http://" + OpenNMSContainer.CLICKHOUSE_ALIAS + ":8123")
@@ -197,19 +196,32 @@ public class SentinelContainer extends GenericContainer<SentinelContainer> imple
         }
     }
 
+    /**
+     * SENTINEL_FLOWS_ENABLED installs sentinel-flows together with the noop blob store and the
+     * Postgres JSON store, so it can only be used when the model asks for exactly those.
+     */
+    private boolean isFlowsEnabledViaEnv() {
+        return model.isTelemetryProcessingEnabled()
+                && model.getBlobStoreStrategy() == BlobStoreStrategy.NOOP
+                && (model.getJsonStoreStrategy() == null || model.getJsonStoreStrategy() == JsonStoreStrategy.POSTGRES);
+    }
+
+    /**
+     * Features installed through the overlay, in addition to the IPC and flow features
+     * the entrypoint installs from SENTINEL_IPC and SENTINEL_FLOWS_ENABLED.
+     */
     public List<String> getFeaturesOnBoot() {
         final List<String> featuresOnBoot = new ArrayList<>();
         featuresOnBoot.add("sentinel-persistence");
         featuresOnBoot.add("sentinel-core");
         featuresOnBoot.add("opennms-health-rest-service");
-        if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
-            featuresOnBoot.add("sentinel-kafka");
-        }
         if (TimeSeriesStrategy.NEWTS.equals(model.getTimeSeriesStrategy())) {
             featuresOnBoot.add("sentinel-newts");
         }
         if (model.isTelemetryProcessingEnabled()) {
-            featuresOnBoot.add("sentinel-flows");
+            if (!isFlowsEnabledViaEnv()) {
+                featuresOnBoot.add("sentinel-flows");
+            }
             featuresOnBoot.add("sentinel-telemetry-bmp");
             featuresOnBoot.add("sentinel-telemetry-graphite");
             featuresOnBoot.add("sentinel-telemetry-jti");

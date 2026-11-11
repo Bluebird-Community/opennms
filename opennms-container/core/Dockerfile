@@ -28,6 +28,11 @@ FROM ${DEPLOY_BASE_IMAGE}
 ## Share the image variable between stages
 ARG DEPLOY_BASE_IMAGE
 
+# envsubst renders the container config templates in the entrypoint.
+# TODO: move gettext into deploy-base and drop this layer.
+RUN microdnf -y install gettext && \
+    microdnf clean all
+
 SHELL ["/bin/bash", "-c"]
 
 # Create OpenNMS user with a specific group ID
@@ -73,10 +78,13 @@ RUN echo "${JAVA_HOME}/bin/java" > /opt/opennms/etc/java.conf && \
     chown 10001:0 /opt/opennms/etc/java.conf && \
     chmod g=u /opt/opennms/etc/java.conf
 
-# Add templates replaced at runtime and entrypoint
-COPY --chown=10001:0 ./container-fs/confd /etc/confd
+# Add entrypoint, health check, and container config files
 COPY --chown=10001:0 ./container-fs/entrypoint.sh /
 COPY --chown=10001:0 ./container-fs/health.sh /
+COPY --chown=10001:0 ./container-fs/etc/ /opt/opennms/container-fs/etc/
+
+# Create prom-jmx-exporter directory; config.yaml is generated at startup from the template in container-fs/etc/templates/
+RUN install -d -m 770 -o 10001 -g 0 /opt/prom-jmx-exporter
 
 # Arguments for labels should not invalidate caches
 ARG BUILD_DATE
@@ -126,7 +134,7 @@ ENV OPENNMS_EXECUTION_ENVIRONMENT=container
 #   * /opt/opennms-overlay: Inject and override custom files relative to /opt/opennms
 # Order (higher number takes precedence):
 #   1. shipped files
-#   2. confd
+#   2. settings from environment variables
 #   3. opt-overlay
 #   4. etc-overlay
 #   5. jetty-overlay

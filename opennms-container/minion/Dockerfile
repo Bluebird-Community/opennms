@@ -7,11 +7,6 @@ ADD --chown=10001:0 ./tarball-root/ /opt/minion/
 
 RUN rm /opt/minion/etc/org.opennms.features.telemetry.listeners-single-port-flows.cfg
 
-# Install confd.io configuration files and scripts and ensure they are executable
-COPY ./container-fs/confd/ /opt/minion/confd/
-COPY ./minion-config-schema.yml /opt/minion/confd/
-RUN chmod +x /opt/minion/confd/scripts/*
-
 # Create the directory for server certificates
 RUN install -d -m 750 /opt/minion/server-certs
 
@@ -37,6 +32,11 @@ FROM ${DEPLOY_BASE_IMAGE}
 ## Share the image variable between stages
 ARG DEPLOY_BASE_IMAGE
 
+# envsubst renders the container config templates in the entrypoint.
+# TODO: move gettext into deploy-base and drop this layer.
+RUN microdnf -y install gettext && \
+    microdnf clean all
+
 RUN groupadd \
         --gid 10001 \
         minion && \
@@ -59,6 +59,13 @@ COPY container-fs/prom-jmx-default-config.yaml /opt/prom-jmx-exporter/config.yam
 # If you copy from /opt/minion to /opt/minion the permissions are not preserved
 # We would have 755 for minion:root instead of 775 and prevents writing lock files in /opt/minion
 COPY --chown=10001:0 --from=minion-tarball /opt /opt
+
+# Overlay container-specific etc config files
+COPY --chown=10001:0 container-fs/etc/ /opt/minion/etc/
+
+# featuresBoot and telemetry listener templates. Kept outside /opt/minion/etc so a mounted or
+# persisted etc directory cannot hide them; the entrypoint applies them from here.
+COPY --chown=10001:0 container-fs/templates/ /opt/minion/container-fs/templates/
 
 # Arguments for labels should not invalidate caches
 ARG BUILD_DATE

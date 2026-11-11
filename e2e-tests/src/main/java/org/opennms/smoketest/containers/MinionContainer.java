@@ -21,14 +21,11 @@
  */
 package org.opennms.smoketest.containers;
 
-import static java.nio.file.Files.createTempDirectory;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.opennms.smoketest.utils.OverlayUtils.jsonMapper;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -45,7 +42,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.io.FileUtils;
 import org.opennms.smoketest.stacks.IpcStrategy;
 import org.opennms.smoketest.stacks.MinionProfile;
 import org.opennms.smoketest.stacks.NetworkProtocol;
@@ -63,7 +59,6 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.SelinuxContext;
 import org.testcontainers.lifecycle.TestDescription;
 import org.testcontainers.lifecycle.TestLifecycleAware;
-import org.testcontainers.utility.MountableFile;
 
 import com.google.common.base.Strings;
 
@@ -116,12 +111,20 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
         withExposedPorts(tcpPorts)
                 .withCreateContainerCmdModifier(createCmd -> {
                     TestContainerUtils.setGlobalMemAndCpuLimits(createCmd);
-                    TestContainerUtils.setEphemeralPortRangeBelowListeners(createCmd);
                     TestContainerUtils.exposePortsAsUdp(createCmd, udpPorts);
+                    // Telemetry listeners and the Karaf RMI server
+                    TestContainerUtils.reserveEphemeralPorts(createCmd, "45444,50000-50002");
                 })
                 .withEnv("OPENNMS_HTTP_USER", "admin")
                 .withEnv("OPENNMS_HTTP_PASS", "admin")
                 .withEnv("JACOCO_AGENT_ENABLED", "1")
+                .withEnv("MINION_VALIDATE_FEATURES_BOOT", "false")
+                .withEnv("MINION_REPAIR_FEATURES_BOOT", "true")
+                .withEnv("JTI_LISTENER_ENABLED", "true")
+                .withEnv("NXOS_LISTENER_ENABLED", "true")
+                .withEnv("FLOWS_LISTENER_ENABLED", "true")
+                .withEnv("MINION_LOCATION", profile.getLocation())
+                .withEnv("MINION_ID", profile.getId())
                 .withEnv("JAVA_OPTS", "-Xms2g -Xmx2g -Djava.security.egd=file:/dev/./urandom")
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases(ALIAS)
@@ -137,79 +140,39 @@ public class MinionContainer extends GenericContainer<MinionContainer> implement
             for (final Map.Entry<String, String> entry : profile.getLegacyConfiguration().entrySet()) {
                 addEnv(entry.getKey(), entry.getValue());
             }
-        } else {
-            addFileSystemBind(writeMinionConfig(profile).toString(),
-                    "/opt/minion/minion-config.yaml", BindMode.READ_ONLY, SelinuxContext.SINGLE);
+        }
+
+        for (final Map.Entry<String, String> entry : profile.getEnvVars().entrySet()) {
+            withEnv(entry.getKey(), entry.getValue());
         }
 
         if (profile.isJvmDebuggingEnabled()) {
             withEnv("KARAF_DEBUG", "true");
             withEnv("JAVA_DEBUG_PORT", "" + MINION_DEBUG_PORT);
         }
-    }
-
-    private Path writeMinionConfig(MinionProfile profile) {
-        try {
-            final Path minionConfig = createTempDirectory(ALIAS).toAbsolutePath().resolve("minion-config.yaml");
-            writeMinionConfigYaml(minionConfig, profile);
-            return minionConfig;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
-    private void writeMinionConfigYaml(Path minionConfigYaml, MinionProfile profile) throws IOException {
-        // Copy over the default configuration from the class-path
-        FileUtils.copyFile(new File(MountableFile.forClasspathResource("minion-config/minion-config.yaml").getFilesystemPath()), minionConfigYaml.toFile());
-        
-        // Allow other users to read the file
-        OverlayUtils.setOverlayPermissions(minionConfigYaml);
-
-        String config = "{\n" +
-                "\t\"location\": \"" + profile.getLocation() + "\",\n" +
-                "\t\"id\": \"" + profile.getId() + "\"\n" +
-                "}";
-        OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(config, Map.class));
-
-        if (!Strings.isNullOrEmpty(profile.getDominionGrpcScvClientSecret())) {
-            final String scvConfig = "{\"scv\": {\"provider\": \"dominion\"}}";
-            OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(scvConfig, Map.class));
-
-            final String gprcConfig = "{\"dominion\": { \"grpc\": { \"client-secret\":\"" + profile.getDominionGrpcScvClientSecret() + "\"}}}";
-            OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(gprcConfig, Map.class));
-        }
 
         if (IpcStrategy.KAFKA.equals(model.getIpcStrategy())) {
-            String kafkaIpc = "{\n" +
-                    "\t\"ipc\": {\n" +
-                    "\t\t\"kafka\": {\n" +
-                    "\t\t\t\"bootstrap.servers\": \""+ OpenNMSContainer.KAFKA_ALIAS +":9092\",\n" +
-                    "\t\t\t\"compression.type\": \""+ model.getKafkaCompressionStrategy().getCodec() +"\"\n" +
-                    "\t\t}\n" +
-                    "\t}\n" +
-                    "}";
-            OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(kafkaIpc, Map.class));
+            withEnv("MINION_IPC", "kafka");
+            withEnv("KAFKA_IPC_BOOTSTRAP_SERVERS", OpenNMSContainer.KAFKA_ALIAS + ":9092");
+            if (model.getKafkaCompressionStrategy() != null) {
+                withEnv("KAFKA_IPC_COMPRESSION_TYPE", model.getKafkaCompressionStrategy().getCodec());
+            }
         } else if (IpcStrategy.GRPC.equals(model.getIpcStrategy())) {
-            String grpc = "{\n" +
-                    "\t\"ipc\": {\n" +
-                    "\t\t\"grpc\": {\n" +
-                    "\t\t\t\"host\": \"" + OpenNMSContainer.ALIAS + "\",\n" +
-                    "\t\t\t\"port\": 8990\n" +
-                    "\t\t}\n" +
-                    "\t}\n" +
-                    "}";
-            OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(grpc, Map.class));
+            withEnv("MINION_IPC", "grpc");
+            withEnv("IPC_GRPC_HOST", OpenNMSContainer.ALIAS);
+            withEnv("IPC_GRPC_PORT", "8990");
         }
 
         if (model.isJaegerEnabled()) {
-            String jaeger = "{\n" +
-                    "\t\"system\": {\n" +
-                    "\t\t\"properties\": {\n" +
-                    "\t\t\t\"JAEGER_ENDPOINT\": \"" + JaegerContainer.getThriftHttpURL() + "\"\n" +
-                    "\t\t}\n" +
-                    "\t}\n" +
-                    "}";
-            OverlayUtils.writeYaml(minionConfigYaml, jsonMapper.readValue(jaeger, Map.class));
+            withEnv("JAEGER_ENABLED", "true");
+            withEnv("JAEGER_ENDPOINT", JaegerContainer.getThriftHttpURL());
+        }
+
+        if (!Strings.isNullOrEmpty(profile.getDominionGrpcScvClientSecret())) {
+            withEnv("DOMINION_SCV_ENABLED", "true");
+            withEnv("DOMINION_GRPC_HOST", OpenNMSContainer.ALIAS);
+            withEnv("DOMINION_GRPC_PORT", "8990");
+            withEnv("DOMINION_GRPC_CLIENT_SECRET", profile.getDominionGrpcScvClientSecret());
         }
     }
 

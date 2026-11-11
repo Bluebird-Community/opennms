@@ -21,26 +21,55 @@
  */
 package org.opennms.web.rest.support.menu;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Strings;
 import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.startsWith;
 
+import org.opennms.web.api.ElementConstants;
+import org.opennms.core.resource.Vault;
 import org.opennms.web.rest.support.menu.model.MainMenu;
 import org.opennms.web.rest.support.menu.model.MenuEntry;
 
 public class MenuProviderTest {
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
+
+    @Test
+    public void parsesTemplateWithUnknownProperties() throws Exception {
+        File file = tempFolder.newFile("menu-template.json");
+        String json = "{\"menus\": [{\"name\": \"Info\", \"locationMatch\": \"x\", \"someFutureKey\": 1,"
+                + " \"requiredSystemProperties\": [{\"name\": \"a\", \"value\": \"b\", \"another\": 2}]}],"
+                + " \"unknownTopLevel\": true}";
+        Files.write(file.toPath(), json.getBytes(StandardCharsets.UTF_8));
+
+        MainMenu menu = MenuProvider.parseMenuTemplate(file.getAbsolutePath());
+
+        assertNotNull(menu);
+        assertEquals(1, menu.menus.size());
+        assertEquals("Info", menu.menus.get(0).name);
+    }
     final static String MENU_TEMPLATE_PATH = "src/test/resources/menu/menu-template.json";
 
     final static String[] ADMIN_ROLES = new String[] { "ROLE_ADMIN", "ROLE_FLOW_MANAGER" };
@@ -61,7 +90,7 @@ public class MenuProviderTest {
         assertEquals("20:30:00 UTC+00", mainMenu.formattedTime);
         assertEquals("On", mainMenu.noticeStatus);
         assertEquals("admin1", mainMenu.username);
-        assertEquals("element/node.jsp?node=", mainMenu.baseNodeUrl);
+        assertEquals(ElementConstants.NODE_DETAILS_URI, mainMenu.baseNodeUrl);
         // version should be "2002-CURRENT_DATE_YEAR"
         assertThat(mainMenu.copyrightDates, startsWith("2002-2"));
         // not testing mainMenu.version, it's probably null in test environment
@@ -90,6 +119,7 @@ public class MenuProviderTest {
                 "Nodes", "Assets", "Path Outages", "External Requisitions",
                 "Logs", "Secure Credentials Vault"
         };
+
         List<String> actualNames = getMenuNames(infoMenu);
         assertEquals(expectedNames.length, actualNames.size());
         assertThat(actualNames, containsInAnyOrder(expectedNames));
@@ -131,16 +161,73 @@ public class MenuProviderTest {
         assertThat(actualNames, containsInAnyOrder(expectedNames));
     }
 
+    @Test
+    public void testDocsUrlTokens() {
+        try {
+            Vault.getProperties().setProperty("opennms.product", "meridian");
+            Vault.getProperties().setProperty("opennms.docs.version", "2026");
+            MainMenu mainMenu = parseMainMenu(ADMIN_ROLES);
+            assertEquals("meridian", mainMenu.product);
+            assertEquals("2026", mainMenu.docsVersion);
+            assertEquals("https://docs.opennms.com/meridian/2026/development/rest/rest-api.html",
+                    getMenuEntry(mainMenu.helpMenu.items, "REST API Reference").url);
+
+            // unknown product: fall back to the Horizon docs rather than a broken link
+            Vault.getProperties().remove("opennms.product");
+            mainMenu = parseMainMenu(ADMIN_ROLES);
+            assertNull(mainMenu.product);
+            assertEquals("https://docs.opennms.com/horizon/latest/development/rest/rest-api.html",
+                    getMenuEntry(mainMenu.helpMenu.items, "REST API Reference").url);
+        } finally {
+            Vault.getProperties().remove("opennms.product");
+            Vault.getProperties().remove("opennms.docs.version");
+        }
+    }
+
+    /**
+     * Regression guard: MenuProvider used to store each request's user and roles in fields of the shared
+     * singleton, so concurrent requests could get each other's menu. It is stateless now, so this cannot
+     * fail today; it is here to catch per-request state being added back.
+     */
+    @Test
+    public void concurrentContextsDoNotLeak() throws Exception {
+        final MenuProvider provider = new MenuProvider();
+        final ExecutorService executor = Executors.newFixedThreadPool(8);
+
+        try {
+            List<Future<Boolean>> futures = new ArrayList<>();
+
+            for (int i = 0; i < 200; i++) {
+                final boolean admin = i % 2 == 0;
+                futures.add(executor.submit(() -> {
+                    var ctx = new TestMenuRequestContext(admin ? "admin1" : "user1",
+                            Arrays.asList(admin ? "ROLE_ADMIN" : "ROLE_USER"));
+                    MainMenu menu = provider.getMainMenu(ctx, MENU_TEMPLATE_PATH);
+                    assertEquals(admin ? "admin1" : "user1", menu.username);
+                    boolean hasLogs = getMenuNames(getMenuEntry(menu.menus, "Info")).contains("Logs");
+                    assertEquals(admin, hasLogs);
+                    return true;
+                }));
+            }
+
+            for (Future<Boolean> f : futures) {
+                assertTrue(f.get(30, TimeUnit.SECONDS));
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     private MainMenu parseMainMenu(String[] roles) {
         MainMenu mainMenu = null;
         List<String> roleList = Arrays.stream(roles).toList();
 
         try {
-            MenuProvider provider = new MenuProvider(MENU_TEMPLATE_PATH);
+            MenuProvider provider = new MenuProvider();
 
-            provider.setMenuRequestContext(
-                    new MenuProviderTest.TestMenuRequestContext(roleList));
-            mainMenu = provider.getMainMenu();
+            mainMenu = provider.getMainMenu(
+                    new MenuProviderTest.TestMenuRequestContext("admin1", roleList),
+                    MENU_TEMPLATE_PATH);
         } catch (Exception e) {
             Assert.fail("Error in MenuProvider.getMainMenu: " + e.getMessage());
         }
@@ -163,16 +250,20 @@ public class MenuProviderTest {
     }
 
     public static class TestMenuRequestContext implements MenuRequestContext {
-        public TestMenuRequestContext(List<String> roles) {
+        public TestMenuRequestContext(String username, List<String> roles) {
+            this.username = username;
+
             if (roles != null && !roles.isEmpty()) {
                 this.userRoles.addAll(roles);
             }
         }
 
+        final private String username;
+
         final private List<String> userRoles = new ArrayList<>();
 
         public String getRemoteUser() {
-            return "admin1";
+            return username;
         }
 
         public String calculateUrlBase() {

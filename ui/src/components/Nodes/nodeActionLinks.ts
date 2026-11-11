@@ -26,13 +26,13 @@ import { IpInterface, Node } from '@/types'
 // The node action links, shared by every place the actions menu is rendered: the Node Details
 // title row and each row of the node list.
 //
-// Intentionally left out: the extra links the legacy node page appends after these (`navEntries`
-// in element/node.jsp). Those come from ConditionalPageNavEntry services registered for
-// "Page=node": any OSGi bundle can register one with `registration.export=true`, and
-// OnmsOSGiBridgeActivator copies it into the core ServiceRegistry, where the page finds it and
-// asks it, per request and node, whether to show. They are code, not user configuration. None
-// ship in this codebase. Supporting third-party ones would need a REST endpoint that evaluates
-// them on the server; that can come later if needed.
+// Intentionally left out: the extra links the legacy node page appended after these (its
+// `navEntries`). Those came from ConditionalPageNavEntry services registered for "Page=node": any
+// OSGi bundle can register one with `registration.export=true`, and OnmsOSGiBridgeActivator copies
+// it into the core ServiceRegistry, where the page found it and asked it, per request and node,
+// whether to show. They are code, not user configuration. None ship in this codebase. Supporting
+// third-party ones would need a REST endpoint that evaluates them on the server; that can come
+// later if needed.
 export const linkItems = [
   { name: 'events', label: 'Events' },
   { name: 'alarms', label: 'Alarms' },
@@ -77,8 +77,8 @@ export interface NodeActionLinkContext {
 // Destinations the server refuses to anyone but ROLE_ADMIN, so offering them to everyone else is
 // offering an access denial. Four sit under /admin/**, which
 // applicationContext-spring-security.xml pins to ROLE_ADMIN wholesale; rescan is under /element/
-// but has an intercept-url rule of its own. The legacy node page gates the same set
-// (element/node.jsp wraps them in <c:if test="${model.admin}">).
+// but has an intercept-url rule of its own. The legacy node page gated the same set (it wrapped
+// them in <c:if test="${model.admin}">).
 //
 // Note updateSnmp is plain ROLE_ADMIN here, NOT useRole's snmpRole (ROLE_ADMIN or
 // ROLE_PROVISION) -- admin/updateSnmp.jsp is covered by the /admin/** rule like the rest.
@@ -130,8 +130,8 @@ export const mapLink = (name: string, node: Node, context: NodeActionLinkContext
     case 'admin':
       return `admin/nodemanagement/index.jsp?node=${node.id}`
     case 'updateSnmp': {
-      // The legacy node page shows this only for a node with an SNMP-primary interface, and
-      // points it at that address. Without one there is nothing safe to link to: the form
+      // The legacy node page showed this only for a node with an SNMP-primary interface, and
+      // pointed it at that address. Without one there is nothing safe to link to: the form
       // would rewrite SNMP configuration for whatever address it was handed.
       if (!context.snmpPrimaryIpAddress) {
         return ''

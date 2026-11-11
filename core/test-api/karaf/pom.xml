@@ -391,17 +391,6 @@
     <!-- Other projects necessary to make the karaf-maven-plugin happy -->
     <!--
     <dependency>
-      <groupId>org.opennms.features.amqp</groupId>
-      <artifactId>org.opennms.features.amqp.event-forwarder</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.opennms.features.amqp</groupId>
-      <artifactId>org.opennms.features.amqp.event-receiver</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
     <dependency>
       <groupId>org.opennms.features</groupId>
       <artifactId>org.opennms.features.discovery</artifactId>
