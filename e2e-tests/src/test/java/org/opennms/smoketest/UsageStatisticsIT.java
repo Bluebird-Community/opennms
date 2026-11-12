@@ -85,10 +85,10 @@ public class UsageStatisticsIT {
 
         final Map<String, Boolean> services = (Map<String, Boolean>) usageReport.get("services");
 
-        // 23 services in the e2e overlay (Karaf added by NMS-20044); Correlator and SnmpPoller are disabled
+        // 23 services in the default service-configuration.xml; OpenNMSContainer enables Syslogd and SnmpPoller, so only Correlator is disabled
         assertEquals(23, services.size());
-        assertEquals(21, services.entrySet().stream().filter(Map.Entry::getValue).count());
-        assertEquals(2, services.entrySet().stream().filter(e -> !e.getValue()).count());
+        assertEquals(22, services.entrySet().stream().filter(Map.Entry::getValue).count());
+        assertEquals(1, services.entrySet().stream().filter(e -> !e.getValue()).count());
 
         assertThat((String) usageReport.get("systemId"), matchesPattern("^\\S+-\\S+-\\S+-\\S+-\\S+$"));
 
