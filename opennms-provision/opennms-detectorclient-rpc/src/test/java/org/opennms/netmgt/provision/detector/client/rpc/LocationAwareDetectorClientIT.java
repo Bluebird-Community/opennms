@@ -61,6 +61,7 @@ import org.springframework.test.context.ContextConfiguration;
         "classpath:/META-INF/opennms/applicationContext-tracer-registry.xml"
 })
 @JUnitConfigurationEnvironment
+@org.springframework.test.annotation.IfProfileValue(name="runFlappers", value="true")
 public class LocationAwareDetectorClientIT {
 
     @Autowired

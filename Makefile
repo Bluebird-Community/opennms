@@ -337,9 +337,7 @@ minion-oci: ## Build container image for Minion, tag local/minion:latest
 		--revision $(RELEASE_COMMIT) \
 		--base-image $(DEPLOY_BASE_IMAGE) \
 		--platform $(OCI_PLATFORM) \
-		--build-date $(BUILD_DATE) \
-		--branch "$(GIT_BRANCH)" \
-		--build-number "$(RELEASE_BUILD_NUM)"
+		--build-date $(BUILD_DATE)
 
 .PHONY: sentinel-oci
 sentinel-oci: ## Build container image for Sentinel, tag local/sentinel:latest

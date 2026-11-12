@@ -33,14 +33,12 @@ Optional:
   --platform <p>            docker --platform value (default: linux/$(uname -m))
   --build-date <d>          BUILD_DATE build arg (default: today, YYYYMMDD)
   --tag <ref>               image tag (default: local/<component>:latest)
-  --branch <name>           git branch, only used by the minion config schema
-  --build-number <n>        build number, only used by the minion config schema
   -h                        show this help
 EOF
 }
 
 COMPONENT=''; VERSION=''; INSTALL_VERSION=''; REVISION=''; BASE_IMAGE=''
-PLATFORM=''; BUILD_DATE=''; TAG=''; BRANCH=''; BUILD_NUMBER='0'
+PLATFORM=''; BUILD_DATE=''; TAG=''
 while [ $# -gt 0 ]; do
   case "$1" in
     --component)       COMPONENT="$2"; shift 2 ;;
@@ -51,8 +49,6 @@ while [ $# -gt 0 ]; do
     --platform)        PLATFORM="$2"; shift 2 ;;
     --build-date)      BUILD_DATE="$2"; shift 2 ;;
     --tag)             TAG="$2"; shift 2 ;;
-    --branch)          BRANCH="$2"; shift 2 ;;
-    --build-number)    BUILD_NUMBER="$2"; shift 2 ;;
     -h|--help)         usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -117,15 +113,6 @@ else
 fi
 
 echo "$INSTALL_VERSION" > "${ROOTFS}/etc/version.info"
-
-# Minion ships a config schema rendered from a template.
-if [ "$COMPONENT" = "minion" ]; then
-  sed -e "s,@VERSION@,${VERSION}," \
-      -e "s,@REVISION@,${REVISION}," \
-      -e "s,@BRANCH@,${BRANCH}," \
-      -e "s,@BUILD_NUMBER@,${BUILD_NUMBER}," \
-      "${CONTEXT}/minion-config-schema.yml.in" > "${CONTEXT}/minion-config-schema.yml"
-fi
 
 docker build --platform="$PLATFORM" \
   --build-arg "DEPLOY_BASE_IMAGE=${BASE_IMAGE}" \
