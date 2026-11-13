@@ -49,7 +49,6 @@
 *** xref:rest/info.adoc[]
 *** xref:rest/ifservices.adoc[]
 *** xref:rest/ipinterfaces.adoc[]
-*** xref:rest/ksc_reports.adoc[]
 *** xref:rest/logs.adoc[]
 *** xref:rest/measurements.adoc[]
 *** xref:rest/menu.adoc[]
@@ -88,6 +87,7 @@
 *** xref:rest/javamail-config.adoc[]
 *** xref:rest/syslognbi-config.adoc[]
 *** xref:rest/trapd-rest-api.adoc[]
+*** xref:rest/thresholds-rest-api.adoc[]
 *** xref:rest/situation-feedback.adoc[]
 
 * xref:oia/introduction.adoc[]

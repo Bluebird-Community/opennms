@@ -342,10 +342,6 @@
   </filter-mapping>
   <filter-mapping>
     <filter-name>AddRefreshHeader-300</filter-name>
-    <url-pattern>/element/node.jsp</url-pattern>
-  </filter-mapping>
-  <filter-mapping>
-    <filter-name>AddRefreshHeader-300</filter-name>
     <url-pattern>/element/linkednode.jsp</url-pattern>
   </filter-mapping>
   <filter-mapping>
@@ -363,10 +359,6 @@
   <filter-mapping>
     <filter-name>AddRefreshHeader-300</filter-name>
     <url-pattern>/graph/results.htm</url-pattern>
-  </filter-mapping>
-  <filter-mapping>
-    <filter-name>AddRefreshHeader-300</filter-name>
-    <url-pattern>/KSC/customView.htm</url-pattern>
   </filter-mapping>
   <filter-mapping>
     <filter-name>AddRefreshHeader-120</filter-name>
@@ -609,6 +601,20 @@
     <url-pattern>/admin/nodeLabelChange</url-pattern>
   </servlet-mapping>
 
+  <!--
+    The legacy node page URL redirects to the Vue Node Details page. Keep it: external links
+    (RSS, email, stored event text) use it. An exact mapping takes precedence over the *.jsp
+    mapping, so no JSP file is needed at this path.
+  -->
+  <servlet>
+    <servlet-name>nodeDetailsRedirect</servlet-name>
+    <servlet-class>org.opennms.web.element.NodeDetailsRedirectServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>nodeDetailsRedirect</servlet-name>
+    <url-pattern>/element/node.jsp</url-pattern>
+  </servlet-mapping>
+
   <!-- Servlet for modify Discovery configuration service -->
   <servlet>
     <servlet-name>actionDiscovery</servlet-name>
@@ -844,16 +850,6 @@
   </servlet>
 
   <servlet>
-    <servlet-name>sendMail</servlet-name>
-    <servlet-class>org.opennms.web.mail.MailerServlet</servlet-class>
-    <init-param>
-      <description>Redirect to this sibling URL on success.</description>
-      <param-name>redirect.success</param-name>
-      <param-value>../support/index.htm</param-value>
-    </init-param>
-  </servlet>
-
-  <servlet>
     <servlet-name>nodeRescan</servlet-name>
     <servlet-class>org.opennms.web.element.NodeRescanServlet</servlet-class>
   </servlet>
@@ -1065,11 +1061,6 @@
   <servlet-mapping>
     <servlet-name>rtcRaw</servlet-name>
     <url-pattern>/rtc/raw</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>sendMail</servlet-name>
-    <url-pattern>/mail/send</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>

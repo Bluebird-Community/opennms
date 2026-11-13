@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -75,19 +76,21 @@ public class TestContainerUtils {
     }
 
     /**
-     * Keeps the kernel's ephemeral port range below the fixed telemetry listener ports (50000-50002).
-     * Linux hands out 32768-60999 by default, so a UDP client socket the container opens while starting
-     * up (SNMP, DNS) can land on a listener port before the listener binds it. The listener then fails
-     * with "Address already in use" and the container never passes its health check.
+     * Keep the kernel from handing out the given ports as ephemeral source ports in the container.
+     * A listener on a port in the ephemeral range (32768-60999) fails to bind when another socket
+     * in the container was given that port first.
      *
      * @param cmd reference to the create container command, obtain with withCreateContainerCmdModifier
+     * @param ports port list in sysctl form, for example "45444,50000-50002"
      */
-    public static void setEphemeralPortRangeBelowListeners(CreateContainerCmd cmd) {
-        HostConfig hostConfig = cmd.getHostConfig();
-        if (hostConfig == null) {
-            hostConfig = new HostConfig();
+    public static void reserveEphemeralPorts(CreateContainerCmd cmd, String ports) {
+        final HostConfig hostConfig = cmd.getHostConfig();
+        final Map<String, String> sysctls = new HashMap<>();
+        if (hostConfig.getSysctls() != null) {
+            sysctls.putAll(hostConfig.getSysctls());
         }
-        hostConfig.withSysctls(Map.of("net.ipv4.ip_local_port_range", "32768 49999"));
+        sysctls.put("net.ipv4.ip_local_reserved_ports", ports);
+        hostConfig.withSysctls(sysctls);
     }
 
     /**

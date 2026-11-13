@@ -92,16 +92,9 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-if [[ "$DISABLE_JRRD2" != "true" ]]; then
-   # if $JAVA_HOME is not set, ask user to setup JAVA_HOME
-   if [[ -z "${JAVA_HOME:-}" ]]; then
-     echo "JAVA_HOME is not set. Detecting required JDK version from pom.xml..."
-     detect_jdk_version_required
-     echo "Detected required JDK version: $REQUIRED_VERSION"
-     echo "Please set JAVA_HOME to a JDK $REQUIRED_VERSION installation and re-run this script."
-     exit 1
-   fi
+select_jdk || exit 1
 
+if [[ "$DISABLE_JRRD2" != "true" ]]; then
    detect_jrrd2_location
    if [[ -z "$JRRD_JAR" ]] || [[ ! -f "$JRRD_JAR" ]] || [[ -z "$JRRD_LIB" ]] || [[ ! -f "$JRRD_LIB" ]]; then
      # Build JRRD2 from source then run the rest of script
@@ -127,6 +120,8 @@ if [[ -f "$ROOT/target/opennms/bin/opennms" ]]; then
     ./target/opennms/bin/opennms stop || true
 fi
 
+BUILD_START=$(date +%s)
+
 if [[ "$SKIP_CLEANUP" == "yes" ]]; then
     echo "Skipping cleanup of previous build artifacts."
 else
@@ -149,9 +144,7 @@ else
 fi
 
 echo "Preparing symlink for OpenNMS release $RELEASE"
-mkdir -p "./target/opennms-$RELEASE"
-ln -s "$ROOT/target/opennms-$RELEASE" "$ROOT/target/opennms"
-tar -zxvf "./target/opennms-$RELEASE.tar.gz" -C "$ROOT/target/opennms-$RELEASE"
+ln -sfn "$ROOT/target/opennms-$RELEASE" "$ROOT/target/opennms"
 
 # Set runtime user
 echo "RUNAS=$(id -u -n)" > "$ROOT/target/opennms/etc/opennms.conf"
@@ -183,6 +176,10 @@ echo "Initialize the Java environment..."
 
 echo "Initialize the database schema..."
 "$ROOT/target/opennms/bin/install" -dis
+
+# Show the time before the start, because a foreground start does not return until OpenNMS stops.
+ELAPSED=$(( $(date +%s) - BUILD_START ))
+echo "Build and setup time: $(( ELAPSED / 60 ))m $(( ELAPSED % 60 ))s"
 
 if [[ "$RUN_OPENNMS_FOREGROUND" == "yes" ]]; then
   echo "Starting OpenNMS (foreground)..."

@@ -264,6 +264,14 @@
       <artifactId>org.opennms.core.mate.model</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-jmx</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.opennms.features.usageanalytics</groupId>
       <artifactId>org.opennms.features.usageanalytics.impl</artifactId>
       <version>${project.version}</version>

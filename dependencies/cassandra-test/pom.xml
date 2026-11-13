@@ -63,7 +63,17 @@
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
+        <!-- newts pulls testcontainers 1.19.7, which speaks Docker API 1.32; current engines need 1.40+ -->
+        <exclusion>
+          <groupId>org.testcontainers</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-cassandra</artifactId>
+      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
