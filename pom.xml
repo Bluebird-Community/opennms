@@ -5367,9 +5367,9 @@
       </snapshots>
     </pluginRepository>
     <pluginRepository>
-      <id>bluebird-releases</id>
-      <name>🚀 Maven Bluebird</name>
-      <url>https://repo.maven.bluebirdops.org/releases</url>
+      <id>bluebird-mirror</id>
+      <name>🇪🇺 Maven CDN BlueBird</name>
+      <url>https://mvn.cdn.eu-central-1.bluebirdops.org/upstream</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
@@ -5399,9 +5399,9 @@
       </snapshots>
     </repository>
     <repository>
-      <id>bluebird-releases</id>
-      <name>🚀 Maven Bluebird</name>
-      <url>https://repo.maven.bluebirdops.org/releases</url>
+      <id>bluebird-mirror</id>
+      <name>🇪🇺 Maven CDN BlueBird</name>
+      <url>https://mvn.cdn.eu-central-1.bluebirdops.org/upstream</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
