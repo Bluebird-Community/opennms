@@ -70,7 +70,7 @@
     <module>osgi-jsr223</module>
     <module>opennms-osgi-core-rest</module>
 
-    <!-- SNMP MIB Parser and Event/Collection Configuration -->
+    <!-- SNMP MIB Parser -->
     <module>mib-compiler</module>
 
 

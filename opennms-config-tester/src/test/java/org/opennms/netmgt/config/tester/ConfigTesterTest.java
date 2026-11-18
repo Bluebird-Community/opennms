@@ -177,11 +177,6 @@ public class ConfigTesterTest {
     }
 
     @Test
-    public void testGroups() {
-        testConfigFile("groups.xml");
-    }
-
-    @Test
     public void testHttpDatacollectionConfig() {
         testConfigFile("http-datacollection-config.xml");
     }
@@ -408,11 +403,13 @@ public class ConfigTesterTest {
         ignoreConfigFile("trapd-configuration.xml");
     }
 
-
     @Test
-    public void testUsers() {
-        testConfigFile("users.xml");
+    public void testUsersAndGroups() {
+        // users, groups and roles live in the database; only the upgrade migrator reads these files
+        ignoreConfigFile("users.xml");
+        ignoreConfigFile("groups.xml");
     }
+
 
     @Test
     public void testVacuumdConfiguration() {
