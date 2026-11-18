@@ -119,6 +119,7 @@
                             org.opennms.netmgt.model.minion,
                             org.opennms.netmgt.model.monitoringLocations,
                             org.opennms.netmgt.model.outage,
+                            org.opennms.netmgt.model.usermgmt,
                             org.opennms.netmgt.poller,
                             org.opennms.netmgt.rrd,
                             org.opennms.netmgt.xml.event,

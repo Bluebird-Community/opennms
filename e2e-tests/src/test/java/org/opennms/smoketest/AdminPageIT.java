@@ -57,7 +57,9 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
     private final String[][] m_adminPageEntriesAll = new String[][] {
         // OpenNMS System
         new String[] { "System Configuration", "//span[text()='OpenNMS Configuration']" },
-        new String[] { "Configure Users, Groups and On-Call Roles", "//span[text()='Users and Groups']" },
+        new String[] { "Configure Users", "//div[@id='app']//h1[@class='page-title' and normalize-space(text())='Manage Users']" },
+        new String[] { "Configure Groups", "//div[@id='app']//h1[@class='page-title' and normalize-space(text())='Manage Groups']" },
+        new String[] { "Configure On-Call Roles", "//div[@id='app']//h1[@class='page-title' and normalize-space(text())='Manage On-Call Roles']" },
 
         // Provisioning
         new String[] { "Manage Provisioning Requisitions", "//h4[contains(text(), 'Requisitions (')]" },
@@ -98,6 +100,7 @@ public class AdminPageIT extends OpenNMSSeleniumIT {
         // Additional Tools
         new String[] { "Configure Grafana Endpoints (Reports only)", "//div/ul/li/a[contains(text(),'Grafana Endpoints')]" },
         new String[] { "Instrumentation Log Reader", "//span[text()='Filtering']" },
+        new String[] { "SNMP MIB Compiler", "//div[@id='app']//div[@class='mib-compiler-container']//div[@class='heading']/p[text()='SNMP MIB Compiler']" },
         new String[] { "Usage Statistics Sharing", "//div[contains(@class, 'card')]//span[text()='Usage Statistics Sharing']" },
         new String[] { "Product Update Enrollment", "//div[contains(@class, 'admin-product-update-enrollment-form-wrapper')]" }
     };
